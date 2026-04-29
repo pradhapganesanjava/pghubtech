@@ -3,5 +3,7 @@ portal/node_modules/
 portal/dist/
 portal/.env
 portal/.env.local
+portal/package-lock.json
+package-lock.json
 .DS_Store
 *.local
