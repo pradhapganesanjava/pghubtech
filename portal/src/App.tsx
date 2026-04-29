@@ -27,7 +27,6 @@ export default function App() {
   const [view, setView]           = useState<View>('home')
   const [theme, setTheme]         = useState<string>(Config.theme)
   const [loginError, setLoginError] = useState('')
-  const [showSheetSetup, setShowSheetSetup] = useState(false)
 
   // On mount: try to restore a session
   useEffect(() => {
@@ -93,7 +92,6 @@ export default function App() {
   async function handleSheetConfigured(sheetId: string) {
     Config.sheetId = sheetId
     await ensureHeaders()
-    setShowSheetSetup(false)
     setAuthState('authenticated')
   }
 
@@ -156,10 +154,6 @@ export default function App() {
               setAuthState('needs-sheet')
             }}
           />
-        )}
-
-        {showSheetSetup && (
-          <SheetSetupModal onDone={handleSheetConfigured} />
         )}
 
         {/* Mobile bottom nav */}
