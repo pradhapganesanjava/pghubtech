@@ -1,0 +1,9 @@
+{
+  "name": "pg-hub-tech-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix portal",
+    "build": "npm run build --prefix portal",
+    "install": "npm install --prefix portal"
+  }
+}
