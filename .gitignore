@@ -7,3 +7,8 @@ portal/package-lock.json
 package-lock.json
 .DS_Store
 *.local
+scripts/node_modules/
+scripts/package-lock.json
+scripts/credentials.json
+scripts/.token.json
+scripts/*-preview.json

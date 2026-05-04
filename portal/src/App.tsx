@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { GAuth } from './lib/gauth'
 import { Config } from './services/config'
-import { checkAccess, ensureHeaders } from './adapters/sheetsRepo'
+import { checkAccess, ensureHeaders, loadSettings, saveSetting, UnauthorizedError } from './adapters/sheetsRepo'
 import { ToastProvider } from './components/Toast'
 import TopBar from './components/TopBar'
 import SheetSetupModal from './components/SheetSetupModal'
@@ -36,8 +36,22 @@ export default function App() {
         setAuthState('needs-sheet')
       } else {
         checkAccess()
-          .then(() => setAuthState('authenticated'))
-          .catch(() => setAuthState('needs-sheet'))
+          .then(async () => {
+            const settings = await loadSettings().catch(() => ({}))
+            if (settings.theme) {
+              setTheme(settings.theme)
+              Config.theme = settings.theme
+            }
+            setAuthState('authenticated')
+          })
+          .catch(e => {
+            if (e instanceof UnauthorizedError) {
+              GAuth.signOut()
+              setAuthState('unauthenticated')
+            } else {
+              setAuthState('needs-sheet')
+            }
+          })
       }
     } else {
       setAuthState('unauthenticated')
@@ -56,6 +70,7 @@ export default function App() {
   function handleTheme(t: string) {
     setTheme(t)
     Config.theme = t
+    saveSetting('theme', t).catch(() => {})
   }
 
   async function handleSignIn() {
@@ -76,6 +91,11 @@ export default function App() {
         setAuthState('needs-sheet')
       } else {
         await ensureHeaders()
+        const settings = await loadSettings().catch(() => ({}))
+        if (settings.theme) {
+          setTheme(settings.theme)
+          Config.theme = settings.theme
+        }
         setAuthState('authenticated')
       }
     } catch (e) {
@@ -158,10 +178,10 @@ export default function App() {
 
         {/* Mobile bottom nav */}
         <nav className="bottom-nav">
-          <button className={`bn-btn${view === 'home'   ? ' active' : ''}`} onClick={() => setView('home')}>
+          <button className={`bn-btn${view === 'home'     ? ' active' : ''}`} onClick={() => setView('home')}>
             <span className="bn-icon">🏠</span><span className="bn-label">Home</span>
           </button>
-          <button className={`bn-btn${view === 'browse' ? ' active' : ''}`} onClick={() => setView('browse')}>
+          <button className={`bn-btn${view === 'browse'   ? ' active' : ''}`} onClick={() => setView('browse')}>
             <span className="bn-icon">📋</span><span className="bn-label">Browse</span>
           </button>
           <button className={`bn-btn${view === 'settings' ? ' active' : ''}`} onClick={() => setView('settings')}>

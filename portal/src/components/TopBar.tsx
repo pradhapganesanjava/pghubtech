@@ -19,8 +19,8 @@ const THEMES = [
 ]
 
 const NAVS = [
-  { id: 'home',     label: 'Home' },
-  { id: 'browse',   label: 'Browse' },
+  { id: 'home',     label: 'Home'     },
+  { id: 'browse',   label: 'Browse'   },
   { id: 'settings', label: 'Settings' },
 ]
 

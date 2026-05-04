@@ -1,297 +1,294 @@
-import { useState, useEffect, useMemo } from 'react'
-import { loadItems, saveItem, updateItem, deleteItem, type TechItem } from '../adapters/sheetsRepo'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import type { AnkiNote, AnkiTemplate } from '../adapters/ankiRepo'
+import { loadAnkiTemplates, loadAllNotes } from '../adapters/ankiRepo'
+import { getAllSRS, isDue } from '../adapters/srsRepo'
+import type { SRSRecord } from '../adapters/srsRepo'
+import { getCardFrontText } from '../utils/cardHelpers'
+import TagDeckTree from '../components/TagDeckTree'
+import NoteDetailPanel from '../components/NoteDetailPanel'
 import { useToast } from '../components/Toast'
 
-type SortKey = 'title' | 'category' | 'created_at' | 'status'
-type SortDir = 'asc' | 'desc'
+// ── Schedule cell ─────────────────────────────────────────────────────────────
 
-const EMPTY_FORM = { title: '', content: '', tags: '', category: '', notes: '', status: 'active' }
+function ScheduleCell({ rec }: { rec: SRSRecord | undefined }) {
+  if (!rec || rec.reps === 0) {
+    return <span className="bgt-sched-new">New</span>
+  }
+  if (isDue(rec)) {
+    return <span className="bgt-sched-due">Due</span>
+  }
+  const nextMs = new Date(rec.nextDue).getTime()
+  const diffMs = nextMs - Date.now()
+  const days   = Math.ceil(diffMs / (24 * 3600 * 1000))
+  let label: string
+  if (days <= 0)       label = 'Due'
+  else if (days === 1) label = 'Tomorrow'
+  else if (days < 7)   label = `in ${days}d`
+  else if (days < 30)  label = `in ${Math.round(days / 7)}w`
+  else                 label = `in ${Math.round(days / 30)}mo`
+  return <span className="bgt-sched-ok">{label}</span>
+}
+
+function relativeDate(dateStr: string): string {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
+  const diffDays = Math.floor((Date.now() - d.getTime()) / (24 * 3600 * 1000))
+  if (diffDays <= 0)  return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7)   return `${diffDays}d ago`
+  if (diffDays < 30)  return `${Math.round(diffDays / 7)}w ago`
+  return `${Math.round(diffDays / 30)}mo ago`
+}
+
+function chipLabel(path: string): string {
+  const parts = path.split('::')
+  return parts.length <= 2 ? path : `…::${parts.slice(-2).join('::')}`
+}
+
+
+// ── Main view ─────────────────────────────────────────────────────────────────
 
 export default function BrowseView() {
   const { toast } = useToast()
-  const [items, setItems]     = useState<TechItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch]   = useState('')
-  const [catFilter, setCatFilter] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('created_at')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
 
-  const [editItem, setEditItem] = useState<TechItem | null>(null)
-  const [showAdd, setShowAdd]   = useState(false)
-  const [form, setForm]         = useState({ ...EMPTY_FORM })
-  const [saving, setSaving]     = useState(false)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [notes,       setNotes]       = useState<AnkiNote[]>([])
+  const [templates,   setTemplates]   = useState<Map<string, AnkiTemplate>>(new Map())
+  const [loading,     setLoading]     = useState(true)
+  const [srsMap,      setSrsMap]      = useState<Map<string, SRSRecord>>(new Map())
 
+  const [selectedNote, setSelectedNote] = useState<AnkiNote | null>(null)
+
+  const [search,        setSearch]        = useState('')
+  const [selectedTags,  setSelectedTags]  = useState<string[]>([])
+  const [selectedDecks, setSelectedDecks] = useState<string[]>([])
+  const [leftCollapsed, setLeftCollapsed] = useState(true)
+
+  const [browseRatio,    setBrowseRatio]    = useState(60)
+  const browseContainerRef                  = useRef<HTMLDivElement>(null)
+  const isDividerDragging                   = useRef(false)
+
+  // ── Load data ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    loadItems()
-      .then(setItems)
-      .catch(e => toast(e instanceof Error ? e.message : String(e), 'error'))
-      .finally(() => setLoading(false))
-  }, [toast])
-
-  const categories = useMemo(() => {
-    const cats = new Set<string>()
-    items.forEach(it => { if (it.category) cats.add(it.category) })
-    return Array.from(cats).sort()
-  }, [items])
-
-  const filtered = useMemo(() => {
-    let list = items
-    if (search) {
-      const q = search.toLowerCase()
-      list = list.filter(it =>
-        it.title.toLowerCase().includes(q) ||
-        it.content.toLowerCase().includes(q) ||
-        it.tags.toLowerCase().includes(q) ||
-        it.category.toLowerCase().includes(q)
-      )
-    }
-    if (catFilter) list = list.filter(it => it.category === catFilter)
-    list = [...list].sort((a, b) => {
-      const av = a[sortKey], bv = b[sortKey]
-      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
-    })
-    return list
-  }, [items, search, catFilter, sortKey, sortDir])
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    else { setSortKey(key); setSortDir('asc') }
-  }
-
-  function openEdit(it: TechItem) {
-    setEditItem(it)
-    setForm({ title: it.title, content: it.content, tags: it.tags, category: it.category, notes: it.notes, status: it.status })
-    setShowAdd(false)
-  }
-
-  function openAdd() {
-    setEditItem(null)
-    setForm({ ...EMPTY_FORM })
-    setShowAdd(true)
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.title.trim()) return
-    setSaving(true)
-    try {
-      if (editItem) {
-        const updated: TechItem = { ...editItem, ...form, title: form.title.trim() }
-        await updateItem(updated)
-        setItems(prev => prev.map(it => it.id === updated.id ? updated : it))
-        toast('Updated', 'success')
-        setEditItem(null)
-      } else {
-        const saved = await saveItem({ ...form, title: form.title.trim() })
-        setItems(prev => [saved, ...prev])
-        toast('Added', 'success')
-        setShowAdd(false)
+    ;(async () => {
+      try {
+        const tmpls = await loadAnkiTemplates()
+        setTemplates(tmpls)
+        const allNotes = await loadAllNotes(tmpls)
+        setNotes(allNotes)
+        setSrsMap(getAllSRS())
+      } catch (e) {
+        toast(`Failed to load: ${(e as Error).message}`, 'error')
+      } finally {
+        setLoading(false)
       }
-    } catch (e) {
-      toast(e instanceof Error ? e.message : String(e), 'error')
-    } finally {
-      setSaving(false)
-    }
+    })()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Divider drag ──────────────────────────────────────────────────────────
+  function handleDividerPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    isDividerDragging.current = true
+    document.body.classList.add('resizing-h')
+  }
+  function handleDividerPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDividerDragging.current) return
+    const container = browseContainerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const pct  = ((e.clientX - rect.left) / rect.width) * 100
+    setBrowseRatio(Math.min(Math.max(pct, 25), 80))
+  }
+  function handleDividerPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    isDividerDragging.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+    document.body.classList.remove('resizing-h')
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this item?')) return
-    setDeleting(id)
-    try {
-      await deleteItem(id)
-      setItems(prev => prev.filter(it => it.id !== id))
-      if (editItem?.id === id) setEditItem(null)
-      toast('Deleted', 'success')
-    } catch (e) {
-      toast(e instanceof Error ? e.message : String(e), 'error')
-    } finally {
-      setDeleting(null)
-    }
+  // ── Filtering ─────────────────────────────────────────────────────────────
+  const filteredNotes = useMemo(() => {
+    const s = search.trim().toLowerCase()
+    return notes.filter(n => {
+      if (selectedDecks.length > 0) {
+        if (!selectedDecks.some(sd => n.deck === sd || n.deck.startsWith(sd + '::'))) return false
+      }
+      if (selectedTags.length > 0) {
+        if (!selectedTags.every(st => n.tags.some(t => t === st || t.startsWith(st + '::')))) return false
+      }
+      if (s) {
+        const tmpl = templates.get(n.templateId)
+        const frontText = tmpl ? getCardFrontText(n, tmpl).toLowerCase() : ''
+        if (!frontText.includes(s) && !n.deck.toLowerCase().includes(s) &&
+            !n.tags.some(t => t.toLowerCase().includes(s))) return false
+      }
+      return true
+    })
+  }, [notes, selectedDecks, selectedTags, search, templates])
+
+  const hasFilters = selectedTags.length > 0 || selectedDecks.length > 0
+
+  function handleSelect(note: AnkiNote) {
+    setSelectedNote(prev => prev?.noteId === note.noteId ? null : note)
   }
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <div className="spinner" />
-        <span>Loading…</span>
-      </div>
-    )
-  }
-
-  const SortIcon = ({ k }: { k: SortKey }) =>
-    sortKey === k ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="browse-layout">
-      {/* Controls */}
-      <div className="browse-controls">
-        <input
-          className="browse-search"
-          type="text"
-          placeholder="Search…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+    <div className="browse-body-wrap">
+      {/* Left: tag/deck tree */}
+      <div className={`browse-col-tags${leftCollapsed ? ' collapsed' : ''}`}>
+        <TagDeckTree
+          notes={notes}
+          selectedTags={selectedTags}
+          selectedDecks={selectedDecks}
+          onToggleTag={t => setSelectedTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
+          onToggleDeck={d => setSelectedDecks(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
+          onClearAll={() => { setSelectedTags([]); setSelectedDecks([]) }}
+          collapsed={leftCollapsed}
+          onCollapse={() => setLeftCollapsed(c => !c)}
         />
-        <select
-          className="browse-filter"
-          value={catFilter}
-          onChange={e => setCatFilter(e.target.value)}
-        >
-          <option value="">All categories</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <button className="btn btn-primary btn-sm" onClick={openAdd}>+ Add</button>
       </div>
 
-      <div className="browse-body">
-        {/* Table */}
-        <div className="browse-table-wrap">
-          <table className="browse-table">
-            <thead>
-              <tr>
-                <th onClick={() => toggleSort('title')} className="sortable">
-                  Title<SortIcon k="title" />
-                </th>
-                <th onClick={() => toggleSort('category')} className="sortable">
-                  Category<SortIcon k="category" />
-                </th>
-                <th>Tags</th>
-                <th onClick={() => toggleSort('status')} className="sortable">
-                  Status<SortIcon k="status" />
-                </th>
-                <th onClick={() => toggleSort('created_at')} className="sortable">
-                  Created<SortIcon k="created_at" />
-                </th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={6} className="browse-empty">No items found.</td></tr>
-              )}
-              {filtered.map(it => (
-                <tr
-                  key={it.id}
-                  className={editItem?.id === it.id ? 'row-selected' : ''}
-                  onClick={() => openEdit(it)}
-                >
-                  <td className="col-title">{it.title}</td>
-                  <td>{it.category && <span className="cat-chip">{it.category}</span>}</td>
-                  <td>
-                    <div className="tag-chips">
-                      {it.tags.split(',').filter(Boolean).map(t => (
-                        <span key={t} className="tag-chip">{t.trim()}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`status-chip ${it.status}`}>{it.status}</span>
-                  </td>
-                  <td className="col-date">
-                    {it.created_at ? new Date(it.created_at).toLocaleDateString() : '—'}
-                  </td>
-                  <td>
-                    <button
-                      className="row-del-btn"
-                      onClick={e => { e.stopPropagation(); handleDelete(it.id) }}
-                      disabled={deleting === it.id}
-                      title="Delete"
-                    >
-                      {deleting === it.id ? '…' : '✕'}
-                    </button>
-                  </td>
-                </tr>
+      {/* Main: cards table + detail split */}
+      <div className="browse-main">
+        {/* Toolbar */}
+        <div className="browse-toolbar">
+          <input
+            className="col-search"
+            style={{ width: 240 }}
+            placeholder="Search cards…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
+            {filteredNotes.length.toLocaleString()} / {notes.length.toLocaleString()} cards
+          </span>
+
+          {hasFilters && (
+            <div className="applied-filter-chips">
+              {selectedDecks.map(d => (
+                <span key={d} className="applied-chip deck-chip" title={d}>
+                  <span className="chip-icon">⬡</span>
+                  <span className="chip-label">{chipLabel(d)}</span>
+                  <button className="chip-rm" onClick={() => setSelectedDecks(prev => prev.filter(x => x !== d))}>×</button>
+                </span>
               ))}
-            </tbody>
-          </table>
+              {selectedTags.map(t => (
+                <span key={t} className="applied-chip tag-chip" title={t}>
+                  <span className="chip-label">{chipLabel(t)}</span>
+                  <button className="chip-rm" onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>×</button>
+                </span>
+              ))}
+              <button className="applied-clear-all" onClick={() => { setSelectedTags([]); setSelectedDecks([]) }}>
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Side form */}
-        {(showAdd || editItem) && (
-          <div className="browse-form-panel">
-            <div className="browse-form-hd">
-              <span>{editItem ? 'Edit Item' : 'New Item'}</span>
-              <button className="icon-btn" onClick={() => { setShowAdd(false); setEditItem(null) }}>✕</button>
-            </div>
-            <form onSubmit={handleSave} className="browse-form">
-              <div className="form-group">
-                <label>Title *</label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  autoFocus
-                />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <input
-                    type="text"
-                    value={form.category}
-                    onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                    list="cat-list"
-                  />
-                  <datalist id="cat-list">
-                    {categories.map(c => <option key={c} value={c} />)}
-                  </datalist>
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
-                    <option value="active">active</option>
-                    <option value="draft">draft</option>
-                    <option value="archived">archived</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Tags</label>
-                <input
-                  type="text"
-                  value={form.tags}
-                  onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-                  placeholder="comma, separated"
-                />
-              </div>
-              <div className="form-group">
-                <label>Content</label>
-                <textarea
-                  value={form.content}
-                  onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-                  rows={6}
-                />
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea
-                  value={form.notes}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Saving…' : 'Save'}
-                </button>
-                {editItem && (
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(editItem.id)}
-                    disabled={!!deleting}
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        )}
-      </div>
+        {/* Cards + detail split */}
+        <div className="browse-cards-split" ref={browseContainerRef}>
 
-      <div className="browse-footer">{filtered.length} / {items.length} items</div>
+          {/* Card list */}
+          <div
+            className="browse-col-cards"
+            style={selectedNote ? { flex: `0 0 ${browseRatio}%` } : undefined}
+          >
+            {loading ? (
+              <div className="browse-stream-init">
+                <div className="browse-stream-spinner" />
+                <span>Loading…</span>
+              </div>
+            ) : filteredNotes.length === 0 ? (
+              <div className="done-state">
+                <div className="done-icon">📭</div>
+                <h3>No cards found</h3>
+                <p>Try adjusting your filters or search.</p>
+              </div>
+            ) : (
+              <table className="bgt">
+                <thead>
+                  <tr className="bgt-hd-row">
+                    <th className="bgt-th bgt-th-title">Question</th>
+                    <th className="bgt-th">Deck</th>
+                    <th className="bgt-th">Tags</th>
+                    <th className="bgt-th bgt-th-prog">Schedule</th>
+                    <th className="bgt-th bgt-th-prog">Reviews</th>
+                    <th className="bgt-th bgt-th-prog">Lapses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNotes.map(n => {
+                    const tmpl  = templates.get(n.templateId)
+                    const title = tmpl ? getCardFrontText(n, tmpl) : n.noteId
+                    const rec   = srsMap.get(n.noteId)
+                    const isSel = selectedNote?.noteId === n.noteId
+
+                    return (
+                      <tr
+                        key={n.noteId}
+                        className={`bgt-row${isSel ? ' sel' : ''}`}
+                        onClick={() => handleSelect(n)}
+                      >
+                        <td className="bgt-td bgt-td-title">{title || n.noteId}</td>
+                        <td className="bgt-td" style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
+                          {n.deck.split('::').pop() || '—'}
+                        </td>
+                        <td className="bgt-td bgt-td-tags">
+                          {n.tags.slice(0, 3).map(t => t.split('::').pop()).join(', ') || '—'}
+                        </td>
+                        <td className="bgt-td bgt-td-prog"><ScheduleCell rec={rec} /></td>
+                        <td className="bgt-td bgt-td-prog">
+                          {rec && rec.reps > 0
+                            ? <span className="bgt-prog-count">{rec.reps}</span>
+                            : <span className="bgt-prog-dim">—</span>}
+                        </td>
+                        <td className="bgt-td bgt-td-prog">
+                          {rec && rec.lapses > 0
+                            ? <span className="bgt-prog-lapses">{rec.lapses}</span>
+                            : <span className="bgt-prog-dim">—</span>}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Draggable divider + detail panel */}
+          {selectedNote && (() => {
+            const tmpl    = templates.get(selectedNote.templateId)
+            const rec     = srsMap.get(selectedNote.noteId)
+            const lastSeen = rec?.lastReviewed ? relativeDate(rec.lastReviewed) : ''
+            if (!tmpl) return null
+            return (
+              <>
+                <div
+                  className="qa-divider"
+                  onPointerDown={handleDividerPointerDown}
+                  onPointerMove={handleDividerPointerMove}
+                  onPointerUp={handleDividerPointerUp}
+                  onPointerCancel={handleDividerPointerUp}
+                />
+                <div className="browse-col-detail has-selection">
+                  <NoteDetailPanel
+                    note={selectedNote}
+                    template={tmpl}
+                    rec={rec}
+                    lastSeen={lastSeen}
+                    onClose={() => setSelectedNote(null)}
+                    onNoteSaved={updated => {
+                      setNotes(prev => prev.map(n => n.noteId === updated.noteId ? updated : n))
+                      setSelectedNote(updated)
+                    }}
+                  />
+                </div>
+              </>
+            )
+          })()}
+        </div>
+      </div>
     </div>
   )
 }

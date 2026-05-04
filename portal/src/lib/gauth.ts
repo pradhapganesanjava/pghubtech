@@ -26,7 +26,7 @@ export const GAuth = {
     if (!raw) return false
     try {
       const { token, expires } = JSON.parse(raw) as StoredToken
-      if (Date.now() < expires) {
+      if (Date.now() < expires - 5 * 60 * 1000) {  // reject if < 5 min remaining
         this._token = token
         const userRaw = sessionStorage.getItem(USER_KEY)
         if (userRaw) this._user = JSON.parse(userRaw) as GoogleUser

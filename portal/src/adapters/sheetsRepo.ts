@@ -87,13 +87,49 @@ async function appendRows(sheet: string, values: string[][]): Promise<void> {
 }
 
 // ── Access check ───────────────────────────────────────────────
+export class UnauthorizedError extends Error {
+  constructor() { super('Session expired — please sign in again.') }
+}
+
 export async function checkAccess(): Promise<void> {
   const url = `${BASE}/${sid()}?fields=spreadsheetId`
   const res = await fetch(url, { headers: authHeaders() })
+  if (res.status === 401) throw new UnauthorizedError()
   if (res.status === 404) throw new Error('Sheet not found — check your Sheet ID.')
   if (res.status === 403) throw new Error('No access — make sure the sheet is shared with your Google account.')
   if (!res.ok) throw new Error(`Sheet error: HTTP ${res.status}`)
 }
+
+// ── Tab existence cache ─────────────────────────────────────────
+let _tabsCache:   string[] | null = null
+let _tabsPending: Promise<string[]> | null = null
+
+async function getExistingTabs(): Promise<string[]> {
+  if (_tabsCache) return _tabsCache
+  if (_tabsPending) return _tabsPending
+  _tabsPending = (async () => {
+    const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: authHeaders() })
+    if (!res.ok) return []
+    const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
+    const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
+    _tabsCache = tabs
+    return tabs
+  })().finally(() => { _tabsPending = null })
+  return _tabsPending
+}
+
+async function createTab(title: string): Promise<void> {
+  await fetch(`${BASE}/${sid()}:batchUpdate`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title } } }] }),
+  })
+  _tabsCache = null  // invalidate so next check reflects the new tab
+}
+
+// ── Settings in-memory cache ────────────────────────────────────
+let _settingsCache:   Record<string, string> | null = null
+let _settingsPending: Promise<Record<string, string>> | null = null
 
 // ── Header bootstrap ────────────────────────────────────────────
 export async function ensureHeaders(): Promise<void> {
@@ -101,11 +137,17 @@ export async function ensureHeaders(): Promise<void> {
     [SHEETS.ITEMS,    HEADERS.ITEMS,    'A1:H1'],
     [SHEETS.SETTINGS, HEADERS.SETTINGS, 'A1:B1'],
   ]
+  const existing = await getExistingTabs()
   for (const [sheet, hdr, range] of specs) {
     try {
-      const rows = await getRange(`${sheet}!${range}`)
-      if (!rows.length) await setRange(`${sheet}!${range}`, [hdr])
-    } catch { /* sheet tab may not exist yet */ }
+      if (!existing.includes(sheet)) {
+        await createTab(sheet)
+        await setRange(`${sheet}!${range}`, [hdr])
+      } else {
+        const rows = await getRange(`${sheet}!${range}`)
+        if (!rows.length) await setRange(`${sheet}!${range}`, [hdr])
+      }
+    } catch { /* ignore individual tab errors */ }
   }
 }
 
@@ -162,16 +204,30 @@ export async function deleteItem(id: string): Promise<void> {
 }
 
 // ── Settings CRUD ──────────────────────────────────────────────
-export async function loadSettings(): Promise<Record<string, string>> {
+async function fetchSettings(): Promise<Record<string, string>> {
   try {
     const rows = await getRange(`${SHEETS.SETTINGS}!A2:B`)
     const map: Record<string, string> = {}
     rows.forEach(r => { if (r[0]) map[r[0]] = r[1] ?? '' })
+    _settingsCache = map
     return map
   } catch { return {} }
 }
 
+export function loadSettings(): Promise<Record<string, string>> {
+  if (_settingsCache) return Promise.resolve(_settingsCache)
+  if (_settingsPending) return _settingsPending
+  _settingsPending = fetchSettings().finally(() => { _settingsPending = null })
+  return _settingsPending
+}
+
 export async function saveSetting(key: string, value: string): Promise<void> {
+  if (_settingsCache) _settingsCache[key] = value  // optimistic update
+  const existing = await getExistingTabs()
+  if (!existing.includes(SHEETS.SETTINGS)) {
+    await createTab(SHEETS.SETTINGS)
+    await setRange(`${SHEETS.SETTINGS}!A1:B1`, [HEADERS.SETTINGS])
+  }
   const rows = await getRange(`${SHEETS.SETTINGS}!A:A`)
   const idx = rows.findIndex(r => r[0] === key)
   if (idx < 1) {
