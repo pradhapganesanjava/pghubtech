@@ -357,15 +357,44 @@ async function noteToRow(note, deckName, fieldKeys, driveCtx) {
 }
 
 // ─── Batch append rows to a sheet ─────────────────────────────────────────────
+const CELL_LIMIT = 49000
+
+function truncateRow(row) {
+  return row.map(cell =>
+    typeof cell === 'string' && cell.length > CELL_LIMIT
+      ? cell.slice(0, CELL_LIMIT) + '\n[…truncated]'
+      : cell
+  )
+}
+
 async function appendRows(sheetsApi, sheetId, tabName, rows) {
   if (!rows.length) return
-  await sheetsApi.spreadsheets.values.append({
-    spreadsheetId:   sheetId,
-    range:           `${tabName}!A1`,
-    valueInputOption: 'RAW',
-    insertDataOption: 'INSERT_ROWS',
-    requestBody:     { values: rows },
+  // Pre-truncate to avoid per-row fallback (which burns quota)
+  const safe = rows.map(row => {
+    const t = truncateRow(row)
+    if (t !== row) console.warn(`\n  [truncated] note ${row[0]}`)
+    return t
   })
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await sheetsApi.spreadsheets.values.append({
+        spreadsheetId:   sheetId,
+        range:           `${tabName}!A1`,
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody:     { values: safe },
+      })
+      return
+    } catch (e) {
+      if (attempt < 3 && (e.message?.includes('Quota exceeded') || e.code === 429)) {
+        const wait = attempt * 65000
+        process.stdout.write(`\n  [quota] waiting ${wait / 1000}s…`)
+        await new Promise(r => setTimeout(r, wait))
+      } else {
+        throw e
+      }
+    }
+  }
 }
 
 // ─── Update existing rows: rewrite local image srcs → Drive URLs ──────────────
