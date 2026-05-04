@@ -184,15 +184,30 @@ async function uploadToDrive(driveApi, folderId, filename, base64Data) {
   return url
 }
 
+const DRIVE_URL_PREFIX = 'https://www.googleapis.com/drive/v3/files/'
+
 async function processHtml(html, driveCtx) {
   if (!html || !driveCtx) return html
   let out = html
   for (const [match, src] of [...html.matchAll(/src="([^"]+)"/g)]) {
-    if (src.startsWith('http') || src.startsWith('data:')) continue
+    if (src.startsWith('data:') || src.startsWith(DRIVE_URL_PREFIX)) continue
     try {
-      const b64 = await anki('retrieveMediaFile', { filename: src })
-      if (!b64) continue
-      const url = await uploadToDrive(driveCtx.driveApi, driveCtx.folderId, src, b64)
+      let b64
+      let filename
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        // External URL — download and mirror to Drive
+        const resp = await fetch(src)
+        if (!resp.ok) { console.warn(`\n  [!] External image ${resp.status}: "${src}"`); continue }
+        const buf = Buffer.from(await resp.arrayBuffer())
+        b64 = buf.toString('base64')
+        filename = src.split('/').pop().split('?')[0].replace(/[^a-zA-Z0-9._-]/g, '_') || `img_${Date.now()}.png`
+      } else {
+        // Local Anki media file
+        b64 = await anki('retrieveMediaFile', { filename: src })
+        if (!b64) continue
+        filename = src
+      }
+      const url = await uploadToDrive(driveCtx.driveApi, driveCtx.folderId, filename, b64)
       out = out.replace(match, `src="${url}"`)
       process.stdout.write('.')
     } catch (e) {
@@ -401,7 +416,8 @@ async function appendRows(sheetsApi, sheetId, tabName, rows) {
 function needsImageUpload(val) {
   if (!val || typeof val !== 'string') return false
   if (!/<img/i.test(val)) return false
-  return /src="(?!https?:|data:)[^"]+"/i.test(val)
+  // Needs reprocessing if any src is NOT already a Drive URL and NOT a data URL
+  return /src="(?!https:\/\/www\.googleapis\.com\/drive\/v3\/files\/|data:)[^"]+"/i.test(val)
 }
 
 async function updateExistingImages(sheetsApi, sheetId, templateId, fieldKeys, driveCtx) {
