@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gRPC Deep Dive — pb2, pb2_grpc, Service Discovery & Routing</title>
+  <style>
+    /* ═══════════════════════════════════════════
+       THEME TOKENS — one block per theme
+       ═══════════════════════════════════════════ */
+
+    html[data-theme="dark"] {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c8eff; --accent2: #a78bfa; --accent3: #34d399; --accent4: #f59e0b; --accent5: #f87171;
+      --text: #e2e8f0; --text-muted: #8892b0;
+      --code-bg: #161b2e;
+      --hero-bg: linear-gradient(135deg,#0f1117 0%,#1a1d27 40%,#0d1a3a 100%);
+      --hero-glow: rgba(108,142,255,0.13);
+      --code-kw:#c678dd; --code-fn:#61afef; --code-str:#98c379; --code-cm:#5c6370; --code-num:#d19a66; --code-cls:#e5c07b; --code-def:#abb2bf;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --panel-bg: #1a1d27; --panel-border: #2e3350;
+    }
+
+    html[data-theme="light"] {
+      --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --accent: #3b5bdb; --accent2: #7c3aed; --accent3: #059669; --accent4: #d97706; --accent5: #dc2626;
+      --text: #1e293b; --text-muted: #64748b;
+      --code-bg: #f1f5f9;
+      --hero-bg: linear-gradient(135deg,#eef2ff 0%,#f5f3ff 40%,#e0f2fe 100%);
+      --hero-glow: rgba(59,91,219,0.09);
+      --code-kw:#7c3aed; --code-fn:#1d4ed8; --code-str:#059669; --code-cm:#94a3b8; --code-num:#b45309; --code-cls:#b45309; --code-def:#374151;
+      --shadow: 0 4px 24px rgba(0,0,0,0.1);
+      --panel-bg: #ffffff; --panel-border: #e2e8f0;
+    }
+
+    html[data-theme="warm"] {
+      --bg: #fdf8f2; --surface: #fffaf4; --surface2: #fef3e2;
+      --border: #e8d5b7;
+      --accent: #c2410c; --accent2: #9a3412; --accent3: #166534; --accent4: #92400e; --accent5: #991b1b;
+      --text: #3d2c1e; --text-muted: #8b6f47;
+      --code-bg: #fef9f0;
+      --hero-bg: linear-gradient(135deg,#fdf6ec 0%,#fef3e2 40%,#fde8cc 100%);
+      --hero-glow: rgba(194,65,12,0.09);
+      --code-kw:#9a3412; --code-fn:#92400e; --code-str:#166534; --code-cm:#b09060; --code-num:#78350f; --code-cls:#b45309; --code-def:#6b4c2a;
+      --shadow: 0 4px 24px rgba(80,40,10,0.12);
+      --panel-bg: #fffaf4; --panel-border: #e8d5b7;
+    }
+
+    html[data-theme="cool"] {
+      --bg: #eef4fb; --surface: #ffffff; --surface2: #e1ecf7;
+      --border: #bfd3e8;
+      --accent: #0369a1; --accent2: #6d28d9; --accent3: #065f46; --accent4: #92400e; --accent5: #9f1239;
+      --text: #1e3a5f; --text-muted: #4a6fa5;
+      --code-bg: #e1ecf7;
+      --hero-bg: linear-gradient(135deg,#dbeafe 0%,#ede9fe 40%,#d1fae5 100%);
+      --hero-glow: rgba(3,105,161,0.11);
+      --code-kw:#6d28d9; --code-fn:#0369a1; --code-str:#065f46; --code-cm:#7090b8; --code-num:#92400e; --code-cls:#0369a1; --code-def:#1e3a5f;
+      --shadow: 0 4px 24px rgba(3,105,161,0.12);
+      --panel-bg: #ffffff; --panel-border: #bfd3e8;
+    }
+
+    html[data-theme="glow"] {
+      --bg: #07070f; --surface: #0c0c1e; --surface2: #111128;
+      --border: #1e1e50;
+      --accent: #00e5cc; --accent2: #ff2d78; --accent3: #00e5cc; --accent4: #f5a623; --accent5: #ff2d78;
+      --text: #e0e0ff; --text-muted: #6868b0;
+      --code-bg: #050510;
+      --hero-bg: linear-gradient(135deg,#07070f 0%,#0c0c20 40%,#0a0a20 100%);
+      --hero-glow: rgba(0,229,204,0.18);
+      --code-kw:#ff2d78; --code-fn:#00e5cc; --code-str:#00ff99; --code-cm:#3a3a80; --code-num:#f5a623; --code-cls:#ff9500; --code-def:#b0b0f0;
+      --shadow: 0 0 32px rgba(0,229,204,0.15), 0 4px 24px rgba(0,0,0,0.5);
+      --panel-bg: #0c0c1e; --panel-border: #1e1e50;
+    }
+
+    html[data-theme="gray"] {
+      --bg: #181818; --surface: #242424; --surface2: #2e2e2e;
+      --border: #3c3c3c;
+      --accent: #a0a0a0; --accent2: #c8c8c8; --accent3: #888888; --accent4: #909090; --accent5: #808080;
+      --text: #e8e8e8; --text-muted: #909090;
+      --code-bg: #1c1c1c;
+      --hero-bg: linear-gradient(135deg,#181818 0%,#202020 40%,#1c1c1c 100%);
+      --hero-glow: rgba(160,160,160,0.06);
+      --code-kw:#d0d0d0; --code-fn:#b8b8b8; --code-str:#989898; --code-cm:#505050; --code-num:#c0c0c0; --code-cls:#c8c8c8; --code-def:#a0a0a0;
+      --shadow: 0 4px 24px rgba(0,0,0,0.5);
+      --panel-bg: #242424; --panel-border: #3c3c3c;
+    }
+
+    html[data-theme="lightdark"] {
+      --bg: #22272e; --surface: #2d333b; --surface2: #373e47;
+      --border: #444c56;
+      --accent: #539bf5; --accent2: #b083f0; --accent3: #46954a; --accent4: #c69026; --accent5: #e5534b;
+      --text: #cdd9e5; --text-muted: #768390;
+      --code-bg: #1c2128;
+      --hero-bg: linear-gradient(135deg,#22272e 0%,#2d333b 40%,#1c2840 100%);
+      --hero-glow: rgba(83,155,245,0.11);
+      --code-kw:#b083f0; --code-fn:#539bf5; --code-str:#96d0ff; --code-cm:#545d68; --code-num:#f69d50; --code-cls:#f69d50; --code-def:#adbac7;
+      --shadow: 0 4px 24px rgba(0,0,0,0.35);
+      --panel-bg: #2d333b; --panel-border: #444c56;
+    }
+
+    /* ═══════════════════════════════════════════
+       BASE RESET + TRANSITIONS
+       ═══════════════════════════════════════════ */
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: var(--fs-base, 15px); }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    /* ── Read mode: narrower, serif, larger line-height ── */
+    body[data-mode="read"] {
+      font-family: Georgia, 'Times New Roman', serif;
+      line-height: 1.95;
+    }
+    body[data-mode="read"] .page {
+      max-width: 740px;
+      padding: 0 28px 80px;
+    }
+    body[data-mode="read"] section { padding-top: 72px; }
+    body[data-mode="read"] .card { padding: 28px; }
+    body[data-mode="read"] .card p, body[data-mode="read"] .stmt-text,
+    body[data-mode="read"] .faq-a, body[data-mode="read"] .deep-card li { font-size: 1rem; }
+    body[data-mode="read"] pre { font-size: 0.82rem; }
+    body[data-mode="read"] .card-grid { grid-template-columns: 1fr; }
+    body[data-mode="read"] .deep-grid { grid-template-columns: 1fr; }
+    body[data-mode="read"] .analogy-grid { grid-template-columns: 1fr; }
+    body[data-mode="read"] .discovery-grid { grid-template-columns: 1fr; }
+
+    /* ── Compact mode: denser, wider ── */
+    body[data-mode="compact"] .page { max-width: 1400px; padding: 0 20px 60px; }
+    body[data-mode="compact"] section { padding-top: 40px; }
+    body[data-mode="compact"] .card { padding: 14px 18px; margin-bottom: 10px; }
+    body[data-mode="compact"] .section-header { margin-bottom: 18px; }
+    body[data-mode="compact"] .card-grid { gap: 10px; }
+    body[data-mode="compact"] .deep-grid { gap: 10px; }
+    body[data-mode="compact"] .analogy-grid { gap: 10px; }
+    body[data-mode="compact"] .discovery-grid { gap: 10px; }
+    body[data-mode="compact"] .statements { gap: 6px; }
+    body[data-mode="compact"] .stmt { padding: 10px 14px; }
+    body[data-mode="compact"] pre { padding: 12px 16px; margin: 10px 0; }
+    body[data-mode="compact"] .deep-card { padding: 16px; }
+    body[data-mode="compact"] .disc-card { padding: 14px 18px; }
+    body[data-mode="compact"] .analogy-card { padding: 14px 18px; }
+    body[data-mode="compact"] .faq-q { padding: 12px 18px; }
+    body[data-mode="compact"] .flow { padding: 20px; }
+    body[data-mode="compact"] .sep { margin: 24px 0 0; }
+    body[data-mode="compact"] .section-header h2 { font-size: 1.25rem; }
+    body[data-mode="compact"] .card p, body[data-mode="compact"] td { font-size: 0.84rem; }
+
+    /* Glow theme: neon accents on key elements */
+    html[data-theme="glow"] .section-header h2 {
+      text-shadow: 0 0 20px var(--accent);
+    }
+    html[data-theme="glow"] .hero h1 {
+      filter: drop-shadow(0 0 16px rgba(0,229,204,0.5));
+    }
+    html[data-theme="glow"] .card,
+    html[data-theme="glow"] .deep-card,
+    html[data-theme="glow"] .analogy-card,
+    html[data-theme="glow"] .disc-card,
+    html[data-theme="glow"] .faq-item,
+    html[data-theme="glow"] .stmt {
+      box-shadow: 0 0 0 1px var(--border), 0 0 16px rgba(0,229,204,0.04);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--hero-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 40px 50px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.25s;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, var(--hero-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 640px;
+      margin: 0 auto 24px;
+    }
+    .hero-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Nav ── */
+    .toc {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .toc ul { display: flex; gap: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+    .toc ul::-webkit-scrollbar { display: none; }
+    .toc a {
+      display: block;
+      padding: 14px 16px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Layout ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; transition: max-width 0.25s, padding 0.25s; }
+    section { padding-top: 64px; }
+
+    .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
+    .section-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .icon-blue   { background: rgba(108,142,255,0.15); }
+    .icon-purple { background: rgba(167,139,250,0.15); }
+    .icon-green  { background: rgba(52,211,153,0.15); }
+    .icon-amber  { background: rgba(245,158,11,0.15); }
+    .icon-red    { background: rgba(248,113,113,0.15); }
+    .icon-teal   { background: rgba(45,212,191,0.15); }
+    .icon-pink   { background: rgba(244,114,182,0.15); }
+
+    .section-header h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); transition: color 0.25s; }
+    .section-header .subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+    .card p { color: var(--text-muted); font-size: 0.92rem; }
+
+    /* ── Code ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      margin: 16px 0;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; color: var(--code-def); }
+    .kw  { color: var(--code-kw); }
+    .fn  { color: var(--code-fn); }
+    .str { color: var(--code-str); }
+    .cm  { color: var(--code-cm); font-style: italic; }
+    .num { color: var(--code-num); }
+    .cls { color: var(--code-cls); }
+
+    /* ── FAQ ── */
+    .faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: background 0.25s, border-color 0.25s; }
+    .faq-q {
+      padding: 18px 24px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+    }
+    .faq-q:hover { background: var(--surface2); }
+    .faq-q .q-label { color: var(--accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; flex-shrink: 0; }
+    .faq-q .chevron { color: var(--text-muted); font-size: 0.8rem; transition: transform 0.2s; }
+    .faq-item.open .chevron { transform: rotate(180deg); }
+    .faq-a { display: none; padding: 16px 24px 20px; color: var(--text-muted); font-size: 0.92rem; border-top: 1px solid var(--border); }
+    .faq-item.open .faq-a { display: block; }
+
+    /* ── Analogy ── */
+    .analogy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .analogy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .analogy-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .ac-blue::before   { background: var(--accent); }
+    .ac-purple::before { background: var(--accent2); }
+    .ac-green::before  { background: var(--accent3); }
+    .ac-amber::before  { background: var(--accent4); }
+    .ac-red::before    { background: var(--accent5); }
+    .analogy-card .emoji { font-size: 2rem; margin-bottom: 10px; }
+    .analogy-card h4 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .analogy-card .tech { font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .analogy-card .real { font-size: 0.88rem; color: var(--text-muted); }
+
+    /* ── Flow diagram ── */
+    .flow { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; overflow-x: auto; transition: background 0.25s; }
+    .flow-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 24px; }
+    .flow-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; min-width: 700px; }
+    .flow-step { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; white-space: nowrap; }
+    .flow-step.client  { border-color: var(--accent);  color: var(--accent); }
+    .flow-step.network { border-color: var(--accent4); color: var(--accent4); }
+    .flow-step.server  { border-color: var(--accent3); color: var(--accent3); }
+    .flow-step.logic   { border-color: var(--accent2); color: var(--accent2); }
+    .flow-arrow { color: var(--text-muted); font-size: 1.1rem; flex-shrink: 0; }
+    .flow-label { font-size: 0.78rem; color: var(--text-muted); font-style: italic; flex: 1; min-width: 120px; }
+    .flow-divider { border: none; border-top: 1px dashed var(--border); margin: 20px 0; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { background: var(--surface2); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px; text-align: left; }
+    td { padding: 12px 16px; border-top: 1px solid var(--border); color: var(--text-muted); vertical-align: top; }
+    tr:hover td { background: var(--surface2); }
+    .hl { color: var(--text); font-weight: 500; }
+
+    /* ── Statements ── */
+    .statements { display: flex; flex-direction: column; gap: 10px; }
+    .stmt { display: flex; align-items: flex-start; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; transition: background 0.25s; }
+    .stmt-num { background: var(--surface2); color: var(--accent); font-weight: 700; font-size: 0.78rem; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .stmt-text { font-size: 0.92rem; color: var(--text-muted); }
+    .stmt-text strong { color: var(--text); }
+
+    /* ── Deep tech ── */
+    .deep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .deep-grid { grid-template-columns: 1fr; } }
+    .deep-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; transition: background 0.25s; }
+    .deep-card h4 { font-size: 0.88rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+    .deep-card ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .deep-card li { font-size: 0.88rem; color: var(--text-muted); padding-left: 18px; position: relative; }
+    .deep-card li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); font-size: 0.75rem; top: 2px; }
+
+    /* ── Discovery ── */
+    .discovery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+    .disc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; transition: background 0.25s; }
+    .disc-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; font-weight: 700; }
+    .disc-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+    .disc-card p { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* ── Separator ── */
+    .sep { border: none; border-top: 1px solid var(--border); margin: 40px 0 0; }
+
+    /* ── Callout ── */
+    .callout { border-left: 3px solid var(--accent); background: rgba(108,142,255,0.07); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0; font-size: 0.9rem; color: var(--text-muted); }
+    .callout strong { color: var(--accent); }
+    .callout-green { border-color: var(--accent3); background: rgba(52,211,153,0.07); }
+    .callout-green strong { color: var(--accent3); }
+    .callout-amber { border-color: var(--accent4); background: rgba(245,158,11,0.07); }
+    .callout-amber strong { color: var(--accent4); }
+
+    /* footer */
+    footer { border-top: 1px solid var(--border); padding: 24px 40px; text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+
+    /* ═══════════════════════════════════════════
+       CONTROL PANEL — floating bottom-right
+       ═══════════════════════════════════════════ */
+
+    #ctrl-toggle {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      z-index: 999;
+      transition: background 0.2s, transform 0.2s;
+    }
+    #ctrl-toggle:hover { transform: scale(1.08); }
+    #ctrl-toggle.open { background: var(--accent2); }
+
+    #ctrl-panel {
+      position: fixed;
+      bottom: 90px;
+      right: 28px;
+      width: 272px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 20px;
+      z-index: 998;
+      box-shadow: var(--shadow);
+      transform: translateY(16px) scale(0.97);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.22s ease, opacity 0.22s ease;
+    }
+    #ctrl-panel.open {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .cp-section { margin-bottom: 18px; }
+    .cp-section:last-child { margin-bottom: 0; }
+    .cp-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    /* Theme swatches */
+    .theme-swatches {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .swatch-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .swatch:hover .swatch-dot { transform: scale(1.12); }
+    .swatch.active .swatch-dot {
+      border-color: var(--text);
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
+    }
+    .swatch-name {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.1;
+    }
+    .swatch.active .swatch-name { color: var(--text); font-weight: 700; }
+
+    /* Swatch colors */
+    .sw-dark     { background: linear-gradient(135deg,#0f1117,#6c8eff); }
+    .sw-light    { background: linear-gradient(135deg,#f8fafc,#3b5bdb); }
+    .sw-warm     { background: linear-gradient(135deg,#fdf8f2,#c2410c); }
+    .sw-cool     { background: linear-gradient(135deg,#eef4fb,#0369a1); }
+    .sw-glow     { background: linear-gradient(135deg,#07070f,#00e5cc); }
+    .sw-gray     { background: linear-gradient(135deg,#181818,#a0a0a0); }
+    .sw-lightdark{ background: linear-gradient(135deg,#22272e,#539bf5); }
+
+    /* Mode pills */
+    .mode-pills { display: flex; gap: 6px; }
+    .mode-pill {
+      flex: 1;
+      padding: 7px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .mode-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .mode-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Font size stepper */
+    .font-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fs-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .fs-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .fs-display {
+      flex: 1;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 0;
+      font-weight: 600;
+    }
+
+    /* divider inside panel */
+    .cp-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  </style>
+</head>
+<body data-mode="web">
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="hero">
+  <h1>gRPC Internals Deep Dive</h1>
+  <p>pb2, pb2_grpc, service discovery, routing — everything from first principles to wire-level mechanics</p>
+  <div class="hero-tags">
+    <span class="tag">Protocol Buffers</span>
+    <span class="tag">pb2.py</span>
+    <span class="tag">pb2_grpc.py</span>
+    <span class="tag">Channel &amp; Stubs</span>
+    <span class="tag">HTTP/2</span>
+    <span class="tag">Service Discovery</span>
+    <span class="tag">Request Routing</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ NAV ═══════════════════ -->
+<nav class="toc">
+  <ul>
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#analogy">Analogy</a></li>
+    <li><a href="#statements">Key Statements</a></li>
+    <li><a href="#components">Components</a></li>
+    <li><a href="#flow">Arch Flow</a></li>
+    <li><a href="#discovery">Service Discovery</a></li>
+    <li><a href="#routing">Routing Internals</a></li>
+    <li><a href="#deeptech">Deep Tech</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+<!-- ═══════════════════ 1. SIMPLE INTRO ═══════════════════ -->
+<section id="intro">
+  <div class="section-header">
+    <div class="section-icon icon-blue">🚀</div>
+    <div>
+      <h2>Simple Introduction</h2>
+      <div class="subtitle">What is gRPC and why do these files exist?</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p>gRPC is a high-performance RPC framework from Google. It lets you call a function on a remote machine as if it were a local function call. Under the hood it uses <strong style="color:var(--accent)">Protocol Buffers</strong> for message encoding and <strong style="color:var(--accent)">HTTP/2</strong> for transport.</p>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="color:var(--accent)">The Problem It Solves</h3>
+      <p>Without gRPC, two services talking over a network need to agree on: message format (JSON? XML?), serialization, connection management, retries, error codes, and interface contracts. gRPC handles all of it — you only define your <em>service contract</em> in a <code>.proto</code> file and everything else is generated.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent2)">The Three Files You Always See</h3>
+      <p><strong>your_service.proto</strong> — human-written contract defining messages and service methods.<br><br>
+      <strong>your_service_pb2.py</strong> — auto-generated; handles message structure and serialization.<br><br>
+      <strong>your_service_pb2_grpc.py</strong> — auto-generated; handles server/client plumbing.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent3)">One Sentence Each</h3>
+      <p>
+        <strong>pb2</strong>: "This is what data looks like."<br><br>
+        <strong>pb2_grpc</strong>: "This is how data travels and who handles it."<br><br>
+        <strong>Your Servicer</strong>: "This is the actual work that gets done."
+      </p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Key insight:</strong> The <code>.proto</code> file is the single source of truth. Both the client (stub) and server (servicer base) are generated from the same file, which guarantees they are always in sync on method names and message shapes.
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 2. ANALOGY ═══════════════════ -->
+<section id="analogy">
+  <div class="section-header">
+    <div class="section-icon icon-amber">🍕</div>
+    <div>
+      <h2>The Pizza Restaurant Analogy</h2>
+      <div class="subtitle">Understand every component through a familiar real-world scenario</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:24px">
+    <p>Imagine a pizza restaurant that takes orders over the phone. Every piece of gRPC maps perfectly to this scenario.</p>
+  </div>
+
+  <div class="analogy-grid">
+    <div class="analogy-card ac-blue">
+      <div class="emoji">📋</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">pb2.py — Message Definitions</div>
+      <div class="real">The <strong>menu and order form</strong>. It defines what a pizza order looks like: size (small/medium/large), toppings (list), delivery address. Pure structure — no behavior, just shapes of data.</div>
+    </div>
+    <div class="analogy-card ac-purple">
+      <div class="emoji">📞</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">pb2_grpc Stub — Client Side</div>
+      <div class="real">The <strong>phone in your hand</strong>. It's pre-configured for the restaurant. When you dial and say "TakeOrder", the right buttons are pressed. You don't think about how the signal travels — you just speak.</div>
+    </div>
+    <div class="analogy-card ac-green">
+      <div class="emoji">📟</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">pb2_grpc Servicer Base — Server Side</div>
+      <div class="real">The <strong>blank answering machine</strong> at the restaurant. It knows to listen for calls. It knows calls can be for TakeOrder or CheckStatus. But it doesn't actually do anything — it's a template.</div>
+    </div>
+    <div class="analogy-card ac-amber">
+      <div class="emoji">👨‍🍳</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Your Implemented Servicer</div>
+      <div class="real">The <strong>actual cook</strong> who picks up the phone. You extended the blank answering machine and filled in real logic: store the order in the database, confirm delivery time, return an order ID.</div>
+    </div>
+    <div class="analogy-card ac-red">
+      <div class="emoji">🔧</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">gRPC Framework + HTTP/2</div>
+      <div class="real">The <strong>phone network and switchboard</strong>. Handles all wiring: packets, connections, retries, routing your call to the right extension. You never think about it — it just works.</div>
+    </div>
+    <div class="analogy-card ac-blue">
+      <div class="emoji">🗺️</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Channel (host:port)</div>
+      <div class="real">The <strong>phone number</strong> of the restaurant. The customer (consumer) must know it. gRPC doesn't hand out phone books — you either know the number, look it up in a directory (service registry), or ask DNS.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber" style="margin-top:24px">
+    <strong>Analogy flow:</strong> Customer (consumer) knows the restaurant number → dials (creates channel) → tells the operator "I want to place an order" (calls stub method) → operator routes to the cook (servicer dispatch) → cook makes pizza (your logic runs) → delivery arrives (response deserialized back to Python object).
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 3. KEY STATEMENTS ═══════════════════ -->
+<section id="statements">
+  <div class="section-header">
+    <div class="section-icon icon-green">💬</div>
+    <div>
+      <h2>Key Statements</h2>
+      <div class="subtitle">The most important truths about gRPC, one at a time</div>
+    </div>
+  </div>
+
+  <div class="statements">
+    <div class="stmt"><div class="stmt-num">1</div><div class="stmt-text"><strong>pb2.py only cares about data shapes.</strong> It defines message classes (like Python dataclasses) and the logic to serialize them into bytes and deserialize bytes back. It knows nothing about servers, clients, or network.</div></div>
+    <div class="stmt"><div class="stmt-num">2</div><div class="stmt-text"><strong>pb2_grpc.py is the glue layer.</strong> It contains the Stub (client helper), the Servicer base class (server interface), and the registration function that wires them together. You never edit this file — protoc regenerates it.</div></div>
+    <div class="stmt"><div class="stmt-num">3</div><div class="stmt-text"><strong>The stub is not pre-wired to any server.</strong> You explicitly create it with a channel that points to a specific host:port. Change the channel, and the same stub points to a different server.</div></div>
+    <div class="stmt"><div class="stmt-num">4</div><div class="stmt-text"><strong>The server does not auto-discover your implementation.</strong> You must call <code>add_YourServiceServicer_to_server(YourImpl(), server)</code>. This registers a method routing table: path → your function.</div></div>
+    <div class="stmt"><div class="stmt-num">5</div><div class="stmt-text"><strong>The HTTP/2 path baked into every request is the routing key.</strong> When the stub sends a call, the path is <code>/package.ServiceName/MethodName</code>. The server does a dictionary lookup on this path to find the right handler.</div></div>
+    <div class="stmt"><div class="stmt-num">6</div><div class="stmt-text"><strong>gRPC does not do service discovery.</strong> It is the consumer's responsibility to know the host:port. gRPC provides extension points (name resolvers, load balancers) but does not ship with a built-in service registry.</div></div>
+    <div class="stmt"><div class="stmt-num">7</div><div class="stmt-text"><strong>Serialization is Protocol Buffers (protobuf), not JSON.</strong> Protobuf encodes data as binary using field numbers (integers), not field names (strings). This makes it 3–10× smaller and faster than JSON.</div></div>
+    <div class="stmt"><div class="stmt-num">8</div><div class="stmt-text"><strong>HTTP/2 is the transport, not HTTP/1.1.</strong> HTTP/2 supports multiplexing (multiple streams over one TCP connection), header compression (HPACK), and bidirectional streaming — all critical for gRPC's streaming and performance story.</div></div>
+    <div class="stmt"><div class="stmt-num">9</div><div class="stmt-text"><strong>The .proto file is the source of truth for both sides.</strong> Since stub and servicer base are generated from the same .proto, they are always in sync. If you change the proto and regenerate, both client and server see the same interface.</div></div>
+    <div class="stmt"><div class="stmt-num">10</div><div class="stmt-text"><strong>Your servicer implementation is just a Python class.</strong> It extends the generated base class and overrides methods. Each method receives a deserialized request object and a <code>context</code> (for metadata, cancellation, deadlines).</div></div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 4. COMPONENTS ═══════════════════ -->
+<section id="components">
+  <div class="section-header">
+    <div class="section-icon icon-purple">🧩</div>
+    <div>
+      <h2>Core Components</h2>
+      <div class="subtitle">What each file and class actually contains</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent)">pb2.py — Generated Message File</h3>
+    <p style="margin-bottom:12px">Contains generated Python classes for each <code>message</code> in your .proto. Wraps the protobuf C extension for fast serialization.</p>
+    <pre><code><span class="cm"># What protoc generates in pizza_pb2.py</span>
+<span class="cm"># You never write this — only read it to know available fields</span>
+
+<span class="kw">class</span> <span class="cls">PizzaOrder</span>(<span class="cls">Message</span>):
+    size: <span class="cls">str</span>             <span class="cm"># field 1 → encoded as tag 0x0A</span>
+    toppings: <span class="cls">List</span>[<span class="cls">str</span>]  <span class="cm"># field 2 → encoded as tag 0x12</span>
+    address: <span class="cls">str</span>          <span class="cm"># field 3 → encoded as tag 0x1A</span>
+
+<span class="cm"># Usage: create a message</span>
+order = pizza_pb2.<span class="fn">PizzaOrder</span>(size=<span class="str">"large"</span>, toppings=[<span class="str">"cheese"</span>], address=<span class="str">"123 Main"</span>)
+<span class="cm"># Serialize to bytes</span>
+raw = order.<span class="fn">SerializeToString</span>()   <span class="cm"># → b'\x08\x03\x12\x06cheese...'</span>
+<span class="cm"># Deserialize from bytes</span>
+recovered = pizza_pb2.PizzaOrder.<span class="fn">FromString</span>(raw)
+</code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent2)">pb2_grpc.py — Generated gRPC Plumbing</h3>
+    <p style="margin-bottom:12px">Contains three things: the Stub class (client), the Servicer base class (server interface), and the registration function.</p>
+    <pre><code><span class="cm"># What protoc generates in pizza_pb2_grpc.py</span>
+
+<span class="cm"># 1. SERVER BASE CLASS — you extend this</span>
+<span class="kw">class</span> <span class="cls">PizzaServiceServicer</span>:
+    <span class="kw">def</span> <span class="fn">TakeOrder</span>(<span class="cls">self</span>, request, context):
+        context.<span class="fn">set_code</span>(grpc.StatusCode.UNIMPLEMENTED)
+        <span class="kw">raise</span> <span class="cls">NotImplementedError</span>
+
+    <span class="kw">def</span> <span class="fn">CheckStatus</span>(<span class="cls">self</span>, request, context):
+        context.<span class="fn">set_code</span>(grpc.StatusCode.UNIMPLEMENTED)
+        <span class="kw">raise</span> <span class="cls">NotImplementedError</span>
+
+<span class="cm"># 2. CLIENT STUB — you instantiate this with a channel</span>
+<span class="kw">class</span> <span class="cls">PizzaServiceStub</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="cls">self</span>, channel):
+        <span class="cls">self</span>.TakeOrder = channel.<span class="fn">unary_unary</span>(
+            <span class="str">'/pizza.PizzaService/TakeOrder'</span>,   <span class="cm"># ← HTTP/2 path</span>
+            request_serializer=pizza_pb2.PizzaOrder.<span class="fn">SerializeToString</span>,
+            response_deserializer=pizza_pb2.OrderConfirmation.<span class="fn">FromString</span>,
+        )
+
+<span class="cm"># 3. REGISTRATION FUNCTION — call this on server startup</span>
+<span class="kw">def</span> <span class="fn">add_PizzaServiceServicer_to_server</span>(servicer, server):
+    <span class="cm"># Builds a routing dict and registers it with the gRPC server core</span>
+    server.<span class="fn">add_generic_rpc_handlers</span>([
+        <span class="cls">GenericMethodHandler</span>(<span class="str">'/pizza.PizzaService/TakeOrder'</span> → servicer.TakeOrder),
+        <span class="cls">GenericMethodHandler</span>(<span class="str">'/pizza.PizzaService/CheckStatus'</span> → servicer.CheckStatus),
+    ])
+</code></pre>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--accent3)">Your Implementation (what you actually write)</h3>
+    <pre><code><span class="cm"># YOUR CODE — server side</span>
+<span class="kw">class</span> <span class="cls">MyPizzaService</span>(<span class="cls">PizzaServiceServicer</span>):   <span class="cm"># extend the generated base</span>
+    <span class="kw">def</span> <span class="fn">TakeOrder</span>(<span class="cls">self</span>, request, context):
+        <span class="cm"># request is a fully deserialized PizzaOrder Python object</span>
+        order_id = db.<span class="fn">save_order</span>(request.size, request.toppings, request.address)
+        <span class="kw">return</span> pizza_pb2.<span class="fn">OrderConfirmation</span>(order_id=order_id, eta_minutes=<span class="num">30</span>)
+
+<span class="cm"># Start server</span>
+server = grpc.<span class="fn">server</span>(futures.<span class="cls">ThreadPoolExecutor</span>(max_workers=<span class="num">10</span>))
+<span class="fn">add_PizzaServiceServicer_to_server</span>(<span class="cls">MyPizzaService</span>(), server)
+server.<span class="fn">add_insecure_port</span>(<span class="str">'0.0.0.0:50051'</span>)
+server.<span class="fn">start</span>()
+
+<span class="cm"># ─────────────────────────────────────────────────────</span>
+<span class="cm"># YOUR CODE — client side</span>
+channel = grpc.<span class="fn">insecure_channel</span>(<span class="str">'pizza-server:50051'</span>)  <span class="cm"># YOU provide the address</span>
+stub = <span class="cls">PizzaServiceStub</span>(channel)
+confirmation = stub.<span class="fn">TakeOrder</span>(pizza_pb2.<span class="fn">PizzaOrder</span>(
+    size=<span class="str">"large"</span>, toppings=[<span class="str">"cheese"</span>, <span class="str">"mushroom"</span>], address=<span class="str">"123 Main"</span>
+))
+<span class="fn">print</span>(confirmation.order_id)  <span class="cm"># back to Python land</span>
+</code></pre>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 5. ARCHITECTURAL FLOW ═══════════════════ -->
+<section id="flow">
+  <div class="section-header">
+    <div class="section-icon icon-teal">🔄</div>
+    <div>
+      <h2>Architectural Request Flow</h2>
+      <div class="subtitle">What happens step by step when stub.TakeOrder(request) is called</div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-title">Full request lifecycle — consumer to server and back</div>
+
+    <div class="flow-row">
+      <div class="flow-step client">① Consumer calls stub.TakeOrder(order)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Pure Python object passed to stub method</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step client">② Stub serializes via pb2</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">PizzaOrder → binary bytes using protobuf encoding</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">③ HTTP/2 POST request sent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Path: /pizza.PizzaService/TakeOrder | Body: serialized bytes</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">④ TCP stream over the channel</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Multiplexed HTTP/2 frames travel to host:port</div>
+    </div>
+
+    <hr class="flow-divider" />
+
+    <div class="flow-row">
+      <div class="flow-step server">⑤ gRPC server receives frames</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Reassembles HTTP/2 frames into a full request</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑥ Router looks up method path</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Dict lookup: "/PizzaService/TakeOrder" → MyPizzaService.TakeOrder</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑦ Deserializes bytes via pb2</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Binary bytes → PizzaOrder Python object</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">⑧ YOUR code runs</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">MyPizzaService.TakeOrder(request, context) executes</div>
+    </div>
+
+    <hr class="flow-divider" />
+
+    <div class="flow-row">
+      <div class="flow-step logic">⑨ Return value serialized</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">OrderConfirmation Python object → bytes via pb2</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">⑩ HTTP/2 response sent back</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Travels back over the same TCP connection</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step client">⑪ Stub deserializes response</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">bytes → OrderConfirmation Python object</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step client">⑫ Consumer gets Python object back</div>
+      <div class="flow-arrow">✓</div>
+      <div class="flow-label">confirmation.order_id is usable Python</div>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:20px">
+    <strong>Important:</strong> Steps ②③④ and ⑨⑩ are entirely handled by the generated pb2_grpc.py + gRPC framework. Steps ① and ⑫ are the consumer's code. Only step ⑧ is your server logic. Everything else is invisible plumbing.
+  </div>
+
+  <div style="margin-top:24px">
+    <div class="card">
+      <h3 style="margin-bottom:16px;color:var(--accent4)">Component Responsibility Matrix</h3>
+      <table>
+        <thead><tr><th>Step</th><th>Who Is Responsible</th><th>Which File</th><th>What Happens</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">Serialize request</td><td>pb2 (generated)</td><td>pizza_pb2.py</td><td>Python object → binary protobuf bytes</td></tr>
+          <tr><td class="hl">Send bytes over network</td><td>gRPC core + HTTP/2</td><td>grpc library</td><td>Frames sent over TCP stream</td></tr>
+          <tr><td class="hl">Route to correct method</td><td>gRPC server + pb2_grpc</td><td>pizza_pb2_grpc.py</td><td>Path string → Python method lookup</td></tr>
+          <tr><td class="hl">Deserialize request</td><td>pb2 (generated)</td><td>pizza_pb2.py</td><td>Binary bytes → Python object</td></tr>
+          <tr><td class="hl">Execute business logic</td><td>YOUR code</td><td>your_service.py</td><td>Runs your Servicer method</td></tr>
+          <tr><td class="hl">Serialize response</td><td>pb2 (generated)</td><td>pizza_pb2.py</td><td>Python response object → bytes</td></tr>
+          <tr><td class="hl">Deserialize response</td><td>pb2_grpc Stub</td><td>pizza_pb2_grpc.py</td><td>bytes → Python object for consumer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 6. SERVICE DISCOVERY ═══════════════════ -->
+<section id="discovery">
+  <div class="section-header">
+    <div class="section-icon icon-amber">🔍</div>
+    <div>
+      <h2>Service Discovery — Who Tells the Consumer?</h2>
+      <div class="subtitle">How clients learn about host:port — gRPC's responsibility boundary</div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>The core truth:</strong> gRPC does NOT do service discovery. The consumer must know the address. gRPC provides hooks to plug in a name resolver, but ships with no built-in registry. This is a deliberate design separation of concerns.
+  </div>
+
+  <div class="discovery-grid" style="margin-top:20px">
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent)">Pattern 1</div>
+      <h4>Hardcoded / Env Var</h4>
+      <p>Simplest approach. <code>PIZZA_SERVICE_ADDR=pizza-server:50051</code> in environment. Works fine for small setups, breaks at scale (can't update without redeploy).</p>
+      <pre style="margin-top:10px"><code><span class="kw">import</span> os
+addr = os.<span class="fn">getenv</span>(<span class="str">"PIZZA_ADDR"</span>, <span class="str">"localhost:50051"</span>)
+channel = grpc.<span class="fn">insecure_channel</span>(addr)
+</code></pre>
+    </div>
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent2)">Pattern 2</div>
+      <h4>DNS</h4>
+      <p>In Kubernetes, every Service gets a DNS name. Consumer uses the DNS name as the channel address. DNS returns one or more IPs (for load balancing). gRPC's built-in DNS resolver handles this natively.</p>
+      <pre style="margin-top:10px"><code>channel = grpc.<span class="fn">insecure_channel</span>(
+  <span class="str">"dns:///pizza-svc.prod.svc.cluster.local:50051"</span>
+)
+</code></pre>
+    </div>
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent3)">Pattern 3</div>
+      <h4>Service Registry</h4>
+      <p>Server registers itself on startup (Consul, etcd, ZooKeeper). Consumer queries registry at startup (or periodically) to get the current address. Allows zero-downtime migrations and autoscaling.</p>
+      <pre style="margin-top:10px"><code><span class="cm"># Server side on startup</span>
+consul.<span class="fn">register</span>(<span class="str">"pizza-service"</span>, host=my_ip, port=<span class="num">50051</span>)
+
+<span class="cm"># Consumer side</span>
+addr = consul.<span class="fn">lookup</span>(<span class="str">"pizza-service"</span>)
+channel = grpc.<span class="fn">insecure_channel</span>(addr)
+</code></pre>
+    </div>
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent4)">Pattern 4</div>
+      <h4>Load Balancer</h4>
+      <p>Consumer always hits a fixed LB address. LB routes to healthy backend instances. Consumer needs no awareness of actual server IPs. Used in production cloud deployments (AWS ALB, GCP Load Balancer, Envoy).</p>
+      <pre style="margin-top:10px"><code><span class="cm"># Consumer only knows the LB address</span>
+channel = grpc.<span class="fn">insecure_channel</span>(<span class="str">"grpc-lb.internal:50051"</span>)
+<span class="cm"># LB figures out which pizza server to use</span>
+</code></pre>
+    </div>
+  </div>
+
+  <div style="margin-top:20px">
+    <div class="card">
+      <h3 style="margin-bottom:16px;color:var(--accent)">Server-Side Registration — How Methods Get Wired</h3>
+      <p style="margin-bottom:14px;color:var(--text-muted)">Once the consumer connects to the right host:port, the server's internal routing table dispatches to the right method. This table is built during <code>add_..._to_server()</code>:</p>
+      <pre><code><span class="cm"># What add_PizzaServiceServicer_to_server() builds internally:</span>
+routing_table = {
+    <span class="str">"/pizza.PizzaService/TakeOrder"</span>:   {
+        <span class="str">"handler"</span>: my_servicer.TakeOrder,
+        <span class="str">"request_deserializer"</span>: pizza_pb2.PizzaOrder.<span class="fn">FromString</span>,
+        <span class="str">"response_serializer"</span>: pizza_pb2.OrderConfirmation.<span class="fn">SerializeToString</span>,
+    },
+    <span class="str">"/pizza.PizzaService/CheckStatus"</span>: {
+        <span class="str">"handler"</span>: my_servicer.CheckStatus,
+        <span class="cm"># ...</span>
+    },
+}
+<span class="cm"># On every incoming request: path → handler → deserialize → run → serialize → send</span>
+</code></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 7. ROUTING INTERNALS ═══════════════════ -->
+<section id="routing">
+  <div class="section-header">
+    <div class="section-icon icon-red">⚡</div>
+    <div>
+      <h2>Routing Internals</h2>
+      <div class="subtitle">How gRPC knows exactly which Python function to call</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="color:var(--accent)">The Path Convention</h3>
+      <p style="margin-bottom:12px">Every gRPC call is an HTTP/2 POST. The path is deterministic:</p>
+      <pre><code>/<span class="cm">package</span>.<span class="cm">ServiceName</span>/<span class="cm">MethodName</span>
+
+<span class="cm"># Example from pizza.proto:</span>
+<span class="cm"># package pizza;</span>
+<span class="cm"># service PizzaService { rpc TakeOrder(...) ... }</span>
+
+/pizza.PizzaService/TakeOrder
+/pizza.PizzaService/CheckStatus
+</code></pre>
+      <p style="margin-top:10px">This path is hardcoded into the generated Stub during code generation. You never write it manually.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent2)">Multiple Services on One Port</h3>
+      <p style="margin-bottom:12px">Since routing uses the full service name path, you can register multiple services on the same server:</p>
+      <pre><code>server = grpc.<span class="fn">server</span>(executor)
+
+<span class="cm"># Multiple servicers on one port — no conflict</span>
+<span class="fn">add_PizzaServiceServicer_to_server</span>(<span class="cls">PizzaImpl</span>(), server)
+<span class="fn">add_DrinkServiceServicer_to_server</span>(<span class="cls">DrinkImpl</span>(), server)
+<span class="fn">add_PaymentServiceServicer_to_server</span>(<span class="cls">PaymentImpl</span>(), server)
+
+server.<span class="fn">add_insecure_port</span>(<span class="str">'0.0.0.0:50051'</span>)
+<span class="cm"># Routes: /pizza.../  /drink.../  /payment.../</span>
+</code></pre>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="color:var(--accent3);margin-bottom:16px">The context Object — What It Gives You</h3>
+    <p style="margin-bottom:12px;color:var(--text-muted)">Your Servicer method receives <code>(self, request, context)</code>. The context carries the call's metadata and control knobs:</p>
+    <pre><code><span class="kw">def</span> <span class="fn">TakeOrder</span>(<span class="cls">self</span>, request, context):
+    <span class="cm"># Read caller metadata (like HTTP headers)</span>
+    auth_token = <span class="fn">dict</span>(context.<span class="fn">invocation_metadata</span>()).get(<span class="str">'authorization'</span>)
+
+    <span class="cm"># Check if caller cancelled</span>
+    <span class="kw">if</span> context.<span class="fn">is_active</span>() == <span class="kw">False</span>:
+        <span class="kw">return</span>
+
+    <span class="cm"># Set error code if something is wrong</span>
+    <span class="kw">if</span> <span class="kw">not</span> <span class="fn">is_authorized</span>(auth_token):
+        context.<span class="fn">set_code</span>(grpc.StatusCode.PERMISSION_DENIED)
+        context.<span class="fn">set_details</span>(<span class="str">"Invalid token"</span>)
+        <span class="kw">return</span> pizza_pb2.<span class="cls">OrderConfirmation</span>()  <span class="cm"># empty response</span>
+
+    <span class="cm"># Check deadline (timeout passed by caller)</span>
+    deadline = context.time_remaining()  <span class="cm"># seconds left before timeout</span>
+
+    <span class="kw">return</span> pizza_pb2.<span class="fn">OrderConfirmation</span>(order_id=<span class="str">"abc-123"</span>)
+</code></pre>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 8. DEEP TECH ═══════════════════ -->
+<section id="deeptech">
+  <div class="section-header">
+    <div class="section-icon icon-pink">🔬</div>
+    <div>
+      <h2>Deep Technical Aspects</h2>
+      <div class="subtitle">Wire format, HTTP/2 internals, protobuf encoding, and performance details</div>
+    </div>
+  </div>
+
+  <div class="deep-grid">
+    <div class="deep-card">
+      <h4>Protobuf Wire Format</h4>
+      <ul>
+        <li>Each field encoded as (field_number &lt;&lt; 3 | wire_type) + value</li>
+        <li>Strings: varint length prefix + UTF-8 bytes</li>
+        <li>Integers: variable-length encoding (1–10 bytes)</li>
+        <li>No field names on the wire — only field numbers (integers)</li>
+        <li>Unknown fields are preserved (forward compatibility)</li>
+        <li>Default values omitted entirely (zero = not present on wire)</li>
+        <li>~3–10× smaller than equivalent JSON</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>HTTP/2 Transport</h4>
+      <ul>
+        <li>Single TCP connection, multiple logical streams (multiplexing)</li>
+        <li>Each gRPC call is one HTTP/2 stream (stream ID)</li>
+        <li>Headers compressed with HPACK (saves repeated metadata)</li>
+        <li>DATA frames carry the protobuf payload</li>
+        <li>5-byte gRPC framing header: 1 compression flag + 4 byte length</li>
+        <li>TRAILERS carry gRPC status code and error details</li>
+        <li>Supports client/server/bidi streaming natively</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Channel Internals</h4>
+      <ul>
+        <li>Channel is a logical connection to a server (not one TCP socket)</li>
+        <li>Backed by a connection pool, lazily connected on first call</li>
+        <li>Handles reconnection with exponential backoff automatically</li>
+        <li>Supports subchannel list for client-side load balancing</li>
+        <li>Name resolver plugin converts addresses to IPs/subchannels</li>
+        <li>Channels are thread-safe and should be reused (expensive to create)</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Interceptors (Middleware)</h4>
+      <ul>
+        <li>gRPC supports interceptors on both client and server</li>
+        <li>Client interceptors: auth token injection, retry logic, tracing</li>
+        <li>Server interceptors: auth validation, logging, rate limiting</li>
+        <li>Executed in a chain before/after the actual method call</li>
+        <li>Access to full request, response, and context objects</li>
+        <li>Used to implement cross-cutting concerns without touching servicer code</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Streaming Modes</h4>
+      <ul>
+        <li><strong>Unary:</strong> one request, one response (most common)</li>
+        <li><strong>Server streaming:</strong> one request, stream of responses</li>
+        <li><strong>Client streaming:</strong> stream of requests, one response</li>
+        <li><strong>Bidirectional streaming:</strong> both sides stream simultaneously</li>
+        <li>All modes use the same HTTP/2 stream; framing differentiates them</li>
+        <li>Streaming methods get an iterator/generator interface in Python</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Error Model</h4>
+      <ul>
+        <li>gRPC has 16 canonical status codes (OK, NOT_FOUND, UNAVAILABLE, etc.)</li>
+        <li>Set via context.set_code() + context.set_details() in the servicer</li>
+        <li>Client receives grpc.RpcError exception with .code() and .details()</li>
+        <li>Rich errors possible via google.rpc.Status protobuf (error details)</li>
+        <li>Deadlines propagate automatically — server can check time_remaining()</li>
+        <li>Cancellation propagates: if client cancels, context.is_active() → False</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Thread Model (Python)</h4>
+      <ul>
+        <li>grpc.server() takes a ThreadPoolExecutor — each call gets a thread</li>
+        <li>Default max_workers=None → unbounded (dangerous under load)</li>
+        <li>For async: use grpc.aio.server() with asyncio event loop</li>
+        <li>Context.run_in_executor() for CPU-bound work from async servicer</li>
+        <li>The GIL limits true CPU parallelism; I/O-bound work is fine</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Reflection &amp; Health Checks</h4>
+      <ul>
+        <li>gRPC Server Reflection: register service definitions at runtime</li>
+        <li>Tools like grpcurl and Postman use reflection to discover methods</li>
+        <li>gRPC Health Checking Protocol: standard HealthCheck service</li>
+        <li>Load balancers use health checks to drain unhealthy instances</li>
+        <li>Both are additional servicers you register — not built-in</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:24px">
+    <h3 style="color:var(--accent4);margin-bottom:16px">gRPC vs REST — When to Use Which</h3>
+    <table>
+      <thead><tr><th>Dimension</th><th>gRPC</th><th>REST/JSON</th></tr></thead>
+      <tbody>
+        <tr><td class="hl">Payload size</td><td>Protobuf binary — 3-10× smaller</td><td>JSON text — human readable, larger</td></tr>
+        <tr><td class="hl">Schema enforcement</td><td>Compile-time via .proto contract</td><td>Runtime; often OpenAPI (optional)</td></tr>
+        <tr><td class="hl">Streaming</td><td>Built-in (server, client, bidi)</td><td>SSE or WebSockets (bolt-on)</td></tr>
+        <tr><td class="hl">Browser support</td><td>Needs grpc-web proxy</td><td>Native</td></tr>
+        <tr><td class="hl">Code generation</td><td>Required — protoc generates stubs</td><td>Optional — OpenAPI codegen</td></tr>
+        <tr><td class="hl">Best for</td><td>Internal service-to-service (microservices)</td><td>Public APIs, browser clients</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- ═══════════════════ 9. FAQ ═══════════════════ -->
+<section id="faq">
+  <div class="section-header">
+    <div class="section-icon icon-green">❓</div>
+    <div>
+      <h2>Frequently Asked Questions</h2>
+      <div class="subtitle">Common questions answered concisely — click to expand</div>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Do I ever edit pb2.py or pb2_grpc.py files manually?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Never. Both files are auto-generated by <code>protoc</code> (the Protocol Buffer compiler) and will be overwritten the next time you run code generation. Your changes would be lost. Treat them as build artifacts. You <em>read</em> pb2.py to know which message classes are available, but you never write to it.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How does gRPC know which server to call? Does it do service discovery?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">gRPC does NOT do service discovery. This is a deliberate design decision. The consumer must supply the host:port when creating the channel. In production, the address typically comes from: (1) environment variables, (2) DNS — especially in Kubernetes where services have DNS names, (3) a service registry like Consul or etcd, or (4) a load balancer address. gRPC provides a name resolver plugin interface if you want to integrate with a custom registry.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is the difference between the Stub and the Servicer?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">The <strong>Stub</strong> lives on the consumer/client side. It is a thin wrapper that sends method calls over the network. The <strong>Servicer base class</strong> lives on the server side and defines the interface your implementation must satisfy (all methods raise NotImplementedError by default). You never use the base Servicer directly — you subclass it and implement the methods. Both are generated from the same .proto file so they always agree on method signatures.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Can I run multiple gRPC services on the same port?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Yes. gRPC routing uses the full HTTP/2 path which includes the service name (e.g., <code>/pizza.PizzaService/TakeOrder</code> vs <code>/drinks.DrinkService/OrderDrink</code>). You simply call <code>add_..._to_server()</code> for each service on the same server instance before starting it. They share the port but are routed independently.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is the context parameter in the Servicer method?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">The <code>context</code> object represents the current RPC call. It gives you: (1) <strong>metadata</strong> — key-value pairs sent by the caller (like HTTP headers), (2) <strong>deadlines</strong> — how much time is left before the call times out, (3) <strong>cancellation</strong> — whether the caller has cancelled the call, and (4) <strong>status control</strong> — ability to set the gRPC status code and error details on the response. Think of it as the HTTP request/response context equivalent for gRPC.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Why is protobuf binary instead of JSON? Isn't JSON easier?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">JSON is text-based: field names are strings repeated in every message, numbers are human-readable characters, no schema enforcement. Protobuf is binary: field names are replaced with small integers (field numbers), values are compactly encoded, and the schema (defined in .proto) is separate from the data. The result is ~3–10× smaller payloads and faster parsing. The tradeoff: you can't just <code>curl</code> a gRPC endpoint and read the response — you need the schema to decode it.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What happens if the consumer sends the wrong message type?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">If you're using generated stubs (pb2_grpc), this can't happen at compile time — the stub's method signature only accepts the correct type. At runtime, if bytes arrive that don't match the expected proto schema, deserialization may produce a partially-filled message (unknown fields are dropped by default) or raise a decode error. This is why keeping your .proto file as the shared source of truth and regenerating both sides together is essential.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Can I use gRPC from a browser?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Not directly. Browsers don't support HTTP/2 trailers (which gRPC uses for status codes). You need a <strong>grpc-web</strong> proxy (like Envoy) in front of your gRPC server. grpc-web translates between the browser's HTTP/1.1 or fetch-based requests and the real gRPC protocol. Alternatively, some teams expose a REST/JSON transcoding layer on top of gRPC for external/browser consumers, while keeping gRPC for internal service-to-service calls.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How do I debug gRPC calls? I can't just use curl.</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Several options: (1) <strong>grpcurl</strong> — command-line curl for gRPC, works with server reflection enabled, (2) <strong>Postman</strong> — has built-in gRPC support with reflection, (3) <strong>Evans</strong> — interactive gRPC client, (4) enable gRPC verbose logging with <code>GRPC_VERBOSITY=DEBUG GRPC_TRACE=all</code> environment variables, (5) add a server interceptor that logs every request. Enable server reflection with <code>from grpc_reflection.v1alpha import reflection</code> to allow tools to auto-discover your service methods.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is the relationship between the .proto file and the generated files?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">The .proto file is the authoritative human-written contract. You run <code>python -m grpc_tools.protoc</code> (or the standalone <code>protoc</code> binary) to generate both pb2.py and pb2_grpc.py from it. The generated files should be committed to your repo (or generated as part of your build). If you change the .proto file, you must regenerate. In a polyglot system (Python server, Go client), each language generates its own pb2/pb2_grpc equivalents from the same .proto — this is how they stay in sync across languages.</div>
+  </div>
+</section>
+
+</div><!-- /page -->
+
+<footer>
+  gRPC Deep Dive — pb2, pb2_grpc, Channels, Routing, and Service Discovery &nbsp;·&nbsp; 2026-04-29
+</footer>
+
+<!-- ═══════════════════ CONTROL PANEL ═══════════════════ -->
+<button id="ctrl-toggle" title="Appearance settings">🎨</button>
+
+<div id="ctrl-panel">
+
+  <!-- Theme -->
+  <div class="cp-section">
+    <div class="cp-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="swatch" data-theme="dark">
+        <div class="swatch-dot sw-dark"></div>
+        <span class="swatch-name">Dark</span>
+      </div>
+      <div class="swatch" data-theme="light">
+        <div class="swatch-dot sw-light"></div>
+        <span class="swatch-name">Light</span>
+      </div>
+      <div class="swatch" data-theme="warm">
+        <div class="swatch-dot sw-warm"></div>
+        <span class="swatch-name">Warm</span>
+      </div>
+      <div class="swatch" data-theme="cool">
+        <div class="swatch-dot sw-cool"></div>
+        <span class="swatch-name">Cool</span>
+      </div>
+      <div class="swatch" data-theme="glow">
+        <div class="swatch-dot sw-glow"></div>
+        <span class="swatch-name">Glow</span>
+      </div>
+      <div class="swatch" data-theme="gray">
+        <div class="swatch-dot sw-gray"></div>
+        <span class="swatch-name">Gray</span>
+      </div>
+      <div class="swatch" data-theme="lightdark">
+        <div class="swatch-dot sw-lightdark"></div>
+        <span class="swatch-name">Dim</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="cp-divider" />
+
+  <!-- Layout mode -->
+  <div class="cp-section">
+    <div class="cp-label">Layout</div>
+    <div class="mode-pills">
+      <button class="mode-pill" data-mode="compact">Compact</button>
+      <button class="mode-pill active" data-mode="web">Web</button>
+      <button class="mode-pill" data-mode="read">Read</button>
+    </div>
+  </div>
+
+  <hr class="cp-divider" />
+
+  <!-- Font size -->
+  <div class="cp-section">
+    <div class="cp-label">Font Size</div>
+    <div class="font-row">
+      <button class="fs-btn" id="fs-down">A−</button>
+      <div class="fs-display" id="fs-display">15px</div>
+      <button class="fs-btn" id="fs-up">A+</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── state ── */
+  const LS = { theme: 'grpc-theme', mode: 'grpc-mode', fs: 'grpc-fs' };
+  let currentFs = parseInt(localStorage.getItem(LS.fs) || '15', 10);
+  const FS_MIN = 12, FS_MAX = 22, FS_STEP = 1;
+
+  /* ── init ── */
+  (function init() {
+    const t = localStorage.getItem(LS.theme) || 'dark';
+    const m = localStorage.getItem(LS.mode)  || 'web';
+    applyTheme(t, false);
+    applyMode(m, false);
+    applyFs(currentFs, false);
+  })();
+
+  /* ── toggle panel ── */
+  const toggle$   = document.getElementById('ctrl-toggle');
+  const panel$    = document.getElementById('ctrl-panel');
+
+  toggle$.addEventListener('click', () => {
+    const open = panel$.classList.toggle('open');
+    toggle$.classList.toggle('open', open);
+  });
+
+  document.addEventListener('click', e => {
+    if (!panel$.contains(e.target) && e.target !== toggle$) {
+      panel$.classList.remove('open');
+      toggle$.classList.remove('open');
+    }
+  });
+
+  /* ── theme ── */
+  function applyTheme(name, save = true) {
+    document.documentElement.setAttribute('data-theme', name);
+    document.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.theme === name);
+    });
+    if (save) localStorage.setItem(LS.theme, name);
+  }
+
+  document.querySelectorAll('.swatch').forEach(s => {
+    s.addEventListener('click', () => applyTheme(s.dataset.theme));
+  });
+
+  /* ── mode ── */
+  function applyMode(name, save = true) {
+    document.body.setAttribute('data-mode', name);
+    document.querySelectorAll('.mode-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.mode === name);
+    });
+    if (save) localStorage.setItem(LS.mode, name);
+  }
+
+  document.querySelectorAll('.mode-pill').forEach(p => {
+    p.addEventListener('click', () => applyMode(p.dataset.mode));
+  });
+
+  /* ── font size ── */
+  function applyFs(px, save = true) {
+    currentFs = Math.min(FS_MAX, Math.max(FS_MIN, px));
+    document.documentElement.style.fontSize = currentFs + 'px';
+    document.getElementById('fs-display').textContent = currentFs + 'px';
+    if (save) localStorage.setItem(LS.fs, currentFs);
+  }
+
+  document.getElementById('fs-up').addEventListener('click',   () => applyFs(currentFs + FS_STEP));
+  document.getElementById('fs-down').addEventListener('click', () => applyFs(currentFs - FS_STEP));
+
+  /* ── FAQ toggle ── */
+  function toggle(el) { el.parentElement.classList.toggle('open'); }
+  document.querySelector('.faq-item').classList.add('open');
+</script>
+</body>
+</html>

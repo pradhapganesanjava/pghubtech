@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kubernetes Deep Dive</title>
+  <style>
+    /* ── THEME TOKENS ── */
+    html[data-theme="dark"]      { --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3350;--accent:#6c8eff;--accent2:#a78bfa;--accent3:#34d399;--accent4:#f59e0b;--accent5:#f87171;--text:#e2e8f0;--text-muted:#8892b0;--code-bg:#161b2e;--hero-bg:linear-gradient(135deg,#0f1117 0%,#1a1d27 40%,#0d1a3a 100%);--hero-glow:rgba(108,142,255,0.13);--code-kw:#c678dd;--code-fn:#61afef;--code-str:#98c379;--code-cm:#5c6370;--code-num:#d19a66;--code-cls:#e5c07b;--code-def:#abb2bf;--shadow:0 4px 24px rgba(0,0,0,0.4);--panel-bg:#1a1d27;--panel-border:#2e3350; }
+    html[data-theme="light"]     { --bg:#f8fafc;--surface:#fff;--surface2:#f1f5f9;--border:#e2e8f0;--accent:#3b5bdb;--accent2:#7c3aed;--accent3:#059669;--accent4:#d97706;--accent5:#dc2626;--text:#1e293b;--text-muted:#64748b;--code-bg:#f1f5f9;--hero-bg:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 40%,#e0f2fe 100%);--hero-glow:rgba(59,91,219,0.09);--code-kw:#7c3aed;--code-fn:#1d4ed8;--code-str:#059669;--code-cm:#94a3b8;--code-num:#b45309;--code-cls:#b45309;--code-def:#374151;--shadow:0 4px 24px rgba(0,0,0,0.1);--panel-bg:#fff;--panel-border:#e2e8f0; }
+    html[data-theme="warm"]      { --bg:#fdf8f2;--surface:#fffaf4;--surface2:#fef3e2;--border:#e8d5b7;--accent:#c2410c;--accent2:#9a3412;--accent3:#166534;--accent4:#92400e;--accent5:#991b1b;--text:#3d2c1e;--text-muted:#8b6f47;--code-bg:#fef9f0;--hero-bg:linear-gradient(135deg,#fdf6ec 0%,#fef3e2 40%,#fde8cc 100%);--hero-glow:rgba(194,65,12,0.09);--code-kw:#9a3412;--code-fn:#92400e;--code-str:#166534;--code-cm:#b09060;--code-num:#78350f;--code-cls:#b45309;--code-def:#6b4c2a;--shadow:0 4px 24px rgba(80,40,10,0.12);--panel-bg:#fffaf4;--panel-border:#e8d5b7; }
+    html[data-theme="cool"]      { --bg:#eef4fb;--surface:#fff;--surface2:#e1ecf7;--border:#bfd3e8;--accent:#0369a1;--accent2:#6d28d9;--accent3:#065f46;--accent4:#92400e;--accent5:#9f1239;--text:#1e3a5f;--text-muted:#4a6fa5;--code-bg:#e1ecf7;--hero-bg:linear-gradient(135deg,#dbeafe 0%,#ede9fe 40%,#d1fae5 100%);--hero-glow:rgba(3,105,161,0.11);--code-kw:#6d28d9;--code-fn:#0369a1;--code-str:#065f46;--code-cm:#7090b8;--code-num:#92400e;--code-cls:#0369a1;--code-def:#1e3a5f;--shadow:0 4px 24px rgba(3,105,161,0.12);--panel-bg:#fff;--panel-border:#bfd3e8; }
+    html[data-theme="glow"]      { --bg:#07070f;--surface:#0c0c1e;--surface2:#111128;--border:#1e1e50;--accent:#00e5cc;--accent2:#ff2d78;--accent3:#00e5cc;--accent4:#f5a623;--accent5:#ff2d78;--text:#e0e0ff;--text-muted:#6868b0;--code-bg:#050510;--hero-bg:linear-gradient(135deg,#07070f 0%,#0c0c20 40%,#0a0a20 100%);--hero-glow:rgba(0,229,204,0.18);--code-kw:#ff2d78;--code-fn:#00e5cc;--code-str:#00ff99;--code-cm:#3a3a80;--code-num:#f5a623;--code-cls:#ff9500;--code-def:#b0b0f0;--shadow:0 0 32px rgba(0,229,204,0.15),0 4px 24px rgba(0,0,0,0.5);--panel-bg:#0c0c1e;--panel-border:#1e1e50; }
+    html[data-theme="gray"]      { --bg:#181818;--surface:#242424;--surface2:#2e2e2e;--border:#3c3c3c;--accent:#a0a0a0;--accent2:#c8c8c8;--accent3:#888;--accent4:#909090;--accent5:#808080;--text:#e8e8e8;--text-muted:#909090;--code-bg:#1c1c1c;--hero-bg:linear-gradient(135deg,#181818 0%,#202020 40%,#1c1c1c 100%);--hero-glow:rgba(160,160,160,0.06);--code-kw:#d0d0d0;--code-fn:#b8b8b8;--code-str:#989898;--code-cm:#505050;--code-num:#c0c0c0;--code-cls:#c8c8c8;--code-def:#a0a0a0;--shadow:0 4px 24px rgba(0,0,0,0.5);--panel-bg:#242424;--panel-border:#3c3c3c; }
+    html[data-theme="lightdark"] { --bg:#22272e;--surface:#2d333b;--surface2:#373e47;--border:#444c56;--accent:#539bf5;--accent2:#b083f0;--accent3:#46954a;--accent4:#c69026;--accent5:#e5534b;--text:#cdd9e5;--text-muted:#768390;--code-bg:#1c2128;--hero-bg:linear-gradient(135deg,#22272e 0%,#2d333b 40%,#1c2840 100%);--hero-glow:rgba(83,155,245,0.11);--code-kw:#b083f0;--code-fn:#539bf5;--code-str:#96d0ff;--code-cm:#545d68;--code-num:#f69d50;--code-cls:#f69d50;--code-def:#adbac7;--shadow:0 4px 24px rgba(0,0,0,0.35);--panel-bg:#2d333b;--panel-border:#444c56; }
+
+    /* ── RESET + BASE ── */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:var(--fs-base,15px)}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;transition:background .25s,color .25s}
+
+    /* ── MODES ── */
+    body[data-mode="read"]{font-family:Georgia,serif;line-height:1.95}
+    body[data-mode="read"] .page{max-width:740px;padding:0 28px 80px}
+    body[data-mode="read"] section{padding-top:72px}
+    body[data-mode="read"] .card{padding:28px}
+    body[data-mode="read"] .card p,.card-grid,.deep-grid,.analogy-grid,.discovery-grid{transition:all .25s}
+    body[data-mode="read"] .card-grid,body[data-mode="read"] .deep-grid,body[data-mode="read"] .analogy-grid,body[data-mode="read"] .discovery-grid{grid-template-columns:1fr}
+    body[data-mode="compact"] .page{max-width:1400px;padding:0 20px 60px}
+    body[data-mode="compact"] section{padding-top:40px}
+    body[data-mode="compact"] .card{padding:14px 18px;margin-bottom:10px}
+    body[data-mode="compact"] .section-header{margin-bottom:18px}
+    body[data-mode="compact"] .card-grid,body[data-mode="compact"] .deep-grid,body[data-mode="compact"] .analogy-grid,body[data-mode="compact"] .discovery-grid{gap:10px}
+    body[data-mode="compact"] .statements{gap:6px}
+    body[data-mode="compact"] .stmt{padding:10px 14px}
+    body[data-mode="compact"] pre{padding:12px 16px;margin:10px 0}
+    body[data-mode="compact"] .deep-card,.disc-card,.analogy-card{padding:14px 18px}
+
+    /* ── GLOW THEME ACCENTS ── */
+    html[data-theme="glow"] .section-header h2{text-shadow:0 0 20px var(--accent)}
+    html[data-theme="glow"] .hero h1{filter:drop-shadow(0 0 16px rgba(0,229,204,.5))}
+    html[data-theme="glow"] .card,html[data-theme="glow"] .deep-card,html[data-theme="glow"] .analogy-card,html[data-theme="glow"] .disc-card,html[data-theme="glow"] .faq-item,html[data-theme="glow"] .stmt{box-shadow:0 0 0 1px var(--border),0 0 16px rgba(0,229,204,.04)}
+
+    /* ── HERO ── */
+    .hero{background:var(--hero-bg);border-bottom:1px solid var(--border);padding:60px 40px 50px;text-align:center;position:relative;overflow:hidden;transition:background .25s}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,var(--hero-glow) 0%,transparent 70%);pointer-events:none}
+    .hero h1{font-size:2.6rem;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+    .hero p{color:var(--text-muted);font-size:1.1rem;max-width:640px;margin:0 auto 24px}
+    .hero-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    .tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-size:.78rem;color:var(--text-muted);letter-spacing:.04em}
+
+    /* ── NAV ── */
+    .toc{background:var(--surface);border-bottom:1px solid var(--border);padding:0 40px;position:sticky;top:0;z-index:100;transition:background .25s}
+    .toc ul{display:flex;list-style:none;overflow-x:auto;scrollbar-width:none}
+    .toc ul::-webkit-scrollbar{display:none}
+    .toc a{display:block;padding:14px 16px;color:var(--text-muted);text-decoration:none;font-size:.82rem;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
+    .toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+    /* ── LAYOUT ── */
+    .page{max-width:1100px;margin:0 auto;padding:0 40px 80px;transition:max-width .25s,padding .25s}
+    section{padding-top:64px}
+    .section-header{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+    .section-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+    .icon-blue{background:rgba(108,142,255,.15)}.icon-purple{background:rgba(167,139,250,.15)}.icon-green{background:rgba(52,211,153,.15)}.icon-amber{background:rgba(245,158,11,.15)}.icon-red{background:rgba(248,113,113,.15)}.icon-teal{background:rgba(45,212,191,.15)}.icon-pink{background:rgba(244,114,182,.15)}
+    .section-header h2{font-size:1.5rem;font-weight:700;color:var(--text);transition:color .25s}
+    .section-header .subtitle{font-size:.85rem;color:var(--text-muted);margin-top:2px}
+
+    /* ── CARDS ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;transition:background .25s,border-color .25s}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+    .card h3{font-size:1rem;font-weight:600;margin-bottom:10px;color:var(--text)}
+    .card p{color:var(--text-muted);font-size:.92rem}
+
+    /* ── CODE ── */
+    pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:20px;overflow-x:auto;font-size:.84rem;line-height:1.6;margin:16px 0;transition:background .25s,border-color .25s}
+    code{font-family:'JetBrains Mono','Fira Code',monospace;color:var(--code-def)}
+    .kw{color:var(--code-kw)}.fn{color:var(--code-fn)}.str{color:var(--code-str)}.cm{color:var(--code-cm);font-style:italic}.num{color:var(--code-num)}.cls{color:var(--code-cls)}
+
+    /* ── FAQ ── */
+    .faq-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;transition:background .25s}
+    .faq-q{padding:18px 24px;font-weight:600;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none}
+    .faq-q:hover{background:var(--surface2)}
+    .faq-q .q-label{color:var(--accent);font-size:.75rem;font-weight:700;letter-spacing:.1em;flex-shrink:0}
+    .faq-q .chevron{color:var(--text-muted);font-size:.8rem;transition:transform .2s}
+    .faq-item.open .chevron{transform:rotate(180deg)}
+    .faq-a{display:none;padding:16px 24px 20px;color:var(--text-muted);font-size:.92rem;border-top:1px solid var(--border)}
+    .faq-item.open .faq-a{display:block}
+
+    /* ── ANALOGY ── */
+    .analogy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .analogy-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;position:relative;overflow:hidden;transition:background .25s}
+    .analogy-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .ac-blue::before{background:var(--accent)}.ac-purple::before{background:var(--accent2)}.ac-green::before{background:var(--accent3)}.ac-amber::before{background:var(--accent4)}.ac-red::before{background:var(--accent5)}
+    .analogy-card .emoji{font-size:2rem;margin-bottom:10px}
+    .analogy-card h4{font-size:.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+    .analogy-card .tech{font-weight:700;color:var(--text);margin-bottom:8px}
+    .analogy-card .real{font-size:.88rem;color:var(--text-muted)}
+
+    /* ── FLOW ── */
+    .flow{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;overflow-x:auto;transition:background .25s}
+    .flow-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:24px}
+    .flow-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;min-width:700px}
+    .flow-step{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:.82rem;white-space:nowrap}
+    .flow-step.client{border-color:var(--accent);color:var(--accent)}.flow-step.network{border-color:var(--accent4);color:var(--accent4)}.flow-step.server{border-color:var(--accent3);color:var(--accent3)}.flow-step.logic{border-color:var(--accent2);color:var(--accent2)}
+    .flow-arrow{color:var(--text-muted);font-size:1.1rem;flex-shrink:0}
+    .flow-label{font-size:.78rem;color:var(--text-muted);font-style:italic;flex:1;min-width:120px}
+    .flow-divider{border:none;border-top:1px dashed var(--border);margin:20px 0}
+
+    /* ── TABLE ── */
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th{background:var(--surface2);color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;padding:10px 16px;text-align:left}
+    td{padding:12px 16px;border-top:1px solid var(--border);color:var(--text-muted);vertical-align:top}
+    tr:hover td{background:var(--surface2)}
+    .hl{color:var(--text);font-weight:500}
+
+    /* ── STATEMENTS ── */
+    .statements{display:flex;flex-direction:column;gap:10px}
+    .stmt{display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:background .25s}
+    .stmt-num{background:var(--surface2);color:var(--accent);font-weight:700;font-size:.78rem;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .stmt-text{font-size:.92rem;color:var(--text-muted)}
+    .stmt-text strong{color:var(--text)}
+
+    /* ── DEEP GRID ── */
+    .deep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:700px){.deep-grid{grid-template-columns:1fr}}
+    .deep-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;transition:background .25s}
+    .deep-card h4{font-size:.88rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+    .deep-card ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .deep-card li{font-size:.88rem;color:var(--text-muted);padding-left:18px;position:relative}
+    .deep-card li::before{content:'▸';position:absolute;left:0;color:var(--accent);font-size:.75rem;top:2px}
+
+    /* ── DISCOVERY ── */
+    .discovery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+    .disc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;transition:background .25s}
+    .disc-card .label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-weight:700}
+    .disc-card h4{font-size:1rem;font-weight:700;margin-bottom:10px;color:var(--text)}
+    .disc-card p{font-size:.85rem;color:var(--text-muted)}
+
+    /* ── MISC ── */
+    .sep{border:none;border-top:1px solid var(--border);margin:40px 0 0}
+    .callout{border-left:3px solid var(--accent);background:rgba(108,142,255,.07);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:.9rem;color:var(--text-muted)}
+    .callout strong{color:var(--accent)}
+    .callout-green{border-color:var(--accent3);background:rgba(52,211,153,.07)}
+    .callout-green strong{color:var(--accent3)}
+    .callout-amber{border-color:var(--accent4);background:rgba(245,158,11,.07)}
+    .callout-amber strong{color:var(--accent4)}
+    footer{border-top:1px solid var(--border);padding:24px 40px;text-align:center;color:var(--text-muted);font-size:.8rem}
+
+    /* ── CONTROL PANEL ── */
+    #ctrl-toggle{position:fixed;bottom:28px;right:28px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1.25rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.35);z-index:999;transition:background .2s,transform .2s}
+    #ctrl-toggle:hover{transform:scale(1.08)}
+    #ctrl-toggle.open{background:var(--accent2)}
+    #ctrl-panel{position:fixed;bottom:90px;right:28px;width:272px;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:16px;padding:20px;z-index:998;box-shadow:var(--shadow);transform:translateY(16px) scale(.97);opacity:0;pointer-events:none;transition:transform .22s ease,opacity .22s ease}
+    #ctrl-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:all}
+    .cp-section{margin-bottom:18px}.cp-section:last-child{margin-bottom:0}
+    .cp-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-weight:700;margin-bottom:10px}
+    .theme-swatches{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .swatch{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+    .swatch-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;transition:transform .15s,border-color .15s}
+    .swatch:hover .swatch-dot{transform:scale(1.12)}
+    .swatch.active .swatch-dot{border-color:var(--text);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+    .swatch-name{font-size:.6rem;color:var(--text-muted);text-align:center;line-height:1.1}
+    .swatch.active .swatch-name{color:var(--text);font-weight:700}
+    .sw-dark{background:linear-gradient(135deg,#0f1117,#6c8eff)}.sw-light{background:linear-gradient(135deg,#f8fafc,#3b5bdb)}.sw-warm{background:linear-gradient(135deg,#fdf8f2,#c2410c)}.sw-cool{background:linear-gradient(135deg,#eef4fb,#0369a1)}.sw-glow{background:linear-gradient(135deg,#07070f,#00e5cc)}.sw-gray{background:linear-gradient(135deg,#181818,#a0a0a0)}.sw-lightdark{background:linear-gradient(135deg,#22272e,#539bf5)}
+    .mode-pills{display:flex;gap:6px}
+    .mode-pill{flex:1;padding:7px 0;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted);font-size:.75rem;font-weight:600;cursor:pointer;text-align:center;transition:background .15s,color .15s,border-color .15s}
+    .mode-pill:hover{border-color:var(--accent);color:var(--accent)}
+    .mode-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .font-row{display:flex;align-items:center;gap:8px}
+    .fs-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;flex-shrink:0}
+    .fs-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+    .fs-display{flex:1;text-align:center;font-size:.8rem;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 0;font-weight:600}
+    .cp-divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+  </style>
+</head>
+<body data-mode="web">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Kubernetes Deep Dive</h1>
+  <p>Container orchestration across the full stack: from hardware and OS kernel to portable, dependency-isolated application environments at scale.</p>
+  <div class="hero-tags">
+    <span class="tag">Containers</span>
+    <span class="tag">Orchestration</span>
+    <span class="tag">Pods</span>
+    <span class="tag">Dependency Isolation</span>
+    <span class="tag">Portability</span>
+    <span class="tag">Control Plane</span>
+    <span class="tag">Declarative Config</span>
+    <span class="tag">Cloud Native</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="toc">
+  <ul>
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#analogy">Analogy</a></li>
+    <li><a href="#statements">Key Statements</a></li>
+    <li><a href="#components">Components</a></li>
+    <li><a href="#flow">Pod Lifecycle</a></li>
+    <li><a href="#internals">Control Plane</a></li>
+    <li><a href="#dispatch">Service Routing</a></li>
+    <li><a href="#deeptech">Deep Tech</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+<!-- SECTION 1: INTRO -->
+<section id="intro">
+  <div class="section-header">
+    <div class="section-icon icon-blue">🚀</div>
+    <div><h2>Simple Introduction</h2><div class="subtitle">What Kubernetes is, what problem it solves, and why it matters</div></div>
+  </div>
+  <div class="card">
+    <p>Kubernetes (K8s) is an open-source container orchestration platform originally built at Google and donated to the CNCF in 2014. It automates the deployment, scaling, self-healing, and networking of containerized applications across clusters of machines. The layer model it operates on is: <strong>Physical Hardware → Linux OS Kernel → Container Runtime (as kernel processes) → Containers (isolated application environments)</strong> — Kubernetes sits above all these layers and treats your entire fleet as a single programmable computer.</p>
+    <p style="margin-top:12px">The core insight is that containers package an application together with all its dependencies (shared libs, config, runtime) into a portable, reproducible unit. Kubernetes then decides <em>where</em> to run those containers, ensures they stay running, handles traffic routing, and manages secrets and configuration — all driven by declarative YAML that describes desired state rather than imperative scripts.</p>
+  </div>
+  <div class="card-grid">
+    <div class="card"><h3 style="color:var(--accent)">The Problem: "Works on My Machine"</h3><p>Applications depend on specific OS library versions, environment variables, and runtime configurations. Without isolation, two apps can conflict on the same host. Deploying to production becomes fragile — the dev environment, CI, staging, and prod all differ subtly. Manual scaling and failure recovery don't scale.</p></div>
+    <div class="card"><h3 style="color:var(--accent2)">The Solution: Containers + Orchestration</h3><p>Containers bundle every dependency into a portable image (like a snapshot of a full OS filesystem). Kubernetes then runs hundreds of those containers across many machines, replaces crashed ones automatically, load-balances traffic, rolls out updates with zero downtime, and manages secrets — all from a single YAML source of truth.</p></div>
+    <div class="card"><h3 style="color:var(--accent3)">Key One-Liners</h3><p><strong>Pod:</strong> one or more containers sharing a network namespace.<br><strong>Node:</strong> the machine (VM or bare-metal) that runs pods.<br><strong>Deployment:</strong> declares how many pod replicas to maintain.<br><strong>Service:</strong> stable DNS name + load balancer in front of pods.<br><strong>Namespace:</strong> virtual cluster — like Python's venv, but for K8s resources.</p></div>
+  </div>
+  <div class="callout"><strong>Key insight:</strong> Kubernetes is fundamentally a <em>desired-state reconciler</em> — you declare what you want (3 replicas of this image), and K8s continuously works to make reality match that declaration, even when nodes crash or traffic spikes.</div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 2: ANALOGY -->
+<section id="analogy">
+  <div class="section-header">
+    <div class="section-icon icon-amber">🏙️</div>
+    <div><h2>The City Infrastructure Analogy</h2><div class="subtitle">Kubernetes concepts mapped to how a city manages buildings, workers, and utilities</div></div>
+  </div>
+  <div class="card" style="margin-bottom:24px"><p>Imagine running a large city where the city council (Control Plane) decides where to build things, the city districts (Nodes) are the actual land, and containers are the individual buildings that house businesses. Services are the road addresses, and ConfigMaps are the city's zoning laws. The city self-heals: if a building collapses, the council immediately orders a replacement built on available land.</p></div>
+  <div class="analogy-grid">
+    <div class="analogy-card ac-blue">
+      <div class="emoji">🏛️</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Control Plane</div>
+      <div class="real">City Council — decides where to place buildings, monitors city health, and issues orders to districts. Never does manual labour itself.</div>
+    </div>
+    <div class="analogy-card ac-purple">
+      <div class="emoji">🏘️</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Node (Worker)</div>
+      <div class="real">City District — actual land and utilities (CPU, memory, disk). The council assigns buildings here; the district manager (kubelet) ensures they stay standing.</div>
+    </div>
+    <div class="analogy-card ac-green">
+      <div class="emoji">🏗️</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Pod</div>
+      <div class="real">A building plot — one or more businesses (containers) share the same street address (IP) and can pass messages through internal hallways (localhost). The plot is the smallest unit you can build on.</div>
+    </div>
+    <div class="analogy-card ac-amber">
+      <div class="emoji">📍</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Service</div>
+      <div class="real">A civic address that never changes — even when the building at that address is demolished and rebuilt (pod restart), the address stays. City mail (traffic) always finds it.</div>
+    </div>
+    <div class="analogy-card ac-red">
+      <div class="emoji">📦</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Container Image</div>
+      <div class="real">Prefabricated building blueprint — every dependency is baked in (walls, wiring, furniture). Clone it identically on any district. The "works on my machine" problem disappears.</div>
+    </div>
+    <div class="analogy-card ac-blue">
+      <div class="emoji">🗂️</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Namespace</div>
+      <div class="real">Borough — a logical boundary within the city where a tenant (team/app) has its own resource quotas, street addressing, and access rules. Like Python venv: isolated scope, same underlying OS.</div>
+    </div>
+  </div>
+  <div class="callout callout-amber" style="margin-top:24px">
+    <strong>Analogy flow:</strong> Developer commits code → CI builds a container image (prefab blueprint) → image pushed to registry → Deployment YAML tells the city council "I need 3 buildings of this blueprint" → council scheduler finds districts with spare land → kubelet on each district constructs the building → Service registers a permanent address → Ingress routes external traffic to that address → if a district loses power, council instantly rebuilds on a healthy district.
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 3: KEY STATEMENTS -->
+<section id="statements">
+  <div class="section-header">
+    <div class="section-icon icon-green">💬</div>
+    <div><h2>Key Statements</h2><div class="subtitle">The most important truths about Kubernetes, one at a time</div></div>
+  </div>
+  <div class="statements">
+    <div class="stmt"><div class="stmt-num">1</div><div class="stmt-text"><strong>Kubernetes is a desired-state reconciler, not a command executor.</strong> You declare what you want in YAML; K8s continuously compares actual state to desired state and corrects any drift — forever.</div></div>
+    <div class="stmt"><div class="stmt-num">2</div><div class="stmt-text"><strong>Containers solve dependency portability the same way Python venv solves package isolation.</strong> Both wrap a runtime environment so the same code runs identically on any host, eliminating host-level conflicts.</div></div>
+    <div class="stmt"><div class="stmt-num">3</div><div class="stmt-text"><strong>The stack layers are: Hardware → Linux Kernel → Container Runtime → Container.</strong> Kubernetes orchestrates at the container layer and above; it doesn't replace the OS — it treats the OS as a stable substrate.</div></div>
+    <div class="stmt"><div class="stmt-num">4</div><div class="stmt-text"><strong>A Pod, not a container, is the smallest deployable unit.</strong> Pods can group tightly-coupled containers (e.g., an app + a log-shipper sidecar) that share a network namespace and lifecycle.</div></div>
+    <div class="stmt"><div class="stmt-num">5</div><div class="stmt-text"><strong>etcd is the single source of truth for all cluster state.</strong> If etcd is healthy, the cluster can fully reconstruct itself from it. Every object — pods, services, secrets — lives there as JSON.</div></div>
+    <div class="stmt"><div class="stmt-num">6</div><div class="stmt-text"><strong>Services decouple traffic from pod IPs.</strong> Pod IPs are ephemeral (change on restart); Services provide a stable ClusterIP backed by iptables or IPVS rules that auto-update as pods come and go.</div></div>
+    <div class="stmt"><div class="stmt-num">7</div><div class="stmt-text"><strong>Kubernetes does not build or push images.</strong> It only pulls images from a registry (Docker Hub, ECR, GCR). Building images is the CI system's job, not K8s's.</div></div>
+    <div class="stmt"><div class="stmt-num">8</div><div class="stmt-text"><strong>Namespaces provide soft multi-tenancy.</strong> They scope resource names, RBAC rules, and NetworkPolicies — but they do not provide kernel-level isolation between tenants (for that, use separate clusters or gVisor/Kata containers).</div></div>
+    <div class="stmt"><div class="stmt-num">9</div><div class="stmt-text"><strong>Rolling updates and rollbacks are first-class operations.</strong> A Deployment tracks revision history; <code>kubectl rollout undo</code> reverts the live workload to any previous ReplicaSet in seconds.</div></div>
+    <div class="stmt"><div class="stmt-num">10</div><div class="stmt-text"><strong>Kubernetes is extensible by design.</strong> Custom Resource Definitions (CRDs) let you define new object types (Kafka topics, ML training jobs, database clusters) that K8s manages with the same reconciliation machinery.</div></div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 4: CORE COMPONENTS -->
+<section id="components">
+  <div class="section-header">
+    <div class="section-icon icon-purple">🧩</div>
+    <div><h2>Core Components</h2><div class="subtitle">Every major building block, what it does, and how to declare it</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent)">Pod — The Atomic Unit</h3>
+    <p style="margin-bottom:12px">One or more containers co-located on the same Node, sharing a network namespace (same IP, same <code>localhost</code>) and optional shared volumes. Pods are ephemeral — never update a running pod; instead, replace it via a controller.</p>
+    <pre><code><span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: <span class="cls">Pod</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: <span class="str">my-app</span>
+  <span class="kw">labels</span>:
+    <span class="kw">app</span>: <span class="str">my-app</span>
+<span class="kw">spec</span>:
+  <span class="kw">containers</span>:
+  - <span class="kw">name</span>: <span class="str">app</span>
+    <span class="kw">image</span>: <span class="str">my-app:1.2.3</span>       <span class="cm"># immutable image tag recommended</span>
+    <span class="kw">ports</span>:
+    - <span class="kw">containerPort</span>: <span class="num">8080</span>
+    <span class="kw">resources</span>:
+      <span class="kw">requests</span>: { <span class="kw">cpu</span>: <span class="str">"100m"</span>, <span class="kw">memory</span>: <span class="str">"128Mi"</span> }
+      <span class="kw">limits</span>:   { <span class="kw">cpu</span>: <span class="str">"500m"</span>, <span class="kw">memory</span>: <span class="str">"512Mi"</span> }</code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent2)">Deployment — Declarative Pod Management</h3>
+    <p style="margin-bottom:12px">Wraps a ReplicaSet to maintain N pod replicas at all times. Handles rolling updates, rollbacks, and scaling. This is how you run stateless workloads in production — never create bare pods.</p>
+    <pre><code><span class="kw">apiVersion</span>: apps/v1
+<span class="kw">kind</span>: <span class="cls">Deployment</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: <span class="str">my-app</span>
+<span class="kw">spec</span>:
+  <span class="kw">replicas</span>: <span class="num">3</span>
+  <span class="kw">selector</span>:
+    <span class="kw">matchLabels</span>: { <span class="kw">app</span>: <span class="str">my-app</span> }
+  <span class="kw">strategy</span>:
+    <span class="kw">type</span>: <span class="str">RollingUpdate</span>
+    <span class="kw">rollingUpdate</span>: { <span class="kw">maxSurge</span>: <span class="num">1</span>, <span class="kw">maxUnavailable</span>: <span class="num">0</span> }
+  <span class="kw">template</span>:
+    <span class="kw">metadata</span>:
+      <span class="kw">labels</span>: { <span class="kw">app</span>: <span class="str">my-app</span> }
+    <span class="kw">spec</span>:
+      <span class="kw">containers</span>:
+      - <span class="kw">name</span>: <span class="str">app</span>
+        <span class="kw">image</span>: <span class="str">my-app:1.2.3</span></code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent3)">Service — Stable Network Endpoint</h3>
+    <p style="margin-bottom:12px">Provides a permanent ClusterIP (and optionally a LoadBalancer IP) that routes to any pod matching its label selector. kube-proxy maintains iptables rules so traffic always reaches a live pod, even as pods restart.</p>
+    <pre><code><span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: <span class="cls">Service</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: <span class="str">my-app-svc</span>
+<span class="kw">spec</span>:
+  <span class="kw">selector</span>:
+    <span class="kw">app</span>: <span class="str">my-app</span>           <span class="cm"># routes to pods with this label</span>
+  <span class="kw">ports</span>:
+  - <span class="kw">port</span>: <span class="num">80</span>
+    <span class="kw">targetPort</span>: <span class="num">8080</span>
+  <span class="kw">type</span>: <span class="str">ClusterIP</span>         <span class="cm"># or LoadBalancer for external access</span></code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent4)">ConfigMap &amp; Secret — Dependency Configuration</h3>
+    <p style="margin-bottom:12px">ConfigMaps inject non-sensitive config (feature flags, URLs) as env vars or mounted files. Secrets are base64-encoded (optionally encrypted at rest) for credentials. Both decouple configuration from the image — the same image runs in dev, staging, and prod with different injected values.</p>
+    <pre><code><span class="cm"># ConfigMap: environment-specific settings</span>
+<span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: <span class="cls">ConfigMap</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: <span class="str">app-config</span> }
+<span class="kw">data</span>:
+  <span class="kw">DATABASE_URL</span>: <span class="str">"postgres://db:5432/mydb"</span>
+  <span class="kw">LOG_LEVEL</span>: <span class="str">"info"</span>
+
+<span class="cm"># Secret: sensitive values</span>
+<span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: <span class="cls">Secret</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: <span class="str">app-secret</span> }
+<span class="kw">stringData</span>:
+  <span class="kw">DB_PASSWORD</span>: <span class="str">"s3cr3t"</span>   <span class="cm"># K8s base64-encodes this</span></code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent5)">Namespace — Virtual Cluster (the "venv" of K8s)</h3>
+    <p style="margin-bottom:12px">Namespaces partition one physical cluster into isolated logical environments — exactly as Python's venv isolates packages per project. You can have <code>dev</code>, <code>staging</code>, and <code>prod</code> namespaces on one cluster, each with their own resource quotas and RBAC rules. Cross-namespace communication uses the DNS form <code>svc.namespace.svc.cluster.local</code>.</p>
+    <pre><code><span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: <span class="cls">Namespace</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: <span class="str">production</span>
+---
+<span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: <span class="cls">ResourceQuota</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: <span class="str">prod-quota</span>
+  <span class="kw">namespace</span>: <span class="str">production</span>
+<span class="kw">spec</span>:
+  <span class="kw">hard</span>:
+    <span class="kw">pods</span>: <span class="str">"50"</span>
+    <span class="kw">requests.cpu</span>: <span class="str">"10"</span>
+    <span class="kw">requests.memory</span>: <span class="str">"20Gi"</span></code></pre>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 5: POD LIFECYCLE FLOW -->
+<section id="flow">
+  <div class="section-header">
+    <div class="section-icon icon-teal">🔄</div>
+    <div><h2>Pod Lifecycle &amp; Scheduling Flow</h2><div class="subtitle">From kubectl apply to a running container — every step the cluster takes</div></div>
+  </div>
+  <div class="flow">
+    <div class="flow-title">Full pod creation lifecycle — from YAML to running container on a node</div>
+
+    <div class="flow-row">
+      <div class="flow-step client">① kubectl apply -f deployment.yaml</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">CLI serializes YAML to JSON, sends HTTP POST to API Server</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">② API Server validates &amp; persists</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Auth/RBAC check, schema validation, then writes Deployment object to etcd</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">③ Deployment Controller watches</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Controller Manager detects new Deployment; creates a ReplicaSet object in etcd</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">④ ReplicaSet Controller watches</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Detects ReplicaSet with 0 actual pods; creates Pod objects in etcd (status: Pending)</div>
+    </div>
+    <hr class="flow-divider" />
+    <div class="flow-row">
+      <div class="flow-step network">⑤ Scheduler watches for Pending Pods</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Scores each Node (CPU, memory, affinity, taints); binds pod to best Node via API Server</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑥ kubelet on target Node watches</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Sees pod bound to its Node; calls container runtime (containerd) to pull image</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">⑦ Container image pulled from registry</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">containerd pulls layers over HTTPS, verifies digests, unpacks to overlay filesystem</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑧ Container started via OCI runtime (runc)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Linux namespaces + cgroups created; container PID 1 launched; pod IP assigned by CNI plugin</div>
+    </div>
+    <hr class="flow-divider" />
+    <div class="flow-row">
+      <div class="flow-logic">⑨ Probes begin</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">startupProbe runs first; then livenessProbe (restart if fails) + readinessProbe (remove from Service endpoints if fails)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑩ Pod status → Running</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">kubelet updates pod status in etcd; kube-proxy adds pod IP to Service's iptables rules</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step client">⑪ Traffic reaches the pod</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Service ClusterIP → iptables DNAT → pod IP; DNS resolves service name via CoreDNS</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">⑫ Self-healing: pod crashes</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">kubelet reports crash → ReplicaSet Controller detects missing pod → creates replacement → loop restarts at ⑤</div>
+    </div>
+  </div>
+  <div class="callout callout-green" style="margin-top:20px">
+    <strong>Automatic steps:</strong> Steps ③ through ⑫ are all automatic after you run <code>kubectl apply</code>. The only manual step is writing the YAML and pushing the image. Everything else is K8s reconciliation loops running continuously.
+  </div>
+  <div style="margin-top:24px">
+    <div class="card">
+      <h3 style="margin-bottom:16px;color:var(--accent4)">Responsibility Matrix</h3>
+      <table>
+        <thead><tr><th>Step</th><th>Who Is Responsible</th><th>Component</th><th>What Happens</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">Validate &amp; Store</td><td>Control Plane</td><td>kube-apiserver + etcd</td><td>RBAC check, schema validation, write to etcd</td></tr>
+          <tr><td class="hl">Create ReplicaSet</td><td>Control Plane</td><td>Deployment Controller</td><td>Reconciles desired replicas into a ReplicaSet object</td></tr>
+          <tr><td class="hl">Schedule Pod</td><td>Control Plane</td><td>kube-scheduler</td><td>Scores nodes, binds pod to best fit node</td></tr>
+          <tr><td class="hl">Pull &amp; Run Image</td><td>Worker Node</td><td>kubelet + containerd</td><td>Pull image, set up namespaces/cgroups, start process</td></tr>
+          <tr><td class="hl">Assign Network IP</td><td>Worker Node</td><td>CNI Plugin (e.g. Calico)</td><td>Allocate pod IP, configure veth pair to node bridge</td></tr>
+          <tr><td class="hl">Route Traffic</td><td>Worker Node</td><td>kube-proxy + iptables</td><td>Add DNAT rules mapping Service IP to pod IPs</td></tr>
+          <tr><td class="hl">Health Checking</td><td>Worker Node</td><td>kubelet</td><td>Execute probes; restart or remove from endpoints on failure</td></tr>
+          <tr><td class="hl">DNS Resolution</td><td>Cluster System Pod</td><td>CoreDNS</td><td>Resolve <code>my-svc.namespace.svc.cluster.local</code> to ClusterIP</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 6: CONTROL PLANE INTERNALS -->
+<section id="internals">
+  <div class="section-header">
+    <div class="section-icon icon-amber">🔍</div>
+    <div><h2>Control Plane Internals</h2><div class="subtitle">How the brain of the cluster works — API server, etcd, controllers, scheduler</div></div>
+  </div>
+  <div class="callout callout-amber">
+    <strong>Core truth:</strong> Every K8s component — controllers, scheduler, kubelet — communicates exclusively through the API Server. No component writes directly to etcd except the API Server. This makes the architecture auditable and extensible.
+  </div>
+  <div class="discovery-grid" style="margin-top:20px">
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent)">Component 1</div>
+      <h4>kube-apiserver</h4>
+      <p>The only entry point to cluster state. Validates all requests, enforces RBAC, serves the REST API, and fan-outs watch events to all interested controllers.</p>
+      <pre style="margin-top:10px"><code><span class="cm"># All K8s operations are HTTP REST</span>
+<span class="fn">GET</span>  /api/v1/namespaces/default/pods
+<span class="fn">POST</span> /apis/apps/v1/deployments
+<span class="fn">WATCH</span> /api/v1/pods?watch=<span class="num">true</span>  <span class="cm"># long-poll SSE stream</span></code></pre>
+    </div>
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent2)">Component 2</div>
+      <h4>etcd</h4>
+      <p>Distributed key-value store using the Raft consensus algorithm. All cluster state — every pod, service, secret, RBAC rule — persists here as JSON under <code>/registry/</code> keys. Losing etcd without a backup loses the entire cluster.</p>
+      <pre style="margin-top:10px"><code><span class="cm"># Keys K8s writes into etcd</span>
+/registry/pods/default/my-app-abc12
+/registry/services/default/my-app-svc
+/registry/deployments/apps/default/my-app
+/registry/secrets/default/app-secret</code></pre>
+    </div>
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent3)">Component 3</div>
+      <h4>kube-scheduler</h4>
+      <p>Watches for unscheduled pods (no <code>nodeName</code> set). Runs Filter (hard constraints: node has enough CPU/memory, no taints) then Score (soft ranking: spreading, affinity). Writes the chosen node back to the pod spec.</p>
+      <pre style="margin-top:10px"><code><span class="cm"># Scheduler plugins chain</span>
+Filter → NodeResourcesFit
+Filter → NodeAffinity
+Filter → TaintToleration
+Score  → BalancedAllocation
+Score  → InterPodAffinity
+→ Bind: write pod.spec.nodeName</code></pre>
+    </div>
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent4)">Component 4</div>
+      <h4>Controller Manager</h4>
+      <p>A single binary running dozens of reconciliation loops: Deployment, ReplicaSet, Node, Job, CronJob controllers. Each watches a specific resource type and acts when actual state diverges from desired state — the engine of K8s's self-healing.</p>
+      <pre style="margin-top:10px"><code><span class="cm"># Controller reconcile loop (pseudocode)</span>
+<span class="kw">for</span> <span class="fn">ever</span>:
+  actual = <span class="fn">get_current_pods</span>(selector)
+  desired = deployment.spec.replicas
+  <span class="kw">if</span> len(actual) &lt; desired:
+    <span class="fn">create_pod</span>()
+  <span class="kw">elif</span> len(actual) &gt; desired:
+    <span class="fn">delete_pod</span>()</code></pre>
+    </div>
+  </div>
+  <div style="margin-top:20px">
+    <div class="card">
+      <h3 style="margin-bottom:16px;color:var(--accent)">kubelet — The Node Agent</h3>
+      <p style="margin-bottom:14px;color:var(--text-muted)">kubelet runs on every worker node. It watches the API Server for pods scheduled to its node, then drives the container runtime (via CRI — Container Runtime Interface) to start/stop containers. It also runs probes and reports pod status back to the API Server.</p>
+      <pre><code><span class="cm"># kubelet flow on a node</span>
+<span class="num">1</span>. Watch API Server: <span class="str">"any pods for me?"</span>
+<span class="num">2</span>. Pod assigned → pull image via containerd (CRI gRPC)
+<span class="num">3</span>. Set up Pod sandbox: network namespace (via CNI), cgroups (via CRI)
+<span class="num">4</span>. Start containers: <span class="fn">runc</span> creates Linux namespaces
+   - pid namespace (isolated process tree)
+   - net namespace (own IP stack, assigned by CNI)
+   - mnt namespace (overlay filesystem from image layers)
+   - uts namespace (hostname = pod name)
+<span class="num">5</span>. Run probes (HTTP GET / exec / TCP)
+<span class="num">6</span>. Report status every 10s to API Server via heartbeat</code></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 7: SERVICE ROUTING / DISPATCH -->
+<section id="dispatch">
+  <div class="section-header">
+    <div class="section-icon icon-red">⚡</div>
+    <div><h2>Service Routing &amp; Traffic Dispatch</h2><div class="subtitle">How a request finds the right pod — DNS, iptables, Ingress, and load balancing</div></div>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="color:var(--accent)">ClusterIP + kube-proxy (iptables mode)</h3>
+      <p style="margin-bottom:12px">kube-proxy watches Service and Endpoints objects. For each Service, it programs iptables DNAT rules on every node: traffic to ClusterIP:port is randomly load-balanced across healthy pod IPs. Pod IPs are removed from Endpoints when readinessProbe fails.</p>
+      <pre><code><span class="cm"># Effective iptables rule created by kube-proxy</span>
+-A KUBE-SERVICES -d <span class="num">10.96.0.50/32</span> -p tcp --dport <span class="num">80</span> \
+  -j KUBE-SVC-XYZ
+
+<span class="cm"># KUBE-SVC-XYZ randomly selects a pod</span>
+-A KUBE-SVC-XYZ -m statistic --mode random \
+  --probability <span class="num">0.33</span> -j KUBE-SEP-POD1
+-A KUBE-SVC-XYZ -m statistic --mode random \
+  --probability <span class="num">0.50</span> -j KUBE-SEP-POD2
+-A KUBE-SVC-XYZ -j KUBE-SEP-POD3</code></pre>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent2)">CoreDNS — Service Discovery</h3>
+      <p style="margin-bottom:12px">Every pod gets CoreDNS as its DNS server (configured via <code>/etc/resolv.conf</code> injected at pod startup). Service names resolve to their ClusterIP automatically. Pattern: <code>svc-name.namespace.svc.cluster.local</code></p>
+      <pre><code><span class="cm"># DNS names K8s registers automatically</span>
+my-app-svc                    <span class="cm"># same namespace</span>
+my-app-svc.production         <span class="cm"># cross-namespace short form</span>
+my-app-svc.production.svc.cluster.local  <span class="cm"># FQDN</span>
+
+<span class="cm"># Headless service (no ClusterIP) returns pod IPs directly</span>
+<span class="kw">spec</span>:
+  <span class="kw">clusterIP</span>: <span class="str">None</span>   <span class="cm"># DNS → individual pod IPs (for StatefulSets)</span></code></pre>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="color:var(--accent3);margin-bottom:16px">Ingress — External HTTP Routing</h3>
+    <p style="margin-bottom:12px;color:var(--text-muted)">Ingress is an L7 (HTTP/HTTPS) routing layer sitting in front of Services. An Ingress Controller (nginx, Traefik, AWS ALB Controller) watches Ingress objects and configures the actual reverse proxy. Routes are matched by host and path; TLS termination and certificate management (via cert-manager) happen here.</p>
+    <pre><code><span class="kw">apiVersion</span>: networking.k8s.io/v1
+<span class="kw">kind</span>: <span class="cls">Ingress</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: <span class="str">my-app-ingress</span>
+  <span class="kw">annotations</span>:
+    <span class="kw">cert-manager.io/cluster-issuer</span>: <span class="str">"letsencrypt-prod"</span>
+<span class="kw">spec</span>:
+  <span class="kw">tls</span>:
+  - <span class="kw">hosts</span>: [<span class="str">"app.example.com"</span>]
+    <span class="kw">secretName</span>: <span class="str">app-tls</span>
+  <span class="kw">rules</span>:
+  - <span class="kw">host</span>: <span class="str">app.example.com</span>
+    <span class="kw">http</span>:
+      <span class="kw">paths</span>:
+      - <span class="kw">path</span>: <span class="str">/api</span>
+        <span class="kw">pathType</span>: <span class="str">Prefix</span>
+        <span class="kw">backend</span>:
+          <span class="kw">service</span>: { <span class="kw">name</span>: <span class="str">api-svc</span>, <span class="kw">port</span>: { <span class="kw">number</span>: <span class="num">80</span> } }
+      - <span class="kw">path</span>: <span class="str">/</span>
+        <span class="kw">pathType</span>: <span class="str">Prefix</span>
+        <span class="kw">backend</span>:
+          <span class="kw">service</span>: { <span class="kw">name</span>: <span class="str">frontend-svc</span>, <span class="kw">port</span>: { <span class="kw">number</span>: <span class="num">80</span> } }</code></pre>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 8: DEEP TECH -->
+<section id="deeptech">
+  <div class="section-header">
+    <div class="section-icon icon-pink">🔬</div>
+    <div><h2>Deep Technical Aspects</h2><div class="subtitle">Linux primitives, network internals, storage, security, and performance details</div></div>
+  </div>
+  <div class="deep-grid">
+    <div class="deep-card">
+      <h4>Linux Namespaces (Isolation Layer)</h4>
+      <ul>
+        <li>Containers are Linux processes wrapped in 7 namespaces: pid, net, mnt, uts, ipc, user, cgroup</li>
+        <li><strong>pid namespace</strong>: container's PID 1 is actually PID ~50,000 on the host</li>
+        <li><strong>net namespace</strong>: each pod gets its own <code>eth0</code>, loopback, and routing table</li>
+        <li><strong>mnt namespace</strong>: overlay filesystem — read-only image layers + writable top layer</li>
+        <li><strong>user namespace</strong>: (optional) maps root inside container to unprivileged UID on host</li>
+        <li>Namespaces are NOT VMs — the kernel is shared; a kernel exploit can escape all containers</li>
+        <li>Kata Containers / gVisor add a hypervisor layer for stronger isolation</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>cgroups (Resource Limits)</h4>
+      <ul>
+        <li>Control Groups v2 (cgroups2) enforces CPU and memory limits declared in pod spec</li>
+        <li><code>requests</code> = guaranteed reservation used by the scheduler for bin-packing</li>
+        <li><code>limits</code> = enforcement ceiling — CPU throttled by CFS bandwidth; memory OOM-killed</li>
+        <li>BestEffort pods (no requests/limits) are killed first under node memory pressure</li>
+        <li>Burstable pods (requests &lt; limits) can burst but can be throttled</li>
+        <li>Guaranteed pods (requests == limits) get highest QoS class — rarely evicted</li>
+        <li>CPU throttling is the most common cause of latency spikes in K8s workloads</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Container Networking (CNI)</h4>
+      <ul>
+        <li>Every pod gets a unique routable IP from the pod CIDR range (e.g. 10.244.0.0/16)</li>
+        <li>CNI plugin creates a <code>veth pair</code>: one end in pod's net namespace, one in host bridge</li>
+        <li>Pod-to-pod on same node: traffic through host bridge (kernel; sub-microsecond)</li>
+        <li>Pod-to-pod cross-node: overlay (VXLAN/WireGuard) or BGP routing depending on CNI</li>
+        <li>Popular CNIs: Calico (BGP, NetworkPolicy), Flannel (VXLAN), Cilium (eBPF, L7 policy)</li>
+        <li>NetworkPolicy objects are K8s-native firewall rules implemented by the CNI, not kube-proxy</li>
+        <li>Cilium replaces iptables entirely with eBPF programs for better observability and performance</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Persistent Storage (CSI)</h4>
+      <ul>
+        <li>Container filesystems are ephemeral — destroyed when pod dies unless using Volumes</li>
+        <li>PersistentVolume (PV) is a cluster-scoped storage resource; PVC is a pod's claim on one</li>
+        <li>StorageClass enables dynamic provisioning: PVC creates EBS/GCS disk automatically</li>
+        <li>Access modes: ReadWriteOnce (one node), ReadOnlyMany (many nodes), ReadWriteMany (NFS/EFS)</li>
+        <li>StatefulSets provide stable pod identity + per-pod PVCs (for databases, Kafka brokers)</li>
+        <li>CSI (Container Storage Interface) drivers are out-of-tree plugins — no kernel recompilation</li>
+        <li>emptyDir volumes are ephemeral, RAM-backed options for sharing data between sidecar containers in a pod</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>RBAC &amp; Security Model</h4>
+      <ul>
+        <li>Every request to the API Server passes through: Authentication → Authorization (RBAC) → Admission Control</li>
+        <li>ServiceAccount = identity for pods; token automounted into <code>/var/run/secrets/kubernetes.io/serviceaccount</code></li>
+        <li>Role (namespace-scoped) and ClusterRole (global) define permissions as verb+resource tuples</li>
+        <li>RoleBinding attaches a Role to a subject (User, Group, ServiceAccount)</li>
+        <li>Admission webhooks (MutatingAdmissionWebhook, ValidatingAdmissionWebhook) run after auth for policy enforcement (e.g. OPA Gatekeeper)</li>
+        <li>PodSecurity Standards (baseline, restricted) restrict privileged containers at the namespace level</li>
+        <li>Secrets are only base64-encoded by default — enable etcd encryption at rest for real security</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Horizontal Pod Autoscaler (HPA)</h4>
+      <ul>
+        <li>HPA queries the Metrics Server (or custom metrics API) every 15s to compute desired replicas</li>
+        <li>Formula: <code>desiredReplicas = ceil(currentReplicas × (currentMetric / targetMetric))</code></li>
+        <li>Supports CPU, memory, and custom metrics (e.g., Kafka consumer lag, RPS)</li>
+        <li>Scale-up is fast (immediate); scale-down has a 5-minute stabilization window by default to prevent flapping</li>
+        <li>Vertical Pod Autoscaler (VPA) adjusts CPU/memory requests in-place</li>
+        <li>KEDA (Kubernetes Event-Driven Autoscaling) extends HPA to 60+ event sources</li>
+        <li>Cluster Autoscaler adds/removes Nodes when pods can't be scheduled or nodes are underutilized</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>Image Layers &amp; Dependency Portability</h4>
+      <ul>
+        <li>A container image is a stack of read-only layers (tarballs) identified by SHA256 digest</li>
+        <li>Layers are cached on each node — only changed layers are pulled on image updates</li>
+        <li>Base layer (e.g. <code>python:3.12-slim</code>) contains OS libs; app layer adds your code</li>
+        <li>Each layer is immutable — identical to the byte on any host anywhere in the world</li>
+        <li>This is the core portability guarantee: same SHA256 → identical behavior on dev, CI, prod</li>
+        <li>OCI (Open Container Initiative) spec defines image format — not Docker-proprietary</li>
+        <li>Multi-stage builds reduce final image size by discarding build tools from the runtime layer</li>
+      </ul>
+    </div>
+    <div class="deep-card">
+      <h4>etcd &amp; Consistency Guarantees</h4>
+      <ul>
+        <li>etcd uses Raft consensus: a write is committed only after a majority quorum acknowledges it</li>
+        <li>3-node etcd cluster tolerates 1 node failure; 5-node tolerates 2</li>
+        <li>API Server uses optimistic concurrency: every object has a <code>resourceVersion</code>; updates rejected if stale</li>
+        <li>Watch streams are served from etcd's event history — controllers reconnect and replay missed events</li>
+        <li>etcd write latency is the bottleneck for large clusters; Kubernetes recommends &lt;10ms P99 disk latency for etcd nodes</li>
+        <li>etcd snapshots are the backup mechanism — restore by loading snapshot into a new etcd cluster</li>
+        <li>Large secrets should use external secret stores (Vault, AWS Secrets Manager) via CSI driver to avoid bloating etcd</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:24px">
+    <h3 style="color:var(--accent4);margin-bottom:16px">Kubernetes vs Docker Compose — When to Use Which</h3>
+    <table>
+      <thead><tr><th>Dimension</th><th>Kubernetes</th><th>Docker Compose</th></tr></thead>
+      <tbody>
+        <tr><td class="hl">Scale</td><td>Thousands of containers across many nodes</td><td>Single machine, a few services</td></tr>
+        <tr><td class="hl">Self-healing</td><td>Automatic pod replacement, node failover</td><td>Manual restart; no node failover</td></tr>
+        <tr><td class="hl">Networking</td><td>Full CNI overlay, NetworkPolicy, Ingress, Service mesh</td><td>Shared bridge network, simple port mapping</td></tr>
+        <tr><td class="hl">Rolling updates</td><td>Zero-downtime rolling deploys, canary, blue-green</td><td>Stop-start or manual coordination</td></tr>
+        <tr><td class="hl">Complexity</td><td>High — significant operational overhead</td><td>Low — one YAML file, one command</td></tr>
+        <tr><td class="hl">Best for</td><td>Production multi-service platforms, microservices</td><td>Local dev, CI test environments, hobby projects</td></tr>
+        <tr><td class="hl">Dependency mgmt</td><td>Image layers + ConfigMaps + init containers for ordering</td><td><code>depends_on</code> + volume mounts</td></tr>
+        <tr><td class="hl">Secrets</td><td>Kubernetes Secrets (or Vault CSI) + RBAC</td><td><code>.env</code> file or inline env vars</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 9: FAQ -->
+<section id="faq">
+  <div class="section-header">
+    <div class="section-icon icon-green">❓</div>
+    <div><h2>Frequently Asked Questions</h2><div class="subtitle">Common questions — click to expand</div></div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is the difference between a container and a Pod?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">A container is the running process isolated by Linux namespaces and cgroups. A Pod is Kubernetes' smallest deployable unit — it wraps one or more containers that share the same network namespace (same IP address, same <code>localhost</code>) and optionally share volumes. You almost never create bare containers in K8s; you create Pods (usually via a Deployment). Sidecar patterns (log-shipper, service mesh proxy) run as additional containers within the same Pod alongside the main app container.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How does Kubernetes solve dependency management and portability?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Container images bundle every dependency — OS libraries, runtime, config files, binaries — into an immutable, content-addressed (SHA256) artifact. This is the same principle as Python's <code>venv</code>, which isolates Python packages per project, but applied to the entire OS-level dependency tree. Because the image is identical on every host (same digest = same bytes), you eliminate "works on my machine" problems entirely. Kubernetes then manages where and how many copies of that image run, but the dependency isolation is provided by the container image itself.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is the layer model from hardware to application in Kubernetes?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a"><strong>Hardware</strong> (physical CPUs, RAM, disks, NICs) → <strong>OS / Linux Kernel</strong> (manages hardware, provides system calls; Kubernetes uses cgroups and namespaces from this layer) → <strong>Container Runtime</strong> (containerd/CRI-O runs as OS processes; pulls images, creates namespaces/cgroups via <code>runc</code>) → <strong>Container</strong> (an isolated process with its own filesystem view, network stack, and process tree — like a lightweight VM without a separate kernel) → <strong>Kubernetes</strong> (orchestrates placement, health, scaling, and networking of containers across many nodes). Kubernetes does NOT replace any of the layers below it — it depends on the OS and container runtime being healthy.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is etcd and why is it so important?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">etcd is a distributed, strongly-consistent key-value store that holds <em>all</em> Kubernetes cluster state: every pod, service, secret, configmap, RBAC rule, and custom resource. It uses the Raft consensus algorithm so writes require a majority quorum — this guarantees no data loss on node failures up to <code>(n-1)/2</code> failures. The API Server is the <em>only</em> component that reads and writes etcd directly. If you lose etcd without a backup, you lose the entire cluster's configuration (though running workloads on nodes may continue temporarily). Back up etcd snapshots regularly.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How do Kubernetes Namespaces compare to Python virtual environments?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">The analogy is very direct. Python <code>venv</code> creates an isolated Python environment where installed packages don't conflict with other projects — same Python interpreter (OS), different package namespace. Kubernetes Namespaces create isolated logical environments within one cluster — same hardware and OS kernel, different K8s resource scopes. Both provide: (1) name isolation (same pod name can exist in <code>dev</code> and <code>prod</code> namespaces, just as same package name can exist in two venvs), (2) access boundaries (RBAC per namespace ≈ venv activation), (3) resource quotas (limit what each tenant can consume). Neither provides kernel-level isolation — for that you need separate clusters (K8s) or separate machines (venv gives OS-level isolation).</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How does Kubernetes handle zero-downtime deployments?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Deployments use a rolling update strategy by default. With <code>maxSurge: 1, maxUnavailable: 0</code>, Kubernetes creates one new pod with the new image, waits for it to pass its <code>readinessProbe</code>, then terminates one old pod — and repeats until all pods are updated. Traffic is never routed to a pod that hasn't passed its readiness check (kube-proxy keeps it out of Service endpoints). If the new version's pods never become ready (crash loop or failing health check), the rollout stalls and old pods keep serving traffic. You can then run <code>kubectl rollout undo</code> to revert to the previous ReplicaSet in seconds.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Does Kubernetes build Docker images?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">No. Kubernetes only pulls and runs pre-built images from a container registry. Building images (running <code>docker build</code> or <code>buildkit</code>) is entirely the CI/CD system's responsibility (GitHub Actions, Jenkins, Tekton, etc.). The workflow is: developer pushes code → CI builds the image, tags it (usually with the git commit SHA), and pushes to a registry (Docker Hub, ECR, GCR, Harbor) → you update your Deployment's <code>image:</code> field with the new tag → Kubernetes pulls the new image onto nodes and performs a rolling update.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What happens when a Node (machine) goes down?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">The Node Controller in the Control Plane monitors node heartbeats (kubelet sends one every 10s). After ~40s of missed heartbeats, the node is marked <code>NotReady</code>. After a configurable tolerance period (default 5 minutes), the Node Controller evicts all pods from that node — it marks them for deletion. The ReplicaSet Controllers detect the missing pods and immediately schedule replacements on healthy nodes. If you had 3 replicas and 1 node dies holding 1 replica, K8s creates a new pod on a healthy node automatically. This is the core self-healing guarantee.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What is the difference between liveness and readiness probes?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a"><strong>Readiness probe</strong>: "Is this pod ready to serve traffic?" — if it fails, the pod is removed from Service Endpoints (no traffic sent) but the pod is NOT restarted. Use this for startup delays or temporary unavailability (cache warming, leader election). <strong>Liveness probe</strong>: "Is this pod still alive?" — if it fails consecutively (default: 3 times), kubelet kills and restarts the container. Use this to break out of deadlocks or hung processes that won't crash on their own. <strong>Startup probe</strong>: disables liveness/readiness until the app passes startup (used for slow-starting apps to avoid premature restarts). Rule of thumb: both probes should check real app health, not just "is the process running."</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; When should I use StatefulSet instead of Deployment?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Use a <strong>StatefulSet</strong> when your pods need: (1) stable, persistent hostnames (pod-0, pod-1 — never random IDs), (2) stable per-pod PersistentVolumes that survive pod restarts, or (3) ordered, graceful scaling and rolling updates (pod-0 must be ready before pod-1 starts). Classic use cases: databases (PostgreSQL, MySQL, Cassandra), message queues (Kafka brokers, RabbitMQ), ZooKeeper clusters. Use a <strong>Deployment</strong> for stateless workloads (APIs, web servers, workers) where any pod is interchangeable — this enables faster scaling and simpler operations. If you're tempted to run a database in K8s for the first time, start with a managed database (RDS, Cloud SQL) and only move to StatefulSet if you have specific requirements.</div>
+  </div>
+
+</section>
+
+</div><!-- /page -->
+
+<footer>
+  Kubernetes Deep Dive &nbsp;·&nbsp; April 2026
+</footer>
+
+<!-- CONTROL PANEL -->
+<button id="ctrl-toggle" title="Appearance settings">🎨</button>
+<div id="ctrl-panel">
+  <div class="cp-section">
+    <div class="cp-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="swatch" data-theme="dark"><div class="swatch-dot sw-dark"></div><span class="swatch-name">Dark</span></div>
+      <div class="swatch" data-theme="light"><div class="swatch-dot sw-light"></div><span class="swatch-name">Light</span></div>
+      <div class="swatch" data-theme="warm"><div class="swatch-dot sw-warm"></div><span class="swatch-name">Warm</span></div>
+      <div class="swatch" data-theme="cool"><div class="swatch-dot sw-cool"></div><span class="swatch-name">Cool</span></div>
+      <div class="swatch" data-theme="glow"><div class="swatch-dot sw-glow"></div><span class="swatch-name">Glow</span></div>
+      <div class="swatch" data-theme="gray"><div class="swatch-dot sw-gray"></div><span class="swatch-name">Gray</span></div>
+      <div class="swatch" data-theme="lightdark"><div class="swatch-dot sw-lightdark"></div><span class="swatch-name">Dim</span></div>
+    </div>
+  </div>
+  <hr class="cp-divider" />
+  <div class="cp-section">
+    <div class="cp-label">Layout</div>
+    <div class="mode-pills">
+      <button class="mode-pill" data-mode="compact">Compact</button>
+      <button class="mode-pill active" data-mode="web">Web</button>
+      <button class="mode-pill" data-mode="read">Read</button>
+    </div>
+  </div>
+  <hr class="cp-divider" />
+  <div class="cp-section">
+    <div class="cp-label">Font Size</div>
+    <div class="font-row">
+      <button class="fs-btn" id="fs-down">A−</button>
+      <div class="fs-display" id="fs-display">15px</div>
+      <button class="fs-btn" id="fs-up">A+</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const LS={theme:'kubernetes-theme',mode:'kubernetes-mode',fs:'kubernetes-fs'};
+  let fs=parseInt(localStorage.getItem(LS.fs)||'15',10);
+  (function init(){applyTheme(localStorage.getItem(LS.theme)||'dark',false);applyMode(localStorage.getItem(LS.mode)||'web',false);applyFs(fs,false)})();
+  const tog=document.getElementById('ctrl-toggle'),pan=document.getElementById('ctrl-panel');
+  tog.addEventListener('click',()=>{const o=pan.classList.toggle('open');tog.classList.toggle('open',o)});
+  document.addEventListener('click',e=>{if(!pan.contains(e.target)&&e.target!==tog){pan.classList.remove('open');tog.classList.remove('open')}});
+  function applyTheme(n,s=true){document.documentElement.setAttribute('data-theme',n);document.querySelectorAll('.swatch').forEach(x=>x.classList.toggle('active',x.dataset.theme===n));if(s)localStorage.setItem(LS.theme,n)}
+  document.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click',()=>applyTheme(s.dataset.theme)));
+  function applyMode(n,s=true){document.body.setAttribute('data-mode',n);document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===n));if(s)localStorage.setItem(LS.mode,n)}
+  document.querySelectorAll('.mode-pill').forEach(p=>p.addEventListener('click',()=>applyMode(p.dataset.mode)));
+  function applyFs(px,s=true){fs=Math.min(22,Math.max(12,px));document.documentElement.style.fontSize=fs+'px';document.getElementById('fs-display').textContent=fs+'px';if(s)localStorage.setItem(LS.fs,fs)}
+  document.getElementById('fs-up').addEventListener('click',()=>applyFs(fs+1));
+  document.getElementById('fs-down').addEventListener('click',()=>applyFs(fs-1));
+  function toggle(el){el.parentElement.classList.toggle('open')}
+  document.querySelector('.faq-item').classList.add('open');
+</script>
+</body>
+</html>
