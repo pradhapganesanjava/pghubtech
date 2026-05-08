@@ -27,7 +27,7 @@ async function resolveDriveImages(
   return out
 }
 
-type HtmlEditMode = 'edit' | 'preview' | 'split'
+type HtmlEditMode = 'rich' | 'html' | 'preview'
 
 interface Props {
   note:         AnkiNote
@@ -54,6 +54,118 @@ function looksLikeHtml(v: string): boolean {
   return /<[a-z]/i.test(v)
 }
 
+// ── Rich text editor (contentEditable + toolbar) ─────────────────────────────
+
+interface ToolbarBtn {
+  cmd:    string
+  arg?:   string
+  label:  string
+  title:  string
+  style?: React.CSSProperties
+}
+
+const TOOLBAR: (ToolbarBtn | 'sep')[] = [
+  { cmd: 'bold',          label: 'B',   title: 'Bold (Ctrl+B)',          style: { fontWeight: 700 } },
+  { cmd: 'italic',        label: 'I',   title: 'Italic (Ctrl+I)',        style: { fontStyle: 'italic' } },
+  { cmd: 'underline',     label: 'U',   title: 'Underline (Ctrl+U)',     style: { textDecoration: 'underline' } },
+  { cmd: 'strikeThrough', label: 'S',   title: 'Strikethrough',          style: { textDecoration: 'line-through' } },
+  'sep',
+  { cmd: 'formatBlock', arg: 'h2',         label: 'H',  title: 'Heading',           style: { fontWeight: 700 } },
+  { cmd: 'formatBlock', arg: 'blockquote', label: '❝',  title: 'Blockquote' },
+  { cmd: 'formatBlock', arg: 'pre',        label: '</>', title: 'Code block',       style: { fontFamily: 'monospace', fontSize: 11 } },
+  'sep',
+  { cmd: 'insertUnorderedList', label: '• ≡', title: 'Bullet list' },
+  { cmd: 'insertOrderedList',   label: '1. ≡', title: 'Numbered list' },
+  { cmd: 'outdent',             label: '⇤',   title: 'Outdent' },
+  { cmd: 'indent',              label: '⇥',   title: 'Indent' },
+  'sep',
+  { cmd: 'removeFormat',        label: '✕',   title: 'Clear formatting' },
+]
+
+function RichEditor({
+  value,
+  onChange,
+}: {
+  value:    string
+  onChange: (v: string) => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const lastEmittedRef = useRef<string>(value)
+
+  // Set initial HTML and re-sync when external value changes (e.g. switching cards).
+  // Skip the sync when the change came from our own onInput, otherwise the cursor jumps.
+  useEffect(() => {
+    if (!ref.current) return
+    if (lastEmittedRef.current !== value) {
+      ref.current.innerHTML = value
+      lastEmittedRef.current = value
+    }
+  }, [value])
+
+  useEffect(() => {
+    if (ref.current) ref.current.innerHTML = value
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function emit() {
+    if (!ref.current) return
+    const html = ref.current.innerHTML
+    lastEmittedRef.current = html
+    onChange(html)
+  }
+
+  function exec(cmd: string, arg?: string) {
+    ref.current?.focus()
+    document.execCommand(cmd, false, arg)
+    emit()
+  }
+
+  function handleLink() {
+    const url = prompt('Link URL:', 'https://')
+    if (!url) return
+    exec('createLink', url)
+  }
+
+  return (
+    <div className="rf-rich-wrap">
+      <div className="rf-rich-toolbar" onMouseDown={e => e.preventDefault()}>
+        {TOOLBAR.map((b, i) =>
+          b === 'sep' ? (
+            <span key={`s${i}`} className="rf-tb-divider" />
+          ) : (
+            <button
+              key={b.cmd + (b.arg ?? '')}
+              type="button"
+              className="rf-tb-btn"
+              title={b.title}
+              style={b.style}
+              onClick={() => exec(b.cmd, b.arg)}
+            >
+              {b.label}
+            </button>
+          )
+        )}
+        <button
+          type="button"
+          className="rf-tb-btn"
+          title="Insert link"
+          onClick={handleLink}
+        >
+          🔗
+        </button>
+      </div>
+      <div
+        ref={ref}
+        className="rf-rich-editor"
+        contentEditable
+        suppressContentEditableWarning
+        onInput={emit}
+        onBlur={emit}
+      />
+    </div>
+  )
+}
+
 // ── Edit mode: single field editor ───────────────────────────────────────────
 
 function EditField({
@@ -65,7 +177,7 @@ function EditField({
   value:    string
   onChange: (v: string) => void
 }) {
-  const [mode, setMode] = useState<HtmlEditMode>('preview')
+  const [mode, setMode] = useState<HtmlEditMode>('rich')
   const isHtml = field.type === 'html' || looksLikeHtml(value)
 
   if (field.type === 'select') {
@@ -87,19 +199,22 @@ function EditField({
         <div className="rf-html-hd">
           <label className="rf-label">{field.label}</label>
           <div className="rf-html-tabs">
-            {(['edit', 'preview', 'split'] as HtmlEditMode[]).map(m => (
+            {(['rich', 'html', 'preview'] as HtmlEditMode[]).map(m => (
               <button
                 key={m}
                 className={`rf-html-tab${mode === m ? ' active' : ''}`}
                 onClick={() => setMode(m)}
               >
-                {m === 'edit' ? 'HTML' : m === 'preview' ? 'Preview' : 'Split'}
+                {m === 'rich' ? 'Rich' : m === 'html' ? 'HTML' : 'Preview'}
               </button>
             ))}
           </div>
         </div>
-        <div className={`rf-html-body${mode === 'split' ? ' split' : ''}`}>
-          {(mode === 'edit' || mode === 'split') && (
+        <div className="rf-html-body">
+          {mode === 'rich' && (
+            <RichEditor value={value} onChange={onChange} />
+          )}
+          {mode === 'html' && (
             <textarea
               className="rf-textarea rf-html-editor"
               value={value}
@@ -108,7 +223,7 @@ function EditField({
               onChange={e => onChange(e.target.value)}
             />
           )}
-          {(mode === 'preview' || mode === 'split') && (
+          {mode === 'preview' && (
             <div
               className="rf-html-preview section-html-body"
               dangerouslySetInnerHTML={{ __html: value || '<em style="opacity:.45">No content</em>' }}
