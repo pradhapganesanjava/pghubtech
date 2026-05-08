@@ -3,14 +3,20 @@ import type { AnkiNote, AnkiTemplate, AnkiField } from '../adapters/ankiRepo'
 import { saveAnkiNote } from '../adapters/ankiRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
 import { GAuth } from '../lib/gauth'
+import {
+  DRIVE_API_RE,
+  getOrCreateImageFolder,
+  inferFilename,
+  uploadImageBlob,
+  uploadInlineDataImages,
+} from '../lib/driveImages'
 import { useToast } from './Toast'
 
-const DRIVE_API_RE = /https:\/\/www\.googleapis\.com\/drive\/v3\/files\/[A-Za-z0-9_-]+\?alt=media/g
-
 async function resolveDriveImages(
-  html: string,
-  token: string,
-  blobUrls: string[],
+  html:        string,
+  token:       string,
+  blobUrls:    string[],
+  blobToDrive: Map<string, string>,
 ): Promise<string> {
   const matches = [...html.matchAll(DRIVE_API_RE)]
   if (!matches.length) return html
@@ -21,9 +27,19 @@ async function resolveDriveImages(
       if (!res.ok) continue
       const blobUrl = URL.createObjectURL(await res.blob())
       blobUrls.push(blobUrl)
+      blobToDrive.set(blobUrl, url)
       out = out.replaceAll(url, blobUrl)
     } catch { /* keep original src */ }
   }
+  return out
+}
+
+function blobUrlsToDrive(html: string, blobToDrive: Map<string, string>): string {
+  if (!blobToDrive.size) return html
+  let out = html
+  blobToDrive.forEach((driveUrl, blobUrl) => {
+    if (out.includes(blobUrl)) out = out.replaceAll(blobUrl, driveUrl)
+  })
   return out
 }
 
@@ -85,9 +101,11 @@ const TOOLBAR: (ToolbarBtn | 'sep')[] = [
 function RichEditor({
   value,
   onChange,
+  onPasteImage,
 }: {
   value:    string
   onChange: (v: string) => void
+  onPasteImage?: (blob: Blob) => Promise<string>  // resolves to a renderable URL (blob: or drive:)
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const lastEmittedRef = useRef<string>(value)
@@ -126,6 +144,54 @@ function RichEditor({
     exec('createLink', url)
   }
 
+  function insertImageHtml(html: string) {
+    ref.current?.focus()
+    document.execCommand('insertHTML', false, html)
+    emit()
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    if (!onPasteImage || !e.clipboardData) return
+    const items = Array.from(e.clipboardData.items)
+    const imgs  = items.filter(it => it.kind === 'file' && it.type.startsWith('image/'))
+    if (imgs.length === 0) return
+    e.preventDefault()
+    for (const it of imgs) {
+      const file = it.getAsFile()
+      if (!file) continue
+      const placeholderId = `pgh-img-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        insertImageHtml(
+          `<img id="${placeholderId}" src="${dataUrl}" data-uploading="1" ` +
+          `style="opacity:.45;max-width:100%" alt="uploading…"/>`
+        )
+        onPasteImage(file)
+          .then(url => {
+            const el = ref.current?.querySelector(`#${placeholderId}`) as HTMLImageElement | null
+            if (!el) return
+            el.removeAttribute('id')
+            el.removeAttribute('data-uploading')
+            el.style.opacity = ''
+            el.src = url
+            emit()
+          })
+          .catch(err => {
+            const el = ref.current?.querySelector(`#${placeholderId}`)
+            if (el) {
+              el.outerHTML =
+                `<span style="color:#e94545;font-size:12px">[image upload failed: ${
+                  (err as Error).message
+                }]</span>`
+            }
+            emit()
+          })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   return (
     <div className="rf-rich-wrap">
       <div className="rf-rich-toolbar" onMouseDown={e => e.preventDefault()}>
@@ -161,6 +227,7 @@ function RichEditor({
         suppressContentEditableWarning
         onInput={emit}
         onBlur={emit}
+        onPaste={handlePaste}
       />
     </div>
   )
@@ -172,10 +239,12 @@ function EditField({
   field,
   value,
   onChange,
+  onPasteImage,
 }: {
   field:    AnkiField
   value:    string
   onChange: (v: string) => void
+  onPasteImage?: (blob: Blob) => Promise<string>
 }) {
   const [mode, setMode] = useState<HtmlEditMode>('rich')
   const isHtml = field.type === 'html' || looksLikeHtml(value)
@@ -212,7 +281,7 @@ function EditField({
         </div>
         <div className="rf-html-body">
           {mode === 'rich' && (
-            <RichEditor value={value} onChange={onChange} />
+            <RichEditor value={value} onChange={onChange} onPasteImage={onPasteImage} />
           )}
           {mode === 'html' && (
             <textarea
@@ -257,7 +326,8 @@ export default function NoteDetailPanel({
   const [editFields, setEditFields] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [resolvedFields, setResolvedFields] = useState<Record<string, string> | null>(null)
-  const blobUrlsRef = useRef<string[]>([])
+  const blobUrlsRef    = useRef<string[]>([])
+  const blobToDriveRef = useRef<Map<string, string>>(new Map())
 
   // Refs that mirror the in-flight edit so we can save the OLD note even after
   // the parent has swapped `note`/`template` props on us.
@@ -276,17 +346,20 @@ export default function NoteDetailPanel({
     if (!token) return
     blobUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
     blobUrlsRef.current = []
+    blobToDriveRef.current = new Map()
     let cancelled = false
     const newBlobUrls: string[] = []
+    const newBlobToDrive = new Map<string, string>()
     Promise.all(
       sortedFields.map(async f => {
         const val = note.fields[f.key] ?? ''
-        const resolved = await resolveDriveImages(val, token, newBlobUrls)
+        const resolved = await resolveDriveImages(val, token, newBlobUrls, newBlobToDrive)
         return [f.key, resolved] as [string, string]
       })
     ).then(pairs => {
       if (cancelled) { newBlobUrls.forEach(u => URL.revokeObjectURL(u)); return }
-      blobUrlsRef.current = newBlobUrls
+      blobUrlsRef.current    = newBlobUrls
+      blobToDriveRef.current = newBlobToDrive
       const map: Record<string, string> = {}
       pairs.forEach(([k, v]) => { map[k] = v })
       setResolvedFields(map)
@@ -298,13 +371,44 @@ export default function NoteDetailPanel({
   const extraFields  = sortedFields.filter(f => !f.isFront && !f.isBack)
 
   function startEdit() {
+    // Prefer resolved (blob:URL) fields so <img> tags render inside the rich
+    // editor; fall back to the raw note fields if resolution hasn't completed.
+    const source = resolvedFields ?? note.fields
     const init: Record<string, string> = {}
-    sortedFields.forEach(f => { init[f.key] = note.fields[f.key] ?? '' })
+    sortedFields.forEach(f => { init[f.key] = source[f.key] ?? '' })
     editingNoteRef.current     = note
     editingTemplateRef.current = template
     editFieldsRef.current      = init
     setEditFields(init)
     setEditMode(true)
+  }
+
+  async function handlePasteImage(blob: Blob): Promise<string> {
+    const token = GAuth.getToken()
+    if (!token) throw new Error('not signed in')
+    const folderId = await getOrCreateImageFolder(token)
+    const driveUrl = await uploadImageBlob(token, folderId, blob, inferFilename(blob))
+    // Local blob URL for immediate display; map it back to the Drive URL so
+    // the saved HTML references Drive (not a transient blob: URL).
+    const blobUrl  = URL.createObjectURL(blob)
+    blobUrlsRef.current.push(blobUrl)
+    blobToDriveRef.current.set(blobUrl, driveUrl)
+    return blobUrl
+  }
+
+  // Convert any blob:/data: image refs back to Drive URLs before persisting.
+  async function normalizeFieldsForSave(
+    fields: Record<string, string>,
+  ): Promise<Record<string, string>> {
+    const token = GAuth.getToken()
+    const out: Record<string, string> = {}
+    for (const [k, v] of Object.entries(fields)) {
+      let html = v
+      if (token) html = await uploadInlineDataImages(html, token)
+      html = blobUrlsToDrive(html, blobToDriveRef.current)
+      out[k] = html
+    }
+    return out
   }
 
   function clearEditState() {
@@ -332,7 +436,8 @@ export default function NoteDetailPanel({
     const editingTmpl = editingTemplateRef.current ?? template
     setSaving(true)
     try {
-      const updated: AnkiNote = { ...editingNote, fields: { ...editFieldsRef.current } }
+      const fields  = await normalizeFieldsForSave(editFieldsRef.current)
+      const updated: AnkiNote = { ...editingNote, fields }
       await saveAnkiNote(updated, editingTmpl)
       onNoteSavedRef.current(updated)
       clearEditState()
@@ -347,13 +452,17 @@ export default function NoteDetailPanel({
   // Background save (after user picked "save" on the unsaved-changes prompt
   // for a note we are no longer viewing). Doesn't touch local edit state.
   function backgroundSave(orig: AnkiNote, tmpl: AnkiTemplate, fields: Record<string, string>) {
-    const updated: AnkiNote = { ...orig, fields: { ...fields } }
-    saveAnkiNote(updated, tmpl)
-      .then(() => {
+    ;(async () => {
+      try {
+        const normalized = await normalizeFieldsForSave(fields)
+        const updated: AnkiNote = { ...orig, fields: normalized }
+        await saveAnkiNote(updated, tmpl)
         onNoteSavedRef.current(updated)
         toast('Card saved', 'success')
-      })
-      .catch(e => toast(`Save failed: ${(e as Error).message}`, 'error'))
+      } catch (e) {
+        toast(`Save failed: ${(e as Error).message}`, 'error')
+      }
+    })()
   }
 
   // Selecting a different note while editing → prompt to save if dirty,
@@ -467,6 +576,7 @@ export default function NoteDetailPanel({
               field={f}
               value={editFields[f.key] ?? ''}
               onChange={v => setEditFields(prev => ({ ...prev, [f.key]: v }))}
+              onPasteImage={handlePasteImage}
             />
           ))}
 
