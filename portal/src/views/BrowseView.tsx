@@ -280,7 +280,9 @@ export default function BrowseView() {
                     onClose={() => setSelectedNote(null)}
                     onNoteSaved={updated => {
                       setNotes(prev => prev.map(n => n.noteId === updated.noteId ? updated : n))
-                      setSelectedNote(updated)
+                      // Only swap selection if the user is still on this note;
+                      // a background save (after switching) shouldn't drag them back.
+                      setSelectedNote(prev => prev?.noteId === updated.noteId ? updated : prev)
                     }}
                   />
                 </div>

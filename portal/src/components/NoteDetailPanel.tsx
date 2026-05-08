@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import type { AnkiNote, AnkiTemplate, AnkiField } from '../adapters/ankiRepo'
 import { saveAnkiNote } from '../adapters/ankiRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
@@ -259,6 +259,15 @@ export default function NoteDetailPanel({
   const [resolvedFields, setResolvedFields] = useState<Record<string, string> | null>(null)
   const blobUrlsRef = useRef<string[]>([])
 
+  // Refs that mirror the in-flight edit so we can save the OLD note even after
+  // the parent has swapped `note`/`template` props on us.
+  const editingNoteRef     = useRef<AnkiNote | null>(null)
+  const editingTemplateRef = useRef<AnkiTemplate | null>(null)
+  const editFieldsRef      = useRef<Record<string, string>>({})
+  const onNoteSavedRef     = useRef(onNoteSaved)
+  useEffect(() => { editFieldsRef.current  = editFields  }, [editFields])
+  useEffect(() => { onNoteSavedRef.current = onNoteSaved }, [onNoteSaved])
+
   const sortedFields = [...template.fields].sort((a, b) => a.order - b.order)
 
   useEffect(() => {
@@ -291,28 +300,93 @@ export default function NoteDetailPanel({
   function startEdit() {
     const init: Record<string, string> = {}
     sortedFields.forEach(f => { init[f.key] = note.fields[f.key] ?? '' })
+    editingNoteRef.current     = note
+    editingTemplateRef.current = template
+    editFieldsRef.current      = init
     setEditFields(init)
     setEditMode(true)
   }
 
-  function cancelEdit() {
+  function clearEditState() {
+    editingNoteRef.current     = null
+    editingTemplateRef.current = null
+    editFieldsRef.current      = {}
     setEditMode(false)
     setEditFields({})
   }
 
+  function cancelEdit() {
+    clearEditState()
+  }
+
+  function isDirty(orig: AnkiNote, fields: Record<string, string>): boolean {
+    const keys = new Set([...Object.keys(orig.fields), ...Object.keys(fields)])
+    for (const k of keys) {
+      if ((orig.fields[k] ?? '') !== (fields[k] ?? '')) return true
+    }
+    return false
+  }
+
   async function handleSave() {
+    const editingNote = editingNoteRef.current ?? note
+    const editingTmpl = editingTemplateRef.current ?? template
     setSaving(true)
     try {
-      const updated: AnkiNote = { ...note, fields: { ...editFields } }
-      await saveAnkiNote(updated, template)
-      onNoteSaved(updated)
-      setEditMode(false)
+      const updated: AnkiNote = { ...editingNote, fields: { ...editFieldsRef.current } }
+      await saveAnkiNote(updated, editingTmpl)
+      onNoteSavedRef.current(updated)
+      clearEditState()
       toast('Card updated', 'success')
     } catch (e) {
       toast(`Save failed: ${(e as Error).message}`, 'error')
     } finally {
       setSaving(false)
     }
+  }
+
+  // Background save (after user picked "save" on the unsaved-changes prompt
+  // for a note we are no longer viewing). Doesn't touch local edit state.
+  function backgroundSave(orig: AnkiNote, tmpl: AnkiTemplate, fields: Record<string, string>) {
+    const updated: AnkiNote = { ...orig, fields: { ...fields } }
+    saveAnkiNote(updated, tmpl)
+      .then(() => {
+        onNoteSavedRef.current(updated)
+        toast('Card saved', 'success')
+      })
+      .catch(e => toast(`Save failed: ${(e as Error).message}`, 'error'))
+  }
+
+  // Selecting a different note while editing → prompt to save if dirty,
+  // then drop edit state so the new note shows in view mode.
+  useLayoutEffect(() => {
+    const prev = editingNoteRef.current
+    if (!prev || prev.noteId === note.noteId) return
+    const tmpl   = editingTemplateRef.current
+    const fields = editFieldsRef.current
+    if (tmpl && isDirty(prev, fields)) {
+      const yes = window.confirm(
+        `You have unsaved changes on the previous card. Save them before switching?`
+      )
+      if (yes) backgroundSave(prev, tmpl, fields)
+    }
+    clearEditState()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note.noteId])
+
+  function handleClose() {
+    const editingNote = editingNoteRef.current
+    const editingTmpl = editingTemplateRef.current
+    if (!editingNote || !editingTmpl || !isDirty(editingNote, editFieldsRef.current)) {
+      clearEditState()
+      onClose()
+      return
+    }
+    const yes = window.confirm('You have unsaved changes. Save them before closing?')
+    if (yes) {
+      backgroundSave(editingNote, editingTmpl, editFieldsRef.current)
+    }
+    clearEditState()
+    onClose()
   }
 
   // ── View mode ───────────────────────────────────────────────────────────────
@@ -331,7 +405,7 @@ export default function NoteDetailPanel({
           </span>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <button className="bci-edit-btn bci-edit-btn-hd" onClick={startEdit} title="Edit card">✎</button>
-            <button className="detail-close-btn" onClick={onClose}>✕</button>
+            <button className="detail-close-btn" onClick={handleClose}>✕</button>
           </div>
         </div>
 
@@ -382,7 +456,7 @@ export default function NoteDetailPanel({
     <>
       <div className="col-hd" style={{ padding: '10px 12px', flexShrink: 0 }}>
         <span>Edit Card</span>
-        <button className="detail-close-btn" onClick={cancelEdit} title="Cancel">✕</button>
+        <button className="detail-close-btn" onClick={handleClose} title="Close">✕</button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 4px 12px' }}>
