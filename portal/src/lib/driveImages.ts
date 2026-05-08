@@ -78,19 +78,33 @@ export function inferFilename(blob: Blob): string {
   return `paste_${stamp}_${rand}.${subtype}`
 }
 
-// Walk an HTML string, upload every <img src="data:image/..."> blob to Drive,
-// and return the rewritten HTML with Drive URLs.
-export async function uploadInlineDataImages(html: string, token: string): Promise<string> {
-  if (!/<img[^>]+src="data:image\//i.test(html)) return html
+// Walk an HTML string and upload every <img> whose src is data:image/… or
+// blob:… to Drive, returning rewritten HTML with Drive URLs. Throws if any
+// image cannot be fetched (e.g. a blob: URL minted in another document).
+export async function uploadInlineImages(html: string, token: string): Promise<string> {
+  if (!/<img[^>]+src="(?:data:image\/|blob:)/i.test(html)) return html
   const folderId  = await getOrCreateImageFolder(token)
   const container = document.createElement('div')
   container.innerHTML = html
-  const imgs = Array.from(container.querySelectorAll('img[src^="data:image/"]')) as HTMLImageElement[]
+  const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
+  const failed: string[] = []
   for (const img of imgs) {
-    const src  = img.getAttribute('src')!
-    const blob = await (await fetch(src)).blob()
-    const url  = await uploadImageBlob(token, folderId, blob, inferFilename(blob))
-    img.setAttribute('src', url)
+    const src = img.getAttribute('src') || ''
+    if (!src.startsWith('data:image/') && !src.startsWith('blob:')) continue
+    try {
+      const blob = await (await fetch(src)).blob()
+      if (!blob.size) throw new Error('empty')
+      const url = await uploadImageBlob(token, folderId, blob, inferFilename(blob))
+      img.setAttribute('src', url)
+    } catch (e) {
+      failed.push((e as Error).message)
+    }
+  }
+  if (failed.length) {
+    throw new Error(
+      `${failed.length} image${failed.length === 1 ? '' : 's'} could not be uploaded ` +
+      `(${failed[0]}). Try re-pasting the image directly.`
+    )
   }
   return container.innerHTML
 }

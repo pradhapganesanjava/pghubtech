@@ -8,7 +8,7 @@ import {
   getOrCreateImageFolder,
   inferFilename,
   uploadImageBlob,
-  uploadInlineDataImages,
+  uploadInlineImages,
 } from '../lib/driveImages'
 import { useToast } from './Toast'
 
@@ -344,22 +344,23 @@ export default function NoteDetailPanel({
     setResolvedFields(null)
     const token = GAuth.getToken()
     if (!token) return
+    // Reset the *shared* refs that paste will also write into. Using the live
+    // refs (instead of scratch locals + replace at the end) avoids clobbering
+    // entries that the paste handler adds while the resolve is still running.
     blobUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
-    blobUrlsRef.current = []
+    blobUrlsRef.current    = []
     blobToDriveRef.current = new Map()
+    const sharedBlobUrls = blobUrlsRef.current
+    const sharedMap      = blobToDriveRef.current
     let cancelled = false
-    const newBlobUrls: string[] = []
-    const newBlobToDrive = new Map<string, string>()
     Promise.all(
       sortedFields.map(async f => {
         const val = note.fields[f.key] ?? ''
-        const resolved = await resolveDriveImages(val, token, newBlobUrls, newBlobToDrive)
+        const resolved = await resolveDriveImages(val, token, sharedBlobUrls, sharedMap)
         return [f.key, resolved] as [string, string]
       })
     ).then(pairs => {
-      if (cancelled) { newBlobUrls.forEach(u => URL.revokeObjectURL(u)); return }
-      blobUrlsRef.current    = newBlobUrls
-      blobToDriveRef.current = newBlobToDrive
+      if (cancelled) { sharedBlobUrls.forEach(u => URL.revokeObjectURL(u)); return }
       const map: Record<string, string> = {}
       pairs.forEach(([k, v]) => { map[k] = v })
       setResolvedFields(map)
@@ -397,15 +398,18 @@ export default function NoteDetailPanel({
   }
 
   // Convert any blob:/data: image refs back to Drive URLs before persisting.
+  // 1. Cheap path: rewrite known blob URLs (paste handler / resolve mappings).
+  // 2. Fallback: upload anything still data:/blob: to Drive. Throws on failure
+  //    so we never silently store an unloadable blob: URL in the sheet.
   async function normalizeFieldsForSave(
     fields: Record<string, string>,
   ): Promise<Record<string, string>> {
     const token = GAuth.getToken()
+    if (!token) throw new Error('not signed in')
     const out: Record<string, string> = {}
     for (const [k, v] of Object.entries(fields)) {
-      let html = v
-      if (token) html = await uploadInlineDataImages(html, token)
-      html = blobUrlsToDrive(html, blobToDriveRef.current)
+      let html = blobUrlsToDrive(v, blobToDriveRef.current)
+      html = await uploadInlineImages(html, token)
       out[k] = html
     }
     return out
