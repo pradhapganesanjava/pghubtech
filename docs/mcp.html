@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCP (Model Context Protocol) Deep Dive</title>
+  <style>
+    /* ── THEME TOKENS ── */
+    html[data-theme="dark"]      { --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3350;--accent:#6c8eff;--accent2:#a78bfa;--accent3:#34d399;--accent4:#f59e0b;--accent5:#f87171;--text:#e2e8f0;--text-muted:#8892b0;--code-bg:#161b2e;--hero-bg:linear-gradient(135deg,#0f1117 0%,#1a1d27 40%,#0d1a3a 100%);--hero-glow:rgba(108,142,255,0.13);--code-kw:#c678dd;--code-fn:#61afef;--code-str:#98c379;--code-cm:#5c6370;--code-num:#d19a66;--code-cls:#e5c07b;--code-def:#abb2bf;--shadow:0 4px 24px rgba(0,0,0,0.4);--panel-bg:#1a1d27;--panel-border:#2e3350; }
+    html[data-theme="light"]     { --bg:#f8fafc;--surface:#fff;--surface2:#f1f5f9;--border:#e2e8f0;--accent:#3b5bdb;--accent2:#7c3aed;--accent3:#059669;--accent4:#d97706;--accent5:#dc2626;--text:#1e293b;--text-muted:#64748b;--code-bg:#f1f5f9;--hero-bg:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 40%,#e0f2fe 100%);--hero-glow:rgba(59,91,219,0.09);--code-kw:#7c3aed;--code-fn:#1d4ed8;--code-str:#059669;--code-cm:#94a3b8;--code-num:#b45309;--code-cls:#b45309;--code-def:#374151;--shadow:0 4px 24px rgba(0,0,0,0.1);--panel-bg:#fff;--panel-border:#e2e8f0; }
+    html[data-theme="warm"]      { --bg:#fdf8f2;--surface:#fffaf4;--surface2:#fef3e2;--border:#e8d5b7;--accent:#c2410c;--accent2:#9a3412;--accent3:#166534;--accent4:#92400e;--accent5:#991b1b;--text:#3d2c1e;--text-muted:#8b6f47;--code-bg:#fef9f0;--hero-bg:linear-gradient(135deg,#fdf6ec 0%,#fef3e2 40%,#fde8cc 100%);--hero-glow:rgba(194,65,12,0.09);--code-kw:#9a3412;--code-fn:#92400e;--code-str:#166534;--code-cm:#b09060;--code-num:#78350f;--code-cls:#b45309;--code-def:#6b4c2a;--shadow:0 4px 24px rgba(80,40,10,0.12);--panel-bg:#fffaf4;--panel-border:#e8d5b7; }
+    html[data-theme="cool"]      { --bg:#eef4fb;--surface:#fff;--surface2:#e1ecf7;--border:#bfd3e8;--accent:#0369a1;--accent2:#6d28d9;--accent3:#065f46;--accent4:#92400e;--accent5:#9f1239;--text:#1e3a5f;--text-muted:#4a6fa5;--code-bg:#e1ecf7;--hero-bg:linear-gradient(135deg,#dbeafe 0%,#ede9fe 40%,#d1fae5 100%);--hero-glow:rgba(3,105,161,0.11);--code-kw:#6d28d9;--code-fn:#0369a1;--code-str:#065f46;--code-cm:#7090b8;--code-num:#92400e;--code-cls:#0369a1;--code-def:#1e3a5f;--shadow:0 4px 24px rgba(3,105,161,0.12);--panel-bg:#fff;--panel-border:#bfd3e8; }
+    html[data-theme="glow"]      { --bg:#07070f;--surface:#0c0c1e;--surface2:#111128;--border:#1e1e50;--accent:#00e5cc;--accent2:#ff2d78;--accent3:#00e5cc;--accent4:#f5a623;--accent5:#ff2d78;--text:#e0e0ff;--text-muted:#6868b0;--code-bg:#050510;--hero-bg:linear-gradient(135deg,#07070f 0%,#0c0c20 40%,#0a0a20 100%);--hero-glow:rgba(0,229,204,0.18);--code-kw:#ff2d78;--code-fn:#00e5cc;--code-str:#00ff99;--code-cm:#3a3a80;--code-num:#f5a623;--code-cls:#ff9500;--code-def:#b0b0f0;--shadow:0 0 32px rgba(0,229,204,0.15),0 4px 24px rgba(0,0,0,0.5);--panel-bg:#0c0c1e;--panel-border:#1e1e50; }
+    html[data-theme="gray"]      { --bg:#181818;--surface:#242424;--surface2:#2e2e2e;--border:#3c3c3c;--accent:#a0a0a0;--accent2:#c8c8c8;--accent3:#888;--accent4:#909090;--accent5:#808080;--text:#e8e8e8;--text-muted:#909090;--code-bg:#1c1c1c;--hero-bg:linear-gradient(135deg,#181818 0%,#202020 40%,#1c1c1c 100%);--hero-glow:rgba(160,160,160,0.06);--code-kw:#d0d0d0;--code-fn:#b8b8b8;--code-str:#989898;--code-cm:#505050;--code-num:#c0c0c0;--code-cls:#c8c8c8;--code-def:#a0a0a0;--shadow:0 4px 24px rgba(0,0,0,0.5);--panel-bg:#242424;--panel-border:#3c3c3c; }
+    html[data-theme="lightdark"] { --bg:#22272e;--surface:#2d333b;--surface2:#373e47;--border:#444c56;--accent:#539bf5;--accent2:#b083f0;--accent3:#46954a;--accent4:#c69026;--accent5:#e5534b;--text:#cdd9e5;--text-muted:#768390;--code-bg:#1c2128;--hero-bg:linear-gradient(135deg,#22272e 0%,#2d333b 40%,#1c2840 100%);--hero-glow:rgba(83,155,245,0.11);--code-kw:#b083f0;--code-fn:#539bf5;--code-str:#96d0ff;--code-cm:#545d68;--code-num:#f69d50;--code-cls:#f69d50;--code-def:#adbac7;--shadow:0 4px 24px rgba(0,0,0,0.35);--panel-bg:#2d333b;--panel-border:#444c56; }
+
+    /* ── RESET + BASE ── */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:var(--fs-base,15px)}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;transition:background .25s,color .25s}
+
+    /* ── MODES ── */
+    body[data-mode="read"]{font-family:Georgia,serif;line-height:1.95}
+    body[data-mode="read"] .page{max-width:740px;padding:0 28px 80px}
+    body[data-mode="read"] section{padding-top:72px}
+    body[data-mode="read"] .card{padding:28px}
+    body[data-mode="read"] .card p,.card-grid,.deep-grid,.analogy-grid,.discovery-grid{transition:all .25s}
+    body[data-mode="read"] .card-grid,body[data-mode="read"] .deep-grid,body[data-mode="read"] .analogy-grid,body[data-mode="read"] .discovery-grid{grid-template-columns:1fr}
+    body[data-mode="compact"] .page{max-width:1400px;padding:0 20px 60px}
+    body[data-mode="compact"] section{padding-top:40px}
+    body[data-mode="compact"] .card{padding:14px 18px;margin-bottom:10px}
+    body[data-mode="compact"] .section-header{margin-bottom:18px}
+    body[data-mode="compact"] .card-grid,body[data-mode="compact"] .deep-grid,body[data-mode="compact"] .analogy-grid,body[data-mode="compact"] .discovery-grid{gap:10px}
+    body[data-mode="compact"] .statements{gap:6px}
+    body[data-mode="compact"] .stmt{padding:10px 14px}
+    body[data-mode="compact"] pre{padding:12px 16px;margin:10px 0}
+    body[data-mode="compact"] .deep-card,.disc-card,.analogy-card{padding:14px 18px}
+
+    /* ── GLOW THEME ACCENTS ── */
+    html[data-theme="glow"] .section-header h2{text-shadow:0 0 20px var(--accent)}
+    html[data-theme="glow"] .hero h1{filter:drop-shadow(0 0 16px rgba(0,229,204,.5))}
+    html[data-theme="glow"] .card,html[data-theme="glow"] .deep-card,html[data-theme="glow"] .analogy-card,html[data-theme="glow"] .disc-card,html[data-theme="glow"] .faq-item,html[data-theme="glow"] .stmt{box-shadow:0 0 0 1px var(--border),0 0 16px rgba(0,229,204,.04)}
+
+    /* ── HERO ── */
+    .hero{background:var(--hero-bg);border-bottom:1px solid var(--border);padding:60px 40px 50px;text-align:center;position:relative;overflow:hidden;transition:background .25s}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,var(--hero-glow) 0%,transparent 70%);pointer-events:none}
+    .hero h1{font-size:2.6rem;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+    .hero p{color:var(--text-muted);font-size:1.1rem;max-width:640px;margin:0 auto 24px}
+    .hero-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    .tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-size:.78rem;color:var(--text-muted);letter-spacing:.04em}
+
+    /* ── NAV ── */
+    .toc{background:var(--surface);border-bottom:1px solid var(--border);padding:0 40px;position:sticky;top:0;z-index:100;transition:background .25s}
+    .toc ul{display:flex;list-style:none;overflow-x:auto;scrollbar-width:none}
+    .toc ul::-webkit-scrollbar{display:none}
+    .toc a{display:block;padding:14px 16px;color:var(--text-muted);text-decoration:none;font-size:.82rem;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
+    .toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+    /* ── LAYOUT ── */
+    .page{max-width:1100px;margin:0 auto;padding:0 40px 80px;transition:max-width .25s,padding .25s}
+    section{padding-top:64px}
+    .section-header{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+    .section-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+    .icon-blue{background:rgba(108,142,255,.15)}.icon-purple{background:rgba(167,139,250,.15)}.icon-green{background:rgba(52,211,153,.15)}.icon-amber{background:rgba(245,158,11,.15)}.icon-red{background:rgba(248,113,113,.15)}.icon-teal{background:rgba(45,212,191,.15)}.icon-pink{background:rgba(244,114,182,.15)}
+    .section-header h2{font-size:1.5rem;font-weight:700;color:var(--text);transition:color .25s}
+    .section-header .subtitle{font-size:.85rem;color:var(--text-muted);margin-top:2px}
+
+    /* ── CARDS ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;transition:background .25s,border-color .25s}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+    .card h3{font-size:1rem;font-weight:600;margin-bottom:10px;color:var(--text)}
+    .card p{color:var(--text-muted);font-size:.92rem}
+
+    /* ── CODE ── */
+    pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:20px;overflow-x:auto;font-size:.84rem;line-height:1.6;margin:16px 0;transition:background .25s,border-color .25s}
+    code{font-family:'JetBrains Mono','Fira Code',monospace;color:var(--code-def)}
+    .kw{color:var(--code-kw)}.fn{color:var(--code-fn)}.str{color:var(--code-str)}.cm{color:var(--code-cm);font-style:italic}.num{color:var(--code-num)}.cls{color:var(--code-cls)}
+
+    /* ── FAQ ── */
+    .faq-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;transition:background .25s}
+    .faq-q{padding:18px 24px;font-weight:600;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none}
+    .faq-q:hover{background:var(--surface2)}
+    .faq-q .q-label{color:var(--accent);font-size:.75rem;font-weight:700;letter-spacing:.1em;flex-shrink:0}
+    .faq-q .chevron{color:var(--text-muted);font-size:.8rem;transition:transform .2s}
+    .faq-item.open .chevron{transform:rotate(180deg)}
+    .faq-a{display:none;padding:16px 24px 20px;color:var(--text-muted);font-size:.92rem;border-top:1px solid var(--border)}
+    .faq-item.open .faq-a{display:block}
+
+    /* ── ANALOGY ── */
+    .analogy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .analogy-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;position:relative;overflow:hidden;transition:background .25s}
+    .analogy-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .ac-blue::before{background:var(--accent)}.ac-purple::before{background:var(--accent2)}.ac-green::before{background:var(--accent3)}.ac-amber::before{background:var(--accent4)}.ac-red::before{background:var(--accent5)}
+    .analogy-card .emoji{font-size:2rem;margin-bottom:10px}
+    .analogy-card h4{font-size:.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+    .analogy-card .tech{font-weight:700;color:var(--text);margin-bottom:8px}
+    .analogy-card .real{font-size:.88rem;color:var(--text-muted)}
+
+    /* ── FLOW ── */
+    .flow{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;overflow-x:auto;transition:background .25s}
+    .flow-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:24px}
+    .flow-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;min-width:700px}
+    .flow-step{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:.82rem;white-space:nowrap}
+    .flow-step.client{border-color:var(--accent);color:var(--accent)}.flow-step.network{border-color:var(--accent4);color:var(--accent4)}.flow-step.server{border-color:var(--accent3);color:var(--accent3)}.flow-step.logic{border-color:var(--accent2);color:var(--accent2)}
+    .flow-arrow{color:var(--text-muted);font-size:1.1rem;flex-shrink:0}
+    .flow-label{font-size:.78rem;color:var(--text-muted);font-style:italic;flex:1;min-width:120px}
+    .flow-divider{border:none;border-top:1px dashed var(--border);margin:20px 0}
+
+    /* ── TABLE ── */
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th{background:var(--surface2);color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;padding:10px 16px;text-align:left}
+    td{padding:12px 16px;border-top:1px solid var(--border);color:var(--text-muted);vertical-align:top}
+    tr:hover td{background:var(--surface2)}
+    .hl{color:var(--text);font-weight:500}
+
+    /* ── STATEMENTS ── */
+    .statements{display:flex;flex-direction:column;gap:10px}
+    .stmt{display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:background .25s}
+    .stmt-num{background:var(--surface2);color:var(--accent);font-weight:700;font-size:.78rem;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .stmt-text{font-size:.92rem;color:var(--text-muted)}
+    .stmt-text strong{color:var(--text)}
+
+    /* ── DEEP GRID ── */
+    .deep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:700px){.deep-grid{grid-template-columns:1fr}}
+    .deep-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;transition:background .25s}
+    .deep-card h4{font-size:.88rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+    .deep-card ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .deep-card li{font-size:.88rem;color:var(--text-muted);padding-left:18px;position:relative}
+    .deep-card li::before{content:'▸';position:absolute;left:0;color:var(--accent);font-size:.75rem;top:2px}
+
+    /* ── DISCOVERY ── */
+    .discovery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+    .disc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;transition:background .25s}
+    .disc-card .label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-weight:700}
+    .disc-card h4{font-size:1rem;font-weight:700;margin-bottom:10px;color:var(--text)}
+    .disc-card p{font-size:.85rem;color:var(--text-muted)}
+
+    /* ── MISC ── */
+    .sep{border:none;border-top:1px solid var(--border);margin:40px 0 0}
+    .callout{border-left:3px solid var(--accent);background:rgba(108,142,255,.07);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:.9rem;color:var(--text-muted)}
+    .callout strong{color:var(--accent)}
+    .callout-green{border-color:var(--accent3);background:rgba(52,211,153,.07)}
+    .callout-green strong{color:var(--accent3)}
+    .callout-amber{border-color:var(--accent4);background:rgba(245,158,11,.07)}
+    .callout-amber strong{color:var(--accent4)}
+    footer{border-top:1px solid var(--border);padding:24px 40px;text-align:center;color:var(--text-muted);font-size:.8rem}
+
+    /* ── CONTROL PANEL ── */
+    #ctrl-toggle{position:fixed;bottom:28px;right:28px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1.25rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.35);z-index:999;transition:background .2s,transform .2s}
+    #ctrl-toggle:hover{transform:scale(1.08)}
+    #ctrl-toggle.open{background:var(--accent2)}
+    #ctrl-panel{position:fixed;bottom:90px;right:28px;width:272px;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:16px;padding:20px;z-index:998;box-shadow:var(--shadow);transform:translateY(16px) scale(.97);opacity:0;pointer-events:none;transition:transform .22s ease,opacity .22s ease}
+    #ctrl-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:all}
+    .cp-section{margin-bottom:18px}.cp-section:last-child{margin-bottom:0}
+    .cp-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-weight:700;margin-bottom:10px}
+    .theme-swatches{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .swatch{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+    .swatch-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;transition:transform .15s,border-color .15s}
+    .swatch:hover .swatch-dot{transform:scale(1.12)}
+    .swatch.active .swatch-dot{border-color:var(--text);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+    .swatch-name{font-size:.6rem;color:var(--text-muted);text-align:center;line-height:1.1}
+    .swatch.active .swatch-name{color:var(--text);font-weight:700}
+    .sw-dark{background:linear-gradient(135deg,#0f1117,#6c8eff)}.sw-light{background:linear-gradient(135deg,#f8fafc,#3b5bdb)}.sw-warm{background:linear-gradient(135deg,#fdf8f2,#c2410c)}.sw-cool{background:linear-gradient(135deg,#eef4fb,#0369a1)}.sw-glow{background:linear-gradient(135deg,#07070f,#00e5cc)}.sw-gray{background:linear-gradient(135deg,#181818,#a0a0a0)}.sw-lightdark{background:linear-gradient(135deg,#22272e,#539bf5)}
+    .mode-pills{display:flex;gap:6px}
+    .mode-pill{flex:1;padding:7px 0;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted);font-size:.75rem;font-weight:600;cursor:pointer;text-align:center;transition:background .15s,color .15s,border-color .15s}
+    .mode-pill:hover{border-color:var(--accent);color:var(--accent)}
+    .mode-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .font-row{display:flex;align-items:center;gap:8px}
+    .fs-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;flex-shrink:0}
+    .fs-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+    .fs-display{flex:1;text-align:center;font-size:.8rem;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 0;font-weight:600}
+    .cp-divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+  </style>
+</head>
+<body data-mode="web">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>MCP — Model Context Protocol</h1>
+  <p>An open JSON-RPC protocol that standardizes how AI apps connect to tools, data, and prompts. The "USB-C for AI."</p>
+  <div class="hero-tags">
+    <span class="tag">JSON-RPC 2.0</span>
+    <span class="tag">Anthropic 2024</span>
+    <span class="tag">Tools / Resources / Prompts</span>
+    <span class="tag">stdio + Streamable HTTP</span>
+    <span class="tag">Open Standard</span>
+    <span class="tag">Client / Server</span>
+    <span class="tag">Capability Negotiation</span>
+    <span class="tag">N+M not N×M</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="toc">
+  <ul>
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#analogy">Analogy</a></li>
+    <li><a href="#statements">Key Statements</a></li>
+    <li><a href="#components">Components</a></li>
+    <li><a href="#flow">Lifecycle Flow</a></li>
+    <li><a href="#internals">Transports & Config</a></li>
+    <li><a href="#dispatch">Dispatch & Routing</a></li>
+    <li><a href="#deeptech">Deep Tech</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+<!-- SECTION 1: INTRO -->
+<section id="intro">
+  <div class="section-header">
+    <div class="section-icon icon-blue">🚀</div>
+    <div><h2>Simple Introduction</h2><div class="subtitle">What MCP is, why it exists, who runs what</div></div>
+  </div>
+  <div class="card"><p>MCP (<strong style="color:var(--text)">Model Context Protocol</strong>) is an open standard introduced by Anthropic in November 2024 that lets AI applications — chat clients, IDEs, agents — plug into external tools and data through a single uniform protocol. Instead of every AI app shipping a custom Slack integration, custom GitHub integration, custom database integration, each tool author publishes <em>one</em> MCP server, and any MCP-aware host can use it.</p>
+  <p style="margin-top:14px">Concretely: an MCP <strong style="color:var(--text)">host</strong> (Claude Desktop, Claude Code, Cursor, Zed, Continue, …) spawns one or more <strong style="color:var(--text)">clients</strong>, each of which speaks JSON-RPC 2.0 to a <strong style="color:var(--text)">server</strong>. The server exposes three kinds of capabilities: <em>tools</em> the model can call, <em>resources</em> the app can attach to context, and <em>prompts</em> the user can invoke as templates.</p></div>
+  <div class="card-grid">
+    <div class="card"><h3 style="color:var(--accent)">The Problem</h3><p>Before MCP, integrating <code>N</code> AI apps with <code>M</code> tools needed N×M bespoke adapters. Every vendor reinvented connector frameworks, function-calling schemas, and auth flows. Tool authors had to publish to many walled gardens; AI apps had to maintain dozens of one-off connectors.</p></div>
+    <div class="card"><h3 style="color:var(--accent2)">The Solution</h3><p>MCP defines one protocol with a standard handshake, capability negotiation, and three primitives. Tool authors write <strong>one server</strong>; AI app vendors write <strong>one client</strong>. N+M instead of N×M. Bonus: the user controls which servers their host connects to — security and consent live with the host, not the tool.</p></div>
+    <div class="card"><h3 style="color:var(--accent3)">One-Liners</h3><p><strong>Host</strong> = the AI app. <strong>Client</strong> = a 1:1 connection inside the host. <strong>Server</strong> = the integration. <strong>Tool</strong> = a function the model can call. <strong>Resource</strong> = data the app can read. <strong>Prompt</strong> = a templated user-invoked instruction. <strong>Transport</strong> = how bytes move (stdio or Streamable HTTP).</p></div>
+  </div>
+  <div class="callout"><strong>Key insight:</strong> MCP is <em>not</em> an LLM API. It does not call models. It is a protocol between an AI app and an external integration, sitting at the layer where the app would otherwise hard-code a Slack or GitHub adapter. The model itself never speaks MCP — the host translates between MCP and whichever LLM API it uses (Claude, OpenAI, local).</div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 2: ANALOGY -->
+<section id="analogy">
+  <div class="section-header">
+    <div class="section-icon icon-amber">🔌</div>
+    <div><h2>The USB-C Analogy</h2><div class="subtitle">Mapping MCP roles to a peripheral hub</div></div>
+  </div>
+  <div class="card" style="margin-bottom:24px"><p>Think of your laptop's <strong style="color:var(--text)">USB-C hub</strong>. The laptop doesn't care whether the thing on the other end is a monitor, a microphone, or a hard drive — it just speaks USB-C. Each peripheral implements the same protocol, advertises what it can do, and the laptop wires it in. MCP is exactly this, but for AI apps and external integrations.</p></div>
+  <div class="analogy-grid">
+    <div class="analogy-card ac-blue">
+      <div class="emoji">💻</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Host (AI app)</div>
+      <div class="real">The laptop. Owns user identity, the screen, and consent. Decides which peripherals are allowed to plug in.</div>
+    </div>
+    <div class="analogy-card ac-purple">
+      <div class="emoji">🔌</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Client</div>
+      <div class="real">A single USB-C port on the laptop. There's exactly one client per peripheral (1:1 connection), and the laptop manages many ports in parallel.</div>
+    </div>
+    <div class="analogy-card ac-green">
+      <div class="emoji">🖱️</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Server</div>
+      <div class="real">A peripheral — mouse, keyboard, drive. Plugs in, announces what it can do ("I'm a 1080p webcam"), and responds to requests.</div>
+    </div>
+    <div class="analogy-card ac-amber">
+      <div class="emoji">📡</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Transport</div>
+      <div class="real">The physical cable. stdio = the cable goes to a peripheral inside the same case (subprocess). HTTP = the cable goes over the network to a remote device.</div>
+    </div>
+    <div class="analogy-card ac-red">
+      <div class="emoji">📋</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Capability Negotiation</div>
+      <div class="real">USB device descriptors. On plug-in, the peripheral lists what it supports ("I have a microphone, a camera, and a button"). The host only enables features both sides understand.</div>
+    </div>
+    <div class="analogy-card ac-blue">
+      <div class="emoji">🔧</div>
+      <h4>Technical Concept</h4>
+      <div class="tech">Tools / Resources / Prompts</div>
+      <div class="real">Three kinds of "device classes." A USB drive (resource — read data), a printer (tool — perform an action), a macro keyboard (prompt — preset user-triggered command).</div>
+    </div>
+  </div>
+  <div class="callout callout-amber" style="margin-top:24px">
+    <strong>Analogy flow:</strong> You plug a server into the host (configure it in <code>~/.claude.json</code> or equivalent). The host's client opens a "port" and runs <code>initialize</code>. The server replies with its capability descriptor. The host wires the discovered tools into the model's tool list. When the model calls one, the request travels down the cable, the server executes, and the result comes back as JSON-RPC.
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 3: KEY STATEMENTS -->
+<section id="statements">
+  <div class="section-header">
+    <div class="section-icon icon-green">💬</div>
+    <div><h2>Key Statements</h2><div class="subtitle">The most important truths, one at a time</div></div>
+  </div>
+  <div class="statements">
+    <div class="stmt"><div class="stmt-num">1</div><div class="stmt-text"><strong>MCP is a protocol, not a runtime.</strong> It defines messages on a wire — there is no SDK lock-in. You can implement an MCP server in any language that can read stdin and write JSON.</div></div>
+    <div class="stmt"><div class="stmt-num">2</div><div class="stmt-text"><strong>Every MCP message is JSON-RPC 2.0.</strong> Three message types only: <code>request</code> (expects response), <code>response</code> (matches a request id), and <code>notification</code> (fire-and-forget, no id).</div></div>
+    <div class="stmt"><div class="stmt-num">3</div><div class="stmt-text"><strong>The host controls consent, not the server.</strong> The server can <em>offer</em> tools; the host decides which the model is allowed to see and whether to confirm with the user before each call.</div></div>
+    <div class="stmt"><div class="stmt-num">4</div><div class="stmt-text"><strong>One client = one server.</strong> If your host connects to 10 servers, it has 10 clients. Each is a separate JSON-RPC session with its own state and capabilities.</div></div>
+    <div class="stmt"><div class="stmt-num">5</div><div class="stmt-text"><strong>Three primitives, three controllers.</strong> Tools are model-controlled (the LLM decides when), resources are app-controlled (the host decides what to attach), prompts are user-controlled (a human picks them from a menu).</div></div>
+    <div class="stmt"><div class="stmt-num">6</div><div class="stmt-text"><strong>Discovery is dynamic.</strong> A server can announce <code>listChanged</code> and push <code>notifications/tools/list_changed</code> at any time — the client re-fetches and the new tool becomes available mid-session.</div></div>
+    <div class="stmt"><div class="stmt-num">7</div><div class="stmt-text"><strong>Servers can call clients back.</strong> Via <em>sampling</em> a server can ask the host to run an LLM completion on its behalf. Via <em>elicitation</em> it can request structured input from the user. Via <em>roots</em> it learns which paths it's allowed to touch.</div></div>
+    <div class="stmt"><div class="stmt-num">8</div><div class="stmt-text"><strong>stdio is for local, Streamable HTTP is for remote.</strong> The old "HTTP+SSE" two-endpoint transport from the original spec was replaced in 2025 by a single-endpoint Streamable HTTP transport.</div></div>
+    <div class="stmt"><div class="stmt-num">9</div><div class="stmt-text"><strong>Auth is OAuth 2.1 for remote servers.</strong> The 2025 spec mandates OAuth 2.1 with PKCE for HTTP transports. Local stdio servers typically read API keys from environment variables set by the host config.</div></div>
+    <div class="stmt"><div class="stmt-num">10</div><div class="stmt-text"><strong>The model never sees MCP wire bytes.</strong> The host translates: it converts MCP <code>tools/list</code> output into the LLM provider's tool schema, and converts the LLM's tool-call request back into MCP <code>tools/call</code>.</div></div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 4: CORE COMPONENTS -->
+<section id="components">
+  <div class="section-header">
+    <div class="section-icon icon-purple">🧩</div>
+    <div><h2>Core Components</h2><div class="subtitle">The pieces of any MCP system, with concrete code</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent)">1. The Server — exposes capabilities</h3>
+    <p style="margin-bottom:12px">A server is a process that owns some external resource (filesystem, GitHub, database) and translates JSON-RPC requests into operations on that resource. Below: a minimal Python server using the official SDK that exposes one tool.</p>
+    <pre><code><span class="cm"># server.py — runs as a subprocess, communicates over stdio</span>
+<span class="kw">from</span> mcp.server.fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+
+mcp = <span class="cls">FastMCP</span>(<span class="str">"weather-server"</span>)
+
+<span class="cm">@mcp.tool()</span>
+<span class="kw">def</span> <span class="fn">get_forecast</span>(city: <span class="cls">str</span>, days: <span class="cls">int</span> = <span class="num">3</span>) -> <span class="cls">str</span>:
+    <span class="str">"""Return a weather forecast for the given city."""</span>
+    <span class="cm"># … real impl would call a weather API …</span>
+    <span class="kw">return</span> <span class="str">f"Forecast for {city} for next {days} days: sunny."</span>
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    mcp.run(transport=<span class="str">"stdio"</span>)</code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent2)">2. The Host config — wires servers in</h3>
+    <p style="margin-bottom:12px">The host (Claude Desktop here) reads a JSON config that tells it how to spawn each server. The host launches the command, pipes stdin/stdout, and from then on talks JSON-RPC to it.</p>
+    <pre><code><span class="cm">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>
+{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"weather"</span>: {
+      <span class="str">"command"</span>: <span class="str">"python"</span>,
+      <span class="str">"args"</span>: [<span class="str">"/Users/me/servers/weather/server.py"</span>],
+      <span class="str">"env"</span>: { <span class="str">"WEATHER_API_KEY"</span>: <span class="str">"sk-…"</span> }
+    },
+    <span class="str">"github"</span>: {
+      <span class="str">"command"</span>: <span class="str">"npx"</span>,
+      <span class="str">"args"</span>: [<span class="str">"-y"</span>, <span class="str">"@modelcontextprotocol/server-github"</span>],
+      <span class="str">"env"</span>: { <span class="str">"GITHUB_TOKEN"</span>: <span class="str">"ghp_…"</span> }
+    }
+  }
+}</code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent3)">3. The Client — what the host runs internally</h3>
+    <p style="margin-bottom:12px">When the host starts the server subprocess, it instantiates a client object that owns the JSON-RPC session. Most hosts use the official TypeScript or Python SDK rather than rolling their own.</p>
+    <pre><code><span class="kw">import</span> { <span class="cls">Client</span> } <span class="kw">from</span> <span class="str">"@modelcontextprotocol/sdk/client/index.js"</span>;
+<span class="kw">import</span> { <span class="cls">StdioClientTransport</span> } <span class="kw">from</span> <span class="str">"@modelcontextprotocol/sdk/client/stdio.js"</span>;
+
+<span class="kw">const</span> transport = <span class="kw">new</span> <span class="cls">StdioClientTransport</span>({
+  command: <span class="str">"python"</span>,
+  args:    [<span class="str">"/Users/me/servers/weather/server.py"</span>],
+});
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="cls">Client</span>({ name: <span class="str">"my-host"</span>, version: <span class="str">"1.0.0"</span> });
+<span class="kw">await</span> client.<span class="fn">connect</span>(transport);          <span class="cm">// initialize handshake</span>
+
+<span class="kw">const</span> { tools } = <span class="kw">await</span> client.<span class="fn">listTools</span>();
+<span class="kw">const</span> result   = <span class="kw">await</span> client.<span class="fn">callTool</span>({
+  name: <span class="str">"get_forecast"</span>,
+  arguments: { city: <span class="str">"Paris"</span>, days: <span class="num">5</span> },
+});</code></pre>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="color:var(--accent4)">4. The wire — JSON-RPC 2.0 over the transport</h3>
+    <p style="margin-bottom:12px">Every interaction is a JSON-RPC envelope. The client sends a request, the server replies with a response carrying the same <code>id</code>. Notifications have no id and need no reply.</p>
+    <pre><code><span class="cm">// Client → Server</span>
+{
+  <span class="str">"jsonrpc"</span>: <span class="str">"2.0"</span>,
+  <span class="str">"id"</span>: <span class="num">42</span>,
+  <span class="str">"method"</span>: <span class="str">"tools/call"</span>,
+  <span class="str">"params"</span>: {
+    <span class="str">"name"</span>: <span class="str">"get_forecast"</span>,
+    <span class="str">"arguments"</span>: { <span class="str">"city"</span>: <span class="str">"Paris"</span>, <span class="str">"days"</span>: <span class="num">5</span> }
+  }
+}
+
+<span class="cm">// Server → Client</span>
+{
+  <span class="str">"jsonrpc"</span>: <span class="str">"2.0"</span>,
+  <span class="str">"id"</span>: <span class="num">42</span>,
+  <span class="str">"result"</span>: {
+    <span class="str">"content"</span>: [{ <span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="str">"Forecast for Paris…"</span> }],
+    <span class="str">"isError"</span>: <span class="kw">false</span>
+  }
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--accent5)">5. The model bridge — translating MCP to LLM tool calls</h3>
+    <p style="margin-bottom:12px">The host turns each MCP tool into a function entry on its LLM API call. When the model emits a tool-use block, the host routes it to the right MCP client by tool name.</p>
+    <pre><code><span class="cm"># Host pseudocode — translating MCP to Anthropic tools API</span>
+mcp_tools = <span class="kw">await</span> client.<span class="fn">list_tools</span>()  <span class="cm"># MCP shape</span>
+
+anthropic_tools = [
+  {
+    <span class="str">"name"</span>:        t.name,
+    <span class="str">"description"</span>: t.description,
+    <span class="str">"input_schema"</span>: t.inputSchema,  <span class="cm"># JSON Schema, same shape</span>
+  } <span class="kw">for</span> t <span class="kw">in</span> mcp_tools
+]
+
+response = anthropic.messages.<span class="fn">create</span>(
+    model=<span class="str">"claude-opus-4-7"</span>,
+    tools=anthropic_tools,
+    messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="str">"forecast Paris"</span>}],
+)
+
+<span class="kw">for</span> block <span class="kw">in</span> response.content:
+    <span class="kw">if</span> block.type == <span class="str">"tool_use"</span>:
+        result = <span class="kw">await</span> client.<span class="fn">call_tool</span>(block.name, block.input)
+        <span class="cm"># … feed result back to model …</span></code></pre>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 5: FLOW -->
+<section id="flow">
+  <div class="section-header">
+    <div class="section-icon icon-teal">🔄</div>
+    <div><h2>Lifecycle Flow</h2><div class="subtitle">From host launch to tool result, every step on the wire</div></div>
+  </div>
+  <div class="flow">
+    <div class="flow-title">Full session — host startup → tool call → shutdown</div>
+
+    <div class="flow-row">
+      <div class="flow-step client">① Host reads config</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">claude_desktop_config.json names servers and how to spawn them</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step client">② Spawn subprocess</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Host runs <code>command</code> + <code>args</code>, pipes stdin/stdout</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">③ initialize request</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Client sends protocolVersion + its capabilities (sampling, roots, …)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">④ initialize result</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Server replies with its capabilities (tools, resources, prompts, …)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">⑤ initialized notification</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Client confirms handshake; session is now operational</div>
+    </div>
+
+    <hr class="flow-divider" />
+
+    <div class="flow-row">
+      <div class="flow-step client">⑥ tools/list</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Client asks for the catalog of callable tools</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑦ Tool catalog</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">name + description + JSON Schema for inputs</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">⑧ Host → LLM</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Tools attached to the model's tool list; user prompt sent</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">⑨ Model picks a tool</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">LLM emits tool_use block with name + arguments</div>
+    </div>
+
+    <hr class="flow-divider" />
+
+    <div class="flow-row">
+      <div class="flow-step client">⑩ User consent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Host shows permission prompt (or auto-approves per allowlist)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step network">⑪ tools/call</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Client sends JSON-RPC request with name + arguments</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑫ Execute</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Server runs the function (DB query, API call, file read, …)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step server">⑬ tools/call result</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">content blocks (text, image, audio, embedded resource) + isError</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step logic">⑭ Result → LLM</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">Host appends tool_result; model continues reasoning</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step client">⑮ shutdown</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-label">On host exit, client closes transport; subprocess terminates</div>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:20px">
+    <strong>Important:</strong> Steps 1–7 happen <em>once at startup</em>. Steps 8–14 repeat for every tool the model invokes during a session. Step 10 (consent) is host policy — Claude Desktop prompts per call by default; some hosts allow per-server allowlists.
+  </div>
+
+  <div style="margin-top:24px">
+    <div class="card">
+      <h3 style="margin-bottom:16px;color:var(--accent4)">Responsibility Matrix</h3>
+      <table>
+        <thead><tr><th>Step</th><th>Who Is Responsible</th><th>Which Component</th><th>What Happens</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">Spawning the server</td><td>Host</td><td>Process manager</td><td>Reads config, runs subprocess, pipes stdio</td></tr>
+          <tr><td class="hl">initialize / capability negotiation</td><td>Both</td><td>Client + Server</td><td>Agree on protocol version, declare features</td></tr>
+          <tr><td class="hl">Listing tools</td><td>Client</td><td>SDK</td><td>Calls <code>tools/list</code>, caches the result</td></tr>
+          <tr><td class="hl">Translating to LLM schema</td><td>Host</td><td>Model adapter</td><td>Maps MCP tool defs to provider's tool format</td></tr>
+          <tr><td class="hl">Deciding to call a tool</td><td>Model</td><td>LLM</td><td>Emits tool_use block — host doesn't pre-decide</td></tr>
+          <tr><td class="hl">User consent</td><td>Host</td><td>UI layer</td><td>Confirmation dialog or allowlist check</td></tr>
+          <tr><td class="hl">Executing the tool</td><td>Server</td><td>Tool handler</td><td>Runs business logic, returns content blocks</td></tr>
+          <tr><td class="hl">Auth to external API</td><td>Server</td><td>Tool handler</td><td>Uses env vars / OAuth tokens — host stays out</td></tr>
+          <tr><td class="hl">Pushing changes</td><td>Server</td><td>Notification sender</td><td>Sends <code>list_changed</code>, progress updates</td></tr>
+          <tr><td class="hl">Sampling callback</td><td>Server → Host</td><td>Reverse direction</td><td>Server asks host to run an LLM completion</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 6: TRANSPORTS & CONFIG -->
+<section id="internals">
+  <div class="section-header">
+    <div class="section-icon icon-amber">🔍</div>
+    <div><h2>Transports & Configuration</h2><div class="subtitle">stdio vs Streamable HTTP, how messages actually move</div></div>
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>Core truth:</strong> MCP is transport-agnostic at the message level — JSON-RPC envelopes don't change. The transport just decides how envelope bytes get from one process to another. Two transports are standard: <strong>stdio</strong> for local subprocess servers, <strong>Streamable HTTP</strong> for remote/network servers.
+  </div>
+
+  <div class="discovery-grid" style="margin-top:20px">
+
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent)">Transport 1</div>
+      <h4>stdio</h4>
+      <p>Server is launched as a subprocess of the host. Messages = JSON lines on stdout/stdin. Stderr is reserved for logs. Zero network exposure, zero auth — trust comes from the host having spawned the binary.</p>
+      <pre style="margin-top:10px"><code><span class="cm"># Newline-delimited JSON-RPC over pipes</span>
+{<span class="str">"jsonrpc"</span>:<span class="str">"2.0"</span>,<span class="str">"id"</span>:<span class="num">1</span>,<span class="str">"method"</span>:<span class="str">"initialize"</span>,...}
+{<span class="str">"jsonrpc"</span>:<span class="str">"2.0"</span>,<span class="str">"id"</span>:<span class="num">1</span>,<span class="str">"result"</span>:{...}}</code></pre>
+    </div>
+
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent2)">Transport 2</div>
+      <h4>Streamable HTTP</h4>
+      <p>Single HTTP endpoint (e.g., <code>/mcp</code>). Client POSTs requests, server replies inline OR upgrades to SSE for streaming responses + server-pushed notifications. Replaces the old two-endpoint HTTP+SSE transport.</p>
+      <pre style="margin-top:10px"><code><span class="kw">POST</span> /mcp HTTP/1.1
+<span class="cls">Content-Type</span>: application/json
+<span class="cls">Accept</span>: application/json, text/event-stream
+
+{<span class="str">"jsonrpc"</span>:<span class="str">"2.0"</span>,<span class="str">"id"</span>:<span class="num">1</span>,...}</code></pre>
+    </div>
+
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent3)">Capability declaration</div>
+      <h4>Negotiated at init</h4>
+      <p>Each side advertises a <code>capabilities</code> object during <code>initialize</code>. Servers declare <code>tools</code>, <code>resources</code>, <code>prompts</code>, <code>logging</code>; clients declare <code>sampling</code>, <code>roots</code>, <code>elicitation</code>. Features absent from <em>either</em> side are off.</p>
+      <pre style="margin-top:10px"><code>{
+  <span class="str">"capabilities"</span>: {
+    <span class="str">"tools"</span>: { <span class="str">"listChanged"</span>: <span class="kw">true</span> },
+    <span class="str">"resources"</span>: { <span class="str">"subscribe"</span>: <span class="kw">true</span> }
+  }
+}</code></pre>
+    </div>
+
+    <div class="disc-card">
+      <div class="label" style="color:var(--accent4)">Versioning</div>
+      <h4>Date-string protocol versions</h4>
+      <p>Versions are date strings like <code>2025-06-18</code>. Client proposes a version; server returns the version it'll use (may downgrade). Mismatch ⇒ client must disconnect. The spec is a living document — current version is published at <code>modelcontextprotocol.io/specification</code>.</p>
+    </div>
+
+  </div>
+
+  <div style="margin-top:20px">
+    <div class="card">
+      <h3 style="margin-bottom:16px;color:var(--accent)">A complete initialize exchange</h3>
+      <p style="margin-bottom:14px;color:var(--text-muted)">The handshake declares versions and capabilities. Once the <code>notifications/initialized</code> note is sent, both sides may use any negotiated feature.</p>
+      <pre><code><span class="cm">// 1. Client → Server</span>
+{
+  <span class="str">"jsonrpc"</span>: <span class="str">"2.0"</span>, <span class="str">"id"</span>: <span class="num">1</span>,
+  <span class="str">"method"</span>: <span class="str">"initialize"</span>,
+  <span class="str">"params"</span>: {
+    <span class="str">"protocolVersion"</span>: <span class="str">"2025-06-18"</span>,
+    <span class="str">"capabilities"</span>: {
+      <span class="str">"sampling"</span>: {},
+      <span class="str">"roots"</span>: { <span class="str">"listChanged"</span>: <span class="kw">true</span> }
+    },
+    <span class="str">"clientInfo"</span>: { <span class="str">"name"</span>: <span class="str">"claude-desktop"</span>, <span class="str">"version"</span>: <span class="str">"0.10.0"</span> }
+  }
+}
+
+<span class="cm">// 2. Server → Client</span>
+{
+  <span class="str">"jsonrpc"</span>: <span class="str">"2.0"</span>, <span class="str">"id"</span>: <span class="num">1</span>,
+  <span class="str">"result"</span>: {
+    <span class="str">"protocolVersion"</span>: <span class="str">"2025-06-18"</span>,
+    <span class="str">"capabilities"</span>: {
+      <span class="str">"tools"</span>: { <span class="str">"listChanged"</span>: <span class="kw">true</span> },
+      <span class="str">"resources"</span>: {},
+      <span class="str">"prompts"</span>: {}
+    },
+    <span class="str">"serverInfo"</span>: { <span class="str">"name"</span>: <span class="str">"weather-server"</span>, <span class="str">"version"</span>: <span class="str">"1.0.0"</span> }
+  }
+}
+
+<span class="cm">// 3. Client → Server (notification, no id, no response)</span>
+{ <span class="str">"jsonrpc"</span>: <span class="str">"2.0"</span>, <span class="str">"method"</span>: <span class="str">"notifications/initialized"</span> }</code></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 7: DISPATCH & ROUTING -->
+<section id="dispatch">
+  <div class="section-header">
+    <div class="section-icon icon-red">⚡</div>
+    <div><h2>Dispatch & Routing</h2><div class="subtitle">How a tool call from the model finds the right server, and the right function inside it</div></div>
+  </div>
+
+  <div class="card-grid">
+
+    <div class="card">
+      <h3 style="color:var(--accent)">Tool name → server</h3>
+      <p style="margin-bottom:12px">The host maintains a name→client map built from <code>tools/list</code> responses. When the LLM calls tool <code>get_forecast</code>, the host looks up which client owns that name and routes the JSON-RPC there.</p>
+      <pre><code><span class="cm"># Host-side dispatch table</span>
+tool_to_client = {}
+<span class="kw">for</span> server_name, client <span class="kw">in</span> active_clients.items():
+    <span class="kw">for</span> tool <span class="kw">in</span> <span class="kw">await</span> client.<span class="fn">list_tools</span>():
+        tool_to_client[tool.name] = client
+
+<span class="cm"># When model emits tool_use:</span>
+client = tool_to_client[block.name]
+result = <span class="kw">await</span> client.<span class="fn">call_tool</span>(block.name, block.input)</code></pre>
+    </div>
+
+    <div class="card">
+      <h3 style="color:var(--accent2)">Name collisions across servers</h3>
+      <p style="margin-bottom:12px">Two servers can both expose a tool named <code>search</code>. Hosts disambiguate by namespacing — Claude Code prefixes tool names with <code>mcp__&lt;serverName&gt;__&lt;toolName&gt;</code> when sending to the LLM. The server itself never sees the prefix.</p>
+      <pre><code><span class="cm"># What the model actually sees</span>
+[
+  <span class="str">"mcp__github__search"</span>,
+  <span class="str">"mcp__filesystem__search"</span>,
+  <span class="str">"mcp__weather__get_forecast"</span>,
+]
+
+<span class="cm"># Host strips the prefix before tools/call</span>
+server, name = block.name.<span class="fn">removeprefix</span>(<span class="str">"mcp__"</span>).<span class="fn">split</span>(<span class="str">"__"</span>, <span class="num">1</span>)
+<span class="kw">await</span> clients[server].<span class="fn">call_tool</span>(name, block.input)</code></pre>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="color:var(--accent3);margin-bottom:16px">Inside the server: method → handler</h3>
+    <p style="margin-bottom:12px;color:var(--text-muted)">Within a server, JSON-RPC <code>method</code> strings dispatch to handlers via a registry. The SDK does this for you — decorate a function and it's auto-registered for both <code>tools/list</code> and <code>tools/call</code>.</p>
+    <pre><code><span class="cm"># FastMCP internals (simplified)</span>
+<span class="kw">class</span> <span class="cls">FastMCP</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, name):
+        self._tools: <span class="cls">dict</span>[<span class="cls">str</span>, <span class="cls">Tool</span>] = {}
+
+    <span class="kw">def</span> <span class="fn">tool</span>(self):
+        <span class="kw">def</span> <span class="fn">decorator</span>(fn):
+            self._tools[fn.__name__] = <span class="cls">Tool</span>.<span class="fn">from_function</span>(fn)
+            <span class="kw">return</span> fn
+        <span class="kw">return</span> decorator
+
+    <span class="cm"># Handles incoming tools/call</span>
+    <span class="kw">async def</span> <span class="fn">_handle_call_tool</span>(self, params):
+        tool = self._tools[params[<span class="str">"name"</span>]]
+        result = <span class="kw">await</span> tool.<span class="fn">run</span>(params[<span class="str">"arguments"</span>])
+        <span class="kw">return</span> { <span class="str">"content"</span>: [{ <span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="cls">str</span>(result) }] }</code></pre>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="color:var(--accent4);margin-bottom:16px">Resources use URI templates, not function names</h3>
+    <p style="margin-bottom:12px;color:var(--text-muted)">For <em>resources</em>, dispatch is by URI. Servers register URI templates (RFC 6570); on <code>resources/read</code> the server matches the requested URI against its templates and calls the matching handler.</p>
+    <pre><code><span class="cm">@mcp.resource("file:///{path}")</span>
+<span class="kw">async def</span> <span class="fn">read_file</span>(path: <span class="cls">str</span>) -> <span class="cls">str</span>:
+    <span class="kw">return</span> <span class="cls">Path</span>(path).<span class="fn">read_text</span>()
+
+<span class="cm">@mcp.resource("postgres://db/{schema}/{table}")</span>
+<span class="kw">async def</span> <span class="fn">read_table</span>(schema: <span class="cls">str</span>, table: <span class="cls">str</span>) -> <span class="cls">str</span>:
+    <span class="kw">return</span> <span class="kw">await</span> db.<span class="fn">describe</span>(schema, table)</code></pre>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 8: DEEP TECH -->
+<section id="deeptech">
+  <div class="section-header">
+    <div class="section-icon icon-pink">🔬</div>
+    <div><h2>Deep Technical Aspects</h2><div class="subtitle">Wire format, threading, errors, security, performance</div></div>
+  </div>
+  <div class="deep-grid">
+
+    <div class="deep-card">
+      <h4>Wire format details</h4>
+      <ul>
+        <li>JSON-RPC 2.0 — <code>jsonrpc: "2.0"</code> required on every message</li>
+        <li>stdio uses <strong>newline-delimited JSON</strong>; one envelope per line, no embedded newlines</li>
+        <li>Streamable HTTP responses may be <code>application/json</code> or <code>text/event-stream</code></li>
+        <li>SSE event data carries the same JSON-RPC envelope, one per <code>data:</code> field</li>
+        <li>UTF-8 only; binary content (images, audio) is base64-encoded inside content blocks</li>
+        <li>No size limit in the spec — practical limit is the host/server memory and any HTTP gateway in between</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Concurrency & request IDs</h4>
+      <ul>
+        <li>Requests are async — multiple in flight simultaneously, matched by <code>id</code></li>
+        <li>IDs must be unique within a session; SDKs use monotonically increasing integers</li>
+        <li>Notifications have <strong>no id</strong> and never get a response</li>
+        <li>Order is not guaranteed — request 5 may complete before request 3</li>
+        <li>Servers may process requests in parallel or serially; the protocol doesn't mandate one</li>
+        <li>Cancellation via <code>notifications/cancelled</code> with the request's id</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Error model</h4>
+      <ul>
+        <li>Two error layers: <strong>protocol errors</strong> (JSON-RPC <code>error</code> object with code/message) and <strong>tool errors</strong> (200-OK result with <code>isError: true</code>)</li>
+        <li>Tool errors carry text content — model can read and recover (e.g., retry with different args)</li>
+        <li>Protocol error codes follow JSON-RPC: -32700 parse, -32600 invalid request, -32601 method not found, -32602 invalid params, -32603 internal</li>
+        <li>Custom server errors use codes ≤ -32000</li>
+        <li>Connection-level errors (broken pipe, HTTP 500) terminate the session</li>
+        <li>SDKs surface tool errors as Python/JS exceptions on the client side</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Authorization (HTTP transport)</h4>
+      <ul>
+        <li>2025-06-18 spec mandates <strong>OAuth 2.1</strong> with PKCE for all HTTP transports</li>
+        <li>Server publishes a metadata document at <code>/.well-known/oauth-authorization-server</code></li>
+        <li>Dynamic Client Registration (RFC 7591) lets clients register on the fly</li>
+        <li>Access tokens carried in <code>Authorization: Bearer</code> header on every request</li>
+        <li>Refresh tokens supported; token rotation per RFC 6749 §6</li>
+        <li>stdio transport has no auth — trust comes from the host having permission to spawn the subprocess</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Sampling (server → host LLM)</h4>
+      <ul>
+        <li>Server can request the host to run an LLM completion via <code>sampling/createMessage</code></li>
+        <li>Lets a server be "agentic" without bundling a model or API key</li>
+        <li>Host decides which model to use; server suggests via <code>modelPreferences</code></li>
+        <li>User must consent (host UI prompts) — server cannot silently bill the user's account</li>
+        <li>Useful for: summarization tools, multi-step planning servers, language translation servers</li>
+        <li>Optional capability — server must declare it during initialize</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Roots (host → server scope)</h4>
+      <ul>
+        <li>Client tells server which URIs it's allowed to operate on (e.g., a list of project directories)</li>
+        <li>Server queries via <code>roots/list</code>; receives <code>roots/list_changed</code> notifications</li>
+        <li>A filesystem server uses roots to refuse reads outside the user's chosen folders</li>
+        <li>Soft contract — enforcement is server-side; a malicious server could ignore them</li>
+        <li>Crucial for sandboxed agents that work on a specific repo</li>
+        <li>Optional capability declared by client</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Notifications & subscriptions</h4>
+      <ul>
+        <li><code>notifications/tools/list_changed</code> — server's tool catalog updated, re-list</li>
+        <li><code>notifications/resources/list_changed</code> — same for resources</li>
+        <li><code>notifications/resources/updated</code> — a specific resource changed (sent only to subscribers)</li>
+        <li><code>notifications/progress</code> — long-running tool call progress (with optional total)</li>
+        <li><code>notifications/cancelled</code> — request cancelled by either side</li>
+        <li><code>notifications/message</code> — server log message at a level (debug/info/warn/error)</li>
+      </ul>
+    </div>
+
+    <div class="deep-card">
+      <h4>Security considerations</h4>
+      <ul>
+        <li><strong>Prompt injection via tool output</strong> — tool result text is fed to the LLM; malicious server can hijack the agent</li>
+        <li><strong>Tool description poisoning</strong> — descriptions go in the model's context; misleading text can cause wrong tool selection</li>
+        <li><strong>Confused deputy</strong> — server holds a token with broad scope; LLM persuades it to do unintended actions</li>
+        <li>Mitigation: per-call user consent, allowlists, scope-narrowed tokens per server, output scrubbing</li>
+        <li>Spec's <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices">Security Best Practices</a> doc enumerates known threats</li>
+        <li>Audit: log every <code>tools/call</code> request and result; many hosts ship this by default</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:24px">
+    <h3 style="color:var(--accent4);margin-bottom:16px">MCP vs Plain Function Calling — When to Use Which</h3>
+    <table>
+      <thead><tr><th>Dimension</th><th>MCP</th><th>Plain function calling (Anthropic / OpenAI)</th></tr></thead>
+      <tbody>
+        <tr><td class="hl">Coupling</td><td>Tools live in separate processes/servers, swappable without rebuild</td><td>Tools defined inline in your application code</td></tr>
+        <tr><td class="hl">Cross-app reuse</td><td>One server works with any MCP host (Claude Desktop, Cursor, Zed, …)</td><td>Each app re-implements the integration</td></tr>
+        <tr><td class="hl">Discovery</td><td>Dynamic — tools can change mid-session via list_changed</td><td>Static — registered once at API call time</td></tr>
+        <tr><td class="hl">Auth boundary</td><td>Lives in the server; host never sees credentials</td><td>Lives inside your app process</td></tr>
+        <tr><td class="hl">Latency</td><td>Extra hop through subprocess/HTTP — typically 1–5 ms locally</td><td>In-process function call — sub-millisecond</td></tr>
+        <tr><td class="hl">Best for</td><td>Distributable integrations, multi-app tools, third-party tools</td><td>Tightly coupled app-specific tools, perf-critical paths</td></tr>
+        <tr><td class="hl">Stateful sessions</td><td>Yes — server holds state across many calls in one session</td><td>You manage state in your app</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="sep" />
+
+<!-- SECTION 9: FAQ -->
+<section id="faq">
+  <div class="section-header">
+    <div class="section-icon icon-green">❓</div>
+    <div><h2>Frequently Asked Questions</h2><div class="subtitle">Common questions — click to expand</div></div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Is MCP an Anthropic-only protocol?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">No. Anthropic created and open-sourced it (Apache 2.0), but it's a vendor-neutral spec governed at modelcontextprotocol.io. OpenAI, Google, and others have either adopted it or expressed support. The protocol does not assume Claude — any LLM can sit behind a host.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Does the LLM speak MCP directly?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">No. The host sits between them. The host translates MCP <code>tools/list</code> output into the LLM provider's tool schema and converts the LLM's tool-call requests back into MCP <code>tools/call</code>. The model just sees a normal list of tools.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What's the difference between a tool, a resource, and a prompt?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a"><strong>Tool</strong> = a function the LLM can decide to call (model-controlled). <strong>Resource</strong> = data the host can attach to context like a file or DB row (app-controlled). <strong>Prompt</strong> = a templated user-triggered command, usually surfaced as a slash command (user-controlled). Same protocol, different control point.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How do I write an MCP server?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">The lowest-friction path: install the official SDK in Python (<code>pip install mcp</code>) or TypeScript (<code>npm i @modelcontextprotocol/sdk</code>), import <code>FastMCP</code>, decorate functions with <code>@mcp.tool()</code>, and call <code>mcp.run()</code>. For non-SDK languages, implement the JSON-RPC handshake yourself — the spec is small.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; How do I add an MCP server to Claude Desktop / Claude Code?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Edit the host's config file. Claude Desktop: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>. Claude Code: <code>claude mcp add &lt;name&gt; &lt;command&gt;</code> (CLI) or edit <code>~/.claude.json</code>. Add an entry under <code>mcpServers</code> with <code>command</code>, <code>args</code>, and optional <code>env</code>. Restart the host.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Can MCP servers run remotely?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Yes — that's the Streamable HTTP transport. The server hosts a single endpoint, the host POSTs JSON-RPC, and the server may upgrade the response to SSE for streaming. Remote servers must implement OAuth 2.1 per the 2025-06-18 spec.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What happens when a tool takes 30 seconds?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Two options. (1) The server can stream <code>notifications/progress</code> messages with a percentage. (2) The host or client can issue <code>notifications/cancelled</code> if the user gives up. The model itself just sees a delayed result; if the host has a timeout, it surfaces an error to the LLM.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Can a server access another server?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">Not directly — clients are 1:1 with servers, and servers don't talk to other servers. To compose, you either let the model orchestrate (it calls server A, then B, then C) or build a "meta-server" that internally embeds clients to other servers. The protocol does not gateway between servers.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; Is MCP a replacement for OpenAPI / GraphQL / gRPC?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">No — different layer. OpenAPI/gRPC describe a service for human-or-machine consumption. MCP describes a service <em>to an LLM</em>, with primitives (resources, prompts) and conventions (capability negotiation, sampling, roots) tuned for that purpose. You can wrap an OpenAPI service as an MCP server in a few hundred lines.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span><span class="q-label">Q</span> &nbsp; What are the biggest pitfalls in practice?</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="faq-a">(1) Vague tool descriptions → model picks the wrong tool. Be specific. (2) Returning huge results → blows the context window; paginate or truncate. (3) Trusting tool output blindly → prompt injection from external data. (4) Stateful tools that assume single-threaded calls — clients can issue parallel requests. (5) Forgetting that env vars on the host config don't reach remote HTTP servers — those need OAuth or their own auth.</div>
+  </div>
+
+</section>
+
+</div><!-- /page -->
+
+<footer>
+  MCP Deep Dive &nbsp;·&nbsp; 2026-05-07
+</footer>
+
+<!-- CONTROL PANEL -->
+<button id="ctrl-toggle" title="Appearance settings">🎨</button>
+<div id="ctrl-panel">
+  <div class="cp-section">
+    <div class="cp-label">Theme</div>
+    <div class="theme-swatches">
+      <div class="swatch" data-theme="dark"><div class="swatch-dot sw-dark"></div><span class="swatch-name">Dark</span></div>
+      <div class="swatch" data-theme="light"><div class="swatch-dot sw-light"></div><span class="swatch-name">Light</span></div>
+      <div class="swatch" data-theme="warm"><div class="swatch-dot sw-warm"></div><span class="swatch-name">Warm</span></div>
+      <div class="swatch" data-theme="cool"><div class="swatch-dot sw-cool"></div><span class="swatch-name">Cool</span></div>
+      <div class="swatch" data-theme="glow"><div class="swatch-dot sw-glow"></div><span class="swatch-name">Glow</span></div>
+      <div class="swatch" data-theme="gray"><div class="swatch-dot sw-gray"></div><span class="swatch-name">Gray</span></div>
+      <div class="swatch" data-theme="lightdark"><div class="swatch-dot sw-lightdark"></div><span class="swatch-name">Dim</span></div>
+    </div>
+  </div>
+  <hr class="cp-divider" />
+  <div class="cp-section">
+    <div class="cp-label">Layout</div>
+    <div class="mode-pills">
+      <button class="mode-pill" data-mode="compact">Compact</button>
+      <button class="mode-pill active" data-mode="web">Web</button>
+      <button class="mode-pill" data-mode="read">Read</button>
+    </div>
+  </div>
+  <hr class="cp-divider" />
+  <div class="cp-section">
+    <div class="cp-label">Font Size</div>
+    <div class="font-row">
+      <button class="fs-btn" id="fs-down">A−</button>
+      <div class="fs-display" id="fs-display">15px</div>
+      <button class="fs-btn" id="fs-up">A+</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const LS={theme:'dochtml-mcp-theme',mode:'dochtml-mcp-mode',fs:'dochtml-mcp-fs'};
+  let fs=parseInt(localStorage.getItem(LS.fs)||'15',10);
+  (function init(){applyTheme(localStorage.getItem(LS.theme)||'dark',false);applyMode(localStorage.getItem(LS.mode)||'web',false);applyFs(fs,false)})();
+  const tog=document.getElementById('ctrl-toggle'),pan=document.getElementById('ctrl-panel');
+  tog.addEventListener('click',()=>{const o=pan.classList.toggle('open');tog.classList.toggle('open',o)});
+  document.addEventListener('click',e=>{if(!pan.contains(e.target)&&e.target!==tog){pan.classList.remove('open');tog.classList.remove('open')}});
+  function applyTheme(n,s=true){document.documentElement.setAttribute('data-theme',n);document.querySelectorAll('.swatch').forEach(x=>x.classList.toggle('active',x.dataset.theme===n));if(s)localStorage.setItem(LS.theme,n)}
+  document.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click',()=>applyTheme(s.dataset.theme)));
+  function applyMode(n,s=true){document.body.setAttribute('data-mode',n);document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===n));if(s)localStorage.setItem(LS.mode,n)}
+  document.querySelectorAll('.mode-pill').forEach(p=>p.addEventListener('click',()=>applyMode(p.dataset.mode)));
+  function applyFs(px,s=true){fs=Math.min(22,Math.max(12,px));document.documentElement.style.fontSize=fs+'px';document.getElementById('fs-display').textContent=fs+'px';if(s)localStorage.setItem(LS.fs,fs)}
+  document.getElementById('fs-up').addEventListener('click',()=>applyFs(fs+1));
+  document.getElementById('fs-down').addEventListener('click',()=>applyFs(fs-1));
+  function toggle(el){el.parentElement.classList.toggle('open')}
+  document.querySelector('.faq-item').classList.add('open');
+</script>
+</body>
+</html>
