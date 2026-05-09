@@ -8,12 +8,13 @@ import SheetSetupModal from './components/SheetSetupModal'
 import HomeView from './views/HomeView'
 import BrowseView from './views/BrowseView'
 import DocsView from './views/DocsView'
+import NotesView from './views/NotesView'
 import SettingsView from './views/SettingsView'
 import AskAIPanel from './components/AskAIPanel'
 import './App.css'
 
 type AuthState = 'loading' | 'unauthenticated' | 'needs-sheet' | 'authenticated'
-type View = 'home' | 'browse' | 'docs' | 'settings'
+type View = 'home' | 'browse' | 'docs' | 'notes' | 'settings'
 
 const GOOGLE_SVG = (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -171,6 +172,7 @@ export default function App() {
         {view === 'home'     && <HomeView />}
         {view === 'browse'   && <BrowseView />}
         {view === 'docs'     && <DocsView />}
+        {view === 'notes'    && <NotesView />}
         {view === 'settings' && (
           <SettingsView
             theme={theme}
@@ -195,6 +197,9 @@ export default function App() {
           </button>
           <button className={`bn-btn${view === 'docs'     ? ' active' : ''}`} onClick={() => setView('docs')}>
             <span className="bn-icon">📄</span><span className="bn-label">Docs</span>
+          </button>
+          <button className={`bn-btn${view === 'notes'    ? ' active' : ''}`} onClick={() => setView('notes')}>
+            <span className="bn-icon">📓</span><span className="bn-label">Notes</span>
           </button>
           {/* Settings is reachable via the avatar dropdown in the top bar
               (same place on desktop and mobile), so it's no longer in the
