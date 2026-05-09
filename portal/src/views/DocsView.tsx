@@ -43,8 +43,28 @@ export default function DocsView() {
   const [editing, setEditing]           = useState(false)
   const [editAlias, setEditAlias]       = useState('')
   const [editTags, setEditTags]         = useState<string>('')
+  const [editBusy, setEditBusy]         = useState(false)
+  const [editErr, setEditErr]           = useState('')
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [listRatio, setListRatio]           = useState(35)
+  const [viewerExpanded, setViewerExpanded] = useState(false)
+  const [tagsRatio, setTagsRatio]           = useState(18)
+
+  const fileInputRef       = useRef<HTMLInputElement>(null)
+  const splitContainerRef  = useRef<HTMLDivElement>(null)
+  const bodyWrapRef        = useRef<HTMLDivElement>(null)
+  const isDraggingRef      = useRef(false)
+  const isLeftDraggingRef  = useRef(false)
+
+  // Whenever the selection changes (different doc OR closed), drop the edit
+  // state so the new selection always lands on the read-only viewer.
+  useEffect(() => {
+    setEditing(false)
+    setEditAlias('')
+    setEditTags('')
+    setEditErr('')
+    setEditBusy(false)
+  }, [selected?.id])
 
   // ── Load on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -59,6 +79,54 @@ export default function DocsView() {
       }
     })()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Draggable list/viewer divider ─────────────────────────────────────────
+  function handleDividerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    isDraggingRef.current = true
+    document.body.classList.add('resizing-h')
+  }
+  function handleDividerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDraggingRef.current) return
+    const c = splitContainerRef.current
+    if (!c) return
+    const r = c.getBoundingClientRect()
+    const pct = ((e.clientX - r.left) / r.width) * 100
+    setListRatio(Math.min(Math.max(pct, 15), 70))
+  }
+  function handleDividerUp(e: React.PointerEvent<HTMLDivElement>) {
+    isDraggingRef.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+    document.body.classList.remove('resizing-h')
+  }
+
+  // ── Draggable left/main divider ───────────────────────────────────────────
+  function handleLeftDividerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    isLeftDraggingRef.current = true
+    document.body.classList.add('resizing-h')
+  }
+  function handleLeftDividerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isLeftDraggingRef.current) return
+    const c = bodyWrapRef.current
+    if (!c) return
+    const r = c.getBoundingClientRect()
+    const pct = ((e.clientX - r.left) / r.width) * 100
+    setTagsRatio(Math.min(Math.max(pct, 12), 45))
+  }
+  function handleLeftDividerUp(e: React.PointerEvent<HTMLDivElement>) {
+    isLeftDraggingRef.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+    document.body.classList.remove('resizing-h')
+  }
+
+  // Reset expanded state when selection clears so a fresh open of any doc
+  // starts from the normal split layout.
+  useEffect(() => {
+    if (!selected) setViewerExpanded(false)
+  }, [selected?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Filtering ─────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -123,6 +191,7 @@ export default function DocsView() {
     if (!selected) return
     setEditAlias(selected.alias)
     setEditTags(selected.tags.join(', '))
+    setEditErr('')
     setEditing(true)
   }
   async function saveEdit() {
@@ -132,6 +201,7 @@ export default function DocsView() {
       alias: editAlias.trim() || selected.alias,
       tags:  editTags.split(',').map(t => t.trim()).filter(Boolean),
     }
+    setEditBusy(true); setEditErr('')
     try {
       await updateDoc(updated)
       setDocs(prev => prev.map(d => d.id === updated.id ? updated : d))
@@ -139,13 +209,18 @@ export default function DocsView() {
       setEditing(false)
       toast('Doc updated', 'success')
     } catch (e) {
-      toast(`Save failed: ${(e as Error).message}`, 'error')
+      const msg = (e as Error).message
+      setEditErr(msg)
+      toast(`Save failed: ${msg}`, 'error')
+    } finally {
+      setEditBusy(false)
     }
   }
   async function doDelete() {
     if (!selected) return
     if (!window.confirm(`Delete "${selected.alias}"? This removes the Drive file too.`)) return
     const target = selected
+    setEditBusy(true); setEditErr('')
     try {
       const token = GAuth.getToken()
       if (!token) throw new Error('Not signed in')
@@ -153,15 +228,20 @@ export default function DocsView() {
       await deleteDocRow(target.id)
       setDocs(prev => prev.filter(d => d.id !== target.id))
       setSelected(null)
+      setEditing(false)
       toast('Doc deleted', 'success')
     } catch (e) {
-      toast(`Delete failed: ${(e as Error).message}`, 'error')
+      const msg = (e as Error).message
+      setEditErr(msg)
+      toast(`Delete failed: ${msg}`, 'error')
+    } finally {
+      setEditBusy(false)
     }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="browse-body-wrap">
+    <div className="browse-body-wrap" ref={bodyWrapRef}>
       {/* Hidden file input drives the upload picker */}
       <input
         ref={fileInputRef}
@@ -179,8 +259,15 @@ export default function DocsView() {
         />
       )}
 
-      {/* Left: tag tree */}
-      <div className={`browse-col-tags${leftCollapsed ? ' collapsed' : ''}`}>
+      {/* When the viewer is expanded, force the left panel to collapse so the
+          doc gets the entire main-column width. The user's own collapsed
+          preference (leftCollapsed) is preserved underneath and is restored
+          when they un-expand.
+          Left: tag tree (resizable) */}
+      <div
+        className={`browse-col-tags${(leftCollapsed || viewerExpanded) ? ' collapsed' : ''}`}
+        style={(leftCollapsed || viewerExpanded) ? undefined : { width: `${tagsRatio}%` }}
+      >
         <DocTagTree
           docs={docs}
           selectedTags={selectedTags}
@@ -188,10 +275,31 @@ export default function DocsView() {
             setSelectedTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
           }
           onClearAll={() => setSelectedTags([])}
-          collapsed={leftCollapsed}
-          onCollapse={() => setLeftColl(c => !c)}
+          collapsed={leftCollapsed || viewerExpanded}
+          onCollapse={() => {
+            // If we're forced-collapsed because the viewer is expanded,
+            // clicking the strip should restore the full split layout.
+            if (viewerExpanded) {
+              setViewerExpanded(false)
+              setLeftColl(false)
+            } else {
+              setLeftColl(c => !c)
+            }
+          }}
         />
       </div>
+
+      {/* Draggable divider between left tags and the main column — hidden
+          whenever the left panel is in its collapsed strip form. */}
+      {!(leftCollapsed || viewerExpanded) && (
+        <div
+          className="qa-divider"
+          onPointerDown={handleLeftDividerDown}
+          onPointerMove={handleLeftDividerMove}
+          onPointerUp={handleLeftDividerUp}
+          onPointerCancel={handleLeftDividerUp}
+        />
+      )}
 
       {/* Main: list + viewer */}
       <div className="browse-main">
@@ -221,11 +329,12 @@ export default function DocsView() {
           )}
         </div>
 
-        <div className="browse-cards-split">
-          {/* Doc list */}
+        <div className="browse-cards-split" ref={splitContainerRef}>
+          {/* Doc list — hidden when viewer is expanded */}
+          {!viewerExpanded && (
           <div
             className="browse-col-cards"
-            style={selected ? { flex: '0 0 32%' } : undefined}
+            style={selected ? { flex: `0 0 ${listRatio}%` } : undefined}
           >
             {loading ? (
               <div className="browse-stream-init">
@@ -268,40 +377,101 @@ export default function DocsView() {
               </ul>
             )}
           </div>
+          )}
+
+          {/* Draggable list/viewer divider — only when both panes are showing */}
+          {selected && !viewerExpanded && (
+            <div
+              className="qa-divider"
+              onPointerDown={handleDividerDown}
+              onPointerMove={handleDividerMove}
+              onPointerUp={handleDividerUp}
+              onPointerCancel={handleDividerUp}
+            />
+          )}
 
           {/* Viewer pane */}
           {selected && (
             <div className="browse-col-detail has-selection" style={{ flex: 1 }}>
-              <div className="col-hd" style={{ padding: '10px 12px', flexShrink: 0 }}>
+              <div
+                className="col-hd doc-detail-hd"
+                style={{ padding: '10px 12px', flexShrink: 0 }}
+                onDoubleClick={() => setViewerExpanded(v => !v)}
+                title="Double-click to expand / restore"
+              >
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {selected.alias || selected.filename}
+                  {editing ? 'Edit doc' : (selected.alias || selected.filename)}
                 </span>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button className="bci-edit-btn bci-edit-btn-hd" onClick={startEdit} title="Edit tags / alias">✎</button>
-                  <button className="bci-edit-btn bci-edit-btn-hd" onClick={doDelete} title="Delete">🗑</button>
+                <div
+                  style={{ display: 'flex', gap: 6 }}
+                  onDoubleClick={e => e.stopPropagation()}
+                >
+                  {!editing && (
+                    <button
+                      className="bci-edit-btn bci-edit-btn-hd"
+                      onClick={startEdit}
+                      title="Edit tags / alias"
+                    >✎</button>
+                  )}
+                  <button
+                    className={`bci-edit-btn bci-edit-btn-hd${viewerExpanded ? ' active' : ''}`}
+                    onClick={() => setViewerExpanded(v => !v)}
+                    title={viewerExpanded ? 'Show list' : 'Expand viewer'}
+                  >{viewerExpanded ? '⤡' : '⤢'}</button>
                   <button className="detail-close-btn" onClick={() => setSelected(null)}>✕</button>
                 </div>
               </div>
 
               {editing ? (
-                <div style={{ padding: 12 }}>
+                <div className="doc-edit-form">
                   <label className="rf-label">Alias</label>
                   <input
                     className="rf-input"
                     value={editAlias}
                     onChange={e => setEditAlias(e.target.value)}
-                    style={{ width: '100%', marginBottom: 10 }}
+                    disabled={editBusy}
                   />
-                  <label className="rf-label">Tags (comma-separated, ‹parent::child› for nesting)</label>
+
+                  <label className="rf-label" style={{ marginTop: 12 }}>
+                    Tags <span style={{ fontWeight: 400, color: 'var(--text2)' }}>
+                      (comma-separated; use <code>parent::child</code> for nested groups)
+                    </span>
+                  </label>
                   <input
                     className="rf-input"
                     value={editTags}
                     onChange={e => setEditTags(e.target.value)}
-                    style={{ width: '100%' }}
+                    placeholder="mcp, anthropic::sdk, frontend"
+                    autoFocus
+                    disabled={editBusy}
                   />
-                  <div className="rf-actions" style={{ marginTop: 12 }}>
-                    <button className="rf-btn-cancel" onClick={() => setEditing(false)}>Cancel</button>
-                    <button className="rf-btn-save" onClick={saveEdit}>Save</button>
+
+                  <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text2)' }}>
+                    File: {selected.filename} · {fmtSize(selected.size)} · {selected.mime}
+                  </div>
+
+                  {editErr && <div className="login-error" style={{ marginTop: 10 }}>{editErr}</div>}
+
+                  <div className="rf-actions" style={{ marginTop: 14 }}>
+                    <button className="rf-btn-cancel" onClick={() => setEditing(false)} disabled={editBusy}>
+                      Cancel
+                    </button>
+                    <button className="rf-btn-save" onClick={saveEdit} disabled={editBusy}>
+                      {editBusy ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
+
+                  <hr className="doc-edit-divider" />
+                  <button
+                    className="doc-edit-delete-btn"
+                    onClick={doDelete}
+                    disabled={editBusy}
+                    title="Permanently delete this doc and its Drive file"
+                  >
+                    🗑 Delete this doc
+                  </button>
+                  <div className="doc-edit-delete-warn">
+                    Removes the Drive file and the sheet row. Cannot be undone.
                   </div>
                 </div>
               ) : (

@@ -53,7 +53,13 @@ export default function DocViewer({ doc }: Props) {
     })()
     return () => {
       cancelled = true
-      if (createdUrl) URL.revokeObjectURL(createdUrl)
+      // Defer the revoke so the iframe has time to finish loading its src.
+      // Otherwise the iframe shows "Not allowed to load local resource:
+      // blob:…" because we revoked the URL while it was still navigating.
+      if (createdUrl) {
+        const u = createdUrl
+        setTimeout(() => URL.revokeObjectURL(u), 30_000)
+      }
     }
   }, [doc.id, kind])
 
@@ -70,17 +76,20 @@ export default function DocViewer({ doc }: Props) {
   }
 
   if (kind === 'html' && blobUrl) {
-    // Note: NO `allow-same-origin`. A blob:URL iframe with allow-same-origin
-    // inherits the parent's strict CSP, which blocks inline <script>/<style>
-    // inside user-uploaded docs. Dropping it gives the iframe a unique opaque
-    // origin (no CSP applies), so the doc's own JS/CSS/fonts run as designed,
-    // while still being isolated from the portal's storage and OAuth token.
+    // Sandbox keeps allow-same-origin so the doc's JS can use localStorage,
+    // sessionStorage, and same-origin fetches as a normal page would. The
+    // parent CSP relaxes script-src to 'unsafe-inline' (defence-in-depth is
+    // already provided by DOMPurify on every render path); connect-src is
+    // still locked to googleapis/accounts.google.com so a malicious doc can't
+    // exfiltrate the OAuth token to a third-party origin. Browsers may emit
+    // a "iframe with allow-scripts AND allow-same-origin can escape" warning
+    // — that's an advisory, not a block.
     return (
       <iframe
         title={doc.alias}
         src={blobUrl}
         className="doc-iframe"
-        sandbox="allow-scripts allow-popups allow-forms"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       />
     )
   }

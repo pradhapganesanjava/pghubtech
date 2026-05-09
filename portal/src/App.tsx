@@ -9,6 +9,7 @@ import HomeView from './views/HomeView'
 import BrowseView from './views/BrowseView'
 import DocsView from './views/DocsView'
 import SettingsView from './views/SettingsView'
+import AskAIPanel from './components/AskAIPanel'
 import './App.css'
 
 type AuthState = 'loading' | 'unauthenticated' | 'needs-sheet' | 'authenticated'
@@ -28,6 +29,7 @@ export default function App() {
   const [view, setView]           = useState<View>('home')
   const [theme, setTheme]         = useState<string>(Config.theme)
   const [loginError, setLoginError] = useState('')
+  const [aiOpen, setAiOpen]       = useState(false)
 
   // On mount: try to restore a session
   useEffect(() => {
@@ -162,6 +164,8 @@ export default function App() {
           theme={theme}
           onTheme={handleTheme}
           onSignOut={handleSignOut}
+          aiOpen={aiOpen}
+          onToggleAI={() => setAiOpen(o => !o)}
         />
 
         {view === 'home'     && <HomeView />}
@@ -177,6 +181,9 @@ export default function App() {
             }}
           />
         )}
+
+        {/* Ask AI floating panel — visible on every view */}
+        <AskAIPanel open={aiOpen} onClose={() => setAiOpen(false)} />
 
         {/* Mobile bottom nav */}
         <nav className="bottom-nav">

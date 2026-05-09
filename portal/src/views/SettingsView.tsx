@@ -1,9 +1,35 @@
 import { useState, useEffect } from 'react'
 import { Config } from '../services/config'
-import { checkAccess } from '../adapters/sheetsRepo'
+import { checkAccess, loadSettings, saveSetting } from '../adapters/sheetsRepo'
 import { loadAnkiTemplates, saveAnkiTemplate } from '../adapters/ankiRepo'
 import type { AnkiTemplate, AnkiField } from '../adapters/ankiRepo'
+import { LLM } from '../lib/llm'
+import { TTS } from '../lib/tts'
 import { useToast } from '../components/Toast'
+
+// Sheet-key ↔ Config-field mapping for the AI assistant settings. Saving the
+// AI panel writes one row per non-empty field to the Settings tab.
+const AI_KEYS = {
+  endpoint:    'ai_endpoint',
+  apiKey:      'ai_api_key',
+  deployment:  'ai_deployment',
+  apiVersion:  'ai_api_version',
+  ttsEndpoint: 'ai_tts_endpoint',
+  ttsApiKey:   'ai_tts_api_key',
+  ttsDeploy:   'ai_tts_deployment',
+  ttsVersion:  'ai_tts_api_version',
+  ttsVoice:    'ai_tts_voice',
+  audioOn:     'ai_audio_on',
+} as const
+
+const TTS_VOICES = [
+  { id: 'alloy',   label: 'Alloy'   },
+  { id: 'echo',    label: 'Echo'    },
+  { id: 'fable',   label: 'Fable'   },
+  { id: 'onyx',    label: 'Onyx'    },
+  { id: 'nova',    label: 'Nova'    },
+  { id: 'shimmer', label: 'Shimmer' },
+]
 
 type SettingsTab = 'general' | 'templates'
 type FieldType = 'text' | 'html' | 'number' | 'select' | 'tags'
@@ -141,6 +167,11 @@ function GeneralTab({ theme, onTheme, onChangeSheet }: Props) {
           {sheetStatus === 'err' && <div className="sheet-status warn">Connection failed — check the ID</div>}
         </div>
 
+        {/* AI Assistant */}
+        <div className="panel" style={{ gridColumn: '1 / -1' }}>
+          <AIAssistantPanel />
+        </div>
+
         {/* Theme */}
         <div className="panel" style={{ gridColumn: '1 / -1' }}>
           <h2>Appearance</h2>
@@ -164,6 +195,233 @@ function GeneralTab({ theme, onTheme, onChangeSheet }: Props) {
 
       </div>
     </div>
+  )
+}
+
+// ── AI assistant panel ────────────────────────────────────────────────────────
+
+function AIAssistantPanel() {
+  const { toast } = useToast()
+  const [endpoint,    setEndpoint]    = useState(Config.azureEndpoint)
+  const [apiKey,      setApiKey]      = useState(Config.azureApiKey)
+  const [deployment,  setDeployment]  = useState(Config.azureDeployment)
+  const [apiVersion,  setApiVersion]  = useState(Config.azureApiVersion)
+  const [ttsEndpoint, setTtsEndpoint] = useState(Config.azureTtsEndpoint)
+  const [ttsApiKey,   setTtsApiKey]   = useState(Config.azureTtsApiKey)
+  const [ttsDeploy,   setTtsDeploy]   = useState(Config.azureTtsDeployment)
+  const [ttsVersion,  setTtsVersion]  = useState(Config.azureTtsApiVersion)
+  const [ttsVoice,    setTtsVoice]    = useState(Config.ttsVoice)
+  const [audioOn,     setAudioOn]     = useState(Config.audioOn)
+  const [saving,      setSaving]      = useState(false)
+  const [testing,     setTesting]     = useState<'ai' | 'tts' | null>(null)
+
+  // Hydrate from the Sheet on mount so any values added directly to the
+  // Settings tab show up here.
+  useEffect(() => {
+    loadSettings().then(s => {
+      const apply = (k: string, set: (v: string) => void, target: keyof typeof Config) => {
+        if (s[k] !== undefined && s[k] !== '') {
+          set(s[k])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(Config as any)[target] = s[k]
+        }
+      }
+      apply(AI_KEYS.endpoint,    setEndpoint,    'azureEndpoint')
+      apply(AI_KEYS.apiKey,      setApiKey,      'azureApiKey')
+      apply(AI_KEYS.deployment,  setDeployment,  'azureDeployment')
+      apply(AI_KEYS.apiVersion,  setApiVersion,  'azureApiVersion')
+      apply(AI_KEYS.ttsEndpoint, setTtsEndpoint, 'azureTtsEndpoint')
+      apply(AI_KEYS.ttsApiKey,   setTtsApiKey,   'azureTtsApiKey')
+      apply(AI_KEYS.ttsDeploy,   setTtsDeploy,   'azureTtsDeployment')
+      apply(AI_KEYS.ttsVersion,  setTtsVersion,  'azureTtsApiVersion')
+      apply(AI_KEYS.ttsVoice,    setTtsVoice,    'ttsVoice')
+      if (s[AI_KEYS.audioOn] !== undefined) {
+        const on = s[AI_KEYS.audioOn] !== 'false'
+        setAudioOn(on)
+        Config.audioOn = on
+      }
+    }).catch(() => { /* fall back to local cache values already in state */ })
+  }, [])
+
+  async function persist(): Promise<void> {
+    setSaving(true)
+    try {
+      // Mirror locally so other modules (LLM/TTS) see the new values
+      // synchronously, then push each row to the Sheet.
+      Config.azureEndpoint      = endpoint.trim()
+      Config.azureApiKey        = apiKey.trim()
+      Config.azureDeployment    = deployment.trim()
+      Config.azureApiVersion    = apiVersion.trim()
+      Config.azureTtsEndpoint   = ttsEndpoint.trim()
+      Config.azureTtsApiKey     = ttsApiKey.trim()
+      Config.azureTtsDeployment = ttsDeploy.trim()
+      Config.azureTtsApiVersion = ttsVersion.trim()
+      Config.ttsVoice           = ttsVoice.trim()
+      Config.audioOn            = audioOn
+
+      await Promise.all([
+        saveSetting(AI_KEYS.endpoint,    Config.azureEndpoint),
+        saveSetting(AI_KEYS.apiKey,      Config.azureApiKey),
+        saveSetting(AI_KEYS.deployment,  Config.azureDeployment),
+        saveSetting(AI_KEYS.apiVersion,  Config.azureApiVersion),
+        saveSetting(AI_KEYS.ttsEndpoint, Config.azureTtsEndpoint),
+        saveSetting(AI_KEYS.ttsApiKey,   Config.azureTtsApiKey),
+        saveSetting(AI_KEYS.ttsDeploy,   Config.azureTtsDeployment),
+        saveSetting(AI_KEYS.ttsVersion,  Config.azureTtsApiVersion),
+        saveSetting(AI_KEYS.ttsVoice,    Config.ttsVoice),
+        saveSetting(AI_KEYS.audioOn,     String(Config.audioOn)),
+      ])
+      toast('AI settings saved', 'success')
+    } catch (e) {
+      toast(`Save failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function testAi(): Promise<void> {
+    setTesting('ai')
+    try {
+      const reply = await LLM.ask('Reply with the single word: ready')
+      toast(`AI: ${reply.slice(0, 60)}`, 'success')
+    } catch (e) {
+      toast(`AI test failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setTesting(null)
+    }
+  }
+
+  async function testTts(): Promise<void> {
+    setTesting('tts')
+    try {
+      await TTS.speak(`Hello, I am ${ttsVoice || 'your assistant'}. This is a voice test.`)
+    } catch (e) {
+      toast(`TTS failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setTesting(null)
+    }
+  }
+
+  return (
+    <>
+      <h2>AI Assistant (Azure OpenAI)</h2>
+      <p className="sub">
+        Configure your Azure OpenAI deployment for the floating Ask AI panel
+        and text-to-speech. Values persist to the Settings tab in your Sheet.
+      </p>
+
+      <div className="settings-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="form-group">
+          <label>Endpoint</label>
+          <input
+            type="text"
+            value={endpoint}
+            onChange={e => setEndpoint(e.target.value)}
+            placeholder="https://my-resource.openai.azure.com"
+          />
+        </div>
+        <div className="form-group">
+          <label>API Key</label>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+        <div className="form-group">
+          <label>Chat Deployment</label>
+          <input
+            type="text"
+            value={deployment}
+            onChange={e => setDeployment(e.target.value)}
+            placeholder="gpt-4o"
+          />
+        </div>
+        <div className="form-group">
+          <label>API Version</label>
+          <input
+            type="text"
+            value={apiVersion}
+            onChange={e => setApiVersion(e.target.value)}
+            placeholder="2024-12-01-preview"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>TTS Endpoint <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span></label>
+          <input
+            type="text"
+            value={ttsEndpoint}
+            onChange={e => setTtsEndpoint(e.target.value)}
+            placeholder="leave blank to reuse chat endpoint"
+          />
+        </div>
+        <div className="form-group">
+          <label>TTS API Key <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span></label>
+          <input
+            type="password"
+            value={ttsApiKey}
+            onChange={e => setTtsApiKey(e.target.value)}
+            placeholder="leave blank to reuse chat key"
+          />
+        </div>
+        <div className="form-group">
+          <label>TTS Deployment</label>
+          <input
+            type="text"
+            value={ttsDeploy}
+            onChange={e => setTtsDeploy(e.target.value)}
+            placeholder="tts-1 (leave blank → browser voice)"
+          />
+        </div>
+        <div className="form-group">
+          <label>TTS API Version</label>
+          <input
+            type="text"
+            value={ttsVersion}
+            onChange={e => setTtsVersion(e.target.value)}
+            placeholder="2025-03-01-preview"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Voice</label>
+          <select
+            value={ttsVoice}
+            onChange={e => setTtsVoice(e.target.value)}
+          >
+            {TTS_VOICES.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select>
+        </div>
+        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={audioOn}
+              onChange={e => setAudioOn(e.target.checked)}
+            />
+            <span>Auto-speak AI replies</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="form-actions" style={{ marginTop: 14, gap: 8, flexWrap: 'wrap' }}>
+        <button className="btn btn-primary" onClick={persist} disabled={saving}>
+          {saving ? 'Saving…' : 'Save AI settings'}
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={testAi}
+          disabled={testing !== null || !endpoint || !apiKey}
+        >{testing === 'ai' ? 'Testing…' : 'Test chat'}</button>
+        <button
+          className="btn btn-secondary"
+          onClick={testTts}
+          disabled={testing !== null}
+        >{testing === 'tts' ? 'Speaking…' : 'Test voice'}</button>
+      </div>
+    </>
   )
 }
 

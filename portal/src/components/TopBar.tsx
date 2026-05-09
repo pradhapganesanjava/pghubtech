@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
 
 interface Props {
@@ -7,6 +7,8 @@ interface Props {
   theme:   string
   onTheme: (t: string) => void
   onSignOut: () => void
+  aiOpen:    boolean
+  onToggleAI: () => void
 }
 
 const THEMES = [
@@ -18,29 +20,44 @@ const THEMES = [
   { id: 'cartoon',  label: 'Cartoon',  bg: '#fff9e6' },
 ]
 
+// Settings is reachable via the avatar menu, so it's no longer in the top nav.
 const NAVS = [
-  { id: 'home',     label: 'Home'     },
-  { id: 'browse',   label: 'Browse'   },
-  { id: 'docs',     label: 'Docs'     },
-  { id: 'settings', label: 'Settings' },
+  { id: 'home',   label: 'Home'   },
+  { id: 'browse', label: 'Browse' },
+  { id: 'docs',   label: 'Docs'   },
 ]
 
-export default function TopBar({ view, onNav, theme, onTheme, onSignOut }: Props) {
-  const [dropOpen, setDropOpen] = useState(false)
-  const dropRef = useRef<HTMLDivElement>(null)
+export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen, onToggleAI }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const closeTimer = useRef<number | null>(null)
   const user = GAuth.getUser()
 
+  // Click-outside to close (in addition to mouseLeave)
   useEffect(() => {
-    if (!dropOpen) return
-    function onOutside(e: MouseEvent) {
-      if (dropRef.current?.contains(e.target as Node)) return
-      setDropOpen(false)
+    if (!menuOpen) return
+    function onDocClick(e: MouseEvent) {
+      if (wrapRef.current?.contains(e.target as Node)) return
+      setMenuOpen(false)
     }
-    document.addEventListener('mousedown', onOutside)
-    return () => document.removeEventListener('mousedown', onOutside)
-  }, [dropOpen])
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [menuOpen])
 
-  const currentTheme = THEMES.find(t => t.id === theme) ?? THEMES[0]
+  function clearCloseTimer() {
+    if (closeTimer.current != null) {
+      window.clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }
+  function scheduleClose() {
+    clearCloseTimer()
+    closeTimer.current = window.setTimeout(() => setMenuOpen(false), 180)
+  }
+  function openNow() {
+    clearCloseTimer()
+    setMenuOpen(true)
+  }
 
   return (
     <div className="topbar">
@@ -60,40 +77,78 @@ export default function TopBar({ view, onNav, theme, onTheme, onSignOut }: Props
       </div>
 
       <div className="topbar-right">
-        {/* Theme picker */}
-        <div className="theme-picker-wrap" ref={dropRef}>
+        {/* Ask AI launcher — banner-height pill */}
+        <button
+          className={`tb-pill ai-launch-btn${aiOpen ? ' active' : ''}`}
+          onClick={onToggleAI}
+          title={aiOpen ? 'Close Ask AI' : 'Open Ask AI'}
+        >
+          <span className="tb-pill-icon">✨</span>
+          <span className="tb-pill-lbl">AI</span>
+        </button>
+
+        {/* Avatar trigger + dropdown (hover OR click) */}
+        <div
+          className={`avatar-menu-wrap${menuOpen ? ' open' : ''}`}
+          ref={wrapRef}
+          onMouseEnter={openNow}
+          onMouseLeave={scheduleClose}
+        >
           <button
-            className="theme-current-dot"
-            style={{ background: currentTheme.bg }}
-            onClick={() => setDropOpen(d => !d)}
-            title={`Theme: ${currentTheme.label}`}
-          />
-          {dropOpen && (
-            <div className="theme-dropdown">
-              {THEMES.map(t => (
-                <button
-                  key={t.id}
-                  className={`theme-drop-item${theme === t.id ? ' active' : ''}`}
-                  onClick={() => { onTheme(t.id); setDropOpen(false) }}
-                >
-                  <span className="theme-drop-dot" style={{ background: t.bg }} />
-                  <span className="theme-drop-label">{t.label}</span>
-                  {theme === t.id && <span className="theme-drop-check">✓</span>}
-                </button>
-              ))}
+            className="tb-pill avatar-trigger"
+            onClick={() => setMenuOpen(o => !o)}
+            title={user?.email ?? 'Account'}
+          >
+            {user?.picture
+              ? <img className="avatar-img" src={user.picture} alt={user.name} referrerPolicy="no-referrer" />
+              : <span className="avatar-chip">{user?.name?.[0]?.toUpperCase() ?? '·'}</span>}
+            <span className="tb-pill-lbl avatar-trigger-lbl">{user?.name?.split(' ')[0] ?? 'Me'}</span>
+            <span className="avatar-trigger-caret">▾</span>
+          </button>
+
+          {menuOpen && (
+            <div className="avatar-menu" onMouseEnter={openNow} onMouseLeave={scheduleClose}>
+              {(user?.name || user?.email) && (
+                <div className="avatar-menu-user">
+                  {user?.name && <div className="avatar-menu-name">{user.name}</div>}
+                  {user?.email && <div className="avatar-menu-email">{user.email}</div>}
+                </div>
+              )}
+
+              <div className="avatar-menu-section-hd">Theme</div>
+              <div className="avatar-menu-themes">
+                {THEMES.map(t => (
+                  <button
+                    key={t.id}
+                    className={`avatar-theme-swatch${theme === t.id ? ' active' : ''}`}
+                    onClick={() => { onTheme(t.id); /* keep menu open so user can preview */ }}
+                    title={t.label}
+                    style={{ background: t.bg }}
+                  >
+                    {theme === t.id && <span className="avatar-theme-check">✓</span>}
+                  </button>
+                ))}
+              </div>
+
+              <div className="avatar-menu-divider" />
+
+              <button
+                className={`avatar-menu-item${view === 'settings' ? ' active' : ''}`}
+                onClick={() => { onNav('settings'); setMenuOpen(false) }}
+              >
+                <span className="avatar-menu-icon">⚙</span>
+                <span>Settings</span>
+              </button>
+              <button
+                className="avatar-menu-item avatar-menu-item-danger"
+                onClick={() => { setMenuOpen(false); onSignOut() }}
+              >
+                <span className="avatar-menu-icon">⏏</span>
+                <span>Sign out</span>
+              </button>
             </div>
           )}
         </div>
-
-        {/* User avatar */}
-        {user?.picture
-          ? <img className="avatar-img" src={user.picture} alt={user.name} title={user.name} referrerPolicy="no-referrer" />
-          : user?.name
-            ? <div className="avatar-chip" title={user.email}>{user.name[0].toUpperCase()}</div>
-            : null
-        }
-
-        <button className="signout-btn" onClick={onSignOut} title="Sign out">⏏</button>
       </div>
     </div>
   )
