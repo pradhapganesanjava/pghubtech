@@ -196,9 +196,9 @@ export default function App() {
           <button className={`bn-btn${view === 'docs'     ? ' active' : ''}`} onClick={() => setView('docs')}>
             <span className="bn-icon">📄</span><span className="bn-label">Docs</span>
           </button>
-          <button className={`bn-btn${view === 'settings' ? ' active' : ''}`} onClick={() => setView('settings')}>
-            <span className="bn-icon">⚙️</span><span className="bn-label">Settings</span>
-          </button>
+          {/* Settings is reachable via the avatar dropdown in the top bar
+              (same place on desktop and mobile), so it's no longer in the
+              bottom-nav row. */}
         </nav>
       </div>
     </ToastProvider>
