@@ -71,6 +71,10 @@ export function newBlock(depth = 0, html = '', kind: BlockKind = 'content'): Pag
 
 // Render the block array as one sanitised HTML stream — used by NotesView's
 // view mode so the whole page reads as a single document.
+//
+// Each <table> is wrapped in a `<div class="page-table-wrap">` so wide
+// tables scroll horizontally inside the block rather than stretching the
+// whole page. Tables are rarely nested, so the simple regex wrap is safe.
 export function renderBlocksAsHtml(blocks: PageBlock[]): string {
   if (blocks.length === 0) return '<em style="opacity:.5">(empty)</em>'
   return blocks.map(b => {
@@ -78,8 +82,16 @@ export function renderBlocksAsHtml(blocks: PageBlock[]): string {
     if ((b.kind ?? 'content') === 'spacer') {
       return `<div style="margin-left:${indent}px;height:18px"></div>`
     }
-    return `<div class="page-render-block" style="margin-left:${indent}px">${b.html}</div>`
+    const html = wrapTables(b.html)
+    return `<div class="page-render-block" style="margin-left:${indent}px">${html}</div>`
   }).join('\n')
+}
+
+function wrapTables(html: string): string {
+  if (!html.includes('<table')) return html
+  return html
+    .replace(/<table([\s>])/gi, '<div class="page-table-wrap"><table$1')
+    .replace(/<\/table>/gi, '</table></div>')
 }
 
 interface Props {

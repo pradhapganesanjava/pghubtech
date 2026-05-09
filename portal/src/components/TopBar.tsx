@@ -26,6 +26,7 @@ const NAVS = [
   { id: 'browse', label: 'Browse' },
   { id: 'docs',   label: 'Docs'   },
   { id: 'notes',  label: 'Notes'  },
+  { id: 'utils',  label: 'Utils'  },
 ]
 
 export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen, onToggleAI }: Props) {

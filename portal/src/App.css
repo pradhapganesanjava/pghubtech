@@ -2042,6 +2042,94 @@ body.resizing-h * {
   border-left: 3px solid var(--primary); padding-left: 9px;
 }
 
+/* Col1 collapsed strip — shows Notes/Recent icon shortcuts so you can
+   switch sidebar mode without expanding first. */
+.notes-strip {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 4px;
+  align-items: center;
+}
+.notes-strip-btn {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px; line-height: 1;
+  transition: background .12s, border-color .12s;
+}
+.notes-strip-btn:hover {
+  background: var(--bg3);
+  border-color: var(--border);
+}
+.notes-strip-btn.active {
+  background: rgba(var(--primary-rgb), .15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Col 2 — the section/page tree, between col1 (Notes/Recent) and col3 (editor). */
+.notes-tree-col {
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.notes-tree-select {
+  flex: 1; min-width: 0;
+  background: var(--bg2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  text-transform: none; letter-spacing: 0;
+  font-weight: 600;
+}
+.notes-tree-body { flex: 1; overflow-y: auto; padding: 0 4px 8px; }
+
+/* Always-visible search input under the tab bar. */
+.notes-search-row {
+  display: flex; gap: 4px;
+  padding: 6px 8px 0;
+  align-items: center;
+}
+.notes-search-row .col-search { flex: 1; }
+.notes-search-icon {
+  font-size: 12px; line-height: 1;
+  width: 18px; text-align: center;
+  flex-shrink: 0; opacity: .7;
+}
+.notes-search-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text2);
+  font-size: 12px;
+  padding: 2px 6px; border-radius: 4px;
+  cursor: pointer; flex-shrink: 0;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.notes-search-toggle:hover {
+  background: var(--bg3);
+  border-color: var(--border);
+  color: var(--text);
+}
+.notes-search-toggle.active {
+  background: rgba(var(--primary-rgb), .15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.notes-search-clear {
+  background: transparent; border: 0;
+  color: var(--text2);
+  font-size: 13px;
+  padding: 4px 6px; border-radius: 3px; cursor: pointer;
+}
+.notes-search-clear:hover { color: var(--primary); background: var(--bg3); }
+
 .notes-tree {
   margin-top: 8px;
   border-top: 1px solid var(--border);
@@ -2121,6 +2209,37 @@ body.resizing-h * {
 .notes-node-actions button:hover { color: var(--primary); background: var(--bg2); }
 .notes-node-actions .notes-trash-btn:hover { background: rgba(255, 107, 61, .15); }
 
+/* Flat list view — every node shown with its parent path prefix. */
+.notes-flat-list { list-style: none; margin: 0; padding: 4px 0; }
+.notes-flat-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 6px; border-radius: 4px;
+  transition: background .12s;
+}
+.notes-flat-row:hover { background: var(--bg3); }
+.notes-flat-row.active {
+  background: rgba(var(--primary-rgb), .14);
+  color: var(--primary);
+}
+.notes-flat-glyph { font-size: 11px; line-height: 1; opacity: .85; flex-shrink: 0; }
+.notes-flat-title {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 4px;
+  background: transparent; border: 0; color: inherit;
+  text-align: left; padding: 0; cursor: pointer;
+  font-size: 12px;
+  overflow: hidden;
+}
+.notes-flat-path {
+  color: var(--text2); font-size: 11px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 50%;
+}
+.notes-flat-leaf {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 /* Inline rename input — same row size as the label it replaces. */
 .notes-rename-input {
   flex: 1; min-width: 0;
@@ -2162,6 +2281,14 @@ body.resizing-h * {
   flex: 1; min-width: 0;
   font-size: 16px; font-weight: 600;
 }
+.notes-editor-title-static {
+  flex: 1; min-width: 0;
+  font-size: 16px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+}
+.notes-page-hd { user-select: none; }
 .notes-editor-body {
   flex: 1; overflow: auto;
   padding: 12px 16px;
@@ -2281,18 +2408,34 @@ body.resizing-h * {
 }
 .page-spacer:hover .page-spacer-actions { opacity: 1; }
 
-/* Read-only "View" rendering of all blocks stacked. */
+/* Read-only "View" rendering of all blocks stacked. The render flows like
+   a normal article — text wraps to the column width, images scale down,
+   and only tables scroll horizontally inside their own wrapper. */
 .page-render {
   padding: 8px 4px;
   font-size: 14px; line-height: 1.6;
   color: var(--text);
+  /* Force long tokens (URLs, hashes, etc.) to wrap so they can never push
+     the column wider than the editor pane. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
-.page-render-block { margin: 8px 0; }
-.page-render-block img { max-width: 100%; height: auto; border-radius: 4px; }
+.page-render-block {
+  margin: 8px 0;
+  max-width: 100%;
+  /* text wraps naturally inside a normal block */
+}
+.page-render-block img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  display: block;
+}
 .page-render-block pre {
   background: var(--bg3); padding: 10px 12px; border-radius: 4px;
   overflow-x: auto; font-family: 'Fira Code', 'Cascadia Code', monospace;
   font-size: 12px; white-space: pre-wrap; word-break: break-word;
+  max-width: 100%;
 }
 .page-render-block code {
   font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px;
@@ -2304,6 +2447,265 @@ body.resizing-h * {
   border-left: 3px solid var(--primary);
   background: var(--bg3); color: var(--text2);
   border-radius: 0 4px 4px 0;
+}
+
+/* Tables get their OWN horizontal scroll container — the surrounding page
+   stays the same width. The wrapper is injected by wrapTables() in
+   PageBlocksEditor.renderBlocksAsHtml. */
+.page-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 6px 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg2);
+}
+.page-table-wrap table {
+  border-collapse: collapse;
+  margin: 0;
+}
+.page-table-wrap th,
+.page-table-wrap td {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  white-space: normal;
+  vertical-align: top;
+}
+.page-table-wrap th { background: var(--bg3); font-weight: 600; }
+
+/* Inside the live rich editor, force tables to scroll horizontally too —
+   no wrapper available there since users can paste raw HTML. */
+.rf-rich-editor table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+/* ─── Utils view (ToDo + Activity) ──────────────────────── */
+.utils-wrap {
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+  height: calc(100vh - 56px);
+}
+.utils-tabbar {
+  display: flex; gap: 4px;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.utils-tab {
+  background: transparent; border: 1px solid transparent;
+  border-bottom: 0;
+  color: var(--text2); font-size: 13px;
+  padding: 6px 14px; cursor: pointer;
+  border-radius: 5px 5px 0 0;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.utils-tab:hover { color: var(--text); background: var(--bg3); }
+.utils-tab.active {
+  color: var(--primary); background: var(--bg);
+  border-color: var(--border);
+  border-bottom-color: var(--bg);
+  margin-bottom: -1px;
+}
+.utils-body {
+  flex: 1; overflow: auto;
+  padding: 16px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.utils-body-flush {
+  padding: 0; gap: 0;
+  overflow: hidden;
+}
+
+/* ToDo */
+.todo-panel { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
+.todo-add-row { display: flex; gap: 6px; align-items: center; }
+.todo-add-row .rf-input { flex: 1; }
+.todo-list, .todo-list ul { list-style: none; margin: 0; padding-left: 22px; }
+.todo-list-root { padding-left: 0; }
+.todo-row { padding: 2px 0; }
+.todo-line {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px; border-radius: 4px;
+}
+.todo-line:hover { background: var(--bg3); }
+.todo-row.done .todo-title { text-decoration: line-through; color: var(--text2); }
+.todo-title {
+  flex: 1; min-width: 0;
+  font-size: 13px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: text;
+}
+.todo-rename-input { flex: 1; }
+.todo-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+.todo-line:hover .todo-actions { opacity: 1; }
+.todo-actions button {
+  background: transparent; border: 0; color: var(--text2);
+  padding: 2px 6px; font-size: 12px; cursor: pointer; border-radius: 3px;
+}
+.todo-actions button:hover { color: var(--primary); background: var(--bg2); }
+.todo-actions .todo-rm { color: #ff6b3d; }
+.todo-actions .todo-rm:hover { background: rgba(255, 107, 61, .12); color: #ff6b3d; }
+
+/* Activity — 3-pane (mirrors Notes layout). */
+.activity-3pane {
+  display: flex; flex: 1; min-height: 0;
+}
+.activity-cal-col {
+  flex-shrink: 0;
+  min-width: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  overflow: hidden;
+  padding: 8px 10px;
+  gap: 6px;
+}
+.activity-day-bar {
+  padding: 10px 12px;
+  flex-shrink: 0;
+  user-select: none;
+}
+.activity-day-body {
+  flex: 1; overflow-y: auto;
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.activity-side-list {
+  list-style: none; margin: 0; padding: 0;
+  flex: 1; overflow-y: auto;
+}
+.activity-side-list li {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .12s;
+}
+.activity-side-list li:hover { background: var(--bg3); }
+.activity-side-title {
+  font-size: 12px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.activity-side-meta {
+  font-size: 10px; color: var(--text2); margin-top: 2px;
+}
+
+/* Per-day calendar markers (T = task, R = reminder, dot = anything else). */
+.cal-cell { position: relative; flex-direction: column; padding-bottom: 4px; }
+.cal-cell-day { font-size: 12px; line-height: 1; }
+.cal-markers {
+  display: flex; gap: 2px; margin-top: 2px;
+  font-size: 8px; line-height: 1;
+}
+.cal-mk {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  font-weight: 700;
+  background: rgba(var(--primary-rgb), .25);
+  color: var(--primary);
+}
+.cal-mk-r { background: rgba(255, 107, 61, .3); color: #ff6b3d; }
+.cal-mk-dot { background: var(--text2); color: transparent; width: 4px; height: 4px; }
+.cal-cell.sel .cal-mk { background: rgba(255,255,255,.35); color: #fff; }
+
+/* Legacy 2-col fallback (kept for reference; not used by new ActivityPanel) */
+.activity-panel {
+  display: grid; grid-template-columns: 280px 1fr;
+  gap: 18px; align-items: start;
+}
+.activity-cal { display: flex; flex-direction: column; gap: 8px; }
+.activity-cal-hd {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 0;
+  user-select: none;
+  cursor: default;
+}
+.activity-cal-hd > span { flex: 1; min-width: 0; font-weight: 600; font-size: 13px; }
+.activity-cal-hd .rf-btn-cancel { padding: 4px 10px; font-size: 12px; }
+.activity-cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-dow {
+  text-align: center; font-size: 10px; color: var(--text2);
+  text-transform: uppercase; padding: 4px 0;
+}
+.cal-cell {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text); font-size: 12px;
+  cursor: pointer; border-radius: 4px;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.cal-cell:hover { background: var(--bg3); }
+.cal-cell.outside { color: var(--text2); opacity: .45; }
+.cal-cell.today {
+  border-color: var(--primary);
+  font-weight: 700;
+}
+.cal-cell.sel {
+  background: var(--primary); color: #fff;
+  border-color: var(--primary);
+}
+.activity-cal-hint input[type="date"] {
+  width: 100%; padding: 5px 8px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 12px;
+}
+
+.activity-day {
+  display: flex; flex-direction: column; gap: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 18px; min-height: 320px;
+}
+.activity-day-hd {
+  font-weight: 600; font-size: 14px; color: var(--text);
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.activity-section-hd {
+  margin: 6px 0 4px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+}
+.activity-singleton { display: flex; flex-direction: column; gap: 4px; }
+.activity-singleton-lbl {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+}
+.activity-hourly-list { list-style: none; margin: 0; padding: 0; }
+.activity-hourly-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 6px; border-bottom: 1px solid var(--border);
+}
+.activity-hour-time {
+  width: 52px; flex-shrink: 0;
+  font-variant-numeric: tabular-nums; font-size: 12px;
+  color: var(--text2);
+}
+.activity-hour-text { flex: 1; font-size: 13px; color: var(--text); }
+.activity-hourly-row .todo-rm {
+  background: transparent; border: 0; color: #ff6b3d;
+  cursor: pointer; padding: 2px 6px; border-radius: 3px;
+}
+.activity-hourly-row .todo-rm:hover { background: rgba(255, 107, 61, .12); }
+.activity-hour-add {
+  display: flex; gap: 6px; align-items: center; margin-top: 4px;
+}
+.activity-hour-add input[type="time"] {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 5px 8px; font-size: 12px; color: var(--text);
+}
+.activity-hour-add .rf-input { flex: 1; }
+
+@media (max-width: 768px) {
+  .activity-panel { grid-template-columns: 1fr; }
 }
 
 /* ─── Docs view ──────────────────────────────────────────── */
