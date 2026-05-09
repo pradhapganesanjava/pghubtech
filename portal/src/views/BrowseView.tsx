@@ -63,6 +63,7 @@ export default function BrowseView() {
   const [selectedTags,  setSelectedTags]  = useState<string[]>([])
   const [selectedDecks, setSelectedDecks] = useState<string[]>([])
   const [leftCollapsed, setLeftCollapsed] = useState(true)
+  const [viewerExpanded, setViewerExpanded] = useState(false)
 
   const [browseRatio,    setBrowseRatio]    = useState(60)
   const browseContainerRef                  = useRef<HTMLDivElement>(null)
@@ -132,11 +133,18 @@ export default function BrowseView() {
     setSelectedNote(prev => prev?.noteId === note.noteId ? null : note)
   }
 
+  // Drop expand state whenever the selection clears so a fresh open of any
+  // card lands on the standard split layout.
+  useEffect(() => {
+    if (!selectedNote) setViewerExpanded(false)
+  }, [selectedNote?.noteId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="browse-body-wrap">
-      {/* Left: tag/deck tree */}
-      <div className={`browse-col-tags${leftCollapsed ? ' collapsed' : ''}`}>
+      {/* Left: tag/deck tree (collapsed when viewer is expanded so the
+          detail can take the full main width). */}
+      <div className={`browse-col-tags${(leftCollapsed || viewerExpanded) ? ' collapsed' : ''}`}>
         <TagDeckTree
           notes={notes}
           selectedTags={selectedTags}
@@ -144,8 +152,17 @@ export default function BrowseView() {
           onToggleTag={t => setSelectedTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
           onToggleDeck={d => setSelectedDecks(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
           onClearAll={() => { setSelectedTags([]); setSelectedDecks([]) }}
-          collapsed={leftCollapsed}
-          onCollapse={() => setLeftCollapsed(c => !c)}
+          collapsed={leftCollapsed || viewerExpanded}
+          onCollapse={() => {
+            // Clicking the strip while forced-collapsed (because viewer
+            // is expanded) restores the full split layout.
+            if (viewerExpanded) {
+              setViewerExpanded(false)
+              setLeftCollapsed(false)
+            } else {
+              setLeftCollapsed(c => !c)
+            }
+          }}
         />
       </div>
 
@@ -201,7 +218,8 @@ export default function BrowseView() {
         {/* Cards + detail split */}
         <div className="browse-cards-split" ref={browseContainerRef}>
 
-          {/* Card list */}
+          {/* Card list — hidden when viewer is expanded */}
+          {!viewerExpanded && (
           <div
             className="browse-col-cards"
             style={selectedNote ? { flex: `0 0 ${browseRatio}%` } : undefined}
@@ -267,6 +285,7 @@ export default function BrowseView() {
               </table>
             )}
           </div>
+          )}
 
           {/* Draggable divider + detail panel */}
           {selectedNote && (() => {
@@ -276,19 +295,23 @@ export default function BrowseView() {
             if (!tmpl) return null
             return (
               <>
-                <div
-                  className="qa-divider"
-                  onPointerDown={handleDividerPointerDown}
-                  onPointerMove={handleDividerPointerMove}
-                  onPointerUp={handleDividerPointerUp}
-                  onPointerCancel={handleDividerPointerUp}
-                />
-                <div className="browse-col-detail has-selection">
+                {!viewerExpanded && (
+                  <div
+                    className="qa-divider"
+                    onPointerDown={handleDividerPointerDown}
+                    onPointerMove={handleDividerPointerMove}
+                    onPointerUp={handleDividerPointerUp}
+                    onPointerCancel={handleDividerPointerUp}
+                  />
+                )}
+                <div className="browse-col-detail has-selection" style={viewerExpanded ? { flex: 1 } : undefined}>
                   <NoteDetailPanel
                     note={selectedNote}
                     template={tmpl}
                     rec={rec}
                     lastSeen={lastSeen}
+                    expanded={viewerExpanded}
+                    onToggleExpand={() => setViewerExpanded(e => !e)}
                     onClose={() => setSelectedNote(null)}
                     onNoteSaved={updated => {
                       setNotes(prev => prev.map(n => n.noteId === updated.noteId ? updated : n))

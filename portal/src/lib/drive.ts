@@ -94,3 +94,32 @@ export async function deleteDriveFile(token: string, fileId: string): Promise<vo
     throw new Error(`Drive delete failed: ${res.status}`)
   }
 }
+
+// Walk an HTML string, auth-fetch every Drive media URL, and replace each
+// with a blob: URL the <img> tag can load without a header. Used by both
+// NoteDetailPanel and HomeView so flashcard images render in the review
+// flow as well as the detail panel.
+//
+// Mutates the passed-in `blobUrls` array (so caller can revoke on unmount)
+// and the `blobToDrive` map (used for round-tripping when saving back).
+export async function resolveDriveImagesInHtml(
+  html:        string,
+  token:       string,
+  blobUrls:    string[],
+  blobToDrive: Map<string, string>,
+): Promise<string> {
+  const matches = [...html.matchAll(DRIVE_API_RE)]
+  if (!matches.length) return html
+  let out = html
+  for (const [url] of matches) {
+    try {
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) continue
+      const blobUrl = URL.createObjectURL(await res.blob())
+      blobUrls.push(blobUrl)
+      blobToDrive.set(blobUrl, url)
+      out = out.replaceAll(url, blobUrl)
+    } catch { /* keep original src on fetch failure */ }
+  }
+  return out
+}

@@ -526,7 +526,20 @@ body {
   display: flex; flex-direction: column; gap: 10px;
 }
 .mgmt-detail-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
-.mgmt-detail-hd h2 { margin: 0; font-size: 16px; color: var(--text); font-weight: 600; }
+.mgmt-detail-hd h2 { margin: 0; font-size: 16px; color: var(--text); font-weight: 600; flex: 1; min-width: 0; }
+.mgmt-back-btn {
+  display: none;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer;
+  font-size: 16px; line-height: 1;
+  padding: 4px 10px; border-radius: 6px;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.mgmt-back-btn:hover {
+  background: rgba(var(--primary-rgb), .15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
 .mgmt-msg { font-size: 12px; color: #22c55e; padding: 3px 8px; background: rgba(34,197,94,.12); border-radius: 4px; }
 .mgmt-section-hd {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
@@ -1414,6 +1427,25 @@ body.resizing-h * {
 .question-html { font-size: 14px; line-height: 1.6; }
 .question-html table { border-collapse: collapse; width: 100%; }
 .question-html td { padding: 6px 10px; border: 1px solid var(--border); font-size: 13px; }
+.question-html img,
+.answer-html img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+.question-html pre,
+.answer-html pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.question-html code,
+.answer-html code {
+  word-break: break-word;
+}
 .show-answer-btn {
   width: 100%; padding: 12px; background: var(--primary); color: #fff;
   border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
@@ -1449,7 +1481,7 @@ body.resizing-h * {
 }
 .done-stat span { font-size: 24px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
 
-/* Mobile filter trigger + drawer backdrop — display rules in @media below. */
+/* Mobile filter trigger — display rule in @media below. */
 .mobile-filter-btn {
   display: none;
   align-items: center; gap: 5px;
@@ -1466,17 +1498,14 @@ body.resizing-h * {
   border-color: var(--primary);
   color: var(--primary);
 }
-.drawer-backdrop {
-  display: none;
-  position: fixed; inset: 0; z-index: 49;
-  background: rgba(0, 0, 0, .55);
-}
+.home-mobile-filter { align-self: flex-start; margin-bottom: 8px; }
+/* Drawer-backdrop is no longer used (inline accordion replaces overlay). */
+.drawer-backdrop { display: none !important; }
 
 /* ─── Responsive ──────────────────────────────────────────── */
 /* TABLET / small laptop */
 @media (max-width: 768px) {
   .mobile-filter-btn { display: inline-flex; }
-  .drawer-backdrop   { display: block; }
   .topbar-nav { display: none; }
   .bottom-nav { display: flex; }
   .home-grid  { grid-template-columns: 1fr; }
@@ -1492,40 +1521,29 @@ body.resizing-h * {
   .ak-ratings { gap: 6px; }
   .ak-rate-btn { padding: 10px 4px; font-size: 12px; }
 
-  /* Tag panel as a bottom-sheet drawer.
-     Desktop stays unchanged — these rules only fire under 768 px. */
-  .browse-body-wrap { position: relative; }
-  .browse-col-tags {
+  /* Tag panel as an inline accordion: stacks above the main content, pushes
+     the list down when expanded. No fixed overlay, no backdrop, no
+     "popup" feel. Desktop above 768 px keeps the resizable side column. */
+  .browse-body-wrap, .review-body { flex-direction: column; }
+  .browse-col-tags, .col-tags {
     width: 100% !important;
-  }
-  /* The collapsed strip button isn't useful when the drawer is hidden — the
-     mobile-filter-btn in the toolbar takes over as the toggle. */
-  .browse-col-tags.collapsed { display: none; }
-  .browse-col-tags:not(.collapsed) {
-    position: fixed;
-    left: 0; right: 0;
-    top: auto;
-    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-    width: 100% !important;
-    max-height: 72vh;
-    z-index: 50;
-    background: var(--bg2);
+    flex-shrink: 0;
     border-right: 0;
-    border-top: 1px solid var(--border);
-    border-radius: 18px 18px 0 0;
-    box-shadow: 0 -10px 36px rgba(0,0,0,.5);
+  }
+  /* When closed, the panel is just hidden — the mobile-filter-btn in the
+     toolbar is the only reveal trigger. */
+  .browse-col-tags.collapsed,
+  .col-tags.collapsed { display: none; }
+  /* When open: a normal block with internal scroll if needed. */
+  .browse-col-tags:not(.collapsed),
+  .col-tags:not(.collapsed) {
+    border-bottom: 1px solid var(--border);
+    max-height: 50vh;
     overflow-y: auto;
   }
-  /* The drag-grip suggests "swipe down to dismiss" affordance. */
-  .browse-col-tags:not(.collapsed)::before {
-    content: ''; display: block;
-    width: 38px; height: 4px; border-radius: 2px;
-    background: var(--text2); opacity: .35;
-    margin: 8px auto 4px;
-    flex-shrink: 0;
-  }
-  /* Hide the tags ↔ main divider on mobile — drawer overlays content. */
-  .browse-body-wrap > .qa-divider { display: none; }
+  /* Hide the tags ↔ main drag-divider — vertical stack doesn't need it. */
+  .browse-body-wrap > .qa-divider,
+  .review-body > .qa-divider { display: none; }
 
   /* When the user picks a card / doc, the list hides and the viewer goes
      full-width. Hitting ✕ clears the selection and brings the list back. */
@@ -1540,6 +1558,51 @@ body.resizing-h * {
   /* Edit form rows stack so labels don't squeeze inputs. */
   .rf-row { flex-direction: column; align-items: stretch; }
   .rf-label { width: auto; margin-bottom: 4px; }
+
+  /* Templates (Settings → Templates tab) — same list/detail pattern as
+     Browse. Stack vertically; when a template is picked, hide the
+     sidebar so the detail uses the full screen. ← back button at the
+     top of the detail header restores the list. */
+  .mgmt-layout { flex-direction: column; }
+  .mgmt-sidebar {
+    width: 100%; min-width: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 50vh;
+  }
+  .mgmt-layout:has(.mgmt-detail) > .mgmt-sidebar { display: none; }
+  .mgmt-back-btn { display: inline-flex; align-items: center; justify-content: center; }
+  .mgmt-empty { display: none; }
+
+  /* HomeView: stack the Q + A panes vertically with a single shared scroll
+     instead of doing a horizontal flex-basis split (which is fine on
+     desktop but cramped on phones). The desktop sets an inline
+     flex-basis percentage on .col-main when the answer is showing —
+     override it with !important so the pane reflows naturally. */
+  .review-qa-split {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .review-qa-split > .col-main,
+  .review-qa-split > .col-answer {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible;
+    border-left: 0;
+  }
+  .col-main-scroll,
+  .answer-col-inner {
+    overflow: visible;
+    min-height: auto;
+    height: auto;
+  }
+  /* Drag-resize divider doesn't make sense in a vertical stack. */
+  .review-qa-split > .qa-divider { display: none; }
+  /* The answer (and its rating buttons) is the last block — leave room
+     for the bottom-nav so the buttons don't sit underneath it. */
+  .review-qa-split > .col-answer { padding-bottom: 90px; }
 }
 
 /* PHONE */

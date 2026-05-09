@@ -4,36 +4,14 @@ import { saveAnkiNote } from '../adapters/ankiRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
 import { GAuth } from '../lib/gauth'
 import {
-  DRIVE_API_RE,
   getOrCreateImageFolder,
   inferFilename,
   uploadImageBlob,
   uploadInlineImages,
 } from '../lib/driveImages'
+import { resolveDriveImagesInHtml as resolveDriveImages } from '../lib/drive'
 import { sanitizeHtml, isSafeLinkUrl } from '../lib/sanitize'
 import { useToast } from './Toast'
-
-async function resolveDriveImages(
-  html:        string,
-  token:       string,
-  blobUrls:    string[],
-  blobToDrive: Map<string, string>,
-): Promise<string> {
-  const matches = [...html.matchAll(DRIVE_API_RE)]
-  if (!matches.length) return html
-  let out = html
-  for (const [url] of matches) {
-    try {
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      if (!res.ok) continue
-      const blobUrl = URL.createObjectURL(await res.blob())
-      blobUrls.push(blobUrl)
-      blobToDrive.set(blobUrl, url)
-      out = out.replaceAll(url, blobUrl)
-    } catch { /* keep original src */ }
-  }
-  return out
-}
 
 function blobUrlsToDrive(html: string, blobToDrive: Map<string, string>): string {
   if (!blobToDrive.size) return html
@@ -47,12 +25,17 @@ function blobUrlsToDrive(html: string, blobToDrive: Map<string, string>): string
 type HtmlEditMode = 'rich' | 'html' | 'preview'
 
 interface Props {
-  note:         AnkiNote
-  template:     AnkiTemplate
-  rec:          SRSRecord | undefined
-  lastSeen:     string
-  onClose:      () => void
-  onNoteSaved:  (note: AnkiNote) => void
+  note:           AnkiNote
+  template:       AnkiTemplate
+  rec:            SRSRecord | undefined
+  lastSeen:       string
+  onClose:        () => void
+  onNoteSaved:    (note: AnkiNote) => void
+  // When provided, the panel renders an ⤢/⤡ expand button next to ✎/✕
+  // and treats double-click on its header as a toggle. Owned by the parent
+  // view (BrowseView) which decides whether the cards list is hidden.
+  expanded?:       boolean
+  onToggleExpand?: () => void
 }
 
 // ── View mode: single field renderer (always renders as HTML) ────────────────
@@ -349,6 +332,7 @@ function EditField({
 
 export default function NoteDetailPanel({
   note, template, rec, lastSeen, onClose, onNoteSaved,
+  expanded, onToggleExpand,
 }: Props) {
   const { toast } = useToast()
   const [editMode, setEditMode] = useState(false)
@@ -540,7 +524,12 @@ export default function NoteDetailPanel({
     const vf = resolvedFields ?? note.fields
     return (
       <>
-        <div className="col-hd" style={{ padding: '10px 12px', flexShrink: 0 }}>
+        <div
+          className="col-hd doc-detail-hd"
+          style={{ padding: '10px 12px', flexShrink: 0 }}
+          onDoubleClick={onToggleExpand}
+          title={onToggleExpand ? 'Double-click to expand / restore' : undefined}
+        >
           <span>
             Detail
             {lastSeen && (
@@ -549,8 +538,18 @@ export default function NoteDetailPanel({
               </span>
             )}
           </span>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div
+            style={{ display: 'flex', gap: 6, alignItems: 'center' }}
+            onDoubleClick={e => e.stopPropagation()}
+          >
             <button className="bci-edit-btn bci-edit-btn-hd" onClick={startEdit} title="Edit card">✎</button>
+            {onToggleExpand && (
+              <button
+                className={`bci-edit-btn bci-edit-btn-hd${expanded ? ' active' : ''}`}
+                onClick={onToggleExpand}
+                title={expanded ? 'Show list' : 'Expand viewer'}
+              >{expanded ? '⤡' : '⤢'}</button>
+            )}
             <button className="detail-close-btn" onClick={handleClose}>✕</button>
           </div>
         </div>
@@ -600,9 +599,26 @@ export default function NoteDetailPanel({
   // ── Edit mode ───────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="col-hd" style={{ padding: '10px 12px', flexShrink: 0 }}>
+      <div
+        className="col-hd doc-detail-hd"
+        style={{ padding: '10px 12px', flexShrink: 0 }}
+        onDoubleClick={onToggleExpand}
+        title={onToggleExpand ? 'Double-click to expand / restore' : undefined}
+      >
         <span>Edit Card</span>
-        <button className="detail-close-btn" onClick={handleClose} title="Close">✕</button>
+        <div
+          style={{ display: 'flex', gap: 6, alignItems: 'center' }}
+          onDoubleClick={e => e.stopPropagation()}
+        >
+          {onToggleExpand && (
+            <button
+              className={`bci-edit-btn bci-edit-btn-hd${expanded ? ' active' : ''}`}
+              onClick={onToggleExpand}
+              title={expanded ? 'Show list' : 'Expand viewer'}
+            >{expanded ? '⤡' : '⤢'}</button>
+          )}
+          <button className="detail-close-btn" onClick={handleClose} title="Close">✕</button>
+        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 4px 12px' }}>

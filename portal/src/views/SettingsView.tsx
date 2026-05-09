@@ -514,6 +514,12 @@ function TemplatesTab() {
       {selected ? (
         <div className="mgmt-detail">
           <div className="mgmt-detail-hd">
+            <button
+              className="mgmt-back-btn"
+              onClick={() => setSelected(null)}
+              title="Back to templates"
+              aria-label="Back to templates list"
+            >←</button>
             <h2>{selected.displayName}</h2>
             {msg && <span className="mgmt-msg">{msg}</span>}
           </div>

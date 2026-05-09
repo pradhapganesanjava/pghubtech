@@ -7,6 +7,8 @@ import {
 import type { SRSRecord } from '../adapters/srsRepo'
 import { getCardFrontHtml, getCardBackHtml, getCardFrontText } from '../utils/cardHelpers'
 import { sanitizeHtml } from '../lib/sanitize'
+import { resolveDriveImagesInHtml } from '../lib/drive'
+import { GAuth } from '../lib/gauth'
 import TagDeckTree from '../components/TagDeckTree'
 import { useToast } from '../components/Toast'
 
@@ -67,7 +69,10 @@ export default function HomeView() {
   const [answerVisible, setAnswerVisible] = useState(false)
 
   // ── Layout ─────────────────────────────────────────────────────────────────
-  const [leftCollapsed, setLeftCollapsed] = useState(false)
+  // Default closed on phones (drawer pattern), open on desktops.
+  const [leftCollapsed, setLeftCollapsed] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  )
   const [qaRatio,       setQaRatio]       = useState(45)
   const qaContainerRef                    = useRef<HTMLDivElement>(null)
   const isDividerDragging                 = useRef(false)
@@ -228,6 +233,44 @@ export default function HomeView() {
   const intervals    = useMemo(() => previewIntervals(currentSRS), [currentNote?.noteId, currentSRS]) // eslint-disable-line react-hooks/exhaustive-deps
   const RATING_LABELS = ['Again', 'Hard', 'Good', 'Easy']
 
+  // Resolve Drive media URLs in the current note's fields to blob: URLs so
+  // <img> tags can render them (Drive's auth-only media endpoint can't be
+  // loaded directly by the browser). Falls back to raw note when no token.
+  const [resolvedNote, setResolvedNote] = useState<AnkiNote | null>(null)
+  const cardBlobUrlsRef = useRef<string[]>([])
+
+  useEffect(() => {
+    if (!currentNote) { setResolvedNote(null); return }
+    setResolvedNote(null)
+    const token = GAuth.getToken()
+    if (!token) { setResolvedNote(currentNote); return }
+    cardBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
+    cardBlobUrlsRef.current = []
+    let cancelled = false
+    const blobUrls: string[] = []
+    const map = new Map<string, string>()
+    Promise.all(
+      Object.entries(currentNote.fields).map(async ([k, v]) => {
+        const out = await resolveDriveImagesInHtml(v ?? '', token, blobUrls, map)
+        return [k, out] as [string, string]
+      })
+    ).then(entries => {
+      if (cancelled) { blobUrls.forEach(u => URL.revokeObjectURL(u)); return }
+      cardBlobUrlsRef.current = blobUrls
+      const fields: Record<string, string> = {}
+      entries.forEach(([k, v]) => { fields[k] = v })
+      setResolvedNote({ ...currentNote, fields })
+    }).catch(() => { if (!cancelled) setResolvedNote(currentNote) })
+    return () => { cancelled = true }
+  }, [currentNote?.noteId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Revoke blob URLs when leaving the view entirely.
+  useEffect(() => () => {
+    cardBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
+  }, [])
+
+  const displayNote = resolvedNote ?? currentNote
+
   // ── Loading screen ─────────────────────────────────────────────────────────
   if (!dataLoaded) {
     return (
@@ -242,8 +285,15 @@ export default function HomeView() {
     )
   }
 
+  const hasAnyFilters = selectedTags.length > 0 || selectedDecks.length > 0
+
   return (
     <div className="review-body">
+      {/* Mobile-only backdrop — tap closes the tag drawer */}
+      {!leftCollapsed && (
+        <div className="drawer-backdrop" onClick={() => setLeftCollapsed(true)} />
+      )}
+
       {/* Left: tags/decks column */}
       <div className={`col-tags${leftCollapsed ? ' collapsed' : ''}`}>
         {leftCollapsed ? (
@@ -272,6 +322,15 @@ export default function HomeView() {
           style={answerVisible ? { flexBasis: qaRatio + '%', flex: `0 0 ${qaRatio}%` } : undefined}
         >
           <div className="col-main-scroll">
+            {/* Mobile-only "open tag drawer" trigger */}
+            <button
+              className={`mobile-filter-btn home-mobile-filter${hasAnyFilters ? ' has-active' : ''}`}
+              onClick={() => setLeftCollapsed(false)}
+              title="Filter by tag or deck"
+            >
+              ☰ Filter{hasAnyFilters ? ` (${selectedTags.length + selectedDecks.length})` : ''}
+            </button>
+
             {/* Applied filter chips */}
             {hasFilters && (
               <div className="review-applied-filters">
@@ -364,7 +423,7 @@ export default function HomeView() {
               >
                 <div
                   className="question-html"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardFrontHtml(currentNote, currentTmpl)) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardFrontHtml(displayNote ?? currentNote, currentTmpl)) }}
                 />
                 {!answerVisible && (
                   <div style={{ marginTop: 16 }}>
@@ -395,7 +454,7 @@ export default function HomeView() {
             <div className="answer-col-inner">
               <div
                 className="answer-html"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardBackHtml(currentNote, currentTmpl)) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardBackHtml(displayNote ?? currentNote, currentTmpl)) }}
               />
 
               {/* Rating buttons */}
