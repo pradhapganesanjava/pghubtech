@@ -7,11 +7,12 @@ import TopBar from './components/TopBar'
 import SheetSetupModal from './components/SheetSetupModal'
 import HomeView from './views/HomeView'
 import BrowseView from './views/BrowseView'
+import DocsView from './views/DocsView'
 import SettingsView from './views/SettingsView'
 import './App.css'
 
 type AuthState = 'loading' | 'unauthenticated' | 'needs-sheet' | 'authenticated'
-type View = 'home' | 'browse' | 'settings'
+type View = 'home' | 'browse' | 'docs' | 'settings'
 
 const GOOGLE_SVG = (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -165,6 +166,7 @@ export default function App() {
 
         {view === 'home'     && <HomeView />}
         {view === 'browse'   && <BrowseView />}
+        {view === 'docs'     && <DocsView />}
         {view === 'settings' && (
           <SettingsView
             theme={theme}
@@ -183,6 +185,9 @@ export default function App() {
           </button>
           <button className={`bn-btn${view === 'browse'   ? ' active' : ''}`} onClick={() => setView('browse')}>
             <span className="bn-icon">📋</span><span className="bn-label">Browse</span>
+          </button>
+          <button className={`bn-btn${view === 'docs'     ? ' active' : ''}`} onClick={() => setView('docs')}>
+            <span className="bn-icon">📄</span><span className="bn-label">Docs</span>
           </button>
           <button className={`bn-btn${view === 'settings' ? ' active' : ''}`} onClick={() => setView('settings')}>
             <span className="bn-icon">⚙️</span><span className="bn-label">Settings</span>
