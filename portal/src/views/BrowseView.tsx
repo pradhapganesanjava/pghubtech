@@ -149,10 +149,22 @@ export default function BrowseView() {
         />
       </div>
 
+      {/* Mobile-only backdrop — tap closes the tag drawer */}
+      {!leftCollapsed && (
+        <div className="drawer-backdrop" onClick={() => setLeftCollapsed(true)} />
+      )}
+
       {/* Main: cards table + detail split */}
       <div className="browse-main">
         {/* Toolbar */}
         <div className="browse-toolbar">
+          <button
+            className={`mobile-filter-btn${hasFilters ? ' has-active' : ''}`}
+            onClick={() => setLeftCollapsed(false)}
+            title="Filter by tag or deck"
+          >
+            ☰ Filter{hasFilters ? ` (${selectedTags.length + selectedDecks.length})` : ''}
+          </button>
           <input
             className="col-search"
             style={{ width: 240 }}

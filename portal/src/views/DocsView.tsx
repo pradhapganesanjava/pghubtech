@@ -37,7 +37,10 @@ export default function DocsView() {
   const [selected, setSelected]         = useState<DocRecord | null>(null)
   const [search, setSearch]             = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [leftCollapsed, setLeftColl]    = useState(false)
+  // Default closed on phones (drawer pattern), open on desktops.
+  const [leftCollapsed, setLeftColl]    = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  )
 
   const [pickedFile, setPickedFile]     = useState<File | null>(null)
   const [editing, setEditing]           = useState(false)
@@ -301,9 +304,21 @@ export default function DocsView() {
         />
       )}
 
+      {/* Mobile-only backdrop — tap closes the tag drawer */}
+      {!leftCollapsed && (
+        <div className="drawer-backdrop" onClick={() => setLeftColl(true)} />
+      )}
+
       {/* Main: list + viewer */}
       <div className="browse-main">
         <div className="browse-toolbar">
+          <button
+            className={`mobile-filter-btn${selectedTags.length > 0 ? ' has-active' : ''}`}
+            onClick={() => setLeftColl(false)}
+            title="Filter by tag"
+          >
+            ☰ Filter{selectedTags.length > 0 ? ` (${selectedTags.length})` : ''}
+          </button>
           <button className="rf-btn-save" onClick={pickFile} style={{ marginLeft: 0 }}>
             ＋ Upload
           </button>
