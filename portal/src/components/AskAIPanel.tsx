@@ -231,7 +231,9 @@ export default function AskAIPanel({ open, onClose }: Props) {
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(simpleMd(m.content)) }}
             />
             {m.role === 'assistant' && (
-              <MessageAudio text={m.content} cacheKey={`${m.convId}|${m.ts}`} />
+              <div className="msg-audio-track">
+                <MessageAudio text={m.content} cacheKey={`${m.convId}|${m.ts}`} />
+              </div>
             )}
           </div>
         ))}

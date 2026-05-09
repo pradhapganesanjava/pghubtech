@@ -1641,8 +1641,7 @@ body.resizing-h * {
   }
   .ai-panel-input { padding: 8px; }
   .ai-textarea  { font-size: 14px; }
-  .msg-audio { width: 40px; padding: 5px 3px 5px; }
-  .msg-audio-btn { width: 28px; height: 28px; font-size: 12px; }
+  .msg-audio-btn { width: 26px; height: 26px; font-size: 11px; }
 }
 
 /* ─── Ask AI floating panel (anchored top-right) ─────────── */
@@ -1748,15 +1747,22 @@ body.resizing-h * {
   max-width: 92%;
 }
 .ai-msg-user      { align-self: flex-end;   align-items: flex-end; }
-/* Assistant message is a row: response body + sticky vertical audio control. */
+/* Assistant message: bubble takes the full row width; the audio control
+   floats over its top-right corner so the conversation reads naturally
+   and text stays selectable. */
 .ai-msg-assistant {
   align-self: stretch;
-  flex-direction: row;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  position: relative;
   max-width: 100%;
 }
-.ai-msg-assistant > .ai-msg-body { flex: 1; min-width: 0; }
+.ai-msg-assistant > .ai-msg-body {
+  flex: none;
+  width: 100%;
+  /* leave room for the floating audio pill at top-right */
+  padding-right: 38px;
+}
 .ai-msg-body {
   padding: 7px 11px;
   border-radius: 10px;
@@ -1846,26 +1852,78 @@ body.resizing-h * {
   .tb-pill { padding: 0 10px; height: 36px; }
 }
 
-/* Per-message audio control — narrow vertical column glued to the right of
-   the assistant bubble. position:sticky keeps it in view as the user scrolls
-   a long response, only leaving the viewport when the message itself does. */
-.msg-audio {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  background: rgba(var(--primary-rgb), .08);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 5px 6px;
-  font-size: 10px; color: var(--text2);
-  width: 44px; flex-shrink: 0;
-  position: sticky; top: 6px;
+/* The audio overlay is composed of two layers:
+   1. .msg-audio-track — invisible vertical channel pinned to the right edge
+      of the assistant bubble, spanning its full height.
+   2. .msg-audio — a transparent pill that uses position: sticky inside the
+      track so it floats down with the scroll: when the user scrolls past
+      the top of the bubble, the pill stays glued to the top of the visible
+      portion until the bubble itself scrolls away.
+   Default state: only the play button visible at ~45% opacity so the
+   response stays readable and text remains selectable (pointer-events:
+   none on the wrappers, auto on the controls). On hover OR while playing,
+   the pill expands to show seek slider + time at full opacity. */
+.msg-audio-track {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 36px;
+  pointer-events: none;
+  z-index: 2;
 }
+.msg-audio {
+  position: sticky;
+  top: 4px;
+  margin-right: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: rgba(var(--primary-rgb), .12);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 2px;
+  font-size: 10px; color: var(--text2);
+  width: auto;
+  opacity: .45;
+  pointer-events: none;       /* selection passes through gaps */
+  z-index: 2;
+  transition: opacity .18s, background .18s, border-color .18s,
+              border-radius .18s, padding .18s;
+}
+/* Direct children stay interactive so the user can always click ▶ etc. */
+.msg-audio > * { pointer-events: auto; }
+
+/* Default: only the play button is visible — slider + time hidden. */
+.msg-audio .msg-audio-slider,
+.msg-audio .msg-audio-time { display: none; }
+
+/* Reveal full controls on hover, focus-within, OR while audio is playing. */
+.ai-msg-assistant:hover .msg-audio,
+.msg-audio:hover,
+.msg-audio:focus-within,
+.msg-audio.playing {
+  opacity: 1;
+  background: rgba(var(--primary-rgb), .14);
+  border-color: var(--border);
+  border-radius: 10px;
+  padding: 4px 3px;
+}
+.ai-msg-assistant:hover .msg-audio .msg-audio-slider,
+.ai-msg-assistant:hover .msg-audio .msg-audio-time,
+.msg-audio:hover .msg-audio-slider,
+.msg-audio:hover .msg-audio-time,
+.msg-audio:focus-within .msg-audio-slider,
+.msg-audio:focus-within .msg-audio-time,
+.msg-audio.playing .msg-audio-slider,
+.msg-audio.playing .msg-audio-time {
+  display: flex;
+}
+
 .msg-audio-btn {
-  width: 32px; height: 32px;
+  width: 28px; height: 28px;
   background: var(--primary); color: #fff;
   border: 0; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0; font-size: 13px; line-height: 1;
-  transition: filter .12s, transform .08s;
+  cursor: pointer; flex-shrink: 0; font-size: 12px; line-height: 1;
+  box-shadow: 0 2px 6px rgba(var(--primary-rgb), .4);
+  transition: filter .12s, transform .08s, box-shadow .12s;
 }
 .msg-audio-btn:disabled { opacity: .55; cursor: default; }
 .msg-audio-btn:hover:not(:disabled) { filter: brightness(1.12); }
@@ -1874,24 +1932,22 @@ body.resizing-h * {
 /* Vertical seek slider — top is start, bottom is end of clip. Height is set
    inline based on audio duration so longer clips give finer seek control. */
 .msg-audio-slider {
-  /* writing-mode flips the range input to vertical in modern browsers;
-     -webkit-appearance: slider-vertical handles older Webkit/Safari. */
   writing-mode: vertical-lr;
   -webkit-appearance: slider-vertical;
   appearance: slider-vertical;
-  width: 6px;
+  width: 4px;
   background: var(--bg3);
-  border-radius: 3px; outline: none; cursor: pointer;
+  border-radius: 2px; outline: none; cursor: pointer;
 }
 .msg-audio-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
   background: var(--primary);
   cursor: pointer; border: 2px solid var(--bg2);
 }
 .msg-audio-slider::-moz-range-thumb {
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
   background: var(--primary);
   cursor: pointer; border: 2px solid var(--bg2);
 }
@@ -1900,6 +1956,7 @@ body.resizing-h * {
 .msg-audio-time {
   font-variant-numeric: tabular-nums;
   white-space: nowrap; font-size: 9px;
+  margin-bottom: 1px;
 }
 .msg-audio-err {
   color: #e94545; font-weight: 700; cursor: help; font-size: 10px;

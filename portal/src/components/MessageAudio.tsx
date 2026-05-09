@@ -120,7 +120,10 @@ export default function MessageAudio({ text, cacheKey }: Props) {
     : 50
 
   return (
-    <div className="msg-audio" title={err || (playing ? 'Playing' : url ? 'Play' : 'Speak this reply')}>
+    <div
+      className={`msg-audio${playing ? ' playing' : ''}${url ? ' has-audio' : ''}`}
+      title={err || (playing ? 'Playing' : url ? 'Play' : 'Speak this reply')}
+    >
       <button
         className="msg-audio-btn"
         onClick={playing ? pause : ensureAndPlay}
