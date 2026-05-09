@@ -70,12 +70,17 @@ export default function DocViewer({ doc }: Props) {
   }
 
   if (kind === 'html' && blobUrl) {
+    // Note: NO `allow-same-origin`. A blob:URL iframe with allow-same-origin
+    // inherits the parent's strict CSP, which blocks inline <script>/<style>
+    // inside user-uploaded docs. Dropping it gives the iframe a unique opaque
+    // origin (no CSP applies), so the doc's own JS/CSS/fonts run as designed,
+    // while still being isolated from the portal's storage and OAuth token.
     return (
       <iframe
         title={doc.alias}
         src={blobUrl}
         className="doc-iframe"
-        sandbox="allow-scripts allow-popups allow-forms allow-same-origin"
+        sandbox="allow-scripts allow-popups allow-forms"
       />
     )
   }

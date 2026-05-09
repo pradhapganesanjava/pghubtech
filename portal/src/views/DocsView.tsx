@@ -257,7 +257,9 @@ export default function DocsView() {
                       </div>
                       {d.tags.length > 0 && (
                         <div className="doc-list-tags">
-                          {d.tags.map(t => <span key={t} className="tag">{t.split('::').pop()}</span>)}
+                          {d.tags.map(t => (
+                            <span key={t} className="tag" title={t}>{t.split('::').pop()}</span>
+                          ))}
                         </div>
                       )}
                     </li>

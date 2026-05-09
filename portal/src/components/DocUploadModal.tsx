@@ -28,11 +28,19 @@ export default function DocUploadModal({ file, knownTags, onCancel, onConfirm }:
     setDraft('')
   }
 
+  // Build the final tag list at submit time so a tag the user typed but never
+  // pressed Enter/comma on still gets included.
+  function flushedTags(): string[] {
+    const draft = draftTag.trim()
+    if (!draft || tags.includes(draft)) return tags
+    return [...tags, draft]
+  }
+
   async function submit() {
     if (!alias.trim()) { setErr('Alias is required'); return }
     setBusy(true); setErr('')
     try {
-      await onConfirm(alias.trim(), tags)
+      await onConfirm(alias.trim(), flushedTags())
     } catch (e) {
       setErr((e as Error).message)
     } finally {
@@ -77,6 +85,7 @@ export default function DocUploadModal({ file, knownTags, onCancel, onConfirm }:
             className="doc-tag-input"
             value={draftTag}
             onChange={e => setDraft(e.target.value)}
+            onBlur={() => addTag(draftTag)}
             onKeyDown={e => {
               if (e.key === 'Enter' || e.key === ',') {
                 e.preventDefault()

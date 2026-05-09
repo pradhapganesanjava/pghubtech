@@ -21,7 +21,8 @@ function buildTrie(tagLists: string[][]): TrieNode {
   for (const tags of tagLists) {
     const seen = new Set<string>()
     for (const t of tags) {
-      const parts = t.split('::').filter(Boolean)
+      const parts = t.split('::').map(p => p.trim()).filter(Boolean)
+      if (parts.length === 0) continue
       let cur = root
       let path = ''
       for (const part of parts) {
