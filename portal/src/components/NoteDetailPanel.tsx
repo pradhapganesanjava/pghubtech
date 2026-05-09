@@ -10,6 +10,7 @@ import {
   uploadImageBlob,
   uploadInlineImages,
 } from '../lib/driveImages'
+import { sanitizeHtml, isSafeLinkUrl } from '../lib/sanitize'
 import { useToast } from './Toast'
 
 async function resolveDriveImages(
@@ -61,7 +62,7 @@ function ViewField({ field, value }: { field: AnkiField; value: string }) {
   return (
     <div className="detail-field-wrap">
       <div className="section-hd">{field.label}</div>
-      <div className="section-html-body" dangerouslySetInnerHTML={{ __html: value }} />
+      <div className="section-html-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }} />
     </div>
   )
 }
@@ -112,16 +113,18 @@ function RichEditor({
 
   // Set initial HTML and re-sync when external value changes (e.g. switching cards).
   // Skip the sync when the change came from our own onInput, otherwise the cursor jumps.
+  // All writes funnel through sanitizeHtml so untrusted card content never
+  // hits the DOM with active script.
   useEffect(() => {
     if (!ref.current) return
     if (lastEmittedRef.current !== value) {
-      ref.current.innerHTML = value
+      ref.current.innerHTML = sanitizeHtml(value)
       lastEmittedRef.current = value
     }
   }, [value])
 
   useEffect(() => {
-    if (ref.current) ref.current.innerHTML = value
+    if (ref.current) ref.current.innerHTML = sanitizeHtml(value)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -141,20 +144,43 @@ function RichEditor({
   function handleLink() {
     const url = prompt('Link URL:', 'https://')
     if (!url) return
-    exec('createLink', url)
+    if (!isSafeLinkUrl(url)) {
+      alert('Only http(s), mailto, tel and relative links are allowed.')
+      return
+    }
+    exec('createLink', url.trim())
   }
 
   function insertImageHtml(html: string) {
     ref.current?.focus()
-    document.execCommand('insertHTML', false, html)
+    // execCommand('insertHTML', …) writes the string directly into the DOM, so
+    // any untrusted HTML (foreign clipboard contents, error messages built
+    // from server text) must be sanitised first.
+    document.execCommand('insertHTML', false, sanitizeHtml(html))
     emit()
   }
 
   function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
-    if (!onPasteImage || !e.clipboardData) return
+    if (!e.clipboardData) return
+
+    // 1) HTML paste from another page/app → sanitise before inserting so
+    //    onerror/onclick/javascript: payloads never reach the DOM.
+    const html = e.clipboardData.getData('text/html')
     const items = Array.from(e.clipboardData.items)
     const imgs  = items.filter(it => it.kind === 'file' && it.type.startsWith('image/'))
-    if (imgs.length === 0) return
+
+    if (imgs.length === 0) {
+      if (html) {
+        e.preventDefault()
+        ref.current?.focus()
+        document.execCommand('insertHTML', false, sanitizeHtml(html))
+        emit()
+      }
+      // No HTML and no images → let the browser handle plain-text paste.
+      return
+    }
+
+    if (!onPasteImage) return
     e.preventDefault()
     for (const it of imgs) {
       const file = it.getAsFile()
@@ -180,10 +206,11 @@ function RichEditor({
           .catch(err => {
             const el = ref.current?.querySelector(`#${placeholderId}`)
             if (el) {
-              el.outerHTML =
+              el.outerHTML = sanitizeHtml(
                 `<span style="color:#e94545;font-size:12px">[image upload failed: ${
                   (err as Error).message
                 }]</span>`
+              )
             }
             emit()
           })
@@ -295,7 +322,9 @@ function EditField({
           {mode === 'preview' && (
             <div
               className="rf-html-preview section-html-body"
-              dangerouslySetInnerHTML={{ __html: value || '<em style="opacity:.45">No content</em>' }}
+              dangerouslySetInnerHTML={{
+                __html: value ? sanitizeHtml(value) : '<em style="opacity:.45">No content</em>',
+              }}
             />
           )}
         </div>
@@ -397,10 +426,13 @@ export default function NoteDetailPanel({
     return blobUrl
   }
 
-  // Convert any blob:/data: image refs back to Drive URLs before persisting.
-  // 1. Cheap path: rewrite known blob URLs (paste handler / resolve mappings).
-  // 2. Fallback: upload anything still data:/blob: to Drive. Throws on failure
-  //    so we never silently store an unloadable blob: URL in the sheet.
+  // Prep field HTML for the sheet:
+  //   1. Rewrite known blob: URLs back to Drive URLs (paste & resolve maps).
+  //   2. Upload any leftover data:/blob: images; throw on failure so we never
+  //      silently store an unloadable URL.
+  //   3. Sanitise — strips event-handler attrs / javascript: hrefs / scripts
+  //      so untrusted content already in the sheet (e.g. migrated Anki decks)
+  //      gets cleaned on first save.
   async function normalizeFieldsForSave(
     fields: Record<string, string>,
   ): Promise<Record<string, string>> {
@@ -410,6 +442,7 @@ export default function NoteDetailPanel({
     for (const [k, v] of Object.entries(fields)) {
       let html = blobUrlsToDrive(v, blobToDriveRef.current)
       html = await uploadInlineImages(html, token)
+      html = sanitizeHtml(html)
       out[k] = html
     }
     return out

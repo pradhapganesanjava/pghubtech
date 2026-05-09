@@ -6,6 +6,7 @@ import {
 } from '../adapters/srsRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
 import { getCardFrontHtml, getCardBackHtml, getCardFrontText } from '../utils/cardHelpers'
+import { sanitizeHtml } from '../lib/sanitize'
 import TagDeckTree from '../components/TagDeckTree'
 import { useToast } from '../components/Toast'
 
@@ -363,7 +364,7 @@ export default function HomeView() {
               >
                 <div
                   className="question-html"
-                  dangerouslySetInnerHTML={{ __html: getCardFrontHtml(currentNote, currentTmpl) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardFrontHtml(currentNote, currentTmpl)) }}
                 />
                 {!answerVisible && (
                   <div style={{ marginTop: 16 }}>
@@ -394,7 +395,7 @@ export default function HomeView() {
             <div className="answer-col-inner">
               <div
                 className="answer-html"
-                dangerouslySetInnerHTML={{ __html: getCardBackHtml(currentNote, currentTmpl) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardBackHtml(currentNote, currentTmpl)) }}
               />
 
               {/* Rating buttons */}

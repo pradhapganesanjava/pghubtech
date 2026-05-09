@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { AnkiNote, AnkiTemplate } from '../adapters/ankiRepo'
 import type { Rating } from '../adapters/srsRepo'
+import { sanitizeHtml } from '../lib/sanitize'
 
 interface BrowseProps {
   note: AnkiNote
@@ -22,7 +23,7 @@ type Props = BrowseProps | PracticeProps
 function FieldContent({ type, value }: { type: string; value: string }) {
   if (!value) return null
   if (type === 'html') {
-    return <div className="ak-html" dangerouslySetInnerHTML={{ __html: value }} />
+    return <div className="ak-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }} />
   }
   return <p className="ak-text">{value}</p>
 }

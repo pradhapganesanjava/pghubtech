@@ -2,16 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' https://accounts.google.com https://apis.google.com;
+      connect-src 'self' https://*.googleapis.com https://accounts.google.com;
+      img-src 'self' data: blob: https://*.googleapis.com https://*.googleusercontent.com;
+      style-src 'self' 'unsafe-inline';
+      font-src 'self' data:;
+      frame-src https://accounts.google.com;
+      object-src 'none';
+      base-uri 'self';
+    " />
     <link rel="icon" type="image/svg+xml" href="/pghubtech/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PG Hub Tech</title>
     <!-- Sync theme before React mounts to avoid flash -->
-    <script>
-      (function () {
-        var t = localStorage.getItem('pghtech_theme');
-        if (t && t !== 'dark') document.documentElement.setAttribute('data-theme', t);
-      })();
-    </script>
+    <script src="./theme-init.js"></script>
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
