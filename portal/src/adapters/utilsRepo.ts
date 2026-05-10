@@ -15,8 +15,10 @@ const BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 
 const TODO_TAB     = 'ToDo'
 const ACTIVITY_TAB = 'Activity'
-const TODO_HEADERS = ['id','parent_id','title','done','position','created_at','updated_at'] as const
-const ACT_HEADERS  = ['id','date','kind','time','content','created_at'] as const
+const LESSONS_TAB  = 'Lessons'
+const TODO_HEADERS    = ['id','parent_id','title','done','position','created_at','updated_at'] as const
+const ACT_HEADERS     = ['id','date','kind','time','content','created_at'] as const
+const LESSONS_HEADERS = ['id','problem','not_worked','worked','source','created_at','updated_at'] as const
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +32,9 @@ export interface ToDoItem {
   updatedAt: string
 }
 
-export type ActivityKind = 'top_task' | 'hourly' | 'wins' | 'improvements' | 'reminder'
+export type ActivityKind =
+  | 'top_task' | 'hourly' | 'wins' | 'improvements' | 'reminder'
+  | 'not_worked' | 'raw'
 
 export interface ActivityEntry {
   id:        string
@@ -39,6 +43,16 @@ export interface ActivityEntry {
   time:      string         // HH:MM or ''
   content:   string
   createdAt: string
+}
+
+export interface Lesson {
+  id:         string
+  problem:    string
+  notWorked:  string
+  worked:     string
+  source:     string         // 'manual' | 'ai:YYYY-MM-DD..YYYY-MM-DD'
+  createdAt:  string
+  updatedAt:  string
 }
 
 // ── Plumbing ─────────────────────────────────────────────────────────────────
@@ -230,7 +244,7 @@ export async function loadAllActivities(): Promise<ActivityEntry[]> {
     .map(r => ({
       id:        r[0],
       date:      r[1] ?? '',
-      kind:      (['top_task','hourly','wins','improvements','reminder'].includes(r[2]) ? r[2] : 'hourly') as ActivityKind,
+      kind:      (['top_task','hourly','wins','improvements','reminder','not_worked','raw'].includes(r[2]) ? r[2] : 'hourly') as ActivityKind,
       time:      r[3] ?? '',
       content:   r[4] ?? '',
       createdAt: r[5] ?? '',
@@ -256,7 +270,7 @@ export async function loadActivityForDate(date: string): Promise<ActivityEntry[]
     .map(r => ({
       id:        r[0],
       date:      r[1] ?? '',
-      kind:      (['top_task','hourly','wins','improvements'].includes(r[2]) ? r[2] : 'hourly') as ActivityKind,
+      kind:      (['top_task','hourly','wins','improvements','reminder','not_worked','raw'].includes(r[2]) ? r[2] : 'hourly') as ActivityKind,
       time:      r[3] ?? '',
       content:   r[4] ?? '',
       createdAt: r[5] ?? '',
@@ -305,4 +319,68 @@ export async function upsertSingleton(date: string, kind: ActivityKind, content:
 export async function deleteActivity(id: string): Promise<void> {
   await ensureTab(ACTIVITY_TAB, ACT_HEADERS)
   await deleteRowsByIds(ACTIVITY_TAB, [id])
+}
+
+// ── Lessons CRUD ─────────────────────────────────────────────────────────────
+
+export async function loadLessons(): Promise<Lesson[]> {
+  await ensureTab(LESSONS_TAB, LESSONS_HEADERS)
+  const rows = await readRows(LESSONS_TAB, 'A2:G')
+  return rows
+    .filter(r => r[0])
+    .map(r => ({
+      id:        r[0],
+      problem:   r[1] ?? '',
+      notWorked: r[2] ?? '',
+      worked:    r[3] ?? '',
+      source:    r[4] ?? 'manual',
+      createdAt: r[5] ?? '',
+      updatedAt: r[6] ?? '',
+    }))
+    .sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt))
+}
+
+export async function addLesson(input: {
+  problem: string; notWorked: string; worked: string; source?: string
+}): Promise<Lesson> {
+  await ensureTab(LESSONS_TAB, LESSONS_HEADERS)
+  const now = new Date().toISOString()
+  const l: Lesson = {
+    id:        uuid('l'),
+    problem:   input.problem.trim(),
+    notWorked: input.notWorked.trim(),
+    worked:    input.worked.trim(),
+    source:    input.source ?? 'manual',
+    createdAt: now,
+    updatedAt: now,
+  }
+  await appendRow(LESSONS_TAB, 'G', [
+    l.id, l.problem, l.notWorked, l.worked, l.source, l.createdAt, l.updatedAt,
+  ])
+  return l
+}
+
+export async function updateLesson(l: Lesson): Promise<Lesson> {
+  await ensureTab(LESSONS_TAB, LESSONS_HEADERS)
+  const idx = await findRowByCol0(LESSONS_TAB, l.id)
+  if (idx < 0) throw new Error('Lesson row not found')
+  const updated: Lesson = { ...l, updatedAt: new Date().toISOString() }
+  await writeRow(LESSONS_TAB, `A${idx}:G${idx}`, [
+    updated.id, updated.problem, updated.notWorked, updated.worked,
+    updated.source, updated.createdAt, updated.updatedAt,
+  ])
+  return updated
+}
+
+export async function deleteLesson(id: string): Promise<void> {
+  await ensureTab(LESSONS_TAB, LESSONS_HEADERS)
+  await deleteRowsByIds(LESSONS_TAB, [id])
+}
+
+// Read activities for an inclusive date range (used to feed AI lesson generation).
+export async function loadActivitiesInRange(from: string, to: string): Promise<ActivityEntry[]> {
+  const all = await loadAllActivities()
+  return all
+    .filter(e => e.date >= from && e.date <= to)
+    .sort((a, b) => (a.date + a.time + a.createdAt).localeCompare(b.date + b.time + b.createdAt))
 }

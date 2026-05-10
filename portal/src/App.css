@@ -1545,6 +1545,79 @@ body.resizing-h * {
   .browse-body-wrap > .qa-divider,
   .review-body > .qa-divider { display: none; }
 
+  /* Activity Log: the calendar column is widthed inline by the JS resize
+     ratios (e.g. width: 30%). In a vertical stack that becomes a half-empty
+     row with the day editor sitting next to it — visually a "split". Force
+     full width and a bottom border so calendar and day editor stack cleanly. */
+  .activity-3pane { flex-direction: column; }
+  .activity-cal-col {
+    width: 100% !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 60vh;
+  }
+  .activity-cal-grid { gap: 4px; }
+  .activity-3pane > .browse-main { width: 100%; }
+
+  /* Notes — Col 2 (the section/page tree) gets an inline width: <pct>% from
+     the JS divider. In a vertical stack that leaves a "split" with empty
+     space next to it. Force full-width so it stacks cleanly under Col 1
+     (notes list / recent) and above Col 3 (editor). */
+  .notes-tree-col {
+    width: 100% !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 55vh;
+  }
+  /* Single-pane on page open: when the editor (.notes-editor-wrap) is
+     rendered inside .browse-main, the tree + side list + dividers hide so
+     the editor owns the screen. The existing ⤢ button (or going back)
+     restores them; manually closing the page (no openPage) removes the
+     editor and the side panels reappear. */
+  .browse-body-wrap:has(.notes-editor-wrap) > .browse-col-tags,
+  .browse-body-wrap:has(.notes-editor-wrap) > .notes-tree-col {
+    display: none;
+  }
+  .browse-body-wrap:has(.notes-editor-wrap) > .browse-main {
+    flex: 1 1 auto;
+  }
+  .notes-editor-wrap { padding-bottom: 90px; }   /* clear bottom-nav */
+
+  /* Activity sub-tabs (Log / Lessons) — slimmer hit area for narrow screens. */
+  .activity-subtabs { padding: 4px 8px 0; gap: 2px; }
+  .activity-subtab  { padding: 6px 10px; font-size: 12px; }
+
+  /* Lessons 3-pane — vertical stack. The actions / list columns have inline
+     pixel widths set by the JS divider; force them to full-width so the
+     stacked rows fill cleanly. The drag-handle is meaningless without two
+     side-by-side columns, so hide it. */
+  .lessons-3pane { flex-direction: column; }
+  .lessons-actions-col {
+    width: 100% !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    overflow: visible;
+  }
+  .lessons-actions-stack { flex-direction: row; flex-wrap: wrap; }
+  .lessons-actions-stack button { flex: 1 1 auto; min-width: 0; width: auto; }
+  .lessons-list-col {
+    width: 100% !important;
+    max-height: 45vh;
+    border-bottom: 1px solid var(--border);
+  }
+  .lessons-3pane > .qa-divider { display: none; }
+  .lessons-detail-col { padding-bottom: 90px; }   /* clear bottom-nav */
+  .lesson-detail-wrap { padding: 12px 14px; }
+  .lessons-edit-area  { min-height: 130px; }       /* roomier on small screens */
+
+  /* When a lesson is open on mobile, hide the actions + list and let the
+     editor / preview own the screen. ← buttons in the headers clear the
+     selection to bring the list back. */
+  .lessons-3pane:has(.lessons-detail-col.has-selection) > .lessons-actions-col,
+  .lessons-3pane:has(.lessons-detail-col.has-selection) > .lessons-list-col {
+    display: none;
+  }
+
   /* When the user picks a card / doc, the list hides and the viewer goes
      full-width. Hitting ✕ clears the selection and brings the list back. */
   .browse-cards-split:has(.browse-col-detail.has-selection) > .browse-col-cards,
@@ -1812,11 +1885,21 @@ body.resizing-h * {
 }
 
 .ai-panel-input {
-  display: flex; gap: 6px; align-items: flex-end;
+  display: flex; gap: 6px; align-items: stretch;
   padding: 10px;
   border-bottom: 1px solid var(--border);
   background: var(--bg2);
   flex-shrink: 0;
+}
+.ai-input-btn-col {
+  display: flex; flex-direction: column; gap: 4px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+.ai-input-btn-col .ai-send-btn {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
 }
 .ai-textarea {
   flex: 1; min-width: 0;
@@ -1841,6 +1924,46 @@ body.resizing-h * {
 }
 .ai-send-btn:disabled { opacity: .45; cursor: default; }
 .ai-send-btn:hover:not(:disabled) { opacity: .85; }
+
+.ai-msg-json {
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px; line-height: 1.45;
+  color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 320px; overflow: auto;
+}
+.ai-apply-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  transition: opacity .12s;
+}
+.ai-apply-btn:hover { opacity: .85; }
+
+.ai-mic-btn {
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.ai-mic-btn:hover:not(:disabled) { background: var(--bg2); opacity: 1; }
+.ai-mic-btn.listening {
+  background: #c0392b;
+  color: #fff;
+  border-color: #c0392b;
+  animation: ai-mic-pulse 1.1s ease-in-out infinite;
+}
+@keyframes ai-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, .55); }
+  50%      { box-shadow: 0 0 0 6px rgba(192, 57, 43, 0);  }
+}
 
 @media (max-width: 480px) {
   .ai-panel {
@@ -2129,6 +2252,43 @@ body.resizing-h * {
   padding: 4px 6px; border-radius: 3px; cursor: pointer;
 }
 .notes-search-clear:hover { color: var(--primary); background: var(--bg3); }
+
+/* AI Skills view (uses .mgmt-* layout) */
+.ai-skills-layout { flex: 1; }
+.ai-skill-dot {
+  display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--primary);
+  margin-right: 6px;
+}
+.ai-skill-enable {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text2); cursor: pointer;
+}
+.ai-skill-help {
+  font-size: 12px; color: var(--text2);
+  margin: 4px 0 8px;
+}
+.ai-skill-instruction {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px; line-height: 1.55;
+  color: var(--text); resize: vertical; outline: none;
+  min-height: 220px;
+}
+.ai-skill-instruction:focus { border-color: var(--primary); }
+.ai-skill-delete {
+  color: #e94545 !important;
+  border-color: rgba(233, 69, 69, .35) !important;
+}
+.ai-skill-delete:hover:not(:disabled) {
+  background: rgba(233, 69, 69, .1) !important;
+  border-color: rgba(233, 69, 69, .55) !important;
+}
 
 .notes-tree {
   margin-top: 8px;
@@ -2550,6 +2710,240 @@ body.resizing-h * {
 .todo-actions button:hover { color: var(--primary); background: var(--bg2); }
 .todo-actions .todo-rm { color: #ff6b3d; }
 .todo-actions .todo-rm:hover { background: rgba(255, 107, 61, .12); color: #ff6b3d; }
+
+/* Activity Preview — read-only render of a day. */
+.activity-preview {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.activity-preview-empty {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  color: var(--text2); font-size: 13px;
+}
+.activity-preview-section h4 {
+  margin: 0 0 4px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+}
+.activity-preview-section p,
+.activity-preview-section ul {
+  margin: 0; padding: 0;
+  font-size: 13px; line-height: 1.5; color: var(--text);
+}
+.activity-preview-section p.multiline { white-space: pre-wrap; }
+.activity-preview-section ul {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.activity-preview-section ul li {
+  display: flex; gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.activity-preview-time {
+  flex-shrink: 0; min-width: 52px;
+  font-variant-numeric: tabular-nums; color: var(--text2);
+}
+.activity-preview-text { flex: 1; }
+.activity-preview-dim { color: var(--text2); }
+.activity-preview-raw {
+  margin: 0; padding: 8px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* Activity panel wrapper + sub-tabs */
+.activity-panel-wrap {
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+}
+.activity-subtabs {
+  display: flex; gap: 4px;
+  padding: 6px 10px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.activity-subtab {
+  background: transparent;
+  border: 0;
+  padding: 8px 14px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .12s, border-color .12s;
+}
+.activity-subtab:hover { color: var(--text); }
+.activity-subtab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Lessons learned — 3-pane layout (Actions | List | Detail). */
+.lessons-3pane {
+  display: flex; flex: 1; min-height: 0;
+}
+.lessons-actions-col {
+  width: 200px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  overflow-y: auto;
+}
+.lessons-actions-col .col-hd {
+  padding: 10px 12px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.lessons-actions-stack {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px;
+}
+.lessons-actions-stack button {
+  width: 100%; text-align: left; padding: 8px 10px;
+  font-size: 12px;
+}
+.lessons-list-col {
+  flex-shrink: 0;
+  min-width: 200px;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+.lessons-list-col .col-hd {
+  padding: 10px 12px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.lessons-detail-col {
+  flex: 1; min-width: 0;
+  overflow-y: auto;
+}
+.lesson-detail-wrap {
+  padding: 16px 22px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.lesson-detail-hd {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.lesson-detail-hd h2 {
+  margin: 0;
+  font-size: 17px; font-weight: 600;
+}
+.lesson-preview-title {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.lesson-preview-section {
+  margin-bottom: 16px;
+}
+.lesson-preview-section h4 {
+  margin: 0 0 4px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+}
+.lesson-preview-section p {
+  margin: 0;
+  font-size: 14px; line-height: 1.55;
+  color: var(--text);
+}
+.lesson-preview-section p.multiline { white-space: pre-wrap; }
+.lesson-preview-meta {
+  margin-top: 16px; padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 11px; color: var(--text2);
+}
+.lessons-row-btn.sel {
+  background: rgba(var(--primary-rgb), .12);
+  border-left: 3px solid var(--primary);
+  padding-left: 7px;
+}
+
+/* Old in-side-panel lesson layout — kept for any leftover refs. */
+.lessons-pane {
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+  overflow: hidden;
+}
+.lessons-actions {
+  display: flex; gap: 6px; padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.lessons-actions .rf-btn-cancel { padding: 4px 10px; font-size: 12px; }
+.lessons-gen-form {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.lessons-gen-form label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text2);
+}
+.lessons-gen-form input[type="date"] {
+  flex: 1; padding: 4px 6px; font-size: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text);
+}
+.lessons-gen-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.lessons-list {
+  list-style: none; margin: 0; padding: 0;
+  flex: 1; overflow-y: auto;
+}
+.lessons-item { border-bottom: 1px solid var(--border); }
+.lessons-row-btn {
+  width: 100%; text-align: left;
+  background: transparent; border: 0;
+  padding: 8px 10px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px;
+  color: var(--text);
+  transition: background .12s;
+}
+.lessons-row-btn:hover { background: var(--bg3); }
+.lessons-row-q {
+  font-size: 12px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lessons-row-w, .lessons-row-x {
+  font-size: 11px; color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lessons-row-w { color: #2ea043; }
+.lessons-row-x { color: #d04a3b; }
+.lessons-row-meta { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.lessons-editor {
+  display: flex; flex-direction: column; gap: 6px;
+  width: 100%;
+}
+.lessons-edit-lbl {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+  margin-top: 8px;
+}
+.lessons-edit-area {
+  width: 100%;
+  min-height: 110px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.lessons-edit-actions {
+  display: flex; gap: 8px; align-items: center; margin-top: 12px;
+}
 
 /* Activity — 3-pane (mirrors Notes layout). */
 .activity-3pane {

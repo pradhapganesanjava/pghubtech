@@ -135,6 +135,13 @@ export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen,
               <div className="avatar-menu-divider" />
 
               <button
+                className={`avatar-menu-item${view === 'ai-skills' ? ' active' : ''}`}
+                onClick={() => { onNav('ai-skills'); setMenuOpen(false) }}
+              >
+                <span className="avatar-menu-icon">✨</span>
+                <span>AI Skills</span>
+              </button>
+              <button
                 className={`avatar-menu-item${view === 'settings' ? ' active' : ''}`}
                 onClick={() => { onNav('settings'); setMenuOpen(false) }}
               >

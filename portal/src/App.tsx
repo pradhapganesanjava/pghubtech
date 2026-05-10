@@ -10,12 +10,13 @@ import BrowseView from './views/BrowseView'
 import DocsView from './views/DocsView'
 import NotesView from './views/NotesView'
 import UtilsView from './views/UtilsView'
+import AISkillsView from './views/AISkillsView'
 import SettingsView from './views/SettingsView'
 import AskAIPanel from './components/AskAIPanel'
 import './App.css'
 
 type AuthState = 'loading' | 'unauthenticated' | 'needs-sheet' | 'authenticated'
-type View = 'home' | 'browse' | 'docs' | 'notes' | 'utils' | 'settings'
+type View = 'home' | 'browse' | 'docs' | 'notes' | 'utils' | 'ai-skills' | 'settings'
 
 const GOOGLE_SVG = (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -175,6 +176,7 @@ export default function App() {
         {view === 'docs'     && <DocsView />}
         {view === 'notes'    && <NotesView />}
         {view === 'utils'    && <UtilsView />}
+        {view === 'ai-skills' && <AISkillsView />}
         {view === 'settings' && (
           <SettingsView
             theme={theme}
