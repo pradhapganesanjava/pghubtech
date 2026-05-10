@@ -13,21 +13,32 @@ import { Config } from '../services/config'
 
 const BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 
-const TODO_TAB     = 'ToDo'
-const ACTIVITY_TAB = 'Activity'
-const LESSONS_TAB  = 'Lessons'
-const TODO_HEADERS    = ['id','parent_id','title','done','position','created_at','updated_at'] as const
+const TODO_TAB         = 'ToDo'
+const ACTIVITY_TAB     = 'Activity'
+const LESSONS_TAB      = 'Lessons'
+const TODO_COMMENTS_TAB = 'ToDoComments'
+const TODO_HEADERS    = ['id','parent_id','title','done','position','created_at','updated_at','description'] as const
 const ACT_HEADERS     = ['id','date','kind','time','content','created_at'] as const
 const LESSONS_HEADERS = ['id','problem','not_worked','worked','source','created_at','updated_at'] as const
+const TODO_COMMENT_HEADERS = ['id','todo_id','content','created_at','updated_at'] as const
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface ToDoItem {
+  id:          string
+  parentId:    string   // '' for top-level
+  title:       string
+  done:        boolean
+  position:    number
+  createdAt:   string
+  updatedAt:   string
+  description: string   // long-form info / what the item means
+}
+
+export interface ToDoComment {
   id:        string
-  parentId:  string   // '' for top-level
-  title:     string
-  done:      boolean
-  position:  number
+  todoId:    string
+  content:   string
   createdAt: string
   updatedAt: string
 }
@@ -166,21 +177,22 @@ async function deleteRowsByIds(name: string, ids: string[]): Promise<void> {
 
 export async function loadToDos(): Promise<ToDoItem[]> {
   await ensureTab(TODO_TAB, TODO_HEADERS)
-  const rows = await readRows(TODO_TAB, 'A2:G')
+  const rows = await readRows(TODO_TAB, 'A2:H')
   return rows
     .filter(r => r[0])
     .map(r => ({
-      id:        r[0],
-      parentId:  r[1] ?? '',
-      title:     r[2] ?? '',
-      done:      (r[3] ?? '').toLowerCase() === 'true',
-      position:  parseInt(r[4] ?? '0', 10) || 0,
-      createdAt: r[5] ?? '',
-      updatedAt: r[6] ?? '',
+      id:          r[0],
+      parentId:    r[1] ?? '',
+      title:       r[2] ?? '',
+      done:        (r[3] ?? '').toLowerCase() === 'true',
+      position:    parseInt(r[4] ?? '0', 10) || 0,
+      createdAt:   r[5] ?? '',
+      updatedAt:   r[6] ?? '',
+      description: r[7] ?? '',
     }))
 }
 
-export async function addToDo(parentId: string, title: string): Promise<ToDoItem> {
+export async function addToDo(parentId: string, title: string, description = ''): Promise<ToDoItem> {
   await ensureTab(TODO_TAB, TODO_HEADERS)
   const all = await loadToDos()
   const siblings = all.filter(t => t.parentId === parentId)
@@ -188,16 +200,74 @@ export async function addToDo(parentId: string, title: string): Promise<ToDoItem
   const now = new Date().toISOString()
   const item: ToDoItem = {
     id: uuid('t'), parentId,
-    title:     title.trim() || 'New task',
-    done:      false,
+    title:       title.trim() || 'New task',
+    done:        false,
     position,
-    createdAt: now, updatedAt: now,
+    createdAt:   now,
+    updatedAt:   now,
+    description: description.trim(),
   }
-  await appendRow(TODO_TAB, 'G', [
+  await appendRow(TODO_TAB, 'H', [
     item.id, item.parentId, item.title, String(item.done),
-    String(item.position), item.createdAt, item.updatedAt,
+    String(item.position), item.createdAt, item.updatedAt, item.description,
   ])
   return item
+}
+
+// Batched insert for a whole tree (used by the AI Generate flow). One Sheets
+// :append call instead of one-per-row, so deep trees don't hit the 60/min
+// write-quota. Walks the recursive shape, pre-generates ids so children
+// carry their parent's id, and returns the flat list of created items in
+// DFS order.
+export interface ToDoDraftInput {
+  title:       string
+  description?: string
+  children?:   ToDoDraftInput[]
+}
+
+export async function appendToDoTreeBatch(
+  drafts: ToDoDraftInput[],
+  rootParentId = '',
+): Promise<ToDoItem[]> {
+  await ensureTab(TODO_TAB, TODO_HEADERS)
+  if (drafts.length === 0) return []
+  const all = await loadToDos()
+  const posByParent = new Map<string, number>()
+  for (const t of all) {
+    const cur = posByParent.get(t.parentId) ?? -1
+    if (t.position > cur) posByParent.set(t.parentId, t.position)
+  }
+  const now = new Date().toISOString()
+  const out:  ToDoItem[] = []
+  const rows: string[][] = []
+  function walk(list: ToDoDraftInput[], parentId: string) {
+    for (const d of list) {
+      const pos = (posByParent.get(parentId) ?? -1) + 1
+      posByParent.set(parentId, pos)
+      const item: ToDoItem = {
+        id:          uuid('t'),
+        parentId,
+        title:       (d.title || 'New task').trim(),
+        done:        false,
+        position:    pos,
+        createdAt:   now,
+        updatedAt:   now,
+        description: (d.description ?? '').trim(),
+      }
+      out.push(item)
+      rows.push([
+        item.id, item.parentId, item.title, String(item.done),
+        String(item.position), item.createdAt, item.updatedAt, item.description,
+      ])
+      if (d.children && d.children.length > 0) walk(d.children, item.id)
+    }
+  }
+  walk(drafts, rootParentId)
+  await fetch(
+    `${BASE}/${sid()}/values/${encodeURIComponent(`${TODO_TAB}!A:H`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    { method: 'POST', headers: auth(true), body: JSON.stringify({ values: rows }) },
+  ).then(r => expectOk(r, 'Append ToDos batch'))
+  return out
 }
 
 export async function updateToDo(item: ToDoItem): Promise<void> {
@@ -205,9 +275,9 @@ export async function updateToDo(item: ToDoItem): Promise<void> {
   const idx = await findRowByCol0(TODO_TAB, item.id)
   if (idx < 0) throw new Error('ToDo row not found')
   const updated = { ...item, updatedAt: new Date().toISOString() }
-  await writeRow(TODO_TAB, `A${idx}:G${idx}`, [
+  await writeRow(TODO_TAB, `A${idx}:H${idx}`, [
     updated.id, updated.parentId, updated.title, String(updated.done),
-    String(updated.position), updated.createdAt, updated.updatedAt,
+    String(updated.position), updated.createdAt, updated.updatedAt, updated.description ?? '',
   ])
 }
 
@@ -383,4 +453,49 @@ export async function loadActivitiesInRange(from: string, to: string): Promise<A
   return all
     .filter(e => e.date >= from && e.date <= to)
     .sort((a, b) => (a.date + a.time + a.createdAt).localeCompare(b.date + b.time + b.createdAt))
+}
+
+// ── ToDo comments (progress log per todo) ────────────────────────────────────
+
+export async function loadAllToDoComments(): Promise<ToDoComment[]> {
+  await ensureTab(TODO_COMMENTS_TAB, TODO_COMMENT_HEADERS)
+  const rows = await readRows(TODO_COMMENTS_TAB, 'A2:E')
+  return rows
+    .filter(r => r[0])
+    .map(r => ({
+      id:        r[0],
+      todoId:    r[1] ?? '',
+      content:   r[2] ?? '',
+      createdAt: r[3] ?? '',
+      updatedAt: r[4] ?? '',
+    }))
+}
+
+export async function addToDoComment(todoId: string, content: string): Promise<ToDoComment> {
+  await ensureTab(TODO_COMMENTS_TAB, TODO_COMMENT_HEADERS)
+  const now = new Date().toISOString()
+  const c: ToDoComment = {
+    id: uuid('c'), todoId,
+    content:   content.trim(),
+    createdAt: now,
+    updatedAt: now,
+  }
+  await appendRow(TODO_COMMENTS_TAB, 'E', [c.id, c.todoId, c.content, c.createdAt, c.updatedAt])
+  return c
+}
+
+export async function updateToDoComment(c: ToDoComment): Promise<ToDoComment> {
+  await ensureTab(TODO_COMMENTS_TAB, TODO_COMMENT_HEADERS)
+  const idx = await findRowByCol0(TODO_COMMENTS_TAB, c.id)
+  if (idx < 0) throw new Error('Comment not found')
+  const updated: ToDoComment = { ...c, updatedAt: new Date().toISOString() }
+  await writeRow(TODO_COMMENTS_TAB, `A${idx}:E${idx}`, [
+    updated.id, updated.todoId, updated.content, updated.createdAt, updated.updatedAt,
+  ])
+  return updated
+}
+
+export async function deleteToDoComment(id: string): Promise<void> {
+  await ensureTab(TODO_COMMENTS_TAB, TODO_COMMENT_HEADERS)
+  await deleteRowsByIds(TODO_COMMENTS_TAB, [id])
 }

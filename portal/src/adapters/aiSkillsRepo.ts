@@ -10,9 +10,12 @@ const BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 const TAB  = 'AISkills'
 const HEADERS = [
   'id', 'name', 'description', 'instruction', 'enabled',
-  'created_at', 'updated_at',
+  'created_at', 'updated_at', 'slug',
 ] as const
 
+// Slugs identify built-in skills that other code paths read by a known key
+// (e.g. the ToDo generator reads the skill with slug "todo_generate" as its
+// system prompt). User-created skills leave slug empty.
 export interface AISkill {
   id:          string
   name:        string
@@ -21,6 +24,7 @@ export interface AISkill {
   enabled:     boolean
   createdAt:   string
   updatedAt:   string
+  slug:        string
 }
 
 function auth(json = false): Record<string, string> {
@@ -57,7 +61,7 @@ async function ensureTab(): Promise<void> {
       body:    JSON.stringify({ requests: [{ addSheet: { properties: { title: TAB } } }] }),
     }).then(r => expectOk(r, 'Add AISkills tab'))
     await fetch(
-      `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A1:G1`)}?valueInputOption=RAW`,
+      `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A1:H1`)}?valueInputOption=RAW`,
       { method: 'PUT', headers: auth(true), body: JSON.stringify({ values: [HEADERS as unknown as string[]] }) },
     ).then(r => expectOk(r, 'Init AISkills headers'))
   }
@@ -74,13 +78,14 @@ function rowToSkill(r: string[]): AISkill | null {
     enabled:     (r[4] ?? '').toLowerCase() === 'true',
     createdAt:   r[5] ?? '',
     updatedAt:   r[6] ?? '',
+    slug:        r[7] ?? '',
   }
 }
 
 function skillToRow(s: AISkill): string[] {
   return [
     s.id, s.name, s.description, s.instruction,
-    String(s.enabled), s.createdAt, s.updatedAt,
+    String(s.enabled), s.createdAt, s.updatedAt, s.slug ?? '',
   ]
 }
 
@@ -91,7 +96,7 @@ function uuid(): string {
 export async function listSkills(): Promise<AISkill[]> {
   await ensureTab()
   const r = await fetch(
-    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A2:G`)}`,
+    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A2:H`)}`,
     { headers: auth() },
   )
   const d = await r.json() as { values?: string[][] }
@@ -99,7 +104,7 @@ export async function listSkills(): Promise<AISkill[]> {
 }
 
 export async function createSkill(input: {
-  name: string; description?: string; instruction?: string; enabled?: boolean
+  name: string; description?: string; instruction?: string; enabled?: boolean; slug?: string
 }): Promise<AISkill> {
   await ensureTab()
   const now = new Date().toISOString()
@@ -111,9 +116,10 @@ export async function createSkill(input: {
     enabled:     input.enabled ?? false,
     createdAt:   now,
     updatedAt:   now,
+    slug:        input.slug ?? '',
   }
   await fetch(
-    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A:G`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A:H`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
       method:  'POST', headers: auth(true),
       body:    JSON.stringify({ values: [skillToRow(skill)] }),
@@ -134,12 +140,37 @@ export async function updateSkill(skill: AISkill): Promise<void> {
   if (idx < 0) throw new Error('Skill row not found')
   const updated = { ...skill, updatedAt: new Date().toISOString() }
   await fetch(
-    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A${idx + 1}:G${idx + 1}`)}?valueInputOption=RAW`,
+    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A${idx + 1}:H${idx + 1}`)}?valueInputOption=RAW`,
     {
       method:  'PUT', headers: auth(true),
       body:    JSON.stringify({ values: [skillToRow(updated)] }),
     },
   ).then(r2 => expectOk(r2, 'Update skill'))
+}
+
+// Look up an existing skill by slug, or create one with the provided defaults
+// if no row carries that slug yet. Used to seed built-in instructions (e.g.
+// the ToDo generator's prompt) so the user sees a normal editable row in
+// AI Skills and other features always have something to read.
+export async function ensureSkillBySlug(
+  slug: string,
+  defaults: { name: string; description?: string; instruction: string },
+): Promise<AISkill> {
+  const all = await listSkills()
+  const found = all.find(s => s.slug === slug)
+  if (found) return found
+  return createSkill({
+    name:        defaults.name,
+    description: defaults.description ?? '',
+    instruction: defaults.instruction,
+    enabled:     true,
+    slug,
+  })
+}
+
+export async function getSkillBySlug(slug: string): Promise<AISkill | null> {
+  const all = await listSkills()
+  return all.find(s => s.slug === slug) ?? null
 }
 
 export async function deleteSkill(id: string): Promise<void> {

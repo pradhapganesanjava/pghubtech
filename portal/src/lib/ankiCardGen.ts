@@ -4,6 +4,7 @@
 // and save.
 
 import { LLM } from './llm'
+import { parseLooseJson } from './looseJson'
 
 export interface AnkiCardDraft {
   question: string
@@ -67,48 +68,6 @@ function normalizeCard(c: any): AnkiCardDraft | null {
 }
 
 function parse(s: string): { cards?: any[] } | null {
-  const t = s.trim()
-  try { return JSON.parse(t) } catch { /* fall through */ }
-  const fence = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```\s*$/i)
-  if (fence) { try { return JSON.parse(fence[1]) } catch { /* */ } }
-  const start = t.indexOf('{'), end = t.lastIndexOf('}')
-  if (start >= 0 && end > start) {
-    try { return JSON.parse(t.slice(start, end + 1)) } catch { /* */ }
-  }
-  // Truncation repair — close any unclosed brackets at the end.
-  if (start >= 0) {
-    const slice = t.slice(start)
-    let braces = 0, brackets = 0, inStr = false, esc = false, lastSafe = 0
-    for (let i = 0; i < slice.length; i++) {
-      const c = slice[i]
-      if (esc) { esc = false; continue }
-      if (inStr) {
-        if (c === '\\') esc = true
-        else if (c === '"') { inStr = false; lastSafe = i + 1 }
-        continue
-      }
-      if (c === '"') inStr = true
-      else if (c === '{') braces++
-      else if (c === '}') { braces--; lastSafe = i + 1 }
-      else if (c === '[') brackets++
-      else if (c === ']') { brackets--; lastSafe = i + 1 }
-    }
-    let cand = (inStr ? slice.slice(0, lastSafe) : slice).replace(/[\s,]+$/, '')
-    braces = 0; brackets = 0; inStr = false; esc = false
-    for (let i = 0; i < cand.length; i++) {
-      const c = cand[i]
-      if (esc) { esc = false; continue }
-      if (inStr) { if (c === '\\') esc = true; else if (c === '"') inStr = false; continue }
-      if (c === '"') inStr = true
-      else if (c === '{') braces++
-      else if (c === '}') braces--
-      else if (c === '[') brackets++
-      else if (c === ']') brackets--
-    }
-    if (!inStr && braces >= 0 && brackets >= 0) {
-      const closed = cand + ']'.repeat(brackets) + '}'.repeat(braces)
-      try { return JSON.parse(closed) } catch { /* */ }
-    }
-  }
-  return null
+  const out = parseLooseJson(s)
+  return (out && typeof out === 'object') ? out as { cards?: any[] } : null
 }

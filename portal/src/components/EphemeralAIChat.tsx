@@ -8,6 +8,7 @@ import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
 import { stopAll } from '../lib/audioRegistry'
 import { exportConversationAsDoc } from '../lib/conversationExport'
+import { parseLooseJson } from '../lib/looseJson'
 import MessageAudio from './MessageAudio'
 import AnkiCardGenModal from './AnkiCardGenModal'
 import { useToast } from './Toast'
@@ -328,82 +329,8 @@ export default function EphemeralAIChat({
   )
 }
 
-// Best-effort JSON extraction from an assistant message. Returns the parsed
-// object/array, or null if nothing valid was found. Tolerates ```json fences,
-// stray prose around an otherwise-valid object, and truncated responses
-// (response cut off mid-value because the model hit max_tokens).
 function tryParseJson(s: string): unknown | null {
-  const t = s.trim()
-  if (!t) return null
-  try { return JSON.parse(t) } catch { /* fall through */ }
-  const fence = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```\s*$/i)
-  if (fence) {
-    try { return JSON.parse(fence[1]) } catch { /* fall through */ }
-  }
-  const start = t.indexOf('{')
-  const end   = t.lastIndexOf('}')
-  if (start >= 0 && end > start) {
-    try { return JSON.parse(t.slice(start, end + 1)) } catch { /* fall through */ }
-  }
-  // Truncation repair: balance unclosed brackets / quotes by walking the
-  // string and appending the missing closes. Trims trailing partial content
-  // (e.g. an unfinished string or value after the last comma) so the repaired
-  // JSON parses without losing the well-formed prefix.
-  if (start >= 0) {
-    const repaired = repairTruncatedJson(t.slice(start))
-    if (repaired != null) return repaired
-  }
-  return null
-}
-
-function repairTruncatedJson(input: string): unknown | null {
-  let braces = 0, brackets = 0, inStr = false, esc = false
-  let lastSafe = -1   // index just after the last cleanly-closed top-level token
-  for (let i = 0; i < input.length; i++) {
-    const c = input[i]
-    if (esc) { esc = false; continue }
-    if (inStr) {
-      if (c === '\\')      esc = true
-      else if (c === '"')  { inStr = false; lastSafe = i + 1 }
-      continue
-    }
-    if (c === '"') inStr = true
-    else if (c === '{') braces++
-    else if (c === '}') { braces--; lastSafe = i + 1 }
-    else if (c === '[') brackets++
-    else if (c === ']') { brackets--; lastSafe = i + 1 }
-    else if (c === ',' || c === ' ' || c === '\n' || c === '\t' || c === '\r') {
-      // skip — punctuation between tokens
-    } else if (!inStr && /[0-9truefalsn.\-+eE]/.test(c)) {
-      // primitive — track end on next non-primitive char
-      lastSafe = i + 1
-    }
-  }
-  // If we ended mid-string or with a trailing partial value, walk back to the
-  // last cleanly-closed point and try from there.
-  let candidate = inStr || lastSafe < 0 ? input.slice(0, lastSafe < 0 ? 0 : lastSafe) : input
-  candidate = candidate.replace(/[\s,]+$/, '')
-  // Recount on the candidate to know how much to close.
-  braces = 0; brackets = 0; inStr = false; esc = false
-  for (let i = 0; i < candidate.length; i++) {
-    const c = candidate[i]
-    if (esc) { esc = false; continue }
-    if (inStr) {
-      if (c === '\\') esc = true
-      else if (c === '"') inStr = false
-      continue
-    }
-    if (c === '"') inStr = true
-    else if (c === '{') braces++
-    else if (c === '}') braces--
-    else if (c === '[') brackets++
-    else if (c === ']') brackets--
-  }
-  if (inStr || braces < 0 || brackets < 0) return null
-  const closed = candidate
-    + ']'.repeat(brackets)
-    + '}'.repeat(braces)
-  try { return JSON.parse(closed) } catch { return null }
+  return parseLooseJson(s)
 }
 
 function simpleMd(s: string): string {

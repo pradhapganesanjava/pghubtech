@@ -3,6 +3,10 @@ import {
   createSkill, deleteSkill, listSkills, updateSkill,
 } from '../adapters/aiSkillsRepo'
 import type { AISkill } from '../adapters/aiSkillsRepo'
+import {
+  DEFAULT_TODO_GENERATE_PROMPT, TODO_GENERATE_SLUG, ensureTodoGenerateSkill,
+} from '../lib/todoGen'
+import { LLM } from '../lib/llm'
 import { useToast } from '../components/Toast'
 
 export default function AISkillsView() {
@@ -14,22 +18,52 @@ export default function AISkillsView() {
   const [draft, setDraft]       = useState<AISkill | null>(null)
   const [dirty, setDirty]       = useState(false)
   const [err, setErr]           = useState('')
+  // Test panel state — runs the *current* draft instruction so the user can
+  // tweak and try without saving first.
+  const [testOpen, setTestOpen]   = useState(false)
+  const [testInput, setTestInput] = useState('')
+  const [testReply, setTestReply] = useState<string>('')
+  const [testBusy, setTestBusy]   = useState(false)
 
   useEffect(() => {
-    listSkills()
-      .then(list => { setSkills(list); setLoading(false) })
-      .catch(e => { setLoading(false); toast(`Load failed: ${(e as Error).message}`, 'error') })
+    // Seed any built-in skill rows (e.g. ToDo Generator) so the user sees
+    // them alongside their custom skills. Failures are non-fatal — the page
+    // still works with whatever rows exist.
+    ensureTodoGenerateSkill().catch(() => { /* ignore */ })
+      .finally(() => {
+        listSkills()
+          .then(list => { setSkills(list); setLoading(false) })
+          .catch(e => { setLoading(false); toast(`Load failed: ${(e as Error).message}`, 'error') })
+      })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function selectSkill(s: AISkill) {
     if (dirty && !window.confirm('Discard unsaved changes?')) return
     setSelected(s); setDraft({ ...s }); setDirty(false); setErr('')
+    setTestOpen(false); setTestInput(''); setTestReply('')
+  }
+
+  async function runTest() {
+    if (!draft || testBusy) return
+    if (!LLM.isConfigured()) { setErr('Configure Azure OpenAI in Settings → AI Assistant.'); return }
+    setTestBusy(true); setTestReply(''); setErr('')
+    try {
+      const reply = await LLM.chat([
+        { role: 'system', content: draft.instruction },
+        { role: 'user',   content: testInput || 'Provide a brief example response demonstrating this skill.' },
+      ], 3000)
+      setTestReply(reply)
+    } catch (e) {
+      setTestReply(`Error: ${(e as Error).message}`)
+    } finally {
+      setTestBusy(false)
+    }
   }
 
   async function handleNew() {
     setBusy(true); setErr('')
     try {
-      const created = await createSkill({ name: 'New skill', description: '', instruction: '', enabled: false })
+      const created = await createSkill({ name: 'New skill', description: '', instruction: '', enabled: false, slug: '' })
       setSkills(prev => [...prev, created])
       setSelected(created); setDraft({ ...created }); setDirty(false)
       toast('Skill created', 'success')
@@ -91,6 +125,7 @@ export default function AISkillsView() {
                 <span className="mgmt-item-name">
                   {s.enabled && <span className="ai-skill-dot" title="Enabled">●</span>}
                   {s.name}
+                  {s.slug && <span className="ai-skill-slug" title={`Built-in slug: ${s.slug}`}>{s.slug}</span>}
                 </span>
                 <span className="mgmt-item-sub">{s.description || (s.instruction ? 'Has instruction' : '—')}</span>
               </li>
@@ -164,11 +199,30 @@ export default function AISkillsView() {
               onClick={() => { if (selected) { setDraft({ ...selected }); setDirty(false) } }}
               disabled={!dirty || busy}
             >Reset</button>
+            {builtinDefaultFor(draft.slug) != null && (
+              <button
+                className="rf-btn-cancel"
+                onClick={() => {
+                  const def = builtinDefaultFor(draft.slug)
+                  if (!def) return
+                  setDraft({ ...draft, name: def.name, description: def.description, instruction: def.instruction })
+                  setDirty(true)
+                }}
+                disabled={busy}
+                title="Replace this row with the latest built-in default. Click Save to persist."
+              >↺ Reset to default</button>
+            )}
             <button
               className="mgmt-save-btn"
               onClick={handleSave}
               disabled={!dirty || busy}
             >{busy ? 'Saving…' : 'Save'}</button>
+            <button
+              className={`rf-btn-cancel${testOpen ? ' active' : ''}`}
+              onClick={() => setTestOpen(o => !o)}
+              disabled={busy}
+              title="Try the current instruction against an example input"
+            >{testOpen ? '✕ Close test' : '▶ Test'}</button>
             <span style={{ flex: 1 }} />
             <button
               className="rf-btn-cancel ai-skill-delete"
@@ -176,10 +230,62 @@ export default function AISkillsView() {
               disabled={busy}
             >Delete skill</button>
           </div>
+
+          {testOpen && (
+            <div className="ai-skill-test">
+              <h3 className="mgmt-section-hd">Test</h3>
+              <p className="ai-skill-help">
+                Sends the <strong>current draft instruction</strong> as the system
+                message and your test input as the user message. Save the
+                skill afterwards if you like the result.
+              </p>
+              <textarea
+                className="rf-textarea"
+                rows={4}
+                value={testInput}
+                onChange={e => setTestInput(e.target.value)}
+                placeholder="Test input — e.g. 'Generate todos for: learn Kubernetes intermediate'"
+                disabled={testBusy}
+              />
+              <div className="ai-skill-test-actions">
+                <button
+                  className="mgmt-save-btn"
+                  onClick={runTest}
+                  disabled={testBusy || !draft.instruction.trim()}
+                >{testBusy ? 'Running…' : '▶ Run test'}</button>
+                {testReply && (
+                  <button
+                    className="rf-btn-cancel"
+                    onClick={() => setTestReply('')}
+                    disabled={testBusy}
+                  >Clear output</button>
+                )}
+              </div>
+              {testReply && (
+                <pre className="ai-skill-test-out">{testReply}</pre>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="mgmt-empty">Select a skill to edit, or click + New.</div>
       )}
     </div>
   )
+}
+
+// Built-in skill defaults — keyed by slug. When a skill row carries a slug
+// listed here, the editor exposes a "Reset to default" button that pulls the
+// latest constants in from code. New built-in skills go in this map.
+function builtinDefaultFor(slug: string): { name: string; description: string; instruction: string } | null {
+  switch (slug) {
+    case TODO_GENERATE_SLUG:
+      return {
+        name:        'ToDo Generator',
+        description: 'System prompt used by Utils → ToDo → ✨ Generate. Edit here to change how AI breaks a goal into a hierarchy of actionable todos.',
+        instruction: DEFAULT_TODO_GENERATE_PROMPT,
+      }
+    default:
+      return null
+  }
 }

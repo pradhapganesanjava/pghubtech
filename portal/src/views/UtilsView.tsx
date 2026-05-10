@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  addHourlyActivity, addLesson, addReminder, addToDo, deleteActivity, deleteLesson,
-  deleteToDo, loadActivitiesInRange, loadActivityForDate, loadAllActivities,
-  loadLessons, loadToDos, updateLesson, updateToDo, upsertSingleton,
+  addHourlyActivity, addLesson, addReminder, addToDo, addToDoComment,
+  appendToDoTreeBatch,
+  deleteActivity, deleteLesson, deleteToDo, deleteToDoComment,
+  loadActivitiesInRange, loadActivityForDate, loadAllActivities, loadAllToDoComments,
+  loadLessons, loadToDos, updateLesson, updateToDo, updateToDoComment,
+  upsertSingleton,
 } from '../adapters/utilsRepo'
-import type { ActivityEntry, ActivityKind, Lesson, ToDoItem } from '../adapters/utilsRepo'
+import type { ActivityEntry, ActivityKind, Lesson, ToDoComment, ToDoItem } from '../adapters/utilsRepo'
 import { useToast } from '../components/Toast'
 import EphemeralAIChat from '../components/EphemeralAIChat'
 import { LLM } from '../lib/llm'
+import { generateToDoHierarchy } from '../lib/todoGen'
+import type { ToDoDraft } from '../lib/todoGen'
 
 type SubTab = 'todo' | 'activity'
 
@@ -27,7 +32,7 @@ export default function UtilsView() {
         >📅 Activity Log</button>
       </div>
 
-      <div className={`utils-body${tab === 'activity' ? ' utils-body-flush' : ''}`}>
+      <div className={`utils-body${tab === 'activity' || tab === 'todo' ? ' utils-body-flush' : ''}`}>
         {tab === 'todo'     && <ToDoPanel />}
         {tab === 'activity' && <ActivityPanel />}
       </div>
@@ -35,20 +40,74 @@ export default function UtilsView() {
   )
 }
 
-// ── ToDo ─────────────────────────────────────────────────────────────────────
+// ── ToDo (3-pane: Actions | Tree/List | Detail) ──────────────────────────────
+
+type TodoView = 'tree' | 'flat'
 
 function ToDoPanel() {
   const { toast } = useToast()
-  const [items, setItems] = useState<ToDoItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
-  const [draft, setDraft] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingDraft, setEditingDraft] = useState('')
+  const [items, setItems]                 = useState<ToDoItem[]>([])
+  const [comments, setComments]           = useState<ToDoComment[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [busy, setBusy]                   = useState(false)
+  const [selectedId, setSelectedId]       = useState<string | null>(null)
+  const [viewMode, setViewMode]           = useState<TodoView>('tree')
+  const [filter, setFilter]               = useState('')
+  const [showDone, setShowDone]           = useState(true)
+  const [manageMode, setManageMode]       = useState(false)
+  const [manageSel, setManageSel]         = useState<Set<string>>(new Set())
+  const [bulkMoveOpen, setBulkMoveOpen]   = useState(false)
+  const [bulkMoveParent, setBulkMoveParent] = useState('')
+
+  // AI generate
+  const [genCtx, setGenCtx]               = useState('')
+  const [genBusy, setGenBusy]             = useState(false)
+  const [genErr, setGenErr]               = useState('')
+  const [genDrafts, setGenDrafts]         = useState<ToDoDraft[] | null>(null)
+  const [genRoot, setGenRoot]             = useState<{ title: string; description: string } | null>(null)
+  const [genRaw, setGenRaw]               = useState('')   // raw LLM reply for debug surfacing
+
+  // Collapse / expand state for the middle tree (per todo id).
+  const [collapsed, setCollapsed]         = useState<Set<string>>(new Set())
+  function toggleCollapse(id: string) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function collapseAllParents() {
+    const all = new Set<string>()
+    for (const t of items) {
+      if ((childrenOf.get(t.id) ?? []).length > 0) all.add(t.id)
+    }
+    setCollapsed(all)
+  }
+  function expandAll() { setCollapsed(new Set()) }
+
+  // Detail-pane edit toggles
+  const [descEditing, setDescEditing]     = useState(false)
+  const [descDraft, setDescDraft]         = useState('')
+  const [titleEditing, setTitleEditing]   = useState(false)
+  const [titleDraft, setTitleDraft]       = useState('')
+  const [moveOpen, setMoveOpen]           = useState(false)
+  const [moveParent, setMoveParent]       = useState('')
+
+  // Comment composer
+  const [newCommentDraft, setNewCommentDraft] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingCommentDraft, setEditingCommentDraft] = useState('')
+
+  // Draggable dividers
+  const [col1Width, setCol1Width] = useState(220)
+  const [col2Width, setCol2Width] = useState(360)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const dragLeft  = useRef(false)
+  const dragRight = useRef(false)
 
   useEffect(() => {
-    loadToDos()
-      .then(list => { setItems(list); setLoading(false) })
+    Promise.all([loadToDos(), loadAllToDoComments()])
+      .then(([list, cs]) => { setItems(list); setComments(cs); setLoading(false) })
       .catch(e => { setLoading(false); toast(`Load failed: ${(e as Error).message}`, 'error') })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -63,88 +122,444 @@ function ToDoPanel() {
     return m
   }, [items])
 
-  async function add(parentId: string, title: string) {
+  const itemsById = useMemo(() => {
+    const m = new Map<string, ToDoItem>()
+    for (const t of items) m.set(t.id, t)
+    return m
+  }, [items])
+
+  const selected = selectedId ? itemsById.get(selectedId) ?? null : null
+
+  // Rebuild title/desc drafts when selection or item changes externally.
+  useEffect(() => {
+    setTitleEditing(false); setDescEditing(false)
+    setMoveOpen(false); setEditingCommentId(null)
+    setDescDraft(selected?.description ?? '')
+    setTitleDraft(selected?.title ?? '')
+    setMoveParent(selected?.parentId ?? '')
+  }, [selectedId, selected?.id])
+
+  // Comments for the selected todo, sorted newest-first.
+  const selectedComments = useMemo(
+    () => selected
+      ? comments.filter(c => c.todoId === selected.id)
+                .slice().sort((a, b) => (b.createdAt).localeCompare(a.createdAt))
+      : [],
+    [comments, selected],
+  )
+
+  // Filter — title or description match. Tree view: keep ancestors of any
+  // matching node so the path stays visible.
+  const filterLower = filter.trim().toLowerCase()
+  const matches = useMemo(() => {
+    const out = new Set<string>()
+    for (const t of items) {
+      if (!showDone && t.done) continue
+      const hay = `${t.title} ${t.description ?? ''}`.toLowerCase()
+      if (!filterLower || hay.includes(filterLower)) out.add(t.id)
+    }
+    if (filterLower || !showDone) {
+      // Walk up ancestors so the tree renders the path.
+      const expand = new Set(out)
+      for (const id of out) {
+        let cur = itemsById.get(id)
+        while (cur && cur.parentId) {
+          expand.add(cur.parentId)
+          cur = itemsById.get(cur.parentId)
+        }
+      }
+      return expand
+    }
+    return null   // null means no filter active
+  }, [items, filterLower, showDone, itemsById])
+
+  const visibleFlat = useMemo(() => {
+    return items
+      .filter(t => (showDone || !t.done))
+      .filter(t => !filterLower || `${t.title} ${t.description ?? ''}`.toLowerCase().includes(filterLower))
+      .sort((a, b) => (a.title.toLowerCase()).localeCompare(b.title.toLowerCase()))
+  }, [items, showDone, filterLower])
+
+  // ── Mutations ─────────────────────────────────────────────────────────
+  async function addTopLevel() {
     setBusy(true)
     try {
-      const created = await addToDo(parentId, title)
+      const created = await addToDo('', 'New task')
       setItems(prev => [...prev, created])
-    } catch (e) {
-      toast(`Add failed: ${(e as Error).message}`, 'error')
-    } finally { setBusy(false) }
+      setSelectedId(created.id)
+      setTitleEditing(true); setTitleDraft(created.title)
+    } catch (e) { toast(`Add failed: ${(e as Error).message}`, 'error') }
+    finally { setBusy(false) }
   }
+
+  async function addChild(parentId: string) {
+    setBusy(true)
+    try {
+      const created = await addToDo(parentId, 'New sub-task')
+      setItems(prev => [...prev, created])
+      setSelectedId(created.id)
+    } catch (e) { toast(`Add failed: ${(e as Error).message}`, 'error') }
+    finally { setBusy(false) }
+  }
+
   async function toggleDone(t: ToDoItem) {
     const updated = { ...t, done: !t.done }
     setItems(prev => prev.map(x => x.id === t.id ? updated : x))
     try { await updateToDo(updated) }
     catch (e) {
-      setItems(prev => prev.map(x => x.id === t.id ? t : x))   // rollback
+      setItems(prev => prev.map(x => x.id === t.id ? t : x))
       toast(`Save failed: ${(e as Error).message}`, 'error')
     }
   }
-  function startEdit(t: ToDoItem) { setEditingId(t.id); setEditingDraft(t.title) }
-  async function commitEdit(t: ToDoItem) {
-    const next = editingDraft.trim()
-    setEditingId(null); setEditingDraft('')
-    if (!next || next === t.title) return
-    const updated = { ...t, title: next }
-    setItems(prev => prev.map(x => x.id === t.id ? updated : x))
+
+  async function saveTitle() {
+    if (!selected) return
+    const next = titleDraft.trim()
+    if (!next || next === selected.title) { setTitleEditing(false); return }
+    const updated = { ...selected, title: next }
+    setItems(prev => prev.map(x => x.id === updated.id ? updated : x))
+    setTitleEditing(false)
     try { await updateToDo(updated) }
     catch (e) { toast(`Rename failed: ${(e as Error).message}`, 'error') }
   }
-  async function remove(t: ToDoItem) {
-    const kids = (childrenOf.get(t.id) ?? []).length
-    const msg  = kids > 0 ? `Delete "${t.title}" and ${kids} sub-task${kids === 1 ? '' : 's'}?`
-                          : `Delete "${t.title}"?`
-    if (!window.confirm(msg)) return
-    try {
-      await deleteToDo(t.id)
-      const refreshed = await loadToDos()
-      setItems(refreshed)
-    } catch (e) {
-      toast(`Delete failed: ${(e as Error).message}`, 'error')
+
+  async function saveDescription() {
+    if (!selected) return
+    const next = descDraft
+    if (next === (selected.description ?? '')) { setDescEditing(false); return }
+    const updated = { ...selected, description: next }
+    setItems(prev => prev.map(x => x.id === updated.id ? updated : x))
+    setDescEditing(false)
+    try { await updateToDo(updated) }
+    catch (e) { toast(`Save failed: ${(e as Error).message}`, 'error') }
+  }
+
+  async function moveSelected() {
+    if (!selected) return
+    if (moveParent === selected.parentId) { setMoveOpen(false); return }
+    if (isDescendant(selected.id, moveParent, childrenOf)) {
+      toast('Cannot move under its own descendant', 'error'); return
+    }
+    const updated = { ...selected, parentId: moveParent }
+    setItems(prev => prev.map(x => x.id === updated.id ? updated : x))
+    setMoveOpen(false)
+    try { await updateToDo(updated) }
+    catch (e) { toast(`Move failed: ${(e as Error).message}`, 'error') }
+  }
+
+  function toggleManage() {
+    setManageMode(m => !m)
+    setManageSel(new Set())
+    setBulkMoveOpen(false)
+  }
+  function toggleSel(id: string) {
+    setManageSel(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  async function moveSibling(t: ToDoItem, dir: -1 | 1) {
+    const siblings = (childrenOf.get(t.parentId) ?? []).slice().sort((a, b) => a.position - b.position)
+    const idx = siblings.findIndex(s => s.id === t.id)
+    const swapIdx = idx + dir
+    if (swapIdx < 0 || swapIdx >= siblings.length) return
+    const other = siblings[swapIdx]
+    const a = { ...t, position: other.position }
+    const b = { ...other, position: t.position }
+    setItems(prev => prev.map(x => x.id === a.id ? a : x.id === b.id ? b : x))
+    try { await Promise.all([updateToDo(a), updateToDo(b)]) }
+    catch (e) {
+      // Rollback on failure.
+      setItems(prev => prev.map(x => x.id === t.id ? t : x.id === other.id ? other : x))
+      toast(`Reorder failed: ${(e as Error).message}`, 'error')
     }
   }
 
-  function renderTree(parentId: string): React.ReactElement {
-    const list = childrenOf.get(parentId) ?? []
+  async function bulkDelete() {
+    if (manageSel.size === 0 || busy) return
+    if (!window.confirm(`Delete ${manageSel.size} item${manageSel.size === 1 ? '' : 's'} and any sub-tasks?`)) return
+    setBusy(true)
+    try {
+      for (const id of manageSel) await deleteToDo(id)
+      const refreshed = await loadToDos()
+      setItems(refreshed)
+      if (selectedId && !refreshed.find(x => x.id === selectedId)) setSelectedId(null)
+      const n = manageSel.size
+      setManageSel(new Set())
+      toast(`Deleted ${n} item${n === 1 ? '' : 's'}`, 'success')
+    } catch (e) { toast(`Delete failed: ${(e as Error).message}`, 'error') }
+    finally { setBusy(false) }
+  }
+
+  async function bulkMove() {
+    if (manageSel.size === 0 || busy) return
+    // Drop selections that would land under their own descendant or themselves.
+    const toMove = items.filter(t => manageSel.has(t.id)).filter(t =>
+      t.id !== bulkMoveParent && !isDescendant(t.id, bulkMoveParent, childrenOf),
+    )
+    if (toMove.length === 0) {
+      toast('No valid items to move (would form a cycle).', 'error'); return
+    }
+    setBusy(true)
+    try {
+      const destSiblings = (childrenOf.get(bulkMoveParent) ?? []).filter(c => !manageSel.has(c.id))
+      let nextPos = destSiblings.length > 0 ? Math.max(...destSiblings.map(s => s.position)) + 1 : 0
+      const updated = toMove.map(t => ({ ...t, parentId: bulkMoveParent, position: nextPos++ }))
+      setItems(prev => prev.map(x => updated.find(u => u.id === x.id) ?? x))
+      for (const u of updated) await updateToDo(u)
+      setManageSel(new Set())
+      setBulkMoveOpen(false)
+      toast(`Moved ${updated.length} item${updated.length === 1 ? '' : 's'}`, 'success')
+    } catch (e) {
+      toast(`Move failed: ${(e as Error).message}`, 'error')
+      const refreshed = await loadToDos().catch(() => null)
+      if (refreshed) setItems(refreshed)
+    }
+    finally { setBusy(false) }
+  }
+
+  async function removeSelected() {
+    if (!selected) return
+    const kids = (childrenOf.get(selected.id) ?? []).length
+    if (!window.confirm(kids > 0
+      ? `Delete "${selected.title}" and ${kids} sub-task${kids === 1 ? '' : 's'}?`
+      : `Delete "${selected.title}"?`)) return
+    try {
+      await deleteToDo(selected.id)
+      const refreshed = await loadToDos()
+      setItems(refreshed)
+      setSelectedId(null)
+    } catch (e) { toast(`Delete failed: ${(e as Error).message}`, 'error') }
+  }
+
+  async function submitNewComment() {
+    if (!selected || !newCommentDraft.trim()) return
+    try {
+      const c = await addToDoComment(selected.id, newCommentDraft)
+      setComments(prev => [...prev, c])
+      setNewCommentDraft('')
+    } catch (e) { toast(`Comment failed: ${(e as Error).message}`, 'error') }
+  }
+
+  async function commitCommentEdit(c: ToDoComment) {
+    const next = editingCommentDraft.trim()
+    setEditingCommentId(null); setEditingCommentDraft('')
+    if (!next || next === c.content) return
+    try {
+      const updated = await updateToDoComment({ ...c, content: next })
+      setComments(prev => prev.map(x => x.id === c.id ? updated : x))
+    } catch (e) { toast(`Update failed: ${(e as Error).message}`, 'error') }
+  }
+
+  async function removeComment(c: ToDoComment) {
+    if (!window.confirm('Delete this comment?')) return
+    try {
+      await deleteToDoComment(c.id)
+      setComments(prev => prev.filter(x => x.id !== c.id))
+    } catch (e) { toast(`Delete failed: ${(e as Error).message}`, 'error') }
+  }
+
+  // AI generation: take the context, ask for a hierarchy, preview, accept.
+  async function runGenerate() {
+    if (!genCtx.trim() || genBusy) return
+    if (!LLM.isConfigured()) {
+      setGenErr('Configure Azure OpenAI in Settings → AI Assistant.'); return
+    }
+    setGenBusy(true); setGenErr(''); setGenRaw('')
+    try {
+      const result = await generateToDoHierarchy(genCtx)
+      setGenRaw(result.raw)
+      if (result.reason === 'ok') {
+        setGenDrafts(result.drafts)
+        setGenRoot({ title: result.rootTitle, description: result.rootDescription })
+      } else {
+        setGenDrafts(null)
+        setGenRoot(null)
+        setGenErr(reasonToMessage(result.reason))
+        // eslint-disable-next-line no-console
+        console.warn('[todo Generate] failed:', result.reason, '\nRaw reply:\n', result.raw)
+      }
+    } catch (e) {
+      setGenErr(`Generate failed: ${(e as Error).message}`)
+      // eslint-disable-next-line no-console
+      console.error('[todo Generate] threw:', e)
+    }
+    finally { setGenBusy(false) }
+  }
+
+  async function acceptDrafts() {
+    if (!genDrafts || !genRoot) return
+    setBusy(true)
+    try {
+      // Wrap the whole tree under one LLM-named root + ISO-date suffix so
+      // the user can fold a whole batch of generated work behind a single
+      // parent. One :append call writes everything.
+      const stamp = new Date().toISOString().slice(0, 10)
+      const wrapped = [{
+        title:       `${genRoot.title} · ${stamp}`,
+        description: genRoot.description,
+        children:    genDrafts,
+      }]
+      const created = await appendToDoTreeBatch(wrapped, '')
+      setItems(prev => [...prev, ...created])
+      setGenDrafts(null); setGenRoot(null); setGenCtx('')
+      toast(`Created ${created.length} todo${created.length === 1 ? '' : 's'} under a new root`, 'success')
+    } catch (e) { toast(`Save failed: ${(e as Error).message}`, 'error') }
+    finally { setBusy(false) }
+  }
+
+  // Dividers.
+  function leftDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId)
+    dragLeft.current = true; document.body.classList.add('resizing-h')
+  }
+  function leftMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragLeft.current) return
+    const r = wrapRef.current?.getBoundingClientRect(); if (!r) return
+    setCol1Width(Math.max(180, Math.min(380, e.clientX - r.left)))
+  }
+  function leftUp(e: React.PointerEvent<HTMLDivElement>) {
+    dragLeft.current = false; e.currentTarget.releasePointerCapture(e.pointerId)
+    document.body.classList.remove('resizing-h')
+  }
+  function rightDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId)
+    dragRight.current = true; document.body.classList.add('resizing-h')
+  }
+  function rightMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRight.current) return
+    const r = wrapRef.current?.getBoundingClientRect(); if (!r) return
+    const minDetail = 320
+    const max = Math.max(220, r.width - col1Width - minDetail)
+    setCol2Width(Math.max(220, Math.min(max, e.clientX - r.left - col1Width)))
+  }
+  function rightUp(e: React.PointerEvent<HTMLDivElement>) {
+    dragRight.current = false; e.currentTarget.releasePointerCapture(e.pointerId)
+    document.body.classList.remove('resizing-h')
+  }
+
+  function renderRowActions(t: ToDoItem) {
+    const siblings = (childrenOf.get(t.parentId) ?? []).slice().sort((a, b) => a.position - b.position)
+    const idx = siblings.findIndex(s => s.id === t.id)
+    const canUp   = idx > 0
+    const canDown = idx >= 0 && idx < siblings.length - 1
     return (
-      <ul className={parentId === '' ? 'todo-list todo-list-root' : 'todo-list'}>
-        {list.map(t => {
-          const isEditing = editingId === t.id
+      <span className="todo3-actions">
+        {manageMode && (
+          <>
+            <button
+              onClick={e => { e.stopPropagation(); moveSibling(t, -1) }}
+              disabled={busy || !canUp}
+              title="Move up among siblings"
+            >↑</button>
+            <button
+              onClick={e => { e.stopPropagation(); moveSibling(t, +1) }}
+              disabled={busy || !canDown}
+              title="Move down among siblings"
+            >↓</button>
+          </>
+        )}
+        <button
+          onClick={e => { e.stopPropagation(); addChild(t.id) }}
+          disabled={busy}
+          title="Add sub-task"
+        >＋</button>
+      </span>
+    )
+  }
+
+  function renderSelCheckbox(t: ToDoItem) {
+    if (!manageMode) return null
+    return (
+      <input
+        type="checkbox"
+        className="todo3-sel"
+        checked={manageSel.has(t.id)}
+        onChange={e => { e.stopPropagation(); toggleSel(t.id) }}
+        onClick={e => e.stopPropagation()}
+        title="Select for bulk action"
+      />
+    )
+  }
+
+  // Tree renderer.
+  function renderTree(parentId: string, depth: number): React.ReactNode {
+    const list = childrenOf.get(parentId) ?? []
+    const visible = list.filter(t => !matches || matches.has(t.id))
+    if (visible.length === 0) return null
+    return (
+      <ul className={depth === 0 ? 'todo3-list todo3-root' : 'todo3-list'}>
+        {visible.map(t => {
           const kids = childrenOf.get(t.id) ?? []
+          const hasKids = kids.length > 0
+          const isCollapsed = collapsed.has(t.id)
+          const hasDesc = !!(t.description ?? '').trim()
+          const cmtCount = comments.filter(c => c.todoId === t.id).length
           return (
-            <li key={t.id} className={`todo-row${t.done ? ' done' : ''}`}>
-              <div className="todo-line">
-                <input
-                  type="checkbox"
-                  checked={t.done}
-                  onChange={() => toggleDone(t)}
-                />
-                {isEditing ? (
-                  <input
-                    autoFocus
-                    className="rf-input todo-rename-input"
-                    value={editingDraft}
-                    onChange={e => setEditingDraft(e.target.value)}
-                    onBlur={() => commitEdit(t)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter')       { e.preventDefault(); commitEdit(t) }
-                      else if (e.key === 'Escape') { e.preventDefault(); setEditingId(null) }
-                    }}
-                  />
+            <li key={t.id} className={`todo3-row${t.done ? ' done' : ''}${selectedId === t.id ? ' sel' : ''}${manageSel.has(t.id) ? ' marked' : ''}`}>
+              <div className="todo3-line" onClick={() => setSelectedId(t.id)}>
+                {hasKids ? (
+                  <button
+                    className="todo3-caret"
+                    onClick={e => { e.stopPropagation(); toggleCollapse(t.id) }}
+                    title={isCollapsed ? `Expand (${kids.length} children)` : 'Collapse'}
+                  >{isCollapsed ? '▸' : '▾'}</button>
                 ) : (
-                  <span
-                    className="todo-title"
-                    onDoubleClick={() => startEdit(t)}
-                    title="Double-click to edit"
-                  >{t.title}</span>
+                  <span className="todo3-caret-spacer" />
                 )}
-                <span className="todo-actions">
-                  <button onClick={() => add(t.id, 'New sub-task')} disabled={busy} title="Add sub-task">＋</button>
-                  <button onClick={() => remove(t)} disabled={busy} title="Delete" className="todo-rm">✕</button>
-                </span>
+                {manageMode ? renderSelCheckbox(t) : (
+                  <input
+                    type="checkbox"
+                    checked={t.done}
+                    onChange={e => { e.stopPropagation(); toggleDone(t) }}
+                    onClick={e => e.stopPropagation()}
+                    title="Mark done"
+                  />
+                )}
+                <span className="todo3-title">{t.title || 'Untitled'}</span>
+                {isCollapsed && hasKids && <span className="todo3-kid-count" title="Hidden children">{kids.length}</span>}
+                {hasDesc && <span className="todo3-icon" title={t.description}>ℹ</span>}
+                {cmtCount > 0 && <span className="todo3-icon todo3-icon-cmt" title={`${cmtCount} comment${cmtCount === 1 ? '' : 's'}`}>💬<span className="todo3-cnt">{cmtCount}</span></span>}
+                {renderRowActions(t)}
               </div>
-              {kids.length > 0 && renderTree(t.id)}
+              {hasKids && !isCollapsed && renderTree(t.id, depth + 1)}
+            </li>
+          )
+        })}
+      </ul>
+    )
+  }
+
+  function renderFlat(): React.ReactNode {
+    if (visibleFlat.length === 0) return <div className="col-empty">No matches</div>
+    return (
+      <ul className="todo3-list todo3-root">
+        {visibleFlat.map(t => {
+          const hasDesc = !!(t.description ?? '').trim()
+          const cmtCount = comments.filter(c => c.todoId === t.id).length
+          const path = pathOf(t, itemsById)
+          return (
+            <li key={t.id} className={`todo3-row${t.done ? ' done' : ''}${selectedId === t.id ? ' sel' : ''}${manageSel.has(t.id) ? ' marked' : ''}`}>
+              <div className="todo3-line" onClick={() => setSelectedId(t.id)}>
+                {manageMode ? renderSelCheckbox(t) : (
+                  <input
+                    type="checkbox"
+                    checked={t.done}
+                    onChange={e => { e.stopPropagation(); toggleDone(t) }}
+                    onClick={e => e.stopPropagation()}
+                    title="Mark done"
+                  />
+                )}
+                <span className="todo3-flat-text">
+                  {path.length > 1 && <span className="todo3-flat-path">{path.slice(0, -1).join(' / ')} / </span>}
+                  <span className="todo3-title">{t.title || 'Untitled'}</span>
+                </span>
+                {hasDesc && <span className="todo3-icon" title={t.description}>ℹ</span>}
+                {cmtCount > 0 && <span className="todo3-icon todo3-icon-cmt" title={`${cmtCount} comment${cmtCount === 1 ? '' : 's'}`}>💬<span className="todo3-cnt">{cmtCount}</span></span>}
+                {renderRowActions(t)}
+              </div>
             </li>
           )
         })}
@@ -153,31 +568,393 @@ function ToDoPanel() {
   }
 
   return (
-    <div className="todo-panel">
-      <form
-        className="todo-add-row"
-        onSubmit={e => {
-          e.preventDefault()
-          if (!draft.trim()) return
-          add('', draft.trim())
-          setDraft('')
-        }}
-      >
-        <input
-          className="rf-input"
-          placeholder="Add a task and press Enter…"
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          disabled={busy}
-        />
-        <button className="rf-btn-save" type="submit" disabled={busy || !draft.trim()}>Add</button>
-      </form>
-      {loading
-        ? <div className="col-empty">Loading…</div>
-        : items.length === 0
-          ? <div className="col-empty">No tasks yet — add one above.</div>
-          : renderTree('')}
+    <div className="todo3-wrap browse-body-wrap" ref={wrapRef}>
+      {/* ── Col 1 — Actions ─────────────────────────────── */}
+      <div className="todo3-actions-col" style={{ width: col1Width }}>
+        <div className="col-hd">Actions</div>
+        <div className="todo3-action-stack">
+          <button className="rf-btn-save" onClick={addTopLevel} disabled={busy}>＋ Add new</button>
+        </div>
+        <div className="col-hd" style={{ marginTop: 12 }}>Generate</div>
+        <div className="todo3-gen">
+          <textarea
+            className="rf-textarea"
+            rows={5}
+            placeholder="Describe a goal or context — AI will break it into a hierarchy of todos."
+            value={genCtx}
+            onChange={e => setGenCtx(e.target.value)}
+            disabled={genBusy}
+          />
+          <button
+            className="rf-btn-cancel"
+            onClick={runGenerate}
+            disabled={genBusy || !genCtx.trim()}
+          >{genBusy ? 'Generating…' : '✨ Generate'}</button>
+          {genErr && <div className="login-error">{genErr}</div>}
+          {genErr && genRaw && (
+            <details className="todo3-gen-raw">
+              <summary>Show raw AI reply</summary>
+              <pre>{genRaw}</pre>
+            </details>
+          )}
+          {genDrafts && genRoot && (
+            <div className="todo3-gen-preview">
+              <div className="col-hd">Preview ({countDrafts(genDrafts) + 1})</div>
+              <div className="todo3-gen-root">
+                <span className="todo3-gen-root-icon">📁</span>
+                <span className="todo3-gen-root-title">{genRoot.title}</span>
+                <span className="todo3-gen-root-stamp">· {new Date().toISOString().slice(0, 10)}</span>
+              </div>
+              {genRoot.description && (
+                <div className="todo3-gen-root-desc">{genRoot.description}</div>
+              )}
+              <div className="todo3-gen-tree">{renderDraftTree(genDrafts, 0)}</div>
+              <div className="todo3-gen-actions">
+                <button className="rf-btn-cancel" onClick={() => { setGenDrafts(null); setGenRoot(null) }}>Discard</button>
+                <button className="mgmt-save-btn" onClick={acceptDrafts} disabled={busy}>Add all</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="qa-divider"
+        onPointerDown={leftDown} onPointerMove={leftMove}
+        onPointerUp={leftUp} onPointerCancel={leftUp}
+      />
+
+      {/* ── Col 2 — List ─────────────────────────────────── */}
+      <div className="todo3-list-col" style={{ width: col2Width }}>
+        <div className="todo3-list-hd">
+          <div className="view-mode-toggle">
+            <button
+              className={`vm-btn${viewMode === 'tree' ? ' active' : ''}`}
+              onClick={() => setViewMode('tree')}
+              title="Tree view"
+            >⊞</button>
+            <button
+              className={`vm-btn${viewMode === 'flat' ? ' active' : ''}`}
+              onClick={() => setViewMode('flat')}
+              title="Flat view"
+            >≡</button>
+          </div>
+          {viewMode === 'tree' && (
+            <button
+              className="vm-btn todo3-collapse-all"
+              onClick={() => (collapsed.size > 0 ? expandAll() : collapseAllParents())}
+              title={collapsed.size > 0 ? 'Expand all rows' : 'Collapse all — show only top-level parents'}
+            >{collapsed.size > 0 ? '▾ All' : '▸ All'}</button>
+          )}
+          <input
+            className="col-search"
+            placeholder="Filter title / description"
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          />
+          <label className="todo3-show-done" title="Hide completed">
+            <input type="checkbox" checked={showDone} onChange={e => setShowDone(e.target.checked)} />
+            Done
+          </label>
+          <button
+            className={`vm-btn todo3-manage-btn${manageMode ? ' active' : ''}`}
+            onClick={toggleManage}
+            title={manageMode ? 'Exit manage mode' : 'Manage — multi-select, reorder, bulk move / delete'}
+          >⚙</button>
+        </div>
+
+        {manageMode && (
+          <div className="todo3-manage-bar">
+            <span className="todo3-manage-count">{manageSel.size} selected</span>
+            <button
+              className="rf-btn-cancel"
+              disabled={manageSel.size === 0 || busy}
+              onClick={bulkDelete}
+              title="Delete all selected items (with their sub-tasks)"
+            >✕ Delete</button>
+            <button
+              className={`rf-btn-cancel${bulkMoveOpen ? ' active' : ''}`}
+              disabled={manageSel.size === 0 || busy}
+              onClick={() => setBulkMoveOpen(o => !o)}
+              title="Move all selected items under a new parent"
+            >↧ Move</button>
+            <button
+              className="rf-btn-cancel"
+              disabled={manageSel.size === 0}
+              onClick={() => setManageSel(new Set())}
+            >Clear</button>
+          </div>
+        )}
+
+        {manageMode && bulkMoveOpen && (
+          <div className="todo3-bulk-move">
+            <label>Move under
+              <select value={bulkMoveParent} onChange={e => setBulkMoveParent(e.target.value)}>
+                <option value="">(top level)</option>
+                {items
+                  .filter(t => !manageSel.has(t.id))
+                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .map(t => <option key={t.id} value={t.id}>{pathOf(t, itemsById).join(' / ')}</option>)}
+              </select>
+            </label>
+            <div className="todo3-bulk-move-actions">
+              <button className="rf-btn-cancel" onClick={() => setBulkMoveOpen(false)}>Cancel</button>
+              <button className="mgmt-save-btn" onClick={bulkMove} disabled={busy}>
+                Move {manageSel.size} here
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="todo3-list-body">
+          {loading ? (
+            <div className="col-empty">Loading…</div>
+          ) : items.length === 0 ? (
+            <div className="col-empty">No tasks yet — use ＋ Add new or ✨ Generate.</div>
+          ) : viewMode === 'tree' ? (
+            renderTree('', 0) ?? <div className="col-empty">No matches</div>
+          ) : (
+            renderFlat()
+          )}
+        </div>
+      </div>
+
+      <div
+        className="qa-divider"
+        onPointerDown={rightDown} onPointerMove={rightMove}
+        onPointerUp={rightUp} onPointerCancel={rightUp}
+      />
+
+      {/* ── Col 3 — Detail ──────────────────────────────── */}
+      <div className="browse-main todo3-detail-col">
+        {!selected ? (
+          <div className="mgmt-empty">Select a todo from the list to see its info, comments, and edit actions.</div>
+        ) : (
+          <div className="todo3-detail">
+            <div className="todo3-detail-hd">
+              <button
+                className="mgmt-back-btn"
+                onClick={() => setSelectedId(null)}
+                title="Back to list"
+              >←</button>
+              <input
+                type="checkbox"
+                checked={selected.done}
+                onChange={() => toggleDone(selected)}
+              />
+              {titleEditing ? (
+                <input
+                  autoFocus
+                  className="rf-input"
+                  value={titleDraft}
+                  onChange={e => setTitleDraft(e.target.value)}
+                  onBlur={saveTitle}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter')       { e.preventDefault(); saveTitle() }
+                    else if (e.key === 'Escape') { setTitleEditing(false); setTitleDraft(selected.title) }
+                  }}
+                />
+              ) : (
+                <h2 className={`todo3-detail-title${selected.done ? ' done' : ''}`}
+                    onDoubleClick={() => { setTitleEditing(true); setTitleDraft(selected.title) }}
+                    title="Double-click to edit"
+                >{selected.title || 'Untitled'}</h2>
+              )}
+              <span style={{ flex: 1 }} />
+              {!titleEditing && (
+                <button
+                  className="bci-edit-btn bci-edit-btn-hd"
+                  onClick={() => { setTitleEditing(true); setTitleDraft(selected.title) }}
+                  title="Edit title"
+                >✎</button>
+              )}
+              <button
+                className={`bci-edit-btn bci-edit-btn-hd${moveOpen ? ' active' : ''}`}
+                onClick={() => { setMoveOpen(o => !o); setMoveParent(selected.parentId) }}
+                title="Move to a different parent"
+              >↧</button>
+              <button
+                className="bci-edit-btn bci-edit-btn-hd"
+                onClick={removeSelected}
+                title="Delete this todo"
+              >🗑</button>
+            </div>
+
+            {moveOpen && (
+              <div className="todo3-move">
+                <label>Move under
+                  <select value={moveParent} onChange={e => setMoveParent(e.target.value)}>
+                    <option value="">(top level)</option>
+                    {items
+                      .filter(t => t.id !== selected.id && !isDescendant(selected.id, t.id, childrenOf))
+                      .sort((a, b) => a.title.localeCompare(b.title))
+                      .map(t => <option key={t.id} value={t.id}>{pathOf(t, itemsById).join(' / ')}</option>)}
+                  </select>
+                </label>
+                <div className="todo3-move-actions">
+                  <button className="rf-btn-cancel" onClick={() => setMoveOpen(false)}>Cancel</button>
+                  <button className="mgmt-save-btn" onClick={moveSelected}>Move</button>
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            <section className="todo3-section">
+              <div className="todo3-section-hd">
+                <span>ℹ Description</span>
+                {!descEditing ? (
+                  <button className="bci-edit-btn" onClick={() => { setDescEditing(true); setDescDraft(selected.description ?? '') }} title="Edit">✎</button>
+                ) : (
+                  <>
+                    <button className="rf-btn-cancel" onClick={() => { setDescEditing(false); setDescDraft(selected.description ?? '') }}>Cancel</button>
+                    <button className="mgmt-save-btn" onClick={saveDescription}>Save</button>
+                  </>
+                )}
+              </div>
+              {descEditing ? (
+                <textarea
+                  className="rf-textarea"
+                  rows={6}
+                  value={descDraft}
+                  onChange={e => setDescDraft(e.target.value)}
+                  placeholder="Why this matters, what done looks like, gotchas…"
+                />
+              ) : (
+                <p className={`todo3-section-body${(selected.description ?? '').trim() ? '' : ' dim'}`}>
+                  {(selected.description ?? '').trim() || '— add a description so future-you remembers what this means —'}
+                </p>
+              )}
+            </section>
+
+            {/* Comments / progress log */}
+            <section className="todo3-section">
+              <div className="todo3-section-hd">
+                <span>💬 Progress log ({selectedComments.length})</span>
+              </div>
+              <div className="todo3-comment-add">
+                <textarea
+                  className="rf-textarea"
+                  rows={2}
+                  placeholder="Log progress, notes, blockers…"
+                  value={newCommentDraft}
+                  onChange={e => setNewCommentDraft(e.target.value)}
+                />
+                <button className="rf-btn-save" onClick={submitNewComment} disabled={!newCommentDraft.trim()}>
+                  Post
+                </button>
+              </div>
+              {selectedComments.length === 0 ? (
+                <p className="todo3-section-body dim">No log entries yet.</p>
+              ) : (
+                <ul className="todo3-comment-list">
+                  {selectedComments.map(c => {
+                    const editing = editingCommentId === c.id
+                    return (
+                      <li key={c.id} className="todo3-comment">
+                        <div className="todo3-comment-hd">
+                          <span className="todo3-comment-ts">{fmtCommentTs(c.createdAt)}</span>
+                          <span style={{ flex: 1 }} />
+                          {editing ? (
+                            <>
+                              <button className="rf-btn-cancel" onClick={() => { setEditingCommentId(null); setEditingCommentDraft('') }}>Cancel</button>
+                              <button className="mgmt-save-btn" onClick={() => commitCommentEdit(c)}>Save</button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="bci-edit-btn" onClick={() => { setEditingCommentId(c.id); setEditingCommentDraft(c.content) }} title="Edit">✎</button>
+                              <button className="bci-edit-btn" onClick={() => removeComment(c)} title="Delete">✕</button>
+                            </>
+                          )}
+                        </div>
+                        {editing ? (
+                          <textarea
+                            className="rf-textarea"
+                            rows={3}
+                            value={editingCommentDraft}
+                            onChange={e => setEditingCommentDraft(e.target.value)}
+                            autoFocus
+                          />
+                        ) : (
+                          <p className="todo3-comment-body">{c.content}</p>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </section>
+          </div>
+        )}
+      </div>
     </div>
+  )
+}
+
+// ── ToDo helpers ─────────────────────────────────────────────────────────────
+
+function reasonToMessage(r: 'ok' | 'empty_context' | 'parse_failed' | 'no_todos_key' | 'empty_list'): string {
+  switch (r) {
+    case 'empty_context':  return 'Add some context before generating.'
+    case 'parse_failed':   return 'AI returned non-JSON output. See the raw reply below — you may need to refine the AI Skill instruction (Avatar → AI Skills → ToDo Generator).'
+    case 'no_todos_key':   return 'AI returned JSON but no "todos" array. Check the raw reply below.'
+    case 'empty_list':     return 'AI returned an empty list. Try giving more detail or a different angle.'
+    default:               return 'Generate finished with an unexpected state.'
+  }
+}
+
+function isDescendant(rootId: string, candidateId: string, childrenOf: Map<string, ToDoItem[]>): boolean {
+  if (!candidateId) return false
+  if (candidateId === rootId) return true
+  const stack = [...(childrenOf.get(rootId) ?? []).map(c => c.id)]
+  while (stack.length) {
+    const id = stack.pop()!
+    if (id === candidateId) return true
+    for (const c of childrenOf.get(id) ?? []) stack.push(c.id)
+  }
+  return false
+}
+
+function pathOf(t: ToDoItem, itemsById: Map<string, ToDoItem>): string[] {
+  const out: string[] = []
+  let cur: ToDoItem | undefined = t
+  while (cur) {
+    out.unshift(cur.title || 'Untitled')
+    cur = cur.parentId ? itemsById.get(cur.parentId) : undefined
+  }
+  return out
+}
+
+function fmtCommentTs(iso: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function countDrafts(drafts: ToDoDraft[]): number {
+  let n = 0
+  const stack = [...drafts]
+  while (stack.length) {
+    const t = stack.pop()!
+    n++
+    for (const c of t.children) stack.push(c)
+  }
+  return n
+}
+
+function renderDraftTree(drafts: ToDoDraft[], depth: number): React.ReactNode {
+  if (drafts.length === 0) return null
+  return (
+    <ul className={depth === 0 ? 'todo3-list todo3-root' : 'todo3-list'}>
+      {drafts.map((d, i) => (
+        <li key={i} className="todo3-row">
+          <div className="todo3-line">
+            <span className="todo3-title">{d.title}</span>
+            {d.description && <span className="todo3-icon" title={d.description}>ℹ</span>}
+          </div>
+          {d.children.length > 0 && renderDraftTree(d.children, depth + 1)}
+        </li>
+      ))}
+    </ul>
   )
 }
 
