@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
 import { stopAll } from '../lib/audioRegistry'
+import { exportConversationAsDoc } from '../lib/conversationExport'
 import {
   appendMessage, deleteConversation, loadAllMessages, newConvId, summarise,
 } from '../adapters/aiChatRepo'
 import type { AIMessage, ConversationSummary } from '../adapters/aiChatRepo'
 import MessageAudio from './MessageAudio'
+import AnkiCardGenModal from './AnkiCardGenModal'
 import { useToast } from './Toast'
 
 interface Props {
@@ -31,6 +33,8 @@ export default function AskAIPanel({ open, onClose }: Props) {
   const [showHistory, setShowHist]  = useState(false)
   const [maximized, setMaximized]   = useState(false)
   const [size, setSize]             = useState({ w: DEFAULT_W, h: DEFAULT_H })
+  const [saving, setSaving]         = useState(false)
+  const [ankiOpen, setAnkiOpen]     = useState(false)
 
   const resizingRef = useRef(false)
   const resizeStart = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
@@ -108,6 +112,24 @@ export default function AskAIPanel({ open, onClose }: Props) {
     }
   }
 
+  async function saveAsDoc() {
+    if (currentMsgs.length === 0 || saving) return
+    setSaving(true); setError('')
+    try {
+      const rec = await exportConversationAsDoc(
+        currentMsgs.map(m => ({ role: m.role, content: m.content })),
+        'Ask AI',
+      )
+      toast(`Saved to Docs as "${rec.alias}"`, 'success')
+    } catch (e) {
+      const msg = (e as Error).message
+      setError(`Save failed: ${msg}`)
+      toast(`Save failed: ${msg}`, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // ── Resize handle (bottom-LEFT corner: panel is anchored top-right) ──────
   function onResizeDown(e: React.PointerEvent<HTMLDivElement>) {
     if (maximized) return
@@ -151,6 +173,18 @@ export default function AskAIPanel({ open, onClose }: Props) {
             onClick={() => setShowHist(s => !s)}
             title="Conversations"
           >🗂</button>
+          <button
+            className="ai-icon-btn"
+            onClick={() => setAnkiOpen(true)}
+            title={currentMsgs.length === 0 ? 'Nothing to convert yet' : 'Generate Anki cards from this conversation'}
+            disabled={currentMsgs.length === 0}
+          >🃏</button>
+          <button
+            className="ai-icon-btn"
+            onClick={saveAsDoc}
+            title={currentMsgs.length === 0 ? 'Nothing to save yet' : 'Save conversation as a Doc'}
+            disabled={currentMsgs.length === 0 || saving}
+          >{saving ? '…' : '💾'}</button>
           <button
             className="ai-icon-btn"
             onClick={startNewChat}
@@ -250,6 +284,13 @@ export default function AskAIPanel({ open, onClose }: Props) {
           title="Drag to resize"
         />
       )}
+
+      <AnkiCardGenModal
+        open={ankiOpen}
+        onClose={() => setAnkiOpen(false)}
+        msgs={currentMsgs.map(m => ({ role: m.role, content: m.content }))}
+        contextLabel="Ask AI"
+      />
     </div>
   )
 }

@@ -221,3 +221,23 @@ export async function saveAnkiNote(note: AnkiNote, template: AnkiTemplate): Prom
   await setRange(`${template.id}!A${rowNum}:${lastCol}${rowNum}`, [row])
 }
 
+// Append a brand-new note to the template tab. Used by the AI chat panels'
+// "Generate Anki cards" flow.
+export async function appendAnkiNote(note: AnkiNote, template: AnkiTemplate): Promise<void> {
+  _notesCache = null
+  const sortedFields = [...template.fields].sort((a, b) => a.order - b.order)
+  const fieldValues  = sortedFields.map(f => note.fields[f.key] ?? '')
+  const row          = [note.noteId, note.deck, note.ankiMod, ...fieldValues, note.tags.join(', ')]
+  const lastCol      = colToLetter(row.length)
+  const url = `${BASE}/${sid()}/values/${encodeURIComponent(`${template.id}!A:${lastCol}`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ values: [row] }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
+    throw new Error(err.error?.message ?? `HTTP ${res.status}`)
+  }
+}
+

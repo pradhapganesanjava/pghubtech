@@ -259,6 +259,78 @@ body {
 }
 .modal-create-btn { width: 100%; }
 
+/* ─── Anki card generator (launched from AI panels) ─── */
+.anki-gen-modal {
+  max-width: 760px;
+  padding: 22px 26px;
+  gap: 14px;
+}
+.anki-gen-hd {
+  display: flex; align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+.anki-gen-title {
+  flex: 1;
+  font-size: 16px; font-weight: 700; color: var(--primary);
+}
+.anki-gen-body {
+  display: flex; flex-direction: column; gap: 12px;
+  flex: 1; min-height: 0; overflow-y: auto;
+}
+.anki-gen-controls {
+  display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+}
+.anki-gen-controls label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+  flex: 1; min-width: 160px;
+}
+.anki-gen-controls select,
+.anki-gen-controls input {
+  padding: 6px 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  text-transform: none; letter-spacing: 0;
+  font-weight: 400;
+}
+.anki-gen-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.anki-gen-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg);
+}
+.anki-gen-card-hd {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 6px;
+}
+.anki-gen-card-num {
+  font-size: 11px; font-weight: 700; color: var(--text2);
+}
+.anki-gen-card-hd .todo-rm {
+  margin-left: auto;
+  background: transparent; border: 0; color: #d04a3b;
+  cursor: pointer; padding: 2px 6px; border-radius: 3px; font-size: 14px;
+}
+.anki-gen-card-hd .todo-rm:hover { background: rgba(208, 74, 59, .12); }
+.anki-gen-lbl {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); font-weight: 700;
+  margin-top: 6px; display: block;
+}
+.anki-gen-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
 .sheet-list-label { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
 .sheet-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
 .sheet-list-item {

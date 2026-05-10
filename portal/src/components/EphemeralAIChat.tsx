@@ -7,7 +7,10 @@ import { useEffect, useRef, useState } from 'react'
 import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
 import { stopAll } from '../lib/audioRegistry'
+import { exportConversationAsDoc } from '../lib/conversationExport'
 import MessageAudio from './MessageAudio'
+import AnkiCardGenModal from './AnkiCardGenModal'
+import { useToast } from './Toast'
 
 interface Props {
   open:           boolean
@@ -39,6 +42,7 @@ const MAX_H     = 1000
 export default function EphemeralAIChat({
   open, onClose, title = 'Ask AI', systemPrompt, maxTokens, onApply,
 }: Props) {
+  const { toast } = useToast()
   const [msgs, setMsgs]         = useState<Msg[]>([])
   const [draft, setDraft]       = useState('')
   const [busy, setBusy]         = useState(false)
@@ -46,6 +50,8 @@ export default function EphemeralAIChat({
   const [maximized, setMax]     = useState(false)
   const [size, setSize]         = useState({ w: DEFAULT_W, h: DEFAULT_H })
   const [listening, setListening] = useState(false)
+  const [saving, setSaving]     = useState(false)
+  const [ankiOpen, setAnkiOpen] = useState(false)
   const resizingRef             = useRef(false)
   const resizeStart             = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const recogRef                = useRef<any>(null)
@@ -134,6 +140,24 @@ export default function EphemeralAIChat({
     stopDictation()
   }
 
+  async function saveAsDoc() {
+    if (msgs.length === 0 || saving) return
+    setSaving(true); setError('')
+    try {
+      const rec = await exportConversationAsDoc(
+        msgs.map(m => ({ role: m.role, content: m.content })),
+        title,
+      )
+      toast(`Saved to Docs as "${rec.alias}"`, 'success')
+    } catch (e) {
+      const msg = (e as Error).message
+      setError(`Save failed: ${msg}`)
+      toast(`Save failed: ${msg}`, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Resize handle — bottom-left so the panel can grow up/left.
   function onResizeDown(e: React.PointerEvent<HTMLDivElement>) {
     if (maximized) return
@@ -173,6 +197,18 @@ export default function EphemeralAIChat({
       <div className="ai-panel-hd">
         <span className="ai-panel-title">✨ {title}</span>
         <div className="ai-panel-hd-actions">
+          <button
+            className="ai-icon-btn"
+            onClick={() => setAnkiOpen(true)}
+            title={msgs.length === 0 ? 'Nothing to convert yet' : 'Generate Anki cards from this conversation'}
+            disabled={msgs.length === 0}
+          >🃏</button>
+          <button
+            className="ai-icon-btn"
+            onClick={saveAsDoc}
+            title={msgs.length === 0 ? 'Nothing to save yet' : 'Save conversation as a Doc'}
+            disabled={msgs.length === 0 || saving}
+          >{saving ? '…' : '💾'}</button>
           <button
             className="ai-icon-btn"
             onClick={reset}
@@ -281,6 +317,13 @@ export default function EphemeralAIChat({
           title="Drag to resize"
         />
       )}
+
+      <AnkiCardGenModal
+        open={ankiOpen}
+        onClose={() => setAnkiOpen(false)}
+        msgs={msgs.map(m => ({ role: m.role, content: m.content }))}
+        contextLabel={title}
+      />
     </div>
   )
 }

@@ -34,6 +34,7 @@ export default function DocsView() {
   const { toast } = useToast()
   const [docs, setDocs]                 = useState<DocRecord[]>([])
   const [loading, setLoading]           = useState(true)
+  const [refreshing, setRefreshing]     = useState(false)
   const [selected, setSelected]         = useState<DocRecord | null>(null)
   const [search, setSearch]             = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -82,6 +83,26 @@ export default function DocsView() {
       }
     })()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Manual refresh — picks up rows added by other paths (e.g. AI chat
+  // panel "Save as doc") without reloading the whole page.
+  async function reloadDocs() {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      const list = await loadDocs()
+      const before = docs.length
+      setDocs(list)
+      const delta = list.length - before
+      if (delta > 0)      toast(`${delta} new doc${delta === 1 ? '' : 's'}`, 'success')
+      else if (delta < 0) toast(`${-delta} doc${delta === -1 ? '' : 's'} removed`, 'info')
+      else                toast('Up to date', 'info')
+    } catch (e) {
+      toast(`Refresh failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   // ── Draggable list/viewer divider ─────────────────────────────────────────
   function handleDividerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -322,6 +343,12 @@ export default function DocsView() {
           <button className="rf-btn-save" onClick={pickFile} style={{ marginLeft: 0 }}>
             ＋ Upload
           </button>
+          <button
+            className="rf-btn-cancel"
+            onClick={reloadDocs}
+            disabled={refreshing || loading}
+            title="Reload Docs from the sheet (picks up files saved by AI chat)"
+          >{refreshing ? '…' : '↻'} Refresh</button>
           <input
             className="col-search"
             style={{ width: 240 }}
