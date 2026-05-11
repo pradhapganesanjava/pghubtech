@@ -67,6 +67,9 @@ function ToDoPanel() {
   const [genRoot, setGenRoot]             = useState<{ title: string; description: string } | null>(null)
   const [genRaw, setGenRaw]               = useState('')   // raw LLM reply for debug surfacing
 
+  // Actions (left) column starts hidden — strip with ▸ / ＋ / ✨ icons.
+  const [actionsCollapsed, setActionsCollapsed] = useState(true)
+
   // Collapse / expand state for the middle tree (per todo id).
   const [collapsed, setCollapsed]         = useState<Set<string>>(new Set())
   function toggleCollapse(id: string) {
@@ -107,7 +110,18 @@ function ToDoPanel() {
 
   useEffect(() => {
     Promise.all([loadToDos(), loadAllToDoComments()])
-      .then(([list, cs]) => { setItems(list); setComments(cs); setLoading(false) })
+      .then(([list, cs]) => {
+        setItems(list)
+        setComments(cs)
+        // Land fully collapsed: every distinct non-empty parentId in the
+        // list is, by definition, a parent that has children — so adding
+        // them all to `collapsed` hides every subtree until the user opens
+        // one explicitly.
+        const parents = new Set<string>()
+        for (const t of list) if (t.parentId) parents.add(t.parentId)
+        setCollapsed(parents)
+        setLoading(false)
+      })
       .catch(e => { setLoading(false); toast(`Load failed: ${(e as Error).message}`, 'error') })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -569,60 +583,90 @@ function ToDoPanel() {
 
   return (
     <div className="todo3-wrap browse-body-wrap" ref={wrapRef}>
-      {/* ── Col 1 — Actions ─────────────────────────────── */}
-      <div className="todo3-actions-col" style={{ width: col1Width }}>
-        <div className="col-hd">Actions</div>
-        <div className="todo3-action-stack">
-          <button className="rf-btn-save" onClick={addTopLevel} disabled={busy}>＋ Add new</button>
-        </div>
-        <div className="col-hd" style={{ marginTop: 12 }}>Generate</div>
-        <div className="todo3-gen">
-          <textarea
-            className="rf-textarea"
-            rows={5}
-            placeholder="Describe a goal or context — AI will break it into a hierarchy of todos."
-            value={genCtx}
-            onChange={e => setGenCtx(e.target.value)}
-            disabled={genBusy}
-          />
+      {/* ── Col 1 — Actions (collapsible) ──────────────── */}
+      {actionsCollapsed ? (
+        <div className="todo3-actions-col todo3-actions-strip">
           <button
-            className="rf-btn-cancel"
-            onClick={runGenerate}
-            disabled={genBusy || !genCtx.trim()}
-          >{genBusy ? 'Generating…' : '✨ Generate'}</button>
-          {genErr && <div className="login-error">{genErr}</div>}
-          {genErr && genRaw && (
-            <details className="todo3-gen-raw">
-              <summary>Show raw AI reply</summary>
-              <pre>{genRaw}</pre>
-            </details>
-          )}
-          {genDrafts && genRoot && (
-            <div className="todo3-gen-preview">
-              <div className="col-hd">Preview ({countDrafts(genDrafts) + 1})</div>
-              <div className="todo3-gen-root">
-                <span className="todo3-gen-root-icon">📁</span>
-                <span className="todo3-gen-root-title">{genRoot.title}</span>
-                <span className="todo3-gen-root-stamp">· {new Date().toISOString().slice(0, 10)}</span>
-              </div>
-              {genRoot.description && (
-                <div className="todo3-gen-root-desc">{genRoot.description}</div>
-              )}
-              <div className="todo3-gen-tree">{renderDraftTree(genDrafts, 0)}</div>
-              <div className="todo3-gen-actions">
-                <button className="rf-btn-cancel" onClick={() => { setGenDrafts(null); setGenRoot(null) }}>Discard</button>
-                <button className="mgmt-save-btn" onClick={acceptDrafts} disabled={busy}>Add all</button>
-              </div>
-            </div>
-          )}
+            className="notes-strip-btn"
+            onClick={() => setActionsCollapsed(false)}
+            title="Show Actions panel"
+          >▸</button>
+          <button
+            className="notes-strip-btn"
+            onClick={() => { setActionsCollapsed(false); addTopLevel() }}
+            disabled={busy}
+            title="Add new top-level todo"
+          >＋</button>
+          <button
+            className="notes-strip-btn"
+            onClick={() => setActionsCollapsed(false)}
+            title="Open AI Generate"
+          >✨</button>
         </div>
-      </div>
+      ) : (
+        <div className="todo3-actions-col" style={{ width: col1Width }}>
+          <div className="col-hd todo3-actions-hd">
+            <span>Actions</span>
+            <button
+              className="panel-toggle-btn"
+              onClick={() => setActionsCollapsed(true)}
+              title="Hide Actions panel"
+            >◂</button>
+          </div>
+          <div className="todo3-action-stack">
+            <button className="rf-btn-save" onClick={addTopLevel} disabled={busy}>＋ Add new</button>
+          </div>
+          <div className="col-hd" style={{ marginTop: 12 }}>Generate</div>
+          <div className="todo3-gen">
+            <textarea
+              className="rf-textarea"
+              rows={5}
+              placeholder="Describe a goal or context — AI will break it into a hierarchy of todos."
+              value={genCtx}
+              onChange={e => setGenCtx(e.target.value)}
+              disabled={genBusy}
+            />
+            <button
+              className="rf-btn-cancel"
+              onClick={runGenerate}
+              disabled={genBusy || !genCtx.trim()}
+            >{genBusy ? 'Generating…' : '✨ Generate'}</button>
+            {genErr && <div className="login-error">{genErr}</div>}
+            {genErr && genRaw && (
+              <details className="todo3-gen-raw">
+                <summary>Show raw AI reply</summary>
+                <pre>{genRaw}</pre>
+              </details>
+            )}
+            {genDrafts && genRoot && (
+              <div className="todo3-gen-preview">
+                <div className="col-hd">Preview ({countDrafts(genDrafts) + 1})</div>
+                <div className="todo3-gen-root">
+                  <span className="todo3-gen-root-icon">📁</span>
+                  <span className="todo3-gen-root-title">{genRoot.title}</span>
+                  <span className="todo3-gen-root-stamp">· {new Date().toISOString().slice(0, 10)}</span>
+                </div>
+                {genRoot.description && (
+                  <div className="todo3-gen-root-desc">{genRoot.description}</div>
+                )}
+                <div className="todo3-gen-tree">{renderDraftTree(genDrafts, 0)}</div>
+                <div className="todo3-gen-actions">
+                  <button className="rf-btn-cancel" onClick={() => { setGenDrafts(null); setGenRoot(null) }}>Discard</button>
+                  <button className="mgmt-save-btn" onClick={acceptDrafts} disabled={busy}>Add all</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-      <div
-        className="qa-divider"
-        onPointerDown={leftDown} onPointerMove={leftMove}
-        onPointerUp={leftUp} onPointerCancel={leftUp}
-      />
+      {!actionsCollapsed && (
+        <div
+          className="qa-divider"
+          onPointerDown={leftDown} onPointerMove={leftMove}
+          onPointerUp={leftUp} onPointerCancel={leftUp}
+        />
+      )}
 
       {/* ── Col 2 — List ─────────────────────────────────── */}
       <div className="todo3-list-col" style={{ width: col2Width }}>

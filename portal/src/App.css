@@ -1579,7 +1579,19 @@ body.resizing-h * {
 @media (max-width: 768px) {
   .mobile-filter-btn { display: inline-flex; }
   .topbar-nav { display: none; }
-  .bottom-nav { display: flex; }
+  /* Always-visible mobile tab-bar. `position: fixed` (not sticky) is the
+     only reliable way to keep it pinned at the bottom across views — some
+     pages (e.g. mobile ToDo) make the document body scroll, where sticky
+     inside a flex .layout can drift away with the scroll. */
+  .bottom-nav {
+    display: flex;
+    position: fixed !important;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+  }
+  /* Reserve space under the fixed nav so the last bit of content isn't
+     hidden behind it. The nav is ~58px tall plus the iOS safe area. */
+  .layout { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .home-grid  { grid-template-columns: 1fr; }
   .stats-row  { grid-template-columns: repeat(3,1fr); gap: 10px; }
   .settings-grid { grid-template-columns: 1fr; }
@@ -1659,10 +1671,56 @@ body.resizing-h * {
   .activity-subtabs { padding: 4px 8px 0; gap: 2px; }
   .activity-subtab  { padding: 6px 10px; font-size: 12px; }
 
-  /* ToDo 3-pane → vertical stack, hide drag-handles, single-pane on selection. */
-  .todo3-wrap { flex-direction: column; }
-  .todo3-actions-col { width: 100% !important; border-right: 0; border-bottom: 1px solid var(--border); max-height: 50vh; }
-  .todo3-list-col    { width: 100% !important; max-height: 55vh; border-bottom: 1px solid var(--border); }
+  /* ToDo 3-pane → vertical stack, hide drag-handles, single-pane on selection.
+     On mobile we let the document body scroll instead of trying to fit
+     everything inside calc(100vh - 56px): when the user expands the Actions /
+     Generate panel it can take a lot of room, and squeezing the list-body
+     into the remainder leaves only ~1 row visible. Native page scroll feels
+     more natural here. Activity Log keeps its internal scroll since its
+     calendar + day editor need to stay anchored. */
+  .utils-wrap:has(.todo3-wrap) {
+    height: auto;
+    min-height: calc(100vh - 56px);
+  }
+  .utils-body-flush:has(.todo3-wrap) { overflow: visible; }
+  .todo3-wrap {
+    flex-direction: column;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .todo3-actions-col {
+    width: 100% !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: none !important;
+  }
+  /* Collapsed Actions strip: render as a slim horizontal row of icons
+     (matching the single-row mobile UX) instead of a tall left column.
+     `!important` because the base .todo3-actions-strip rule lives LATER
+     in the source than this @media block — without !important the
+     base rule's `flex-direction: column` wins on mobile too. */
+  .todo3-actions-strip {
+    width: 100% !important;
+    max-height: none !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    padding: 4px 10px !important;
+    gap: 6px !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  .todo3-actions-strip .notes-strip-btn { width: 30px; height: 30px; }
+  .todo3-list-col {
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-bottom: 1px solid var(--border);
+  }
+  .todo3-list-body {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
   .todo3-wrap > .qa-divider { display: none; }
   .todo3-detail-col { padding-bottom: 90px; }
   .todo3-detail     { padding: 12px 14px; }
@@ -2139,11 +2197,13 @@ body.resizing-h * {
 .msg-audio-btn:active:not(:disabled) { transform: scale(.94); }
 
 /* Vertical seek slider — top is start, bottom is end of clip. Height is set
-   inline based on audio duration so longer clips give finer seek control. */
+   inline based on audio duration so longer clips give finer seek control.
+   Modern recipe: writing-mode: vertical-lr + direction: rtl replaces the
+   deprecated `appearance: slider-vertical` and preserves the same
+   top-is-start visual orientation. */
 .msg-audio-slider {
   writing-mode: vertical-lr;
-  -webkit-appearance: slider-vertical;
-  appearance: slider-vertical;
+  direction: rtl;
   width: 4px;
   background: var(--bg3);
   border-radius: 2px; outline: none; cursor: pointer;
@@ -2897,6 +2957,29 @@ body.resizing-h * {
   background: var(--bg);
   overflow-y: auto;
 }
+.todo3-actions-strip {
+  width: 36px;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  gap: 4px;
+  overflow: hidden;
+}
+.todo3-actions-strip .notes-strip-btn {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.todo3-actions-hd {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.todo3-actions-hd .panel-toggle-btn {
+  background: transparent; border: 0;
+  color: var(--text2);
+  font-size: 11px; cursor: pointer;
+  padding: 2px 6px; border-radius: 3px;
+}
+.todo3-actions-hd .panel-toggle-btn:hover { background: var(--bg2); color: var(--text); }
 .todo3-actions-col .col-hd {
   padding: 10px 12px;
   font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
