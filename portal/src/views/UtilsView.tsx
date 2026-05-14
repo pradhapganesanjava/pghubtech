@@ -69,6 +69,8 @@ function ToDoPanel() {
 
   // Actions (left) column starts hidden — strip with ▸ / ＋ / ✨ icons.
   const [actionsCollapsed, setActionsCollapsed] = useState(true)
+  // Middle list column expanded (hides detail pane).
+  const [listExpanded, setListExpanded] = useState(false)
 
   // Collapse / expand state for the middle tree (per todo id).
   const [collapsed, setCollapsed]         = useState<Set<string>>(new Set())
@@ -669,9 +671,13 @@ function ToDoPanel() {
       )}
 
       {/* ── Col 2 — List ─────────────────────────────────── */}
-      <div className="todo3-list-col" style={{ width: col2Width }}>
-        <div className="todo3-list-hd">
-          <div className="view-mode-toggle">
+      <div className="todo3-list-col" style={listExpanded ? { flex: 1 } : { width: col2Width }}>
+        <div
+          className={`todo3-list-hd${listExpanded ? ' todo3-list-hd--expanded' : ''}`}
+          onDoubleClick={() => setListExpanded(e => !e)}
+          title="Double-click to expand / restore the list"
+        >
+          <div className="view-mode-toggle" onDoubleClick={e => e.stopPropagation()}>
             <button
               className={`vm-btn${viewMode === 'tree' ? ' active' : ''}`}
               onClick={() => setViewMode('tree')}
@@ -687,6 +693,7 @@ function ToDoPanel() {
             <button
               className="vm-btn todo3-collapse-all"
               onClick={() => (collapsed.size > 0 ? expandAll() : collapseAllParents())}
+              onDoubleClick={e => e.stopPropagation()}
               title={collapsed.size > 0 ? 'Expand all rows' : 'Collapse all — show only top-level parents'}
             >{collapsed.size > 0 ? '▾ All' : '▸ All'}</button>
           )}
@@ -695,14 +702,16 @@ function ToDoPanel() {
             placeholder="Filter title / description"
             value={filter}
             onChange={e => setFilter(e.target.value)}
+            onDoubleClick={e => e.stopPropagation()}
           />
-          <label className="todo3-show-done" title="Hide completed">
+          <label className="todo3-show-done" title="Hide completed" onDoubleClick={e => e.stopPropagation()}>
             <input type="checkbox" checked={showDone} onChange={e => setShowDone(e.target.checked)} />
             Done
           </label>
           <button
             className={`vm-btn todo3-manage-btn${manageMode ? ' active' : ''}`}
             onClick={toggleManage}
+            onDoubleClick={e => e.stopPropagation()}
             title={manageMode ? 'Exit manage mode' : 'Manage — multi-select, reorder, bulk move / delete'}
           >⚙</button>
         </div>
@@ -762,14 +771,16 @@ function ToDoPanel() {
         </div>
       </div>
 
-      <div
-        className="qa-divider"
-        onPointerDown={rightDown} onPointerMove={rightMove}
-        onPointerUp={rightUp} onPointerCancel={rightUp}
-      />
+      {!listExpanded && (
+        <div
+          className="qa-divider"
+          onPointerDown={rightDown} onPointerMove={rightMove}
+          onPointerUp={rightUp} onPointerCancel={rightUp}
+        />
+      )}
 
       {/* ── Col 3 — Detail ──────────────────────────────── */}
-      <div className="browse-main todo3-detail-col">
+      {!listExpanded && <div className="browse-main todo3-detail-col">
         {!selected ? (
           <div className="mgmt-empty">Select a todo from the list to see its info, comments, and edit actions.</div>
         ) : (
@@ -928,7 +939,7 @@ function ToDoPanel() {
             </section>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   )
 }
@@ -1042,6 +1053,7 @@ function ActivityPanel() {
   const [col2EndRatio, setCol2EndRatio] = useState(48)
   const [dayExpanded, setDayExpanded] = useState(false)
   const [calExpanded, setCalExpanded] = useState(false)
+  const [calCollapsed, setCalCollapsed] = useState(true)
   const [aiOpen, setAiOpen]           = useState(false)
   // The two expand toggles are mutually exclusive — turning one on cancels
   // the other so the layout never gets into a weird half-state.
@@ -1459,7 +1471,7 @@ function ActivityPanel() {
       )}
 
       {/* Divider 1 */}
-      {!dayExpanded && !calExpanded && !leftCollapsed && (
+      {!dayExpanded && !calExpanded && !leftCollapsed && !calCollapsed && (
         <div className="qa-divider"
              onPointerDown={leftDown} onPointerMove={leftMove}
              onPointerUp={leftUp} onPointerCancel={leftUp}/>
@@ -1467,6 +1479,18 @@ function ActivityPanel() {
 
       {/* ── Col 2: month calendar with markers ───────────────────── */}
       {!dayExpanded && (
+        calCollapsed ? (
+          <div className="activity-cal-strip">
+            <button
+              className="notes-strip-btn"
+              onClick={() => setCalCollapsed(false)}
+              title="Show calendar"
+            >📅</button>
+            <span className="activity-cal-strip-label">
+              {cursor.toLocaleDateString(undefined, { month: 'short' })}
+            </span>
+          </div>
+        ) : (
         <div
           className="activity-cal-col"
           style={{ width: calExpanded ? '100%' : `${col2Width}%` }}
@@ -1493,6 +1517,12 @@ function ActivityPanel() {
               onDoubleClick={e => e.stopPropagation()}
               title="Jump to today"
             >Today</button>
+            <button
+              className="rf-btn-cancel"
+              onClick={() => setCalCollapsed(true)}
+              onDoubleClick={e => e.stopPropagation()}
+              title="Hide calendar"
+            >◂</button>
             <button
               className={`bci-edit-btn bci-edit-btn-hd${calExpanded ? ' active' : ''}`}
               onClick={toggleCalExpand}
@@ -1538,10 +1568,11 @@ function ActivityPanel() {
             />
           </div>
         </div>
+        )
       )}
 
       {/* Divider 2 */}
-      {!dayExpanded && !calExpanded && (
+      {!dayExpanded && !calExpanded && !calCollapsed && (
         <div className="qa-divider"
              onPointerDown={midDown} onPointerMove={midMove}
              onPointerUp={midUp} onPointerCancel={midUp}/>

@@ -57,6 +57,8 @@ export default function NotesView() {
   // Col3 (the editor) takes whatever's left.
   const [col1Ratio, setCol1Ratio]       = useState(18)
   const [col2EndRatio, setCol2EndRatio] = useState(44)
+  // When true, col3 (editor) is hidden and col2 expands to fill the space.
+  const [rightHidden, setRightHidden]   = useState(false)
   const bodyWrapRef                     = useRef<HTMLDivElement>(null)
   const isLeftDragging                  = useRef(false)
   const isMidDragging                   = useRef(false)
@@ -175,6 +177,7 @@ export default function NotesView() {
     setDirty(false)
     setPageMode(forceEdit ? 'edit' : 'view')
     setPageExpanded(false)
+    setRightHidden(false)
   }
 
   // ── Notes CRUD ───────────────────────────────────────────────────────────
@@ -733,7 +736,7 @@ export default function NotesView() {
 
       {/* ── Col 2: section / page tree of the open note ─────────────── */}
       {!pageExpanded && (
-      <div className="notes-tree-col" style={{ width: `${col2Width}%` }}>
+      <div className="notes-tree-col" style={rightHidden ? { flex: 1 } : { width: `${col2Width}%` }}>
         {notes.length === 0 ? (
           <div className="col-empty" style={{ padding: 18, textAlign: 'center' }}>
             Create a note in the left column.
@@ -744,7 +747,11 @@ export default function NotesView() {
           </div>
         ) : (
           <div className="notes-tree" style={{ marginTop: 0, borderTop: 0 }}>
-            <div className="notes-tree-hd">
+            <div
+              className={`notes-tree-hd${rightHidden ? ' notes-tree-hd--expanded' : ''}`}
+              onDoubleClick={() => setRightHidden(h => !h)}
+              title="Double-click to expand / restore"
+            >
               {/* Note picker — auto-fills when there's only one. */}
               {notes.length === 1 ? (
                 <span title={openNote.name}>{openNote.name}</span>
@@ -756,6 +763,7 @@ export default function NotesView() {
                     const next = notes.find(n => n.id === e.target.value)
                     if (next && next.id !== openNote.id) selectNote(next)
                   }}
+                  onDoubleClick={e => e.stopPropagation()}
                   title="Switch note"
                 >
                   {notes.map(n => (
@@ -763,7 +771,7 @@ export default function NotesView() {
                   ))}
                 </select>
               )}
-              <div className="view-mode-toggle">
+              <div className="view-mode-toggle" onDoubleClick={e => e.stopPropagation()}>
                 <button
                   className={`vm-btn${viewMode === 'tree' ? ' active' : ''}`}
                   title="Hierarchical tree"
@@ -778,12 +786,14 @@ export default function NotesView() {
               <button
                 className="notes-add-link"
                 onClick={() => handleAddChild('', 'section')}
+                onDoubleClick={e => e.stopPropagation()}
                 disabled={busy}
                 title="Add top-level section"
               >＋ Section</button>
               <button
                 className="notes-add-link"
                 onClick={() => handleAddChild('', 'page')}
+                onDoubleClick={e => e.stopPropagation()}
                 disabled={busy}
                 title="Add top-level page"
               >＋ Page</button>
@@ -844,7 +854,7 @@ export default function NotesView() {
       )}
 
       {/* Divider between col2 and col3 */}
-      {!pageExpanded && (
+      {!pageExpanded && !rightHidden && (
         <div
           className="qa-divider"
           onPointerDown={handleMidDividerDown}
@@ -855,7 +865,7 @@ export default function NotesView() {
       )}
 
       {/* ── Col 3: editor ─────────────────────────────────────────────── */}
-      <div className="browse-main">
+      {!rightHidden && <div className="browse-main">
         {!openNote ? (
           <div className="done-state" style={{ flex: 1 }}>
             <div className="done-icon">📓</div>
@@ -911,6 +921,7 @@ export default function NotesView() {
                         setBlocks([])
                         setDirty(false)
                         setPageExpanded(false)
+                        setRightHidden(true)
                       }}
                       title="Close page"
                     >✕</button>
@@ -952,6 +963,7 @@ export default function NotesView() {
                         setDirty(false)
                         setPageMode('view')
                         setPageExpanded(false)
+                        setRightHidden(true)
                       }}
                       title="Close page"
                     >✕</button>
@@ -976,7 +988,7 @@ export default function NotesView() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   )
 }

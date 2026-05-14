@@ -709,6 +709,43 @@ body {
 .bn-icon { font-size: 20px; line-height: 1; }
 .bn-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
 
+/* ─── Activity calendar collapsed strip ─────────────────── */
+.activity-cal-strip {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 4px; gap: 6px; background: var(--bg2);
+  border-right: 1px solid var(--border); flex-shrink: 0; width: 36px;
+}
+.activity-cal-strip-label {
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-size: 10px; font-weight: 600; color: var(--text2);
+  letter-spacing: .5px; text-transform: uppercase;
+}
+
+/* ─── ToDo list column expanded header ───────────────────── */
+.todo3-list-hd--expanded {
+  background: var(--primary); color: #fff; cursor: pointer;
+}
+.todo3-list-hd--expanded .vm-btn,
+.todo3-list-hd--expanded .todo3-collapse-all,
+.todo3-list-hd--expanded .todo3-manage-btn,
+.todo3-list-hd--expanded .todo3-show-done {
+  color: rgba(255,255,255,.85);
+}
+.todo3-list-hd--expanded .col-search {
+  background: rgba(255,255,255,.15); color: #fff; border-color: rgba(255,255,255,.3);
+}
+.todo3-list-hd--expanded .col-search::placeholder { color: rgba(255,255,255,.6); }
+
+/* ─── Notes col2 header expanded state ───────────────────── */
+.notes-tree-hd--expanded {
+  background: var(--primary); color: #fff; cursor: pointer;
+}
+.notes-tree-hd--expanded .vm-btn,
+.notes-tree-hd--expanded .notes-add-link,
+.notes-tree-hd--expanded .notes-tree-select {
+  color: rgba(255,255,255,.85);
+}
+
 /* ─── Ads iframe view ────────────────────────────────────── */
 .ads-frame-wrap {
   flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;
