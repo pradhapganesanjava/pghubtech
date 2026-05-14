@@ -11,12 +11,13 @@ import DocsView from './views/DocsView'
 import NotesView from './views/NotesView'
 import UtilsView from './views/UtilsView'
 import AISkillsView from './views/AISkillsView'
+import AdsView from './views/AdsView'
 import SettingsView from './views/SettingsView'
 import AskAIPanel from './components/AskAIPanel'
 import './App.css'
 
 type AuthState = 'loading' | 'unauthenticated' | 'needs-sheet' | 'authenticated'
-type View = 'home' | 'browse' | 'docs' | 'notes' | 'utils' | 'ai-skills' | 'settings'
+type View = 'home' | 'browse' | 'docs' | 'notes' | 'utils' | 'ads' | 'ai-skills' | 'settings'
 
 const GOOGLE_SVG = (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -176,6 +177,7 @@ export default function App() {
         {view === 'docs'     && <DocsView />}
         {view === 'notes'    && <NotesView />}
         {view === 'utils'    && <UtilsView />}
+        {view === 'ads'      && <AdsView />}
         {view === 'ai-skills' && <AISkillsView />}
         {view === 'settings' && (
           <SettingsView
@@ -207,6 +209,9 @@ export default function App() {
           </button>
           <button className={`bn-btn${view === 'utils'    ? ' active' : ''}`} onClick={() => setView('utils')}>
             <span className="bn-icon">🧰</span><span className="bn-label">Utils</span>
+          </button>
+          <button className={`bn-btn${view === 'ads'      ? ' active' : ''}`} onClick={() => setView('ads')}>
+            <span className="bn-icon">📢</span><span className="bn-label">Ads</span>
           </button>
           {/* Settings is reachable via the avatar dropdown in the top bar
               (same place on desktop and mobile), so it's no longer in the
