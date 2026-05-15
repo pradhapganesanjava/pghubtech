@@ -19,7 +19,6 @@ export default function AdsView() {
         className="ads-frame"
         style={{ opacity: loading ? 0 : 1 }}
         onLoad={() => setLoading(false)}
-        allow="popups"
       />
     </div>
   )
