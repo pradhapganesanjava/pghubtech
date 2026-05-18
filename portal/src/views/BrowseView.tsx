@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import type { AnkiNote, AnkiTemplate } from '../adapters/ankiRepo'
-import { loadAnkiTemplates, loadAllNotes } from '../adapters/ankiRepo'
+import { loadAnkiTemplates, loadAllNotes, deleteAnkiNotes } from '../adapters/ankiRepo'
 import { getAllSRS, isDue } from '../adapters/srsRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
 import { getCardFrontText } from '../utils/cardHelpers'
 import TagDeckTree from '../components/TagDeckTree'
 import NoteDetailPanel from '../components/NoteDetailPanel'
+import AddNoteModal from '../components/AddNoteModal'
+import CsvUploadModal from '../components/CsvUploadModal'
 import { useToast } from '../components/Toast'
 
 // ── Schedule cell ─────────────────────────────────────────────────────────────
@@ -58,6 +60,11 @@ export default function BrowseView() {
   const [srsMap,      setSrsMap]      = useState<Map<string, SRSRecord>>(new Map())
 
   const [selectedNote, setSelectedNote] = useState<AnkiNote | null>(null)
+
+  const [showAdd,      setShowAdd]      = useState(false)
+  const [showUpload,   setShowUpload]   = useState(false)
+  const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set())
+  const [deleting,     setDeleting]     = useState(false)
 
   const [search,        setSearch]        = useState('')
   const [selectedTags,  setSelectedTags]  = useState<string[]>([])
@@ -129,6 +136,67 @@ export default function BrowseView() {
 
   const hasFilters = selectedTags.length > 0 || selectedDecks.length > 0
 
+  const existingDecks = useMemo(() => {
+    const seen = new Set<string>()
+    notes.forEach(n => { if (n.deck) seen.add(n.deck) })
+    return [...seen].sort((a, b) => a.localeCompare(b))
+  }, [notes])
+
+  const existingTags = useMemo(() => {
+    const seen = new Set<string>()
+    notes.forEach(n => n.tags.forEach(t => { if (t) seen.add(t) }))
+    return [...seen].sort((a, b) => a.localeCompare(b))
+  }, [notes])
+
+  function handleNoteAdded(note: AnkiNote) {
+    setNotes(prev => [note, ...prev])
+  }
+
+  function handleImportDone(added: AnkiNote[]) {
+    setNotes(prev => [...added, ...prev])
+  }
+
+  // ── Multi-select ─────────────────────────────────────────────────────────────
+  const allFilteredSelected =
+    filteredNotes.length > 0 && filteredNotes.every(n => selectedIds.has(n.noteId))
+  const someSelected = selectedIds.size > 0
+
+  function toggleRowCheck(noteId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    e.stopPropagation()
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(noteId)) next.delete(noteId); else next.add(noteId)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredNotes.map(n => n.noteId)))
+    }
+  }
+
+  async function handleDeleteSelected() {
+    const count = selectedIds.size
+    if (count === 0) return
+    if (!window.confirm(`Delete ${count} card${count === 1 ? '' : 's'}? This cannot be undone.`)) return
+    setDeleting(true)
+    try {
+      const toDelete = notes.filter(n => selectedIds.has(n.noteId))
+      await deleteAnkiNotes(toDelete)
+      setNotes(prev => prev.filter(n => !selectedIds.has(n.noteId)))
+      if (selectedNote && selectedIds.has(selectedNote.noteId)) setSelectedNote(null)
+      setSelectedIds(new Set())
+      toast(`Deleted ${count} card${count === 1 ? '' : 's'}`, 'success')
+    } catch (e) {
+      toast(`Delete failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   function handleSelect(note: AnkiNote) {
     setSelectedNote(prev => prev?.noteId === note.noteId ? null : note)
   }
@@ -171,6 +239,23 @@ export default function BrowseView() {
         <div className="drawer-backdrop" onClick={() => setLeftCollapsed(true)} />
       )}
 
+      {/* Add + CSV upload modals */}
+      <AddNoteModal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        templates={templates}
+        existingDecks={existingDecks}
+        existingTags={existingTags}
+        onNoteAdded={handleNoteAdded}
+      />
+      <CsvUploadModal
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
+        templates={templates}
+        existingDecks={existingDecks}
+        onImportDone={handleImportDone}
+      />
+
       {/* Main: cards table + detail split */}
       <div className="browse-main">
         {/* Toolbar */}
@@ -192,6 +277,27 @@ export default function BrowseView() {
           <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
             {filteredNotes.length.toLocaleString()} / {notes.length.toLocaleString()} cards
           </span>
+
+          <div className="browse-action-btns">
+            {someSelected && (
+              <button
+                className="browse-delete-btn"
+                onClick={handleDeleteSelected}
+                disabled={deleting}
+                title={`Delete ${selectedIds.size} selected card${selectedIds.size === 1 ? '' : 's'}`}
+              >{deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}</button>
+            )}
+            <button
+              className="browse-add-btn"
+              onClick={() => setShowAdd(true)}
+              title="Add a new note"
+            >+ Add</button>
+            <button
+              className="browse-upload-btn"
+              onClick={() => setShowUpload(true)}
+              title="Bulk import notes from CSV"
+            >↑ Upload</button>
+          </div>
 
           {hasFilters && (
             <div className="applied-filter-chips">
@@ -239,12 +345,20 @@ export default function BrowseView() {
               <table className="bgt">
                 <thead>
                   <tr className="bgt-hd-row">
+                    <th className="bgt-th bgt-th-check" onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="bgt-checkbox"
+                        checked={allFilteredSelected}
+                        onChange={toggleSelectAll}
+                        title={allFilteredSelected ? 'Deselect all' : 'Select all filtered'}
+                      />
+                    </th>
                     <th className="bgt-th bgt-th-title">Question</th>
                     <th className="bgt-th">Deck</th>
                     <th className="bgt-th">Tags</th>
                     <th className="bgt-th bgt-th-prog">Schedule</th>
-                    <th className="bgt-th bgt-th-prog">Reviews</th>
-                    <th className="bgt-th bgt-th-prog">Lapses</th>
+                    <th className="bgt-th bgt-th-tmpl">Template</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,12 +368,21 @@ export default function BrowseView() {
                     const rec   = srsMap.get(n.noteId)
                     const isSel = selectedNote?.noteId === n.noteId
 
+                    const isChecked = selectedIds.has(n.noteId)
                     return (
                       <tr
                         key={n.noteId}
-                        className={`bgt-row${isSel ? ' sel' : ''}`}
+                        className={`bgt-row${isSel ? ' sel' : ''}${isChecked ? ' checked' : ''}`}
                         onClick={() => handleSelect(n)}
                       >
+                        <td className="bgt-td bgt-td-check" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="bgt-checkbox"
+                            checked={isChecked}
+                            onChange={e => toggleRowCheck(n.noteId, e)}
+                          />
+                        </td>
                         <td className="bgt-td bgt-td-title">{title || n.noteId}</td>
                         <td className="bgt-td" style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
                           {n.deck.split('::').pop() || '—'}
@@ -268,15 +391,8 @@ export default function BrowseView() {
                           {n.tags.slice(0, 3).map(t => t.split('::').pop()).join(', ') || '—'}
                         </td>
                         <td className="bgt-td bgt-td-prog"><ScheduleCell rec={rec} /></td>
-                        <td className="bgt-td bgt-td-prog">
-                          {rec && rec.reps > 0
-                            ? <span className="bgt-prog-count">{rec.reps}</span>
-                            : <span className="bgt-prog-dim">—</span>}
-                        </td>
-                        <td className="bgt-td bgt-td-prog">
-                          {rec && rec.lapses > 0
-                            ? <span className="bgt-prog-lapses">{rec.lapses}</span>
-                            : <span className="bgt-prog-dim">—</span>}
+                        <td className="bgt-td bgt-td-tmpl">
+                          {tmpl ? tmpl.displayName : <span className="bgt-prog-dim">—</span>}
                         </td>
                       </tr>
                     )

@@ -241,3 +241,110 @@ export async function appendAnkiNote(note: AnkiNote, template: AnkiTemplate): Pr
   }
 }
 
+// Delete many notes in one batchUpdate per template tab.
+// Reads column A of each affected tab to locate row indices, then deletes
+// them in descending order (bottom-up) so earlier indices stay valid.
+export async function deleteAnkiNotes(notes: AnkiNote[]): Promise<void> {
+  if (notes.length === 0) return
+  _notesCache = null
+  const id = sid()
+
+  // Group noteIds by their template tab
+  const byTemplate = new Map<string, Set<string>>()
+  for (const n of notes) {
+    const s = byTemplate.get(n.templateId) ?? new Set<string>()
+    s.add(n.noteId)
+    byTemplate.set(n.templateId, s)
+  }
+
+  // Fetch spreadsheet metadata to get numeric sheetId per tab title
+  const metaRes = await fetch(
+    `${BASE}/${id}?fields=sheets.properties(sheetId,title)`,
+    { headers: authHeaders() },
+  )
+  if (!metaRes.ok) {
+    const err = await metaRes.json().catch(() => ({})) as { error?: { message?: string } }
+    throw new Error(err.error?.message ?? `Metadata fetch failed: ${metaRes.status}`)
+  }
+  const meta = await metaRes.json() as {
+    sheets: { properties: { sheetId: number; title: string } }[]
+  }
+  const sheetIdByTitle = new Map(
+    meta.sheets.map(s => [s.properties.title, s.properties.sheetId]),
+  )
+
+  // Build all deleteDimension requests (descending within each tab)
+  const requests: object[] = []
+  for (const [templateId, targetIds] of byTemplate) {
+    const sheetId = sheetIdByTitle.get(templateId)
+    if (sheetId === undefined) continue
+
+    // Read column A to find 0-based row indices for each target noteId
+    const colA = await getRange(`${templateId}!A:A`)
+    const indices: number[] = []
+    colA.forEach((row, i) => {
+      if (i === 0) return          // header row
+      if (targetIds.has(row[0])) indices.push(i)
+    })
+
+    // Process bottom-up so earlier indices aren't shifted by prior deletions
+    indices.sort((a, b) => b - a)
+    for (const idx of indices) {
+      requests.push({
+        deleteDimension: {
+          range: { sheetId, dimension: 'ROWS', startIndex: idx, endIndex: idx + 1 },
+        },
+      })
+    }
+  }
+
+  if (requests.length === 0) return
+
+  const batchRes = await fetch(`${BASE}/${id}:batchUpdate`, {
+    method:  'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ requests }),
+  })
+  if (!batchRes.ok) {
+    const err = await batchRes.json().catch(() => ({})) as { error?: { message?: string } }
+    throw new Error(err.error?.message ?? `Delete failed: ${batchRes.status}`)
+  }
+}
+
+// Bulk-append notes in chunks to avoid browser connection timeouts on large
+// payloads and stay within Sheets API write-rate limits.
+// Each chunk is one API call; 50 rows × ~1 KB avg ≈ 50 KB per request.
+const BULK_CHUNK_SIZE = 50
+
+export async function appendAnkiNotesBulk(
+  notes:       AnkiNote[],
+  template:    AnkiTemplate,
+  onProgress?: (done: number, total: number) => void,
+): Promise<void> {
+  if (notes.length === 0) return
+  _notesCache = null
+  const sortedFields = [...template.fields].sort((a, b) => a.order - b.order)
+  const allRows = notes.map(note => {
+    const fieldValues = sortedFields.map(f => note.fields[f.key] ?? '')
+    return [note.noteId, note.deck, note.ankiMod, ...fieldValues, note.tags.join(', ')]
+  })
+  const lastCol = colToLetter(allRows[0].length)
+  const url = `${BASE}/${sid()}/values/${encodeURIComponent(`${template.id}!A:${lastCol}`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
+
+  let sent = 0
+  for (let i = 0; i < allRows.length; i += BULK_CHUNK_SIZE) {
+    const chunk = allRows.slice(i, i + BULK_CHUNK_SIZE)
+    const res = await fetch(url, {
+      method:  'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ values: chunk }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
+      throw new Error(err.error?.message ?? `HTTP ${res.status}`)
+    }
+    sent += chunk.length
+    onProgress?.(sent, notes.length)
+  }
+}
+

@@ -564,12 +564,12 @@ body {
 }
 .mgmt-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 .mgmt-tab:hover:not(.active) { color: var(--text); background: var(--bg3); }
-.mgmt-tab-content { flex: 1; display: flex; overflow: hidden; }
+.mgmt-tab-content { flex: 1; min-height: 0; display: flex; overflow: hidden; }
 
 /* ─── Template management layout ─────────────────────── */
-.mgmt-layout { display: flex; flex: 1; overflow: hidden; height: 100%; }
+.mgmt-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; height: 100%; }
 .mgmt-sidebar {
-  width: 220px; min-width: 180px;
+  width: 220px; min-width: 180px; min-height: 0;
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column; overflow: hidden;
 }
@@ -583,7 +583,7 @@ body {
   padding: 3px 8px; font-size: 12px; cursor: pointer;
 }
 .mgmt-new-btn:hover { opacity: .85; }
-.mgmt-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+.mgmt-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; min-height: 0; }
 .mgmt-list-item {
   display: flex; flex-direction: column;
   padding: 8px 12px; cursor: pointer;
@@ -594,7 +594,7 @@ body {
 .mgmt-item-name { font-size: 13px; font-weight: 500; color: var(--text); }
 .mgmt-item-sub  { font-size: 11px; color: var(--text2); margin-top: 2px; }
 .mgmt-detail {
-  flex: 1; overflow-y: auto; padding: 16px 20px;
+  flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px;
   display: flex; flex-direction: column; gap: 10px;
 }
 .mgmt-detail-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
@@ -762,8 +762,8 @@ body {
 
 /* ─── Anki layout ────────────────────────────────────────── */
 .anki-layout {
-  display: flex; flex: 1; overflow: hidden;
-  height: calc(100vh - 56px);
+  display: flex; flex: 1; min-height: 0;
+  overflow: hidden; height: calc(100vh - 56px);
 }
 .anki-sidebar {
   width: 220px; flex-shrink: 0;
@@ -787,7 +787,7 @@ body {
 .ak-tree-node:hover { background: var(--bg3); color: var(--text); }
 .ak-tree-node.selected { background: rgba(var(--primary-rgb),.15); color: var(--primary); font-weight: 600; }
 .ak-tree-arrow { font-size: 10px; flex-shrink: 0; color: var(--text2); }
-.anki-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.anki-main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .anki-toolbar {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 16px; background: var(--bg2);
@@ -907,7 +907,8 @@ body {
 
 /* ─── Practice layout ─────────────────────────────────────── */
 .practice-layout {
-  display: flex; flex-direction: column; flex: 1; height: calc(100vh - 56px);
+  display: flex; flex-direction: column; flex: 1; min-height: 0;
+  height: calc(100vh - 56px);
 }
 .practice-header {
   display: flex; align-items: center; gap: 12px;
@@ -926,7 +927,7 @@ body {
 .practice-progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s; }
 .practice-progress-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
 .practice-body {
-  flex: 1; overflow-y: auto;
+  flex: 1; min-height: 0; overflow-y: auto;
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; padding: 24px 20px; gap: 16px;
 }
@@ -963,13 +964,13 @@ body {
 /* ─── 3-Column Review Layout ───────────────────────────────── */
 .review-body {
   display: flex;
-  flex: 1;
+  flex: 1; min-height: 0;
   overflow: hidden;
   height: calc(100vh - 56px);
 }
 
 .review-qa-split {
-  flex: 1;
+  flex: 1; min-height: 0;
   display: flex;
   overflow: hidden;
   min-width: 0;
@@ -1000,7 +1001,7 @@ body.resizing-h * {
 
 .col-tags {
   width: 210px;
-  flex-shrink: 0;
+  flex-shrink: 0; min-height: 0;
   overflow: hidden;
   border-right: 1px solid var(--border);
   display: flex;
@@ -1029,7 +1030,7 @@ body.resizing-h * {
 }
 
 .col-main {
-  flex: 1;
+  flex: 1; min-height: 0;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -1052,7 +1053,7 @@ body.resizing-h * {
 .col-main-scroll .question-card { max-width: 100%; width: 100%; }
 
 .col-answer {
-  flex: 1;
+  flex: 1; min-height: 0;
   min-width: 0;
   overflow: hidden;
   display: flex;
@@ -1105,30 +1106,50 @@ body.resizing-h * {
 .rating-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
 
 /* ─── Browse body layout ──────────────────────────────────── */
-.browse-body-wrap { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 56px); }
+/* browse-body-wrap, browse-main, browse-cards-split are shared across
+   BrowseView, DocsView, NotesView, UtilsView — keep changes minimal. */
+/* min-height:0 on every flex-column child is required so the item can
+   shrink to its flex-allocated height and let overflow:hidden clip content.
+   Without it, a tall child forces the item to grow past the parent's height,
+   pushing the page to scroll instead of the inner column. This is safe for all
+   views that share these classes (Docs, Notes, Utils) — it only removes a
+   "can't shrink below content" restriction; flex still allocates the full space. */
+.browse-body-wrap {
+  display: flex; flex: 1; min-height: 0;
+  overflow: hidden; height: calc(100vh - 56px);
+}
 .browse-col-tags {
-  width: 210px; flex-shrink: 0;
+  width: 210px; flex-shrink: 0; min-height: 0;
   border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden;
 }
 .browse-col-tags.collapsed { width: 28px; min-width: 28px; overflow: hidden; }
-.browse-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.browse-main {
+  flex: 1; min-height: 0; min-width: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
 .browse-toolbar {
   padding: 10px 14px; background: var(--bg2); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
 }
 /* Cards + detail split */
 .browse-cards-split {
-  flex: 1; display: flex; overflow: hidden; min-width: 0;
+  flex: 1; min-height: 0; min-width: 0;
+  display: flex; overflow: hidden;
+  height: 100%; /* concrete height so children can resolve % and overflow */
 }
 .browse-col-cards {
-  flex: 1; display: flex; flex-direction: column;
-  overflow: auto; min-width: 0;
+  flex: 1 1 0; min-height: 0; min-width: 0;
+  /* Hard cap mirrors the ToDo pattern: without a concrete max-height the
+     flex chain may not resolve to a definite pixel height, so overflow-y
+     never engages and the table is clipped by the parent overflow:hidden. */
+  max-height: calc(100vh - 56px - 52px); /* viewport - topbar - toolbar */
+  overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior-y: contain;
   border-right: 1px solid var(--border);
 }
 .browse-col-detail {
-  flex: 1; min-width: 0;
+  flex: 1; min-height: 0; min-width: 0;
   display: none; flex-direction: column;
   overflow: hidden; background: var(--bg);
 }
@@ -1357,9 +1378,13 @@ body.resizing-h * {
 }
 .bgt-th-title  { min-width: 180px; }
 .bgt-th-prog   { width: 80px; text-align: center; }
+.bgt-th-tmpl   { width: 120px; }
+.bgt-th-check  { width: 36px; text-align: center; }
 .bgt-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
 .bgt-row:hover { background: var(--bg3); }
-.bgt-row.sel   { background: rgba(var(--primary-rgb),.08); border-left: 3px solid var(--primary); }
+.bgt-row.sel     { background: rgba(var(--primary-rgb),.08); border-left: 3px solid var(--primary); }
+.bgt-row.checked { background: rgba(var(--danger),.06); }
+.bgt-row.checked.sel { background: rgba(var(--primary-rgb),.10); }
 .bgt-td {
   padding: 8px 10px; vertical-align: top; color: var(--text);
   max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1367,6 +1392,9 @@ body.resizing-h * {
 .bgt-td-title  { color: var(--text); white-space: normal; line-height: 1.4; }
 .bgt-td-tags   { color: var(--text2); font-size: 12px; }
 .bgt-td-prog   { text-align: center; white-space: nowrap; vertical-align: middle; }
+.bgt-td-tmpl   { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.bgt-td-check  { width: 36px; text-align: center; vertical-align: middle; padding: 0; }
+.bgt-checkbox  { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
 .bgt-tags      { color: var(--text2); }
 
 /* Schedule cell states */
@@ -1467,7 +1495,14 @@ body.resizing-h * {
 .panel-strip-btn:hover { color: var(--primary); background: var(--bg3); }
 
 /* ─── Tag tree ───────────────────────────────────────────── */
-.tag-tree { display: flex; flex-direction: column; overflow-y: auto; flex: 1; }
+.tag-tree {
+  display: flex; flex-direction: column;
+  flex: 1 1 0; min-height: 0;
+  /* Hard cap (same pattern as todo3-list-body) so the scrollbar always
+     engages: budget = topbar(56) + tab-bar(36) + search-row(44) + room */
+  max-height: calc(100vh - 56px - 100px);
+  overflow-y: auto;
+}
 .tree-node-wrap { display: flex; flex-direction: column; }
 .tree-row { display: flex; align-items: center; gap: 2px; padding: 2px 0; }
 .tree-toggle {
@@ -1513,7 +1548,12 @@ body.resizing-h * {
 .vm-btn:hover  { background: var(--bg2); color: var(--text); }
 .vm-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
-.tag-flat-list { padding: 4px 0 8px; }
+.tag-flat-list {
+  flex: 1 1 0; min-height: 0;
+  max-height: calc(100vh - 56px - 100px);
+  overflow-y: auto;
+  padding: 4px 0 8px;
+}
 .flat-tag-row {
   display: flex; align-items: center; justify-content: space-between;
   width: 100%; padding: 4px 10px;
@@ -1539,6 +1579,111 @@ body.resizing-h * {
 .browse-stream-init {
   display: flex; align-items: center; justify-content: center;
   gap: 10px; padding: 48px 0; color: var(--text2); font-size: 13px;
+}
+
+/* ── Browse toolbar action buttons ───────────────────────── */
+.browse-action-btns {
+  display: flex; gap: 6px; margin-left: auto; flex-shrink: 0;
+}
+.browse-add-btn, .browse-upload-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 32px; padding: 0 14px;
+  border-radius: 8px; border: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+  white-space: nowrap;
+}
+.browse-add-btn {
+  background: var(--primary); color: #fff; border-color: var(--primary);
+}
+.browse-add-btn:hover { background: var(--primary-h); border-color: var(--primary-h); }
+.browse-upload-btn {
+  background: var(--bg3); color: var(--text);
+}
+.browse-upload-btn:hover { border-color: var(--primary); color: var(--primary); }
+.browse-delete-btn {
+  background: rgba(239,68,68,.12); color: var(--danger);
+  border-color: rgba(239,68,68,.35);
+}
+.browse-delete-btn:hover:not(:disabled) {
+  background: rgba(239,68,68,.22); border-color: var(--danger);
+}
+.browse-delete-btn:disabled { opacity: .55; cursor: default; }
+
+/* ── Add Note modal ──────────────────────────────────────── */
+.anote-modal { max-width: 700px; gap: 0; padding: 22px 26px; }
+.anote-body {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 18px 0; overflow-y: auto; max-height: 72vh;
+}
+.anote-lbl {
+  display: flex; flex-direction: column; gap: 5px;
+  font-size: 13px; font-weight: 600; color: var(--text2);
+}
+.anote-lbl select, .anote-lbl input {
+  margin-top: 2px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  padding: 7px 10px; transition: border-color .12s;
+}
+.anote-lbl select:focus, .anote-lbl input:focus {
+  outline: none; border-color: var(--primary);
+}
+.anote-select {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  padding: 7px 10px; transition: border-color .12s;
+}
+.anote-select:focus { outline: none; border-color: var(--primary); }
+/* Wrapper for each template field row */
+.anote-field-row { display: flex; flex-direction: column; gap: 4px; }
+/* Keep the rich editor body visible even when empty */
+.anote-editor-body { min-height: 120px; }
+
+/* ── CSV Upload modal ────────────────────────────────────── */
+.csv-modal { max-width: 760px; gap: 0; padding: 22px 26px; }
+.csv-top-bar {
+  display: flex; gap: 16px; padding: 18px 0 14px; flex-wrap: wrap;
+}
+.csv-top-field { flex: 1; min-width: 200px; }
+.csv-file-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 2px;
+}
+.csv-choose-btn { flex-shrink: 0; height: 34px; }
+.csv-file-name  { font-size: 12px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.csv-mapper-wrap { display: flex; flex-direction: column; gap: 6px; }
+.csv-mapper-header-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text2);
+  padding: 0 4px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.csv-mapper-list {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 36vh; overflow-y: auto; padding-right: 4px;
+}
+.csv-mapper-item {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  align-items: center;
+  padding: 6px 4px; border-radius: 6px;
+  border: 1px solid transparent;
+  transition: border-color .1s;
+}
+.csv-mapper-item:hover { border-color: var(--border); background: var(--bg3); }
+.csv-field-label { display: flex; flex-direction: column; }
+.csv-field-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.csv-field-note { font-size: 11px; color: var(--text2); }
+.csv-col-select {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 12px;
+  padding: 5px 8px; transition: border-color .12s;
+}
+.csv-col-select:focus { outline: none; border-color: var(--primary); }
+.csv-preview-count {
+  font-size: 12px; color: var(--text2);
+  padding: 8px 4px 0; border-top: 1px solid var(--border); margin-top: 6px;
 }
 
 /* ─── Question / answer card styles ─────────────────────── */
@@ -1959,7 +2104,7 @@ body.resizing-h * {
   color: var(--primary);
 }
 .ai-panel-body {
-  flex: 1; overflow-y: auto;
+  flex: 1; min-height: 0; overflow-y: auto;
   padding: 10px 10px 14px;
   display: flex; flex-direction: column; gap: 10px;
 }
@@ -2296,7 +2441,7 @@ body.resizing-h * {
 
 /* ─── Notes view ─────────────────────────────────────────── */
 .notes-side-body {
-  flex: 1; overflow-y: auto;
+  flex: 1; min-height: 0; overflow-y: auto;
   display: flex; flex-direction: column; gap: 6px;
   padding-bottom: 12px;
 }
@@ -2391,7 +2536,7 @@ body.resizing-h * {
 
 /* Col 2 — the section/page tree, between col1 (Notes/Recent) and col3 (editor). */
 .notes-tree-col {
-  flex-shrink: 0;
+  flex-shrink: 0; min-height: 0;
   border-right: 1px solid var(--border);
   background: var(--bg);
   display: flex; flex-direction: column;
@@ -2409,7 +2554,7 @@ body.resizing-h * {
   text-transform: none; letter-spacing: 0;
   font-weight: 600;
 }
-.notes-tree-body { flex: 1; overflow-y: auto; padding: 0 4px 8px; }
+.notes-tree-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 4px 8px; }
 
 /* Always-visible search input under the tab bar. */
 .notes-search-row {
@@ -2681,7 +2826,7 @@ body.resizing-h * {
 }
 .notes-page-hd { user-select: none; }
 .notes-editor-body {
-  flex: 1; overflow: auto;
+  flex: 1; min-height: 0; overflow: auto;
   padding: 12px 16px;
   display: flex; flex-direction: column;
 }
@@ -2903,7 +3048,7 @@ body.resizing-h * {
   margin-bottom: -1px;
 }
 .utils-body {
-  flex: 1; overflow: auto;
+  flex: 1; min-height: 0; overflow: auto;
   padding: 16px 24px;
   display: flex; flex-direction: column; gap: 14px;
 }
@@ -3002,7 +3147,7 @@ body.resizing-h * {
   overflow: hidden;
 }
 .todo3-actions-col {
-  flex-shrink: 0;
+  flex-shrink: 0; min-height: 0;
   display: flex; flex-direction: column;
   border-right: 1px solid var(--border);
   background: var(--bg);
@@ -3236,7 +3381,7 @@ body.resizing-h * {
 .todo3-wrap:has(.todo3-manage-bar) .todo3-actions { visibility: visible; }
 
 /* Detail pane */
-.todo3-detail-col { flex: 1; min-width: 0; overflow-y: auto; }
+.todo3-detail-col { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; }
 .todo3-detail { padding: 16px 22px; max-width: 880px; }
 .todo3-detail-hd {
   display: flex; align-items: center; gap: 10px;
@@ -3375,7 +3520,7 @@ body.resizing-h * {
   font-size: 12px;
 }
 .lessons-list-col {
-  flex-shrink: 0;
+  flex-shrink: 0; min-height: 0;
   min-width: 200px;
   display: flex; flex-direction: column;
   background: var(--bg);
@@ -3389,7 +3534,9 @@ body.resizing-h * {
   flex-shrink: 0;
 }
 .lessons-detail-col {
-  flex: 1; min-width: 0;
+  flex: 1 1 0; min-height: 0; min-width: 0;
+  /* budget: topbar(56) + utils-tabbar(45) + activity-subtabs(40) */
+  max-height: calc(100vh - 150px);
   overflow-y: auto;
 }
 .lesson-detail-wrap {
@@ -3466,7 +3613,10 @@ body.resizing-h * {
 .lessons-gen-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .lessons-list {
   list-style: none; margin: 0; padding: 0;
-  flex: 1; overflow-y: auto;
+  flex: 1 1 0; min-height: 0;
+  /* budget: topbar(56) + utils-tabbar(45) + activity-subtabs(40) + col-hd(42) */
+  max-height: calc(100vh - 195px);
+  overflow-y: auto;
 }
 .lessons-item { border-bottom: 1px solid var(--border); }
 .lessons-row-btn {
@@ -3512,8 +3662,16 @@ body.resizing-h * {
 .activity-3pane {
   display: flex; flex: 1; min-height: 0;
 }
+/* When activity-3pane / lessons-3pane are combined with browse-body-wrap they
+   are nested INSIDE utils-wrap (also calc(100vh-56px)), so browse-body-wrap's
+   explicit height is too tall for the slot. Override it to auto so flex
+   sizing takes over, exactly like todo3-wrap does with height:auto !important. */
+.activity-3pane.browse-body-wrap,
+.lessons-3pane.browse-body-wrap {
+  height: auto !important;
+}
 .activity-cal-col {
-  flex-shrink: 0;
+  flex-shrink: 0; min-height: 0;
   min-width: 0;
   display: flex; flex-direction: column;
   border-right: 1px solid var(--border);
@@ -3528,13 +3686,19 @@ body.resizing-h * {
   user-select: none;
 }
 .activity-day-body {
-  flex: 1; overflow-y: auto;
+  flex: 1 1 0; min-height: 0;
+  /* budget: topbar(56) + utils-tabbar(45) + activity-subtabs(40) + day-bar(48) */
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
   padding: 14px 18px;
   display: flex; flex-direction: column; gap: 12px;
 }
 .activity-side-list {
   list-style: none; margin: 0; padding: 0;
-  flex: 1; overflow-y: auto;
+  flex: 1 1 0; min-height: 0;
+  /* budget: topbar(56) + utils-tabbar(45) + activity-subtabs(40) + left-tab-bar(36) */
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
 }
 .activity-side-list li {
   padding: 8px 10px;

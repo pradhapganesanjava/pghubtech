@@ -366,7 +366,7 @@ export default function NoteDetailPanel({
           </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', maxHeight: 'calc(100vh - 56px - 50px)' }}>
           <NoteMetaRow note={note} />
 
           {frontFields.length > 0 && (
@@ -433,7 +433,7 @@ export default function NoteDetailPanel({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 4px 12px' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', maxHeight: 'calc(100vh - 56px - 50px)', padding: '0 4px 12px' }}>
         <div className="record-form" style={{ padding: '8px 8px 0' }}>
           {sortedFields.map(f => (
             <EditField

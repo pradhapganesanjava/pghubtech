@@ -1,0 +1,299 @@
+// Modal for manually adding a single new Anki note.
+// Front/Back (and html-typed) fields get the same Rich / HTML / Preview
+// tab editor that the Browse edit panel uses. Other fields get plain inputs.
+
+import { useEffect, useState } from 'react'
+import type { AnkiField, AnkiNote, AnkiTemplate } from '../adapters/ankiRepo'
+import { appendAnkiNote } from '../adapters/ankiRepo'
+import { sanitizeHtml } from '../lib/sanitize'
+import RichEditor from './RichEditor'
+import { useToast } from './Toast'
+
+type EditMode = 'rich' | 'html' | 'preview'
+
+// Mirrors the EditField logic from NoteDetailPanel — Rich/HTML/Preview tabs
+// for every field that is Front, Back, or explicitly typed as html.
+function FieldEditor({
+  field,
+  value,
+  onChange,
+  disabled,
+}: {
+  field:    AnkiField
+  value:    string
+  onChange: (v: string) => void
+  disabled: boolean
+}) {
+  const [mode, setMode] = useState<EditMode>('rich')
+  const isRich = field.type === 'html' || field.isFront || field.isBack
+
+  if (field.type === 'select') {
+    const opts = field.options ? field.options.split(',').map(o => o.trim()).filter(Boolean) : []
+    return (
+      <div className="anote-field-row">
+        <label className="anote-lbl">{field.label}</label>
+        <select
+          className="anote-select"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          disabled={disabled}
+        >
+          <option value="">—</option>
+          {opts.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      </div>
+    )
+  }
+
+  if (isRich) {
+    return (
+      <div className="anote-field-row rf-row-col rf-html-field">
+        <div className="rf-html-hd">
+          <label className="anote-lbl" style={{ marginBottom: 0 }}>{field.label}</label>
+          <div className="rf-html-tabs">
+            {(['rich', 'html', 'preview'] as EditMode[]).map(m => (
+              <button
+                key={m}
+                type="button"
+                className={`rf-html-tab${mode === m ? ' active' : ''}`}
+                onClick={() => setMode(m)}
+                disabled={disabled}
+              >
+                {m === 'rich' ? 'Rich' : m === 'html' ? 'HTML' : 'Preview'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="rf-html-body anote-editor-body">
+          {mode === 'rich' && (
+            <RichEditor value={value} onChange={onChange} />
+          )}
+          {mode === 'html' && (
+            <textarea
+              className="rf-textarea rf-html-editor"
+              value={value}
+              rows={6}
+              spellCheck={false}
+              onChange={e => onChange(e.target.value)}
+              disabled={disabled}
+            />
+          )}
+          {mode === 'preview' && (
+            <div
+              className="rf-html-preview section-html-body"
+              dangerouslySetInnerHTML={{
+                __html: value ? sanitizeHtml(value) : '<em style="opacity:.45">No content</em>',
+              }}
+            />
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="anote-field-row">
+      <label className="anote-lbl">{field.label}</label>
+      <input
+        className="rf-input"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+      />
+    </div>
+  )
+}
+
+// ── Main modal ────────────────────────────────────────────────────────────────
+
+interface Props {
+  open:          boolean
+  onClose:       () => void
+  templates:     Map<string, AnkiTemplate>
+  existingDecks: string[]
+  existingTags:  string[]
+  onNoteAdded:   (note: AnkiNote) => void
+}
+
+export default function AddNoteModal({ open, onClose, templates, existingDecks, existingTags, onNoteAdded }: Props) {
+  const { toast } = useToast()
+  const tplList = [...templates.values()]
+
+  const [tplId,     setTplId]     = useState<string>('')
+  const [deck,      setDeck]      = useState<string>('')
+  const [tags,      setTags]      = useState<string[]>([])
+  const [draftTag,  setDraftTag]  = useState<string>('')
+  const [fields,    setFields]    = useState<Record<string, string>>({})
+  const [saving,    setSaving]    = useState(false)
+  const [error,     setError]     = useState<string>('')
+
+  const selectedTemplate = templates.get(tplId)
+
+  useEffect(() => {
+    if (!open) return
+    if (tplList.length > 0 && !tplId) setTplId(tplList[0].id)
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset fields whenever template changes
+  useEffect(() => {
+    if (!selectedTemplate) return
+    const init: Record<string, string> = {}
+    selectedTemplate.fields.forEach(f => { init[f.key] = '' })
+    setFields(init)
+  }, [tplId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!open) { setError(''); setSaving(false); setFields({}); setDeck(''); setTags([]); setDraftTag('') }
+  }, [open])
+
+  function addTag(t: string) {
+    const clean = t.trim()
+    if (!clean || tags.includes(clean)) return
+    setTags(prev => [...prev, clean])
+    setDraftTag('')
+  }
+
+  function removeTag(t: string) {
+    setTags(prev => prev.filter(x => x !== t))
+  }
+
+  // Flush any unconfirmed draft tag at save time
+  function resolvedTags(): string[] {
+    const draft = draftTag.trim()
+    if (!draft || tags.includes(draft)) return tags
+    return [...tags, draft]
+  }
+
+  const tagSuggestions = existingTags.filter(
+    t => !tags.includes(t) && (!draftTag || t.toLowerCase().includes(draftTag.toLowerCase()))
+  ).slice(0, 10)
+
+  async function handleSave() {
+    if (!selectedTemplate) { setError('Pick a template.'); return }
+    if (!deck.trim())       { setError('Enter a deck name.'); return }
+    setSaving(true); setError('')
+    try {
+      const note: AnkiNote = {
+        noteId:     `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        deck:       deck.trim(),
+        ankiMod:    String(Date.now()),
+        templateId: selectedTemplate.id,
+        fields,
+        tags: resolvedTags(),
+      }
+      await appendAnkiNote(note, selectedTemplate)
+      toast('Note added', 'success')
+      onNoteAdded(note)
+      onClose()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!open) return null
+
+  const sortedFields = selectedTemplate
+    ? [...selectedTemplate.fields].sort((a, b) => a.order - b.order)
+    : []
+
+  return (
+    <div className="modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="modal-card anote-modal" onMouseDown={e => e.stopPropagation()}>
+        <div className="anki-gen-hd">
+          <span className="anki-gen-title">Add Note</span>
+          <button className="ai-icon-btn" onClick={onClose} title="Close">✕</button>
+        </div>
+
+        <div className="anote-body">
+          {/* Template */}
+          <label className="anote-lbl">
+            Template
+            <select value={tplId} onChange={e => setTplId(e.target.value)} disabled={saving}>
+              {tplList.length === 0
+                ? <option value="">No templates configured</option>
+                : tplList.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+            </select>
+          </label>
+
+          {/* Deck */}
+          <label className="anote-lbl">
+            Deck
+            <input
+              className="rf-input"
+              value={deck}
+              onChange={e => setDeck(e.target.value)}
+              list="anote-deck-list"
+              placeholder="e.g. Programming::JS"
+              disabled={saving}
+            />
+            <datalist id="anote-deck-list">
+              {existingDecks.map(d => <option key={d} value={d} />)}
+            </datalist>
+          </label>
+
+          {/* Template fields — rich editor for Front/Back/html, plain for others */}
+          {sortedFields.map(f => (
+            <FieldEditor
+              key={f.key}
+              field={f}
+              value={fields[f.key] ?? ''}
+              onChange={v => setFields(prev => ({ ...prev, [f.key]: v }))}
+              disabled={saving}
+            />
+          ))}
+
+          {/* Tags — chip input with live suggestions */}
+          <div className="anote-field-row">
+            <span className="anote-lbl">Tags</span>
+            <div className="doc-tag-input-wrap">
+              {tags.map(t => (
+                <span key={t} className="doc-tag-chip">
+                  {t}
+                  <button type="button" onClick={() => removeTag(t)} disabled={saving}>×</button>
+                </span>
+              ))}
+              <input
+                className="doc-tag-input"
+                value={draftTag}
+                onChange={e => setDraftTag(e.target.value)}
+                onBlur={() => addTag(draftTag)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(draftTag) }
+                  else if (e.key === 'Backspace' && !draftTag && tags.length) removeTag(tags[tags.length - 1])
+                }}
+                placeholder={tags.length ? '' : 'type to search or add…'}
+                disabled={saving}
+              />
+            </div>
+            {tagSuggestions.length > 0 && (
+              <div className="doc-tag-suggestions">
+                {tagSuggestions.map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="doc-tag-suggestion"
+                    onMouseDown={e => { e.preventDefault(); addTag(s) }}
+                    disabled={saving}
+                  >+ {s}</button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {error && <div className="login-error">{error}</div>}
+        </div>
+
+        <div className="anki-gen-actions">
+          <button className="rf-btn-cancel" onClick={onClose} disabled={saving}>Cancel</button>
+          <button
+            className="mgmt-save-btn"
+            onClick={handleSave}
+            disabled={saving || !tplId}
+          >{saving ? 'Saving…' : 'Add Note'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}

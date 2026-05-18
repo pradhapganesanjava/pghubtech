@@ -286,7 +286,7 @@ export default function TagDeckTree({
 
       {/* Tree view */}
       {viewMode === 'tree' && (
-        <div className="tag-tree" style={{ padding: '4px 8px 8px', overflowY: 'auto', flex: 1 }}>
+        <div className="tag-tree" style={{ padding: '4px 8px 8px' }}>
           {Object.entries(trie.children)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([name, node]) => (
@@ -308,7 +308,7 @@ export default function TagDeckTree({
 
       {/* Flat view */}
       {viewMode === 'flat' && (
-        <div className="tag-flat-list" style={{ overflowY: 'auto', flex: 1 }}>
+        <div className="tag-flat-list">
           {filteredFlat.length === 0 && (
             <div className="col-empty">No {tab} found</div>
           )}
