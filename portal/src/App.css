@@ -1814,12 +1814,27 @@ body.resizing-h * {
      toolbar is the only reveal trigger. */
   .browse-col-tags.collapsed,
   .col-tags.collapsed { display: none; }
-  /* When open: a normal block with internal scroll if needed. */
+  /* When open: fixed-height accordion that scrolls internally.
+     overscroll-behavior:contain stops the scroll from leaking to the page
+     body when the list reaches its top/bottom boundary (iOS + Android). */
   .browse-col-tags:not(.collapsed),
   .col-tags:not(.collapsed) {
     border-bottom: 1px solid var(--border);
     max-height: 50vh;
     overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* On mobile the outer panel (max-height:50vh; overflow-y:auto) is the scroll
+     container. The inner trees must NOT use flex:1/min-height:0 — that collapses
+     them to 0 when the parent has no defined height in a column stack.
+     Reset to natural content height; the outer panel clips and scrolls. */
+  .tag-tree,
+  .tag-flat-list,
+  .col-tags-tree {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow-y: visible;
   }
   /* Hide the tags ↔ main drag-divider — vertical stack doesn't need it. */
   .browse-body-wrap > .qa-divider,
