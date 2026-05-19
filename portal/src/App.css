@@ -1857,12 +1857,38 @@ body.resizing-h * {
   /* Notes — Col 2 (the section/page tree) gets an inline width: <pct>% from
      the JS divider. In a vertical stack that leaves a "split" with empty
      space next to it. Force full-width so it stacks cleanly under Col 1
-     (notes list / recent) and above Col 3 (editor). */
+     (notes list / recent) and above Col 3 (editor).
+     overflow-y:auto makes the col scroll internally (not the page).
+     overscroll-behavior:contain stops the scroll leaking to the page body. */
   .notes-tree-col {
     width: 100% !important;
     border-right: 0;
     border-bottom: 1px solid var(--border);
     max-height: 55vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Col 1 — notes list: same containment as the Tags panel fix. */
+  .browse-col-tags:not(.collapsed) {
+    overscroll-behavior: contain;
+  }
+  /* Inner flex scroll bodies collapse to 0 in an unconstrained column
+     container (flex:1 has no free space to grow into).
+     Reset them to natural content height so the outer max-height panel
+     is the scroll container, not the inner element. */
+  .notes-side-body,
+  .notes-tree-body {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+  /* Col 3 — editor. When a page is open cols 1+2 are hidden and the
+     editor owns the full remaining height. Cap the scrollable body so
+     the flex chain resolves even if the parent height is ambiguous.
+     Budget: topbar(56) + col-hd(45) + bottom-nav padding(90) = 191. */
+  .notes-editor-body {
+    max-height: calc(100vh - 200px);
   }
   /* Single-pane on page open: when the editor (.notes-editor-wrap) is
      rendered inside .browse-main, the tree + side list + dividers hide so
