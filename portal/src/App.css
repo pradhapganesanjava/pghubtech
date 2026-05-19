@@ -4014,4 +4014,27 @@ body.resizing-h * {
   margin-top: 6px; font-size: 11px; color: var(--text2);
 }
 
+/* ─── Mobile override fix for Notes scroll bodies ────────────────────────────
+   The desktop Notes rules (.notes-side-body, .notes-tree-body,
+   .notes-editor-body) are defined AFTER the main @media (max-width:768px)
+   block. Same specificity + later source order means the desktop max-height
+   values beat the mobile "max-height:none" overrides from that block.
+   This second media query sits after all desktop rules so it wins the cascade
+   and correctly resets those properties for mobile. ──────────────────────── */
+@media (max-width: 768px) {
+  /* Cols 1 & 2: let the outer panel (max-height:50/55vh; overflow-y:auto)
+     be the scroll container — inner body must take natural content height. */
+  .notes-side-body,
+  .notes-tree-body {
+    flex: 0 0 auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  /* Col 3 editor: use the mobile budget that includes bottom-nav clearance. */
+  .notes-editor-body {
+    max-height: calc(100vh - 200px) !important;
+  }
+}
+
 
