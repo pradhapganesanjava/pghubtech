@@ -2482,7 +2482,9 @@ body.resizing-h * {
 
 /* ─── Notes view ─────────────────────────────────────────── */
 .notes-side-body {
-  flex: 1; min-height: 0; overflow-y: auto;
+  flex: 1 1 0; min-height: 0; overflow-y: auto;
+  /* Hard cap: topbar(56) + tab-bar(36) + search-row(49) */
+  max-height: calc(100vh - 145px);
   display: flex; flex-direction: column; gap: 6px;
   padding-bottom: 12px;
 }
@@ -2595,7 +2597,11 @@ body.resizing-h * {
   text-transform: none; letter-spacing: 0;
   font-weight: 600;
 }
-.notes-tree-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 4px 8px; }
+.notes-tree-body {
+  flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 0 4px 8px;
+  /* Hard cap: topbar(56) + tree-hd(42) + tree-search(46) + content-search(46) */
+  max-height: calc(100vh - 195px);
+}
 
 /* Always-visible search input under the tab bar. */
 .notes-search-row {
@@ -2867,7 +2873,9 @@ body.resizing-h * {
 }
 .notes-page-hd { user-select: none; }
 .notes-editor-body {
-  flex: 1; min-height: 0; overflow: auto;
+  flex: 1 1 0; min-height: 0; overflow: auto;
+  /* Hard cap: topbar(56) + page col-hd(50) */
+  max-height: calc(100vh - 115px);
   padding: 12px 16px;
   display: flex; flex-direction: column;
 }
