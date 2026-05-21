@@ -589,7 +589,7 @@ export default function NotesView() {
   const col2Width = Math.max(0, col2EndRatio - col1Ratio)
 
   return (
-    <div className="browse-body-wrap" ref={bodyWrapRef}>
+    <div className="browse-body-wrap notes-view-wrap" ref={bodyWrapRef}>
       {/* ── Col 1: Notes / Recent ─────────────────────────────────────── */}
       {!pageExpanded && (
       <div

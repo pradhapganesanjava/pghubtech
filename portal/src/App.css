@@ -1855,27 +1855,30 @@ body.resizing-h * {
   .activity-3pane > .browse-main { width: 100%; }
 
   /* Notes — Col 2 (the section/page tree) gets an inline width: <pct>% from
-     the JS divider. In a vertical stack that leaves a "split" with empty
-     space next to it. Force full-width so it stacks cleanly under Col 1
-     (notes list / recent) and above Col 3 (editor).
-     overflow-y:auto makes the col scroll internally (not the page).
-     overscroll-behavior:contain stops the scroll leaking to the page body. */
+     the JS divider. In a vertical stack that becomes a half-empty split.
+     Force full-width and make it flex:1 1 0 so it fills the remaining
+     container height after Col 1 — exactly the same way browse-col-cards
+     fills the space after the Tags accordion in Browse. This keeps the total
+     (col1 + col2) ≤ container height so overflow:hidden never blocks touch.
+     The col itself is the scroll container for its content.  */
   .notes-tree-col {
     width: 100% !important;
+    flex: 1 1 0 !important;
+    min-height: 0;
     border-right: 0;
     border-bottom: 1px solid var(--border);
-    max-height: 55vh;
+    max-height: none;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  /* Col 1 — notes list: same containment as the Tags panel fix. */
+  /* Col 1 — notes list: same accordion pattern as Browse Tags.
+     browse-col-tags:not(.collapsed) already sets max-height:50vh + overflow-y:auto.
+     overscroll-behavior:contain stops scroll leaking to the page body. */
   .browse-col-tags:not(.collapsed) {
     overscroll-behavior: contain;
   }
-  /* Inner flex scroll bodies collapse to 0 in an unconstrained column
-     container (flex:1 has no free space to grow into).
-     Reset them to natural content height so the outer max-height panel
-     is the scroll container, not the inner element. */
+  /* Inner flex bodies: let the outer column be the scroll container.
+     Reset to natural content height so the col's overflow-y:auto clips them. */
   .notes-side-body,
   .notes-tree-body {
     flex: 0 0 auto;
@@ -4022,8 +4025,17 @@ body.resizing-h * {
    This second media query sits after all desktop rules so it wins the cascade
    and correctly resets those properties for mobile. ──────────────────────── */
 @media (max-width: 768px) {
-  /* Cols 1 & 2: let the outer panel (max-height:50/55vh; overflow-y:auto)
-     be the scroll container — inner body must take natural content height. */
+  /* Col 2: fill remaining container height (Browse→cards pattern).
+     Desktop overflow:hidden at line 2581 would otherwise override the
+     mobile overflow-y:auto set earlier in the file — !important wins. */
+  .notes-tree-col {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  /* Inner bodies: natural height so the outer column clips and scrolls them. */
   .notes-side-body,
   .notes-tree-body {
     flex: 0 0 auto !important;
