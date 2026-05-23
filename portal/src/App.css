@@ -1639,6 +1639,22 @@ body.resizing-h * {
 .anote-field-row { display: flex; flex-direction: column; gap: 4px; }
 /* Keep the rich editor body visible even when empty */
 .anote-editor-body { min-height: 120px; }
+/* AI generate block — sits above the field editors */
+.anote-ai-box {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px; border: 1px dashed var(--border); border-radius: 10px;
+  background: var(--bg3);
+}
+.anote-ai-hd { display: flex; flex-direction: column; gap: 2px; }
+.anote-ai-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.anote-ai-sub   { font-size: 12px; color: var(--text2); }
+.anote-ai-input { width: 100%; resize: vertical; }
+.anote-ai-actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.anote-ai-err {
+  font-size: 12px; color: var(--danger, #d04a3b); line-height: 1.4;
+}
 
 /* ── CSV Upload modal ────────────────────────────────────── */
 .csv-modal { max-width: 760px; gap: 0; padding: 22px 26px; }

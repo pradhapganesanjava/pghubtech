@@ -5,6 +5,8 @@
 import { useEffect, useState } from 'react'
 import type { AnkiField, AnkiNote, AnkiTemplate } from '../adapters/ankiRepo'
 import { appendAnkiNote } from '../adapters/ankiRepo'
+import { generateAnkiNoteForTemplate } from '../lib/ankiNoteGen'
+import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
 import RichEditor from './RichEditor'
 import { useToast } from './Toast'
@@ -126,6 +128,9 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
   const [fields,    setFields]    = useState<Record<string, string>>({})
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState<string>('')
+  const [aiPrompt,  setAiPrompt]  = useState<string>('')
+  const [aiBusy,    setAiBusy]    = useState(false)
+  const [aiError,   setAiError]   = useState<string>('')
 
   const selectedTemplate = templates.get(tplId)
 
@@ -143,8 +148,43 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
   }, [tplId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!open) { setError(''); setSaving(false); setFields({}); setDeck(''); setTags([]); setDraftTag('') }
+    if (!open) {
+      setError(''); setSaving(false); setFields({}); setDeck(''); setTags([]); setDraftTag('')
+      setAiPrompt(''); setAiBusy(false); setAiError('')
+    }
   }, [open])
+
+  async function handleAiGenerate() {
+    if (aiBusy) return
+    if (!selectedTemplate) { setAiError('Pick a template first.'); return }
+    const prompt = aiPrompt.trim()
+    if (!prompt) { setAiError('Type what you want the card to cover.'); return }
+    if (!LLM.isConfigured()) {
+      setAiError('Azure OpenAI is not configured — open Settings to add the endpoint and API key.')
+      return
+    }
+    setAiBusy(true); setAiError('')
+    try {
+      const draft = await generateAnkiNoteForTemplate(selectedTemplate, prompt)
+      if (!draft) { setAiError("AI didn't return a usable card. Try a more specific prompt."); return }
+      // Merge generated fields over the existing state, keeping the template's
+      // full key set so optional fields stay defined (just blank).
+      setFields(prev => ({ ...prev, ...draft.fields }))
+      // Merge tags, dedup-preserving existing order.
+      if (draft.tags.length > 0) {
+        setTags(prev => {
+          const seen = new Set(prev)
+          const merged = [...prev]
+          for (const t of draft.tags) if (t && !seen.has(t)) { seen.add(t); merged.push(t) }
+          return merged
+        })
+      }
+    } catch (e) {
+      setAiError((e as Error).message)
+    } finally {
+      setAiBusy(false)
+    }
+  }
 
   function addTag(t: string) {
     const clean = t.trim()
@@ -232,6 +272,35 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
               {existingDecks.map(d => <option key={d} value={d} />)}
             </datalist>
           </label>
+
+          {/* AI generate — fills Front/Back/extras for the selected template */}
+          {selectedTemplate && (
+            <div className="anote-ai-box">
+              <div className="anote-ai-hd">
+                <span className="anote-ai-title">✨ Generate with AI</span>
+                <span className="anote-ai-sub">
+                  Describe the topic — AI fills the fields below for <em>{selectedTemplate.displayName}</em>.
+                </span>
+              </div>
+              <textarea
+                className="rf-textarea anote-ai-input"
+                rows={3}
+                placeholder="e.g. CSS Flexbox justify-content vs align-items"
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                disabled={aiBusy || saving}
+              />
+              <div className="anote-ai-actions">
+                <button
+                  type="button"
+                  className="rf-btn-save"
+                  onClick={handleAiGenerate}
+                  disabled={aiBusy || saving || !aiPrompt.trim()}
+                >{aiBusy ? 'Generating…' : '✨ Generate card'}</button>
+                {aiError && <span className="anote-ai-err">{aiError}</span>}
+              </div>
+            </div>
+          )}
 
           {/* Template fields — rich editor for Front/Back/html, plain for others */}
           {sortedFields.map(f => (
