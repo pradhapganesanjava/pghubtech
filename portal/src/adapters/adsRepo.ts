@@ -220,6 +220,25 @@ export async function loadProblems(force = false): Promise<LCProblem[]> {
   return _cache
 }
 
+const problemToRow = (p: LCProblem): string[] => ([
+  p.slug, p.frontendId, p.title, p.difficulty,
+  p.topics.join('; '), p.companies.join('; '), p.companiesRecent.join('; '),
+  p.tags.join('; '), p.leetcodeUrl, p.descriptionHtml,
+  p.notesDriveId, p.hasNotes ? '1' : '',
+])
+
+// Append a brand-new problem row to LCProblems and patch the cache. Caller
+// must ensure slug/frontendId are unique (see AdsHubView's validation).
+export async function appendProblem(p: LCProblem): Promise<void> {
+  await ensureTab()
+  const res = await fetch(
+    `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A:L')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    { method: 'POST', headers: auth(), body: JSON.stringify({ values: [problemToRow(p)] }) },
+  )
+  if (!res.ok) throw new Error(`Failed to add problem: ${res.status}`)
+  if (_cache) _cache.push(p)
+}
+
 // ─── MyList: user-defined problem collections ────────────────────────────────
 // Stored in a sibling tab "LCLists", one row per (list, problem) membership.
 // A list exists as long as it has ≥1 row.

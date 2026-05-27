@@ -6,7 +6,7 @@ import {
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
 import {
-  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags,
+  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
   loadLists, getCachedLists, addToList, removeFromList, renameList,
 } from '../adapters/adsRepo'
 import type { LCProblem, LCList } from '../adapters/adsRepo'
@@ -154,6 +154,12 @@ export default function AdsHubView() {
   const [selectedList, setSelectedList]    = useState<string | null>(null)
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage'>('browse')
   const [lineageFocus, setLineageFocus]    = useState<number | null>(null)
+  // Add-a-problem modal.
+  const EMPTY_ADD = { frontendId: '', title: '', slug: '', difficulty: 'Medium', topics: '', companies: '', tags: '', leetcodeUrl: '', description: '' }
+  const [addOpen, setAddOpen] = useState(false)
+  const [addForm, setAddForm] = useState({ ...EMPTY_ADD })
+  const [addErr, setAddErr]   = useState('')
+  const [addBusy, setAddBusy] = useState(false)
   // Tag editing on the selected problem.
   const [editingTags, setEditingTags] = useState(false)
   const [tagDraft, setTagDraft]       = useState<string[]>([])
@@ -351,6 +357,41 @@ export default function AdsHubView() {
   }
   function clearAllFilters() {
     setTags([]); setCompanies([]); setSelectedList(null)
+  }
+
+  // ── Add a new problem ───────────────────────────────────────────────────
+  const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  function openAddProblem() { setAddForm({ ...EMPTY_ADD }); setAddErr(''); setAddOpen(true) }
+  function setAdd(k: keyof typeof EMPTY_ADD, v: string) { setAddForm(f => ({ ...f, [k]: v })) }
+  async function saveNewProblem() {
+    const id = addForm.frontendId.trim()
+    const title = addForm.title.trim()
+    const slug = addForm.slug.trim() || slugify(title)
+    if (!id)    { setAddErr('Problem id (#) is required'); return }
+    if (!title) { setAddErr('Title is required'); return }
+    if (!slug)  { setAddErr('Enter a slug (could not derive one from the title)'); return }
+    if (problems.some(p => p.frontendId === id))   { setAddErr(`Id #${id} is already taken`); return }
+    if (problems.some(p => p.slug === slug))        { setAddErr(`Slug "${slug}" already exists`); return }
+    const list = (s: string) => s.split(/\s*[;,]\s*/).map(x => x.trim()).filter(Boolean)
+    const desc = addForm.description.trim()
+    const p: LCProblem = {
+      slug, frontendId: id, title, difficulty: addForm.difficulty,
+      topics: list(addForm.topics), companies: list(addForm.companies), companiesRecent: [],
+      tags: list(addForm.tags),
+      leetcodeUrl: addForm.leetcodeUrl.trim() || `https://leetcode.com/problems/${slug}/`,
+      descriptionHtml: desc && !/</.test(desc) ? `<p>${desc}</p>` : desc,
+      notesDriveId: '', hasNotes: false,
+    }
+    setAddBusy(true); setAddErr('')
+    try {
+      await appendProblem(p)
+      setProblems(prev => [...prev, p])
+      setSelected(p)
+      setAddOpen(false)
+      toast(`Added #${id} ${title}`, 'success')
+    } catch (e) {
+      setAddErr((e as Error).message)
+    } finally { setAddBusy(false) }
   }
 
   // ── Tag editing on the selected problem ─────────────────────────────────
@@ -702,6 +743,54 @@ export default function AdsHubView() {
 
   return (
     <div className="browse-body-wrap" ref={bodyWrapRef}>
+      {/* ── Add-a-problem modal ────────────────────────────────────────── */}
+      {addOpen && (
+        <div className="adshub-modal-backdrop" onClick={() => setAddOpen(false)}>
+          <div className="adshub-manager" onClick={e => e.stopPropagation()}>
+            <div className="adshub-manager-hd">
+              <span>Add a problem</span>
+              <button className="detail-close-btn" onClick={() => setAddOpen(false)}>✕</button>
+            </div>
+            <div className="adshub-add-form">
+              <label>Id (#) *
+                <input className="rf-input" value={addForm.frontendId} onChange={e => setAdd('frontendId', e.target.value)} placeholder="e.g. 3001" disabled={addBusy} autoFocus />
+              </label>
+              <label>Difficulty
+                <select className="rf-input" value={addForm.difficulty} onChange={e => setAdd('difficulty', e.target.value)} disabled={addBusy}>
+                  {['Easy', 'Medium', 'Hard'].map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </label>
+              <label className="adshub-add-full">Title *
+                <input className="rf-input" value={addForm.title} onChange={e => setAdd('title', e.target.value)} placeholder="Problem title" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">Slug
+                <input className="rf-input" value={addForm.slug} onChange={e => setAdd('slug', e.target.value)} placeholder={slugify(addForm.title) || 'auto from title'} disabled={addBusy} />
+              </label>
+              <label>Topics
+                <input className="rf-input" value={addForm.topics} onChange={e => setAdd('topics', e.target.value)} placeholder="Array; Hash Table" disabled={addBusy} />
+              </label>
+              <label>Companies
+                <input className="rf-input" value={addForm.companies} onChange={e => setAdd('companies', e.target.value)} placeholder="Amazon; Google" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">Tags (:: lineage)
+                <input className="rf-input" value={addForm.tags} onChange={e => setAdd('tags', e.target.value)} placeholder="_ds::array::subset; _prob::sum::pair" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">LeetCode URL
+                <input className="rf-input" value={addForm.leetcodeUrl} onChange={e => setAdd('leetcodeUrl', e.target.value)} placeholder="auto: https://leetcode.com/problems/<slug>/" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">Description
+                <textarea className="rf-textarea" rows={5} value={addForm.description} onChange={e => setAdd('description', e.target.value)} placeholder="Plain text or HTML…" disabled={addBusy} />
+              </label>
+              {addErr && <div className="login-error adshub-add-full">{addErr}</div>}
+              <div className="rf-actions adshub-add-full">
+                <button className="rf-btn-cancel" onClick={() => setAddOpen(false)} disabled={addBusy}>Cancel</button>
+                <button className="rf-btn-save" onClick={saveNewProblem} disabled={addBusy}>{addBusy ? 'Saving…' : 'Add problem'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── List Manager modal ─────────────────────────────────────────── */}
       {managerOpen && (
         <div className="adshub-modal-backdrop" onClick={() => setManagerOpen(false)}>
@@ -857,6 +946,7 @@ export default function AdsHubView() {
             disabled={refreshing || loading}
             title="Reload problems from the sheet"
           >{refreshing ? '…' : '↻'}</button>
+          <button className="rf-btn-save" onClick={openAddProblem} title="Add a new problem">＋ Add</button>
           <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
             {filtered.length.toLocaleString()} / {problems.length.toLocaleString()}
           </span>
