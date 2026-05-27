@@ -4188,20 +4188,14 @@ body.resizing-h * {
 
 .code-editor {
   flex: 1 1 auto; min-height: 200px; display: flex; overflow: hidden;
-  border: 1px solid var(--border); border-radius: 0 6px 6px 6px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 0 6px 6px 6px;
 }
-.code-gutter {
-  flex: 0 0 auto; overflow: hidden; text-align: right; user-select: none;
-  padding: 10px 6px 10px 10px; color: var(--text2); opacity: .5;
-  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6;
-  background: var(--bg3);
-}
-.code-textarea {
-  flex: 1 1 auto; min-width: 0; resize: none; border: 0; outline: none;
-  padding: 10px 12px; background: transparent; color: var(--text);
-  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6;
-  white-space: pre; overflow: auto; tab-size: 4;
-}
+/* CodeMirror fills the editor area */
+.code-cm { padding: 0; background: transparent; }
+.code-cm > * { flex: 1 1 auto; min-width: 0; min-height: 0; }
+.code-cm .cm-editor { height: 100%; font-size: 12.5px; }
+.code-cm .cm-scroller { font-family: 'Fira Code', 'Cascadia Code', monospace; }
+.code-cm .cm-editor.cm-focused { outline: none; }
 .code-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0 2px; position: relative; }
 .code-btn {
   padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 600;
