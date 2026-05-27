@@ -3,3 +3,5 @@ credentials.json
 node_modules/
 package-lock.json
 *-preview.json
+.card-draft.json
+.ads-manifest.json

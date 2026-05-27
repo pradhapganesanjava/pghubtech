@@ -426,6 +426,7 @@ export default function BrowseView() {
                     template={tmpl}
                     rec={rec}
                     lastSeen={lastSeen}
+                    existingTags={existingTags}
                     expanded={viewerExpanded}
                     onToggleExpand={() => setViewerExpanded(e => !e)}
                     onClose={() => setSelectedNote(null)}
