@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react'
-import type { DocRecord } from '../adapters/docsRepo'
+
+// Any item that carries a list of (optionally ::-delimited) tag paths. Both
+// DocRecord and adsRepo's LCProblem satisfy this, so the tag tree is shared
+// between DocsView and AdsHubView.
+interface Taggable { tags: string[] }
 
 interface Props {
-  docs:         DocRecord[]
+  docs:         Taggable[]
   selectedTags: string[]
   onToggleTag:  (tag: string) => void
   onClearAll:   () => void
@@ -12,13 +16,15 @@ interface Props {
 
 // ── Trie ─────────────────────────────────────────────────────────────────────
 
-interface TrieNode {
+// Exported so other ::-tag panels (e.g. AdsHubSidebar) can reuse the same
+// hierarchical tree without duplicating the trie logic.
+export interface TrieNode {
   children: Record<string, TrieNode>
   count:    number
   fullPath: string
 }
 
-function buildTrie(tagLists: string[][]): TrieNode {
+export function buildTrie(tagLists: string[][]): TrieNode {
   const root: TrieNode = { children: {}, count: 0, fullPath: '' }
   for (const tags of tagLists) {
     const seen = new Set<string>()
@@ -54,7 +60,7 @@ interface TreeNodeProps {
   searchLower: string
 }
 
-function TreeNode({ name, node, selected, onToggle, searchLower }: TreeNodeProps) {
+export function TreeNode({ name, node, selected, onToggle, searchLower }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false)
   const hasChildren = Object.keys(node.children).length > 0
   const isActive    = selected.includes(node.fullPath)

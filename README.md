@@ -42,6 +42,7 @@ A personal **Anki-style flashcard study app** that uses **Google Sheets as its d
 |-----------|----------------------------------------------------------------|
 | `portal/` | React 19 + TypeScript + Vite SPA (the actual app)              |
 | `scripts/`| Node.js scripts to seed the Sheet from a local Anki install    |
+| `apps-script/` | Google Apps Script web app: a `curl`-callable endpoint that files a new card from free text (AI picks deck/template/tags). See `apps-script/README.md` |
 | `docs/`   | Static HTML / Markdown reference docs                          |
 | `.github/workflows/deploy.yml` | Builds `portal/` and deploys to GitHub Pages |
 
@@ -199,6 +200,34 @@ The app creates these tabs lazily as needed:
 - **Offline-leaning SRS** — writes hit localStorage first, Sheets in background, merge-on-load with last-write-wins
 - **Drive image hosting** — scripts mirror Anki media to a Drive folder so card HTML can render images
 - **CI/CD** — push to `main` → GitHub Action builds portal with secrets and deploys to Pages
+
+---
+
+## File-a-card API (Apps Script)
+
+Because the portal is a static SPA (no backend) that writes to Sheets using the
+browser's Google login, there's no server to host an HTTP endpoint and no way
+for an external caller to reuse that login. To add a `curl`-callable "file a
+card from text" API, `apps-script/` contains a **Google Apps Script web app**
+bound to the same Sheet:
+
+- **POST free text** → it reads your templates + decks + sample tags, asks Azure
+  OpenAI to pick the **best existing deck + template** and generate the card +
+  tags, then appends the row in the **same format as Browse → Add Note**
+  (`ankiRepo.appendAnkiNote`).
+- Runs **as the sheet owner** (no service account); deployed **Execute as me /
+  access: only myself**, so callers pass an **OAuth bearer token** for the owner
+  account.
+- Config (Sheet ID, Azure endpoint/key) lives in **Script Properties**.
+
+```bash
+TOKEN=$(gcloud auth print-access-token)   # same Google account that owns the script
+curl -sS --location-trusted -X POST "$WEB_APP_URL" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"text":"Explain TCP vs UDP for a backend interview."}'
+```
+
+Full setup checklist, API reference, and troubleshooting: **`apps-script/README.md`**.
 
 ---
 

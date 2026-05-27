@@ -1213,6 +1213,16 @@ body.resizing-h * {
 
 /* Deck + tag badges in detail meta row */
 .card-meta-row { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 0 4px; }
+.card-meta-row .deck-badge {
+  display: inline-block; padding: 2px 8px;
+  background: rgba(var(--primary-rgb), .15); color: var(--primary);
+  border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.card-meta-row .tag {
+  display: inline-block; padding: 2px 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; font-size: 11px; color: var(--text2);
+}
 
 /* Per-field wrapper in view mode */
 .detail-field-wrap { margin-bottom: 6px; }
@@ -4064,5 +4074,317 @@ body.resizing-h * {
     max-height: calc(100vh - 200px) !important;
   }
 }
+
+/* ─── AdsHub (LeetCode archive) ──────────────────────────── */
+/* Difficulty palette — fixed hues so they read the same in every theme. */
+.lc-easy   { --lc: #16b88a; }
+.lc-medium { --lc: #f0a020; }
+.lc-hard   { --lc: #f0506e; }
+
+/* Difficulty filter pills (also reused for the notes toggle) */
+.adshub-diff-pills { display: flex; gap: 4px; }
+.adshub-diff-pill {
+  padding: 4px 10px; border-radius: 16px; font-size: 12px; font-weight: 600;
+  background: var(--bg3); color: var(--text2);
+  border: 1px solid var(--border); cursor: pointer; transition: all .12s;
+}
+.adshub-diff-pill:hover { color: var(--text); }
+.adshub-diff-pill.active {
+  background: rgba(var(--primary-rgb), .15); color: var(--primary);
+  border-color: var(--primary);
+}
+.adshub-diff-pill.active.lc-easy,
+.adshub-diff-pill.active.lc-medium,
+.adshub-diff-pill.active.lc-hard {
+  color: var(--lc); border-color: var(--lc); background: color-mix(in srgb, var(--lc) 14%, transparent);
+}
+
+/* List item difficulty dot + problem number + notes badge */
+.adshub-diff-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--lc, var(--text2)); margin-right: 6px; vertical-align: middle;
+}
+.adshub-pid { color: var(--text2); font-weight: 500; margin-right: 6px; }
+.adshub-note-badge { color: var(--primary); margin-left: 6px; font-size: 11px; }
+.adshub-more-note {
+  padding: 10px 12px; font-size: 11px; color: var(--text2);
+  font-style: italic; text-align: center;
+}
+
+/* Detail pane */
+.adshub-detail-body {
+  flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 16px;
+  display: flex; flex-direction: column;
+  /* Same definite-height cap the list column uses (.browse-col-cards): the
+     flex chain doesn't resolve to a pixel height on its own, so without this
+     the detail pane sizes to its content and leaves empty space below /
+     mismatches the list height. */
+  max-height: calc(100vh - 56px - 52px);  /* viewport - topbar - toolbar */
+}
+.adshub-meta-row {
+  display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  padding: 12px 0 8px;
+}
+.adshub-meta-row .tag,
+.adshub-company-chips .tag,
+.doc-list-tags .tag {
+  display: inline-block; padding: 2px 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; font-size: 11px; color: var(--text2);
+}
+.adshub-diff-badge {
+  display: inline-block; padding: 2px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  color: var(--lc); border: 1px solid var(--lc);
+  background: color-mix(in srgb, var(--lc) 14%, transparent);
+}
+.adshub-notes-toggle { padding: 4px 0 10px; }
+.adshub-desc { padding-top: 4px; }
+.adshub-desc strong, .adshub-desc b { color: var(--text); }
+.adshub-companies { margin-top: 14px; }
+.adshub-companies-summary {
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text2); padding: 4px 0;
+}
+.adshub-companies-summary::-webkit-details-marker { display: none; }
+.adshub-companies-summary::before {
+  content: '▸'; font-size: 9px; transition: transform .15s; display: inline-block;
+}
+.adshub-companies[open] .adshub-companies-summary::before { transform: rotate(90deg); }
+.adshub-company-chips { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 6px; }
+.adshub-company-chips .adshub-company-recent {
+  color: var(--primary); border-color: var(--primary);
+  background: rgba(var(--primary-rgb), .12);
+}
+.adshub-note-iframe {
+  width: 100%; flex: 1 1 auto; min-height: 320px; border: 1px solid var(--border);
+  border-radius: 6px; background: #fff; margin-top: 4px;
+}
+/* When the note editor is open, let it fill the pane too (no empty gap). */
+/* Description | Code split inside the detail body (under the header) */
+.adshub-desc-code-split { display: flex; flex: 1 1 auto; min-height: 0; margin-top: 4px; }
+.adshub-desc-col { flex: 1 1 0; min-width: 0; overflow-y: auto; padding-right: 4px; }
+.adshub-code-col { flex: 0 0 42%; min-width: 0; display: flex; padding-left: 4px; }
+
+/* Code panel (Python3 / Java starter code editor) */
+.code-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
+.code-panel-hd { display: flex; align-items: center; gap: 10px; padding: 2px 0 8px; }
+.code-panel-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text2);
+}
+.code-lang-tabs { display: flex; gap: 4px; }
+.code-lang-tab {
+  padding: 3px 10px; border-radius: 6px 6px 0 0; font-size: 12px; font-weight: 600;
+  background: var(--bg3); color: var(--text2); border: 1px solid var(--border);
+  border-bottom: none; cursor: pointer;
+}
+.code-lang-tab.active { background: var(--bg2); color: var(--primary); }
+.code-hd-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+/* Notes overlay fills the code-editor space */
+.code-panel > .adshub-note-iframe,
+.code-panel > .adshub-note-editor { flex: 1 1 auto; min-height: 0; }
+
+.code-editor {
+  flex: 1 1 auto; min-height: 200px; display: flex; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 0 6px 6px 6px; background: var(--bg2);
+}
+.code-gutter {
+  flex: 0 0 auto; overflow: hidden; text-align: right; user-select: none;
+  padding: 10px 6px 10px 10px; color: var(--text2); opacity: .5;
+  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6;
+  background: var(--bg3);
+}
+.code-textarea {
+  flex: 1 1 auto; min-width: 0; resize: none; border: 0; outline: none;
+  padding: 10px 12px; background: transparent; color: var(--text);
+  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6;
+  white-space: pre; overflow: auto; tab-size: 4;
+}
+.code-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0 2px; position: relative; }
+.code-btn {
+  padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border); cursor: pointer;
+}
+.code-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.code-btn:disabled { opacity: .45; cursor: not-allowed; }
+.code-btn.active { color: var(--primary); border-color: var(--primary); }
+.code-btn-save { background: rgba(var(--primary-rgb), .15); color: var(--primary); border-color: var(--primary); }
+.code-saved-at { font-size: 11px; color: var(--text2); margin-left: auto; white-space: nowrap; }
+.code-hist-wrap { position: relative; }
+.code-hist-menu {
+  position: absolute; bottom: 32px; left: 0; z-index: 30; width: 200px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3); padding: 6px; max-height: 260px; overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .adshub-desc-code-split { flex-direction: column; }
+  /* Inline flex-basis (codeRatio) is for the horizontal split — reset when stacked. */
+  .adshub-code-col {
+    flex: 1 1 auto !important; border-top: 1px solid var(--border);
+    padding-left: 0; padding-top: 10px; margin-top: 6px; min-height: 320px;
+  }
+  .adshub-desc-col { padding-right: 0; }
+  .adshub-desc-code-split > .qa-divider { display: none; }
+}
+
+/* List Manager modal */
+.adshub-modal-backdrop {
+  position: fixed; inset: 0; z-index: 60; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,.5);
+}
+.adshub-manager {
+  width: 560px; max-width: 100%; max-height: 85vh; display: flex; flex-direction: column;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.45); overflow: hidden;
+}
+.adshub-manager-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2);
+}
+.adshub-manager-name { display: flex; gap: 8px; align-items: center; padding: 12px 14px 8px; }
+.adshub-manager-name .rf-input { flex: 1; min-width: 0; }
+.adshub-manager-add { padding: 4px 14px 8px; }
+.adshub-manager-add .col-search { width: 100%; }
+.adshub-manager-members { padding: 0 14px 14px; overflow-y: auto; flex: 1; min-height: 0; }
+.adshub-prob-results { list-style: none; margin: 4px 0 0; padding: 0; }
+.adshub-prob-results li {
+  display: flex; align-items: center; gap: 8px; padding: 6px 6px;
+  border-radius: 6px; font-size: 13px; cursor: pointer;
+}
+.adshub-manager-add .adshub-prob-results li:hover { background: var(--bg3); }
+.adshub-prob-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adshub-prob-add { color: var(--primary); font-weight: 700; }
+
+/* Editable custom-tags section in the detail pane (collapsible) */
+.adshub-tags-section { margin: 8px 0 4px; }
+.adshub-tags-summary {
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text2); padding: 4px 0;
+}
+.adshub-tags-summary::-webkit-details-marker { display: none; }
+.adshub-tags-summary::before { content: '▸'; font-size: 9px; transition: transform .15s; display: inline-block; }
+.adshub-tags-section[open] .adshub-tags-summary::before { transform: rotate(90deg); }
+.adshub-tags-body { padding-top: 6px; }
+.adshub-tags-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.adshub-tag-edit { margin-top: 4px; }
+.adshub-tag-hint { margin-top: 6px; font-size: 11px; color: var(--text2); }
+.adshub-tag-hint code { background: var(--bg3); padding: 1px 4px; border-radius: 3px; }
+
+/* Lineage graph iframe (bundled knowledge_graph.html) */
+.adshub-lineage-frame {
+  flex: 1 1 auto; width: 100%; min-height: 0; border: 0; display: block;
+  background: var(--bg);
+}
+
+/* End-of-content footer line in the detail pane */
+.adshub-end-footer {
+  margin-top: 18px; padding: 10px 0 4px; text-align: center;
+  font-size: 11px; color: var(--text2); opacity: .6; letter-spacing: .04em;
+  border-top: 1px solid var(--border);
+}
+.adshub-note-editor { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.adshub-note-editor .rf-rich-wrap { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+/* Lift the base editor's 420px cap so it fills the pane (no empty white space
+   below) — matches the card-view iframe height. */
+.adshub-note-editor .rf-rich-editor { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; }
+.adshub-note-editor .adshub-html-editor,
+.adshub-note-editor .adshub-editor-preview { flex: 1 1 auto; min-height: 0; }
+.adshub-note-editor { padding-top: 4px; }
+.adshub-note-editor .rf-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0; }
+
+/* Sidebar tab bar — make every tab clickable (DocTagTree's single tab is static) */
+.browse-col-tags .left-tab-bar .left-tab { cursor: pointer; }
+
+/* MyList rows in the sidebar */
+.adshub-list-row { display: flex; align-items: center; }
+.adshub-list-row.active .adshub-list-main { background: rgba(var(--primary-rgb), .12); color: var(--primary); }
+.adshub-list-main {
+  flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: transparent; border: none; color: var(--text); padding: 6px 8px;
+  cursor: pointer; font-size: 13px; border-radius: 6px; text-align: left;
+}
+.adshub-list-main:hover { background: var(--bg3); }
+.adshub-list-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adshub-list-del {
+  background: transparent; border: none; color: var(--text2);
+  cursor: pointer; padding: 2px 8px; font-size: 14px; line-height: 1;
+}
+.adshub-list-del:hover { color: var(--danger); }
+
+/* ★ Add-to-list popover in the detail header */
+.adshub-list-menu {
+  position: absolute; top: 32px; right: 0; z-index: 30; width: 250px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3); padding: 6px; max-height: 340px; overflow: auto;
+}
+.adshub-list-menu-hd {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text2); padding: 4px 6px; font-weight: 700;
+}
+.adshub-list-menu-empty { font-size: 12px; color: var(--text2); padding: 4px 6px; }
+.adshub-list-menu-item {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: transparent; border: none; color: var(--text); padding: 6px;
+  cursor: pointer; font-size: 13px; border-radius: 5px; text-align: left;
+}
+.adshub-list-menu-item:hover { background: var(--bg3); }
+.adshub-list-menu-new {
+  display: flex; gap: 6px; padding: 8px 2px 2px; border-top: 1px solid var(--border); margin-top: 4px;
+}
+.adshub-list-menu-new .rf-input { flex: 1; min-width: 0; }
+
+/* Rich-editor colour-picker buttons (text colour + highlight) */
+.rf-tb-color { position: relative; overflow: hidden; cursor: pointer; }
+.rf-tb-color input[type="color"] {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; border: none; padding: 0;
+}
+
+/* Note editor: Rich / HTML / Preview mode tabs + panes */
+.adshub-editor-tabs { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.adshub-html-editor {
+  width: 100%; min-height: 42vh; resize: vertical;
+  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px;
+  line-height: 1.6; padding: 10px 12px; border-radius: 6px;
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+}
+.adshub-editor-preview {
+  min-height: 42vh; padding: 12px; border: 1px solid var(--border);
+  border-radius: 6px; overflow: auto;
+}
+
+/* HTML embed block inside the rich editor */
+.rf-rich-wrap { position: relative; }
+.rf-html-embed {
+  border: 1px dashed var(--primary); border-radius: 6px; padding: 8px 10px;
+  margin: 8px 0; background: rgba(var(--primary-rgb), .05); cursor: pointer;
+}
+.rf-html-embed-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--primary); font-weight: 700; margin-bottom: 6px; user-select: none;
+}
+.rf-html-embed-preview { font-size: 13px; }
+.rf-embed-modal {
+  position: absolute; inset: 6px; z-index: 40; display: flex; flex-direction: column;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.rf-embed-modal-hd {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text2); margin-bottom: 8px;
+}
+.rf-embed-textarea {
+  flex: 1; min-height: 200px; resize: none; width: 100%;
+  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6;
+  padding: 10px; border-radius: 6px; background: var(--bg3);
+  color: var(--text); border: 1px solid var(--border);
+}
+.rf-embed-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 
 

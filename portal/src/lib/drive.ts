@@ -75,6 +75,31 @@ export async function uploadFileToDrive(
   return { id, url: `${DRIVE_API_PREFIX}${id}?alt=media` }
 }
 
+// Overwrite an existing Drive file's contents in place (keeps the same file
+// id, so anything referencing it — e.g. a sheet's notes_drive_id — stays
+// valid). Used when re-saving an edited note.
+export async function updateDriveFileContent(
+  token:  string,
+  fileId: string,
+  blob:   Blob,
+): Promise<void> {
+  const res = await fetch(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+    {
+      method:  'PATCH',
+      headers: {
+        Authorization:  `Bearer ${token}`,
+        'Content-Type': blob.type || 'application/octet-stream',
+      },
+      body: blob,
+    },
+  )
+  if (!res.ok) {
+    const err = await res.text().catch(() => '')
+    throw new Error(`Drive update failed (${res.status}): ${err.slice(0, 160)}`)
+  }
+}
+
 // Auth-fetch a Drive file's bytes. Returns the raw Blob so the caller can
 // either createObjectURL (iframe src) or read as text/json.
 export async function fetchDriveFile(token: string, fileId: string): Promise<Blob> {
