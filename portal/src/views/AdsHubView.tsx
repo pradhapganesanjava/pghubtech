@@ -121,10 +121,12 @@ function NoteViewer({ driveId }: { driveId: string }) {
   if (loading) return <div className="doc-viewer-state"><div className="spinner" /><span>Loading notes…</span></div>
   if (error)   return <div className="doc-viewer-state error">Failed to load notes: {error}</div>
   if (html == null) return null
-  // sandbox without allow-scripts: notes are static HTML; this both isolates
-  // their <style> blocks from the portal and keeps same-origin so the
-  // parent-created blob: image URLs resolve.
-  return <iframe title="Notes" className="adshub-note-iframe" sandbox="allow-same-origin" srcDoc={html} />
+  // allow-scripts so embedded HTML sections (which may carry <script>) run, and
+  // allow-same-origin so the parent-created blob: image URLs resolve. This is
+  // the user's own note content — same sandbox posture as DocViewer for
+  // user-uploaded docs. (Browsers log an advisory that this combo can escape
+  // the sandbox; that's expected, not a block.)
+  return <iframe title="Notes" className="adshub-note-iframe" sandbox="allow-scripts allow-same-origin allow-popups" srcDoc={html} />
 }
 
 export default function AdsHubView() {
@@ -164,6 +166,7 @@ export default function AdsHubView() {
   const [listRatio, setListRatio]           = useState(40)  // list width % when a problem is open
   const [tagsRatio, setTagsRatio]           = useState(20)  // sidebar width %
   const [codeRatio, setCodeRatio]           = useState(42)  // code-panel width % within the detail body
+  const [codeCollapsed, setCodeCollapsed]   = useState(true) // code/notes panel collapsed to a strip on load
   const descCodeRef = useRef<HTMLDivElement>(null)
   const dragCodeRef = useRef(false)
   // Add-to-list menu in the detail header.
@@ -296,7 +299,16 @@ export default function AdsHubView() {
     setEditorHtml('')
     setNoteMode('hidden')
     setEditingTags(false)
+    setCodeCollapsed(true)   // code/notes start collapsed for each problem
   }, [selected?.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Expand the right panel into code or notes.
+  function openCode()  { setNoteMode('hidden'); setCodeCollapsed(false) }
+  function openNotes() {
+    setCodeCollapsed(false)
+    if (selected?.hasNotes && selected.notesDriveId) setNoteMode('view')
+    else startCreate()   // no note yet → open the editor to add one
+  }
 
   // Load MyList collections once (unless cached).
   useEffect(() => {
@@ -1054,22 +1066,41 @@ export default function AdsHubView() {
                     )}
                     <div className="adshub-end-footer">· end of problem ·</div>
                   </div>
-                  <div
-                    className="qa-divider"
-                    onPointerDown={startCodeDrag}
-                    onPointerMove={moveCodeDrag}
-                    onPointerUp={endCodeDrag}
-                    onPointerCancel={endCodeDrag}
-                    onDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
-                    title="Drag to resize · double-click to widen the code panel"
-                  />
-                  <div className="adshub-code-col" style={{ flex: `0 0 ${codeRatio}%` }}>
-                    <CodePanel
-                      key={selected.slug}
-                      slug={selected.slug}
-                      headerRight={renderNotesToggle()}
-                      overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
+                  {!codeCollapsed && (
+                    <div
+                      className="qa-divider"
+                      onPointerDown={startCodeDrag}
+                      onPointerMove={moveCodeDrag}
+                      onPointerUp={endCodeDrag}
+                      onPointerCancel={endCodeDrag}
+                      onDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
+                      title="Drag to resize · double-click to widen the code panel"
                     />
+                  )}
+                  <div
+                    className={`adshub-code-col${codeCollapsed ? ' collapsed' : ''}`}
+                    style={codeCollapsed ? { flex: '0 0 48px' } : { flex: `0 0 ${codeRatio}%` }}
+                  >
+                    {codeCollapsed ? (
+                      <div className="adshub-code-strip">
+                        <button className="adshub-strip-btn" onClick={openCode} title="Show code">
+                          <span>{'{ }'}</span><span className="adshub-strip-lbl">Code</span>
+                        </button>
+                        <button className="adshub-strip-btn" onClick={openNotes} title="Show notes">
+                          <span>📝</span><span className="adshub-strip-lbl">Notes</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <CodePanel
+                        key={selected.slug}
+                        slug={selected.slug}
+                        headerRight={<>
+                          {renderNotesToggle()}
+                          <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
+                        </>}
+                        overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
