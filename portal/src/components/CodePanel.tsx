@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import { python } from '@codemirror/lang-python'
 import { java } from '@codemirror/lang-java'
+import { oneDark } from '@codemirror/theme-one-dark'
 import { loadCode, saveCode, EMPTY_CODE } from '../adapters/adsRepo'
 import type { ProblemCode } from '../adapters/adsRepo'
 import { useToast } from './Toast'
@@ -38,10 +39,13 @@ export default function CodePanel({ slug, headerRight, overlay }: Props) {
   const value   = code[lang]
   const modified = code[MOD_KEY[lang]]
   const extensions = useMemo(() => [lang === 'python3' ? python() : java()], [lang])
-  // Match the editor chrome to the app theme (light variants → light, else dark).
-  const cmTheme = useMemo<'light' | 'dark'>(() => {
+  // Match the editor to the app theme. For dark we use the One Dark theme,
+  // which ships a high-contrast syntax highlight style — the plain "dark"
+  // theme reuses the light-tuned default highlight style, so keywords come out
+  // nearly invisible on a dark background (that's the "no colours" bug).
+  const cmTheme = useMemo(() => {
     const t = typeof document !== 'undefined' ? document.documentElement.getAttribute('data-theme') : null
-    return (t === 'light' || t === 'cartoon') ? 'light' : 'dark'
+    return (t === 'light' || t === 'cartoon') ? 'light' as const : oneDark
   }, [])
 
   function onEdit(v: string) {
