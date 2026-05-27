@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import CodeMirror from '@uiw/react-codemirror'
+import { python } from '@codemirror/lang-python'
+import { java } from '@codemirror/lang-java'
 import { loadCode, saveCode, EMPTY_CODE } from '../adapters/adsRepo'
 import type { ProblemCode } from '../adapters/adsRepo'
 import { useToast } from './Toast'
@@ -21,8 +24,6 @@ export default function CodePanel({ slug, headerRight, overlay }: Props) {
   const [dirty, setDirty]     = useState(false)
   const [saving, setSaving]   = useState(false)
   const [histOpen, setHistOpen] = useState(false)
-  const taRef     = useRef<HTMLTextAreaElement>(null)
-  const gutterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -36,25 +37,16 @@ export default function CodePanel({ slug, headerRight, overlay }: Props) {
 
   const value   = code[lang]
   const modified = code[MOD_KEY[lang]]
-  const lineCount = useMemo(() => Math.max(value.split('\n').length, 1), [value])
+  const extensions = useMemo(() => [lang === 'python3' ? python() : java()], [lang])
+  // Match the editor chrome to the app theme (light variants → light, else dark).
+  const cmTheme = useMemo<'light' | 'dark'>(() => {
+    const t = typeof document !== 'undefined' ? document.documentElement.getAttribute('data-theme') : null
+    return (t === 'light' || t === 'cartoon') ? 'light' : 'dark'
+  }, [])
 
   function onEdit(v: string) {
     setCode(prev => ({ ...prev, [lang]: v }))
     setDirty(true)
-  }
-
-  function syncScroll() {
-    if (gutterRef.current && taRef.current) gutterRef.current.scrollTop = taRef.current.scrollTop
-  }
-
-  function handleTab(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta = e.currentTarget
-    const s = ta.selectionStart, end = ta.selectionEnd
-    const next = value.slice(0, s) + '    ' + value.slice(end)
-    onEdit(next)
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 4 })
   }
 
   async function persist(next: ProblemCode, msg = 'Code saved') {
@@ -108,19 +100,15 @@ export default function CodePanel({ slug, headerRight, overlay }: Props) {
         <div className="doc-viewer-state"><div className="spinner" /><span>Loading code…</span></div>
       ) : (
         <>
-          <div className="code-editor">
-            <div className="code-gutter" ref={gutterRef}>
-              {Array.from({ length: lineCount }, (_, i) => <div key={i}>{i + 1}</div>)}
-            </div>
-            <textarea
-              ref={taRef}
-              className="code-textarea"
+          <div className="code-editor code-cm">
+            <CodeMirror
               value={value}
-              spellCheck={false}
+              height="100%"
+              theme={cmTheme}
+              extensions={extensions}
+              onChange={onEdit}
               placeholder={`# your ${lang === 'python3' ? 'Python3' : 'Java'} solution…`}
-              onChange={e => onEdit(e.target.value)}
-              onScroll={syncScroll}
-              onKeyDown={handleTab}
+              basicSetup={{ lineNumbers: true, highlightActiveLine: true, foldGutter: true, autocompletion: false }}
             />
           </div>
 
