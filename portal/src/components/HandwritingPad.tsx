@@ -380,51 +380,100 @@ function ReactPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadPr
   const rafRef              = useRef<number | null>(null)
   const svgRef              = useRef<SVGSVGElement>(null)
 
+  // Latest props captured in refs so the native listeners (which are attached
+  // once and outlive React renders) always see the current tool/color/size.
+  const toolRef    = useRef(tool);    toolRef.current    = tool
+  const colorRef   = useRef(color);   colorRef.current   = color
+  const sizeRef    = useRef(size);    sizeRef.current    = size
+  const onCommitR  = useRef(onCommit); onCommitR.current = onCommit
+  const onEraseR   = useRef(onErase);  onEraseR.current  = onErase
+
   function endRaf() { if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null } }
   function pushActive() {
     if (rafRef.current != null) return
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null
       const a = activeRef.current
-      // Clone so React sees a new reference and re-renders the active path.
       setActive(a ? { ...a, points: a.points.slice() } : null)
     })
   }
+  function logical(e: PointerEvent): [number, number] {
+    const el = svgRef.current!
+    const r = el.getBoundingClientRect()
+    return [(e.clientX - r.left) / r.width * PAGE_W, (e.clientY - r.top) / r.height * PAGE_H]
+  }
 
-  function onDown(e: React.PointerEvent<SVGSVGElement>) {
-    if (tool === 'pan' || e.pointerType === 'touch') return
-    e.preventDefault()
-    // If iPad dropped the previous stroke's pointerup, salvage it before we
-    // start the next one. Without this, fast successive strokes can lose one.
-    if (activeRef.current && activeRef.current.points.length) onCommit(activeRef.current)
-    activeRef.current = null; endRaf()
-    try { svgRef.current?.setPointerCapture(e.pointerId) } catch {}
-    const [x, y] = logicalFrom(svgRef.current!, e)
-    if (tool === 'eraser') { onErase(x, y); return }
-    activeRef.current = { tool: 'pen', color, size, points: [[x, y, e.pressure || 0.5]] }
-    setActive({ ...activeRef.current, points: activeRef.current.points.slice() })
-  }
-  function onMove(e: React.PointerEvent<SVGSVGElement>) {
-    if (tool === 'pan' || e.pointerType === 'touch') return
-    if (tool === 'eraser') {
-      if (e.buttons) { const [x, y] = logicalFrom(svgRef.current!, e); onErase(x, y) }
-      return
+  // Native pointer/touch listeners. React's synthetic events go through a
+  // root-level delegation layer; iPadOS Safari's gesture-detection layer can
+  // suppress alternate Pencil strokes in rapid bursts BEFORE the synthetic
+  // dispatch fires. Attaching directly with capture:true + passive:false (so
+  // preventDefault works on touch events) gets us the events first and lets
+  // us cancel the browser gesture machinery cold.
+  useEffect(() => {
+    const el = svgRef.current; if (!el) return
+    const opts: AddEventListenerOptions = { passive: false, capture: true }
+
+    function down(e: PointerEvent) {
+      const t = toolRef.current
+      if (t === 'pan' || e.pointerType === 'touch') return
+      e.preventDefault(); e.stopPropagation()
+      // Salvage any stroke whose pointerup the iPad swallowed.
+      if (activeRef.current && activeRef.current.points.length) onCommitR.current(activeRef.current)
+      activeRef.current = null; endRaf()
+      try { el.setPointerCapture(e.pointerId) } catch {}
+      const [x, y] = logical(e)
+      if (t === 'eraser') { onEraseR.current(x, y); return }
+      activeRef.current = { tool: 'pen', color: colorRef.current, size: sizeRef.current, points: [[x, y, e.pressure || 0.5]] }
+      setActive({ ...activeRef.current, points: activeRef.current.points.slice() })
     }
-    if (!activeRef.current) return
-    const native = e.nativeEvent as PointerEvent
-    const evs = native.getCoalescedEvents?.() ?? [native]
-    for (const ev of evs) {
-      const [x, y] = logicalFrom(svgRef.current!, ev)
-      activeRef.current.points.push([x, y, ev.pressure || 0.5])
+    function move(e: PointerEvent) {
+      const t = toolRef.current
+      if (t === 'pan' || e.pointerType === 'touch') return
+      e.preventDefault()
+      if (t === 'eraser') { if (e.buttons) { const [x, y] = logical(e); onEraseR.current(x, y) } return }
+      if (!activeRef.current) return
+      const evs = e.getCoalescedEvents?.() ?? [e]
+      for (const ev of evs) { const [x, y] = logical(ev); activeRef.current.points.push([x, y, ev.pressure || 0.5]) }
+      pushActive()
     }
-    pushActive()
-  }
-  function onUp() {
-    if (tool === 'eraser' || tool === 'pan') return
-    const s = activeRef.current
-    activeRef.current = null; endRaf(); setActive(null)
-    if (s && s.points.length) onCommit(s)
-  }
+    function up(_e: PointerEvent) {
+      const t = toolRef.current
+      if (t === 'eraser' || t === 'pan') return
+      const s = activeRef.current
+      activeRef.current = null; endRaf(); setActive(null)
+      if (s && s.points.length) onCommitR.current(s)
+    }
+    // Block touch + iOS gesture events so palm contact and 2-finger gestures
+    // can't cancel the active pen pointer.
+    function block(e: Event) { e.preventDefault() }
+
+    el.addEventListener('pointerdown',        down,  opts)
+    el.addEventListener('pointermove',        move,  opts)
+    el.addEventListener('pointerup',          up,    opts)
+    el.addEventListener('pointercancel',      up,    opts)
+    el.addEventListener('lostpointercapture', up,    opts)
+    el.addEventListener('touchstart',         block, opts)
+    el.addEventListener('touchmove',          block, opts)
+    el.addEventListener('touchend',           block, opts)
+    el.addEventListener('gesturestart',       block, opts)
+    el.addEventListener('gesturechange',      block, opts)
+    el.addEventListener('gestureend',         block, opts)
+    el.addEventListener('contextmenu',        block, opts)
+    return () => {
+      el.removeEventListener('pointerdown',        down,  opts)
+      el.removeEventListener('pointermove',        move,  opts)
+      el.removeEventListener('pointerup',          up,    opts)
+      el.removeEventListener('pointercancel',      up,    opts)
+      el.removeEventListener('lostpointercapture', up,    opts)
+      el.removeEventListener('touchstart',         block, opts)
+      el.removeEventListener('touchmove',          block, opts)
+      el.removeEventListener('touchend',           block, opts)
+      el.removeEventListener('gesturestart',       block, opts)
+      el.removeEventListener('gesturechange',      block, opts)
+      el.removeEventListener('gestureend',         block, opts)
+      el.removeEventListener('contextmenu',        block, opts)
+    }
+  }, [])
 
   const style = tool === 'pan' ? { touchAction: 'auto' as const, cursor: 'grab' as const } : undefined
   return (
@@ -435,12 +484,7 @@ function ReactPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadPr
         viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}
         preserveAspectRatio="xMidYMid meet"
         style={style}
-        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       >
-        {/* Committed strokes — keys are STABLE across commits, so React keeps
-            each <path> in place and only appends one new node per commit.
-            Each is wrapped in React.memo so old strokes never re-run the
-            (expensive) perfect-freehand pass on subsequent renders. */}
         {page.strokes.map((s, i) => (
           <CommittedPath key={`${pageKey}-c-${i}`} stroke={s} />
         ))}
