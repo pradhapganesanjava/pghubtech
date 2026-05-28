@@ -4014,6 +4014,28 @@ body.resizing-h * {
   cursor: pointer;
 }
 
+/* Per-problem study timer — centered in the doc-detail-hd header.
+   pointer-events:none so the header's double-click (snap divider) still fires
+   when the cursor is over the timer, and the title's click isn't blocked. */
+.doc-detail-timer {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+  color: var(--text2, #6a737d);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.doc-detail-timer.warn   { color: #f0a020; font-weight: 800; }     /* ≥ 10 min */
+.doc-detail-timer.danger { color: #e34545; }                       /* ≥ 15 min */
+.doc-detail-timer.blink  { animation: doc-detail-timer-blink 1s steps(2, start) infinite; }
+@keyframes doc-detail-timer-blink { 50% { opacity: 0.25; } }
+
 /* Doc edit form */
 .doc-edit-form {
   padding: 14px 16px; overflow-y: auto;
