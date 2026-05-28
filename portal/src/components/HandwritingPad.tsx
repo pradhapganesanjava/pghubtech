@@ -13,7 +13,7 @@ import { getStroke } from 'perfect-freehand'
 //   SVG       — strokes are <path> elements appended to an <svg>. Browser
 //               composites natively; the active stroke updates one path's d.
 
-export type DrawMode = 'smooth' | 'immediate' | 'direct' | 'svg'
+export type DrawMode = 'react' | 'smooth' | 'immediate' | 'direct' | 'svg'
 const MODE_STORAGE = 'adshub.hw.mode'
 
 export interface HwStroke { tool: 'pen'; color: string; size: number; points: number[][] } // [x, y, pressure]
@@ -355,6 +355,90 @@ function SvgPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadProp
   )
 }
 
+// ── React (JSX-only SVG + rAF state) ─────────────────────────────────────────
+// The simplest, most reliable mode. EVERY stroke — committed and in-progress —
+// is a React-rendered <path>. No imperative appendChild, no canvas resize that
+// can wipe pixels, no transform-state to go stale. The active stroke lives in
+// a ref (so pointermove can push points cheaply) and is mirrored to React
+// state via rAF so the SVG re-renders at most once per frame. On pointerup
+// we hand the stroke to onCommit; React reconciliation adds one new <path>
+// with a stable key (we don't churn keys for already-committed strokes).
+function ReactPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadProps) {
+  const [active, setActive] = useState<HwStroke | null>(null)
+  const activeRef           = useRef<HwStroke | null>(null)
+  const rafRef              = useRef<number | null>(null)
+  const svgRef              = useRef<SVGSVGElement>(null)
+
+  function endRaf() { if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null } }
+  function pushActive() {
+    if (rafRef.current != null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      const a = activeRef.current
+      // Clone so React sees a new reference and re-renders the active path.
+      setActive(a ? { ...a, points: a.points.slice() } : null)
+    })
+  }
+
+  function onDown(e: React.PointerEvent<SVGSVGElement>) {
+    if (tool === 'pan' || e.pointerType === 'touch') return
+    e.preventDefault()
+    // If iPad dropped the previous stroke's pointerup, salvage it before we
+    // start the next one. Without this, fast successive strokes can lose one.
+    if (activeRef.current && activeRef.current.points.length) onCommit(activeRef.current)
+    activeRef.current = null; endRaf()
+    try { svgRef.current?.setPointerCapture(e.pointerId) } catch {}
+    const [x, y] = logicalFrom(svgRef.current!, e)
+    if (tool === 'eraser') { onErase(x, y); return }
+    activeRef.current = { tool: 'pen', color, size, points: [[x, y, e.pressure || 0.5]] }
+    setActive({ ...activeRef.current, points: activeRef.current.points.slice() })
+  }
+  function onMove(e: React.PointerEvent<SVGSVGElement>) {
+    if (tool === 'pan' || e.pointerType === 'touch') return
+    if (tool === 'eraser') {
+      if (e.buttons) { const [x, y] = logicalFrom(svgRef.current!, e); onErase(x, y) }
+      return
+    }
+    if (!activeRef.current) return
+    const native = e.nativeEvent as PointerEvent
+    const evs = native.getCoalescedEvents?.() ?? [native]
+    for (const ev of evs) {
+      const [x, y] = logicalFrom(svgRef.current!, ev)
+      activeRef.current.points.push([x, y, ev.pressure || 0.5])
+    }
+    pushActive()
+  }
+  function onUp() {
+    if (tool === 'eraser' || tool === 'pan') return
+    const s = activeRef.current
+    activeRef.current = null; endRaf(); setActive(null)
+    if (s && s.points.length) onCommit(s)
+  }
+
+  const style = tool === 'pan' ? { touchAction: 'auto' as const, cursor: 'grab' as const } : undefined
+  return (
+    <div className="hw-canvas-stack">
+      <svg
+        ref={svgRef}
+        className="hw-canvas hw-canvas-live"
+        viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}
+        preserveAspectRatio="xMidYMid meet"
+        style={style}
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+      >
+        {/* Committed strokes — keys are STABLE across commits, so React keeps
+            each <path> in place and only appends one new node per commit. */}
+        {page.strokes.map((s, i) => (
+          <path key={`${pageKey}-c-${i}`} d={strokeToSvgD(s)} fill={s.color} />
+        ))}
+        {active && active.points.length > 0 && (
+          <path key={`${pageKey}-a`} d={strokeToSvgD(active)} fill={active.color} />
+        )}
+      </svg>
+    </div>
+  )
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // Outer pad — shared toolbar, state, mode selector
 // ───────────────────────────────────────────────────────────────────────────
@@ -368,7 +452,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     const [color, setColor] = useState(COLORS[0])
     const [size, setSize]   = useState(SIZES[1])
     const [mode, setModeState] = useState<DrawMode>(() => (typeof localStorage !== 'undefined'
-      && (localStorage.getItem(MODE_STORAGE) as DrawMode | null)) || 'smooth')
+      && (localStorage.getItem(MODE_STORAGE) as DrawMode | null)) || 'react')
     function setMode(m: DrawMode) { setModeState(m); try { localStorage.setItem(MODE_STORAGE, m) } catch {} }
 
     const pagesRef = useRef(pages);   pagesRef.current = pages
@@ -416,7 +500,11 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     }
 
     const page    = pages[pageIdx] ?? { strokes: [] }
-    const pageKey = `${mode}-${pageIdx}-${page.strokes.length}` // bumps so modes re-init on commit/page change
+    // pageKey identifies the page (and mode) but is STABLE across commits, so
+    // React keeps already-mounted stroke elements in place instead of churning
+    // every <path>/canvas key on every commit (which on iPad was causing the
+    // "every other stroke goes blank" bug).
+    const pageKey = `${mode}-${pageIdx}`
 
     const padProps: PadProps = { page, pageKey, tool, color, size, onCommit, onErase }
 
@@ -447,9 +535,14 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
           <button className="hw-tool" onClick={addPage} title="Add page">＋</button>
           <button className="hw-tool" onClick={deletePage} title="Delete page">🗑</button>
           <span className="hw-sep" />
+          {/* Stroke counter — lets you verify on iPad that commits are
+              actually landing in state even when the paint is missing. */}
+          <span className="hw-pageno" title="Strokes committed on this page">{page.strokes.length} strokes</span>
+          <span className="hw-sep" />
           <label className="hw-mode-lbl" title="Drawing engine — try each on iPad and pick what feels best">
             mode:
             <select className="hw-mode-select" value={mode} onChange={e => setMode(e.target.value as DrawMode)}>
+              <option value="react">React (JSX-only SVG — recommended)</option>
               <option value="smooth">Smooth (perfect-freehand + rAF + predicted)</option>
               <option value="immediate">Immediate (perfect-freehand, no rAF)</option>
               <option value="direct">Direct (lines, no rAF, no freehand)</option>
@@ -458,6 +551,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
           </label>
         </div>
         <div className="hw-canvas-wrap">
+          {mode === 'react'     && <ReactPad     key={mode} {...padProps} />}
           {mode === 'smooth'    && <SmoothPad    key={mode} {...padProps} />}
           {mode === 'immediate' && <ImmediatePad key={mode} {...padProps} />}
           {mode === 'direct'    && <DirectPad    key={mode} {...padProps} />}
