@@ -206,6 +206,16 @@ export default function AdsHubView() {
   // the details↔code divider to its max when the code/notes panel is expanded.
   // (Same effect as double-clicking the dividers; the user can still drag.)
   useEffect(() => { setListRatio(selected ? 15 : 40) }, [selected?.slug])
+
+  // Per-problem study timer (mm:ss). Resets when the selection changes.
+  // Visual escalation: orange + bold at 10 min, red at 15 min, blinking at 20+.
+  const [timerSec, setTimerSec] = useState(0)
+  useEffect(() => {
+    setTimerSec(0)
+    if (!selected) return
+    const id = window.setInterval(() => setTimerSec(s => s + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [selected?.slug])
   useEffect(() => { setCodeRatio(codeCollapsed ? 42 : 75) }, [codeCollapsed])
   const descCodeRef = useRef<HTMLDivElement>(null)
   const dragCodeRef = useRef(false)
@@ -1156,13 +1166,21 @@ export default function AdsHubView() {
             <div className="browse-col-detail has-selection" style={{ flex: 1 }}>
               <div
                 className="col-hd doc-detail-hd"
-                style={{ padding: '10px 12px', flexShrink: 0 }}
+                style={{ padding: '10px 12px', flexShrink: 0, position: 'relative' }}
                 onDoubleClick={() => setListRatio(r => r <= 18 ? 40 : 15)}
                 title="Double-click to widen / restore the detail pane"
               >
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {selected.frontendId && <>#{selected.frontendId} · </>}{selected.title}
                 </span>
+                <span
+                  className={`doc-detail-timer${
+                    timerSec >= 20 * 60 ? ' warn danger blink' :
+                    timerSec >= 15 * 60 ? ' warn danger' :
+                    timerSec >= 10 * 60 ? ' warn' : ''
+                  }`}
+                  title="Time on this problem (resets when you switch)"
+                >{Math.floor(timerSec / 60)}:{String(timerSec % 60).padStart(2, '0')}</span>
                 <div style={{ display: 'flex', gap: 6, position: 'relative' }} onDoubleClick={e => e.stopPropagation()}>
                   {/* Notes toggle now lives in the code-panel header (right end). */}
                   {/* ★ Add to list */}
