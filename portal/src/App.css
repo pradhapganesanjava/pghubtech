@@ -4308,11 +4308,20 @@ body.resizing-h * {
   background: var(--bg3); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 6px 6px;
   display: flex; justify-content: center;
 }
-.hw-canvas {
+/* Two stacked canvases: committed (bottom, static) + live (top, per-frame).
+   Same exact size; the live one is the one that receives pointer events. */
+.hw-canvas-stack {
+  position: relative;
   width: 100%; max-width: 760px; aspect-ratio: 1000 / 1400; height: auto;
+  align-self: flex-start;
   background: #fff; border: 1px solid var(--border); border-radius: 4px;
-  touch-action: none; box-shadow: 0 2px 8px rgba(0,0,0,.12); align-self: flex-start;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
 }
+.hw-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+}
+.hw-canvas-committed { z-index: 0; background: transparent; }
+.hw-canvas-live      { z-index: 1; background: transparent; touch-action: none; }
 
 /* List Manager modal */
 .adshub-modal-backdrop {
