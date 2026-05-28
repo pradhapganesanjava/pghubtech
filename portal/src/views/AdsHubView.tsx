@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
-import { fetchDriveFile, resolveDriveImagesInHtml } from '../lib/drive'
+import { fetchDriveFile, resolveDriveImagesInHtml, deleteDriveFile } from '../lib/drive'
 import {
   getOrCreateImageFolder, uploadImageBlob, inferFilename, uploadInlineImages,
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
 import {
-  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
+  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem, clearProblemNote,
   loadLists, getCachedLists, addToList, removeFromList, renameList,
 } from '../adapters/adsRepo'
 import type { LCProblem, LCList } from '../adapters/adsRepo'
 import AdsHubSidebar from '../components/AdsHubSidebar'
 import AdsLineage from '../components/AdsLineage'
 import CodePanel from '../components/CodePanel'
+import HandwritingPad from '../components/HandwritingPad'
+import type { HwDoc, HandwritingPadHandle } from '../components/HandwritingPad'
 import RichEditor from '../components/RichEditor'
 import { useToast } from '../components/Toast'
 
@@ -144,7 +146,9 @@ export default function AdsHubView() {
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
   const [editorHtml, setEditorHtml] = useState('')
-  const [editorView, setEditorView] = useState<'rich' | 'html' | 'preview'>('rich')
+  const [editorView, setEditorView] = useState<'rich' | 'html' | 'preview' | 'draw'>('rich')
+  const [hwInitialDoc, setHwInitialDoc] = useState<HwDoc | null>(null)
+  const hwPadRef = useRef<HandwritingPadHandle>(null)
   const [editorLoading, setEditorLoading] = useState(false)
   const [savingNote, setSavingNote] = useState(false)
   const blobUrlsRef    = useRef<string[]>([])
@@ -199,6 +203,7 @@ export default function AdsHubView() {
   function startCreate() {
     revokeEditorBlobs()
     setEditorHtml('')
+    setHwInitialDoc(null)
     setEditorView('rich')
     setNoteMode('edit')
   }
@@ -211,6 +216,7 @@ export default function AdsHubView() {
   async function startEdit() {
     if (!selected?.notesDriveId) { startCreate(); return }
     revokeEditorBlobs()
+    setHwInitialDoc(null)
     setEditorView('rich')
     setNoteMode('edit')
     setEditorLoading(true)
@@ -218,6 +224,16 @@ export default function AdsHubView() {
       const token = GAuth.getToken()
       if (!token) throw new Error('Not signed in')
       const raw  = await (await fetchDriveFile(token, selected.notesDriveId)).text()
+      // Handwriting note? rehydrate the strokes into the Draw pad.
+      const hwMatch = raw.match(/<div class="hw-doc" data-doc="([^"]*)"/)
+      if (hwMatch) {
+        try {
+          const json = hwMatch[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          setHwInitialDoc(JSON.parse(json) as HwDoc)
+          setEditorView('draw')
+          return
+        } catch { /* fall through to text edit */ }
+      }
       const body = contractHtmlEmbeds(extractEditableBody(raw))
       // Swap Drive image URLs → blob: URLs so they render in the editor; the
       // reverse map lets save() restore the Drive URLs.
@@ -248,6 +264,32 @@ export default function AdsHubView() {
     try {
       const token = GAuth.getToken()
       if (!token) throw new Error('Not signed in')
+
+      // ── Handwriting note: upload page PNGs + embed the stroke JSON ──────────
+      if (editorView === 'draw' && hwPadRef.current) {
+        const doc  = hwPadRef.current.getDoc()
+        const pngs = await hwPadRef.current.exportPagePngs()
+        const folderId = await getOrCreateImageFolder(token)
+        const urls: string[] = []
+        for (let i = 0; i < pngs.length; i++) {
+          urls.push(await uploadImageBlob(token, folderId, pngs[i], `hw-${selected.slug}-${Date.now()}-${i}.png`))
+        }
+        const root = document.createElement('div')
+        const data = document.createElement('div')
+        data.className = 'hw-doc'
+        data.setAttribute('data-doc', JSON.stringify(doc))   // outerHTML escapes the attribute
+        root.appendChild(data)
+        for (const u of urls) { const img = document.createElement('img'); img.className = 'hw-page'; img.src = u; root.appendChild(img) }
+        const id = await saveProblemNote(selected, root.innerHTML)
+        const patched = { ...selected, notesDriveId: id, hasNotes: true }
+        setProblems(prev => prev.map(p => p.slug === selected.slug ? patched : p))
+        setSelected(patched)
+        setNoteRev(r => r + 1)
+        setNoteMode('view')
+        toast('Handwriting saved', 'success')
+        return
+      }
+
       let html = blobUrlsToDrive(editorHtml, blobToDriveRef.current)
       html = await uploadInlineImages(html, token)   // upload any leftover data:/blob: images
       html = sanitizeHtml(html)
@@ -271,6 +313,24 @@ export default function AdsHubView() {
     revokeEditorBlobs()
     setEditorHtml('')
     setNoteMode(selected?.notesDriveId ? 'view' : 'hidden')
+  }
+
+  async function deleteNote() {
+    if (!selected?.notesDriveId) return
+    if (!window.confirm('Delete this note? This removes its Drive file and cannot be undone.')) return
+    const target = selected
+    try {
+      const token = GAuth.getToken()
+      if (token) await deleteDriveFile(token, target.notesDriveId).catch(() => { /* keep going */ })
+      await clearProblemNote(target.slug)
+      const patched = { ...target, notesDriveId: '', hasNotes: false }
+      setProblems(prev => prev.map(p => p.slug === target.slug ? patched : p))
+      setSelected(patched)
+      setNoteMode('hidden')
+      toast('Note deleted', 'success')
+    } catch (e) {
+      toast(`Delete failed: ${(e as Error).message}`, 'error')
+    }
   }
 
   useEffect(() => {
@@ -303,6 +363,8 @@ export default function AdsHubView() {
   useEffect(() => {
     revokeEditorBlobs()
     setEditorHtml('')
+    setHwInitialDoc(null)
+    setEditorView('rich')
     setNoteMode('hidden')
     setEditingTags(false)
     setCodeCollapsed(true)   // code/notes start collapsed for each problem
@@ -687,7 +749,10 @@ export default function AdsHubView() {
           title={noteMode === 'view' ? 'Hide notes' : 'Show my notes'}
         >{noteMode === 'view' ? '✕ Notes' : '📝 Notes'}</button>
         {noteMode === 'view' && (
-          <button className="code-btn" onClick={startEdit} title="Edit notes">✏️</button>
+          <>
+            <button className="code-btn" onClick={startEdit} title="Edit notes">✏️</button>
+            <button className="code-btn" onClick={deleteNote} title="Delete notes">🗑</button>
+          </>
         )}
       </>
     ) : (
@@ -709,13 +774,18 @@ export default function AdsHubView() {
           ) : (
             <>
               <div className="adshub-editor-tabs">
-                {(['rich', 'html', 'preview'] as const).map(m => (
+                {(['rich', 'html', 'preview', 'draw'] as const).map(m => (
                   <button key={m} className={`adshub-diff-pill${editorView === m ? ' active' : ''}`} onClick={() => setEditorView(m)}>
-                    {m === 'rich' ? 'Rich' : m === 'html' ? '</> HTML' : 'Preview'}
+                    {m === 'rich' ? 'Rich' : m === 'html' ? '</> HTML' : m === 'preview' ? 'Preview' : '✏️ Draw'}
                   </button>
                 ))}
-                <button className="adshub-diff-pill" style={{ marginLeft: 'auto' }} onClick={copyEditorHtml} title="Copy the note's HTML to the clipboard">⧉ Copy HTML</button>
+                {editorView !== 'draw' && (
+                  <button className="adshub-diff-pill" style={{ marginLeft: 'auto' }} onClick={copyEditorHtml} title="Copy the note's HTML to the clipboard">⧉ Copy HTML</button>
+                )}
               </div>
+              {editorView === 'draw' && (
+                <HandwritingPad key={`${selected.slug}-${hwInitialDoc ? 'edit' : 'new'}`} ref={hwPadRef} initialDoc={hwInitialDoc ?? undefined} />
+              )}
               {editorView === 'rich' && (
                 <RichEditor value={editorHtml} onChange={setEditorHtml} onPasteImage={handlePasteImage} allowHtmlEmbed />
               )}

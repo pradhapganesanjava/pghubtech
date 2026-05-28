@@ -128,6 +128,8 @@ function wrapNoteHtml(body: string): string {
   html,body{margin:0;padding:16px;background:#fff;color:#1a1a2e;
     font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
   img{max-width:100%;height:auto;}
+  .hw-doc{display:none;}
+  .hw-page{display:block;max-width:100%;margin:0 auto 12px;border:1px solid #e1e4e8;border-radius:4px;}
   pre{white-space:pre-wrap;word-break:break-word;background:#f6f8fa;
     padding:10px;border-radius:6px;border:1px solid #e1e4e8;}
   code{background:#f6f8fa;padding:1px 5px;border-radius:3px;}
@@ -163,6 +165,21 @@ async function updateProblemNoteRef(slug: string, driveId: string): Promise<void
     { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [[driveId, '1']] }) },
   )
   if (!res.ok) throw new Error(`Failed to update note ref: ${res.status}`)
+}
+
+// Detach a problem's note: clear notes_drive_id (K) + has_notes (L) and patch
+// the cache. (The Drive file is deleted separately by the caller.)
+export async function clearProblemNote(slug: string): Promise<void> {
+  await ensureTab()
+  const rowNum = await findRowNum(slug)
+  if (rowNum < 0) return
+  const res = await fetch(
+    `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!K${rowNum}:L${rowNum}`)}?valueInputOption=RAW`,
+    { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [['', '']] }) },
+  )
+  if (!res.ok) throw new Error(`Failed to clear note: ${res.status}`)
+  const cached = _cache?.find(p => p.slug === slug)
+  if (cached) { cached.notesDriveId = ''; cached.hasNotes = false }
 }
 
 // Update a problem's custom :: tags (column H). Writes the sheet, patches the
