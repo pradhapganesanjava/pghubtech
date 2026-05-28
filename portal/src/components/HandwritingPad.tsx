@@ -1,11 +1,22 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { getStroke } from 'perfect-freehand'
 
-// ── GoodNotes-style handwriting pad ──────────────────────────────────────────
-// Apple Pencil (Pointer Events: pointerType 'pen' + pressure), palm rejection
-// (ignore 'touch'), multi-page, pen/eraser/colours, undo. Strokes are stored as
-// vectors in a fixed logical page space so they re-edit and export crisply.
+// ── GoodNotes-style handwriting pad v2 ───────────────────────────────────────
+// Best-practice web handwriting (the tldraw / Excalidraw approach):
+//   • perfect-freehand   pressure-sensitive, tapered, real-pen-feel strokes
+//   • two layered canvases  committed strokes (static) + live stroke (cleared
+//                            per frame); the live one is never wiped by a
+//                            committed redraw, so fast successive strokes
+//                            never disappear
+//   • rAF-batched live render  pointer events queue raw points; one render
+//                              per frame keeps writing smooth even at 120 Hz
+//   • getCoalescedEvents + getPredictedEvents  high-rate Pencil sampling +
+//                                              lower perceived latency
+//   • palm rejection  ignore pointerType==='touch' for drawing
+//   • Pan tool  flips touch-action to auto so a finger scrolls; Pencil still
+//               draws when on Pen/Eraser (touch-action:none)
 
-export interface HwStroke { tool: 'pen'; color: string; size: number; points: number[][] } // points: [x, y, pressure]
+export interface HwStroke { tool: 'pen'; color: string; size: number; points: number[][] } // [x, y, pressure]
 export interface HwPage { strokes: HwStroke[] }
 export interface HwDoc { pages: HwPage[] }
 export interface HandwritingPadHandle {
@@ -17,27 +28,45 @@ const PAGE_W = 1000
 const PAGE_H = 1400
 const COLORS = ['#1a1a2e', '#e94545', '#2563eb', '#16a34a', '#f59e0b', '#9333ea']
 const SIZES  = [2, 4, 7]
-const ERASE_R = 18   // logical-px radius for stroke erase
+const ERASE_R = 18   // logical-px stroke-erase radius
+
+// perfect-freehand options tuned for a fountain-pen feel.
+function pfOptions(size: number) {
+  return {
+    size,
+    thinning: 0.55,
+    smoothing: 0.55,
+    streamline: 0.45,
+    easing: (t: number) => t,
+    simulatePressure: false,   // we have real Pencil pressure
+    last: true,
+  }
+}
 
 function dist2(ax: number, ay: number, bx: number, by: number) {
   const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy
 }
 
-// Render one page's strokes onto a 2D context already transformed to logical coords.
+// Build a Path2D from a perfect-freehand outline polygon.
+function strokePath(outline: number[][]): Path2D {
+  const p = new Path2D()
+  if (!outline.length) return p
+  p.moveTo(outline[0][0], outline[0][1])
+  for (let i = 1; i < outline.length; i++) p.lineTo(outline[i][0], outline[i][1])
+  p.closePath()
+  return p
+}
+
+function paintStroke(ctx: CanvasRenderingContext2D, s: HwStroke) {
+  if (!s.points.length) return
+  const outline = getStroke(s.points, pfOptions(s.size)) as number[][]
+  if (!outline.length) return
+  ctx.fillStyle = s.color
+  ctx.fill(strokePath(outline))
+}
+
 function paintPage(ctx: CanvasRenderingContext2D, page: HwPage) {
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round'
-  for (const s of page.strokes) {
-    ctx.strokeStyle = s.color; ctx.fillStyle = s.color
-    const pts = s.points
-    if (pts.length === 1) {
-      ctx.beginPath(); ctx.arc(pts[0][0], pts[0][1], s.size / 2, 0, Math.PI * 2); ctx.fill(); continue
-    }
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1], b = pts[i]
-      ctx.lineWidth = s.size * (0.4 + 0.6 * (((a[2] ?? 0.5) + (b[2] ?? 0.5)) / 2))
-      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke()
-    }
-  }
+  for (const s of page.strokes) paintStroke(ctx, s)
 }
 
 const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
@@ -50,11 +79,17 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     const [color, setColor] = useState(COLORS[0])
     const [size, setSize]   = useState(SIZES[1])
 
-    const canvasRef  = useRef<HTMLCanvasElement>(null)
-    const wrapRef    = useRef<HTMLDivElement>(null)
-    const drawing    = useRef<HwStroke | null>(null)
-    const pagesRef   = useRef(pages);   pagesRef.current = pages
-    const idxRef     = useRef(pageIdx); idxRef.current = pageIdx
+    // Two stacked canvases: committed (static) + live (per-frame).
+    // Living strokes are NEVER wiped by a committed-strokes redraw.
+    const committedRef = useRef<HTMLCanvasElement>(null)
+    const liveRef      = useRef<HTMLCanvasElement>(null)
+    const wrapRef      = useRef<HTMLDivElement>(null)
+
+    const drawing  = useRef<HwStroke | null>(null)
+    const predicted = useRef<number[][]>([])    // perfect-freehand likes a tail of predicted pts
+    const rafId    = useRef<number | null>(null)
+    const pagesRef = useRef(pages);   pagesRef.current = pages
+    const idxRef   = useRef(pageIdx); idxRef.current = pageIdx
 
     useImperativeHandle(ref, () => ({
       getDoc: () => ({ pages: pagesRef.current }),
@@ -73,36 +108,75 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
       },
     }), [])
 
-    // Size the backing store to the displayed size (× dpr) and map drawing to
-    // the fixed logical page space, then repaint the current page.
-    function redraw() {
-      const canvas = canvasRef.current; if (!canvas) return
+    // Map a CSS-pixel pointer position to the fixed logical page space.
+    function toLogical(e: { clientX: number; clientY: number }): [number, number] {
+      const r = liveRef.current!.getBoundingClientRect()
+      return [(e.clientX - r.left) / r.width * PAGE_W, (e.clientY - r.top) / r.height * PAGE_H]
+    }
+
+    // Resize both canvases' backing store to displayed size × dpr and set the
+    // logical→backing transform on each. Then repaint committed (no live yet).
+    function ensureCanvasSize(canvas: HTMLCanvasElement) {
       const rect = canvas.getBoundingClientRect()
       const dpr = window.devicePixelRatio || 1
       const w = Math.max(1, Math.round(rect.width * dpr)), h = Math.max(1, Math.round(rect.height * dpr))
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
       const ctx = canvas.getContext('2d')!
       ctx.setTransform(canvas.width / PAGE_W, 0, 0, canvas.height / PAGE_H, 0, 0)
+      return ctx
+    }
+
+    function paintCommitted() {
+      const c = committedRef.current; if (!c) return
+      const ctx = ensureCanvasSize(c)
       ctx.clearRect(0, 0, PAGE_W, PAGE_H)
       paintPage(ctx, pagesRef.current[idxRef.current] ?? { strokes: [] })
-      // Also paint the in-progress stroke. Without this, a fast next stroke
-      // started before the previous commit's redraw runs would have its
-      // already-drawn segments wiped — looking like the stroke "didn't take".
+    }
+    function paintLive() {
+      const c = liveRef.current; if (!c) return
+      const ctx = ensureCanvasSize(c)
+      ctx.clearRect(0, 0, PAGE_W, PAGE_H)
       if (drawing.current && drawing.current.points.length) {
-        paintPage(ctx, { strokes: [drawing.current] })
+        // Mix in the predicted tail for lower perceived latency; the next real
+        // move overwrites it on the next frame.
+        const s = drawing.current
+        const stroke: HwStroke = predicted.current.length
+          ? { ...s, points: [...s.points, ...predicted.current] }
+          : s
+        paintStroke(ctx, stroke)
       }
     }
 
-    useEffect(() => { redraw() }, [pages, pageIdx])
+    // Schedule one live paint per animation frame (drops bursts).
+    function scheduleLive() {
+      if (rafId.current != null) return
+      rafId.current = requestAnimationFrame(() => { rafId.current = null; paintLive() })
+    }
+
+    useEffect(() => { paintCommitted(); paintLive() }, [pages, pageIdx])
     useEffect(() => {
-      const ro = new ResizeObserver(() => redraw())
+      const ro = new ResizeObserver(() => { paintCommitted(); paintLive() })
       if (wrapRef.current) ro.observe(wrapRef.current)
       return () => ro.disconnect()
     }, [])
 
-    function toLogical(e: { clientX: number; clientY: number }): [number, number] {
-      const r = canvasRef.current!.getBoundingClientRect()
-      return [(e.clientX - r.left) / r.width * PAGE_W, (e.clientY - r.top) / r.height * PAGE_H]
+    // Commit the in-progress stroke into pages. Shared by onUp and onDown — on
+    // iPad a stroke's pointerup can be dropped during fast writing; flushing
+    // in onDown rescues that stroke before starting the next.
+    function commitCurrent() {
+      const cur = drawing.current
+      drawing.current = null
+      predicted.current = []
+      if (!cur || !cur.points.length) return
+      // Stamp onto the committed canvas immediately so the user sees it land
+      // before React re-renders (no flicker, even if state update is delayed).
+      const ctx = committedRef.current?.getContext('2d')
+      if (ctx) paintStroke(ctx, cur)
+      // Clear the live layer.
+      const live = liveRef.current?.getContext('2d')
+      if (live) live.clearRect(0, 0, PAGE_W, PAGE_H)
+      // Persist for save / undo / re-edit.
+      setPages(prev => prev.map((p, i) => i === idxRef.current ? { strokes: [...p.strokes, cur] } : p))
     }
 
     function eraseAt(x: number, y: number) {
@@ -114,38 +188,36 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     }
 
     function onDown(e: React.PointerEvent<HTMLCanvasElement>) {
-      if (tool === 'pan') return                       // pan mode → let the wrap scroll
-      if (e.pointerType === 'touch') return            // palm / finger rejection
+      if (tool === 'pan') return                                  // pan → wrap scrolls
+      if (e.pointerType === 'touch') return                       // palm / finger rejection
       e.preventDefault()
-      canvasRef.current!.setPointerCapture(e.pointerId)
+      commitCurrent()                                              // flush any dropped-pointerup stroke
+      liveRef.current!.setPointerCapture(e.pointerId)
       const [x, y] = toLogical(e)
       if (tool === 'eraser') { eraseAt(x, y); return }
       drawing.current = { tool: 'pen', color, size, points: [[x, y, e.pressure || 0.5]] }
+      predicted.current = []
+      scheduleLive()
     }
 
     function onMove(e: React.PointerEvent<HTMLCanvasElement>) {
-      if (tool === 'pan') return
-      if (e.pointerType === 'touch') return
+      if (tool === 'pan' || e.pointerType === 'touch') return
       if (tool === 'eraser') { if (e.buttons) { const [x, y] = toLogical(e); eraseAt(x, y) } return }
       const cur = drawing.current; if (!cur) return
-      const evs = (e.nativeEvent.getCoalescedEvents?.() as PointerEvent[] | undefined) ?? [e.nativeEvent as PointerEvent]
-      const ctx = canvasRef.current!.getContext('2d')!
-      ctx.strokeStyle = cur.color; ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+      const native = e.nativeEvent as PointerEvent
+      const evs = native.getCoalescedEvents?.() ?? [native]
       for (const ev of evs) {
         const [x, y] = toLogical(ev)
-        const prev = cur.points[cur.points.length - 1]
         cur.points.push([x, y, ev.pressure || 0.5])
-        // incremental segment (avoids a full repaint per move)
-        ctx.lineWidth = cur.size * (0.4 + 0.6 * (((prev[2] ?? 0.5) + (ev.pressure || 0.5)) / 2))
-        ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(x, y); ctx.stroke()
       }
+      const pred = (native as PointerEvent & { getPredictedEvents?: () => PointerEvent[] }).getPredictedEvents?.() ?? []
+      predicted.current = pred.map(ev => { const [x, y] = toLogical(ev); return [x, y, ev.pressure || 0.5] })
+      scheduleLive()
     }
 
     function onUp() {
-      if (tool === 'eraser' || tool === 'pan') { return }
-      const cur = drawing.current; drawing.current = null
-      if (!cur || !cur.points.length) return
-      setPages(prev => prev.map((p, i) => i === idxRef.current ? { strokes: [...p.strokes, cur] } : p))
+      if (tool === 'eraser' || tool === 'pan') return
+      commitCurrent()
     }
 
     function undo() {
@@ -155,7 +227,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
       setPages(prev => prev.map((p, i) => i === idxRef.current ? { strokes: [] } : p))
     }
     function addPage() {
-      setPages(prev => { const next = [...prev, { strokes: [] }]; return next }); setPageIdx(pages.length)
+      setPages(prev => [...prev, { strokes: [] }]); setPageIdx(pages.length)
     }
     function deletePage() {
       if (pages.length <= 1) { clearPage(); return }
@@ -163,6 +235,8 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
       setPages(prev => prev.filter((_, k) => k !== i))
       setPageIdx(Math.max(0, i - 1))
     }
+
+    const liveStyle = tool === 'pan' ? { touchAction: 'auto' as const, cursor: 'grab' as const } : undefined
 
     return (
       <div className="hw-wrap">
@@ -192,16 +266,18 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
           <button className="hw-tool" onClick={deletePage} title="Delete page">🗑</button>
         </div>
         <div className="hw-canvas-wrap" ref={wrapRef}>
-          <canvas
-            ref={canvasRef}
-            className="hw-canvas"
-            style={tool === 'pan' ? { touchAction: 'auto', cursor: 'grab' } : undefined}
-            onPointerDown={onDown}
-            onPointerMove={onMove}
-            onPointerUp={onUp}
-            onPointerCancel={onUp}
-            onPointerLeave={onUp}
-          />
+          <div className="hw-canvas-stack">
+            <canvas ref={committedRef} className="hw-canvas hw-canvas-committed" />
+            <canvas
+              ref={liveRef}
+              className="hw-canvas hw-canvas-live"
+              style={liveStyle}
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerCancel={onUp}
+            />
+          </div>
         </div>
       </div>
     )
