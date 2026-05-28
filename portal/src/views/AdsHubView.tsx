@@ -293,13 +293,17 @@ export default function AdsHubView() {
       // Fetch the existing note body once so we can preserve whichever side
       // (text or handwriting) the user is NOT actively editing in this save.
       // Without this, saving from Draw would wipe rich text and vice versa.
+      // ABORT on any fetch/parse failure — silently swallowing it once cost a
+      // user their note when a transient fetch error left prevText empty and
+      // the save proceeded with just the handwriting.
       let prevText = '', prevHw = ''
       if (selected.notesDriveId) {
-        try {
-          const prevRaw = await (await fetchDriveFile(token, selected.notesDriveId)).text()
-          const s = splitNoteBody(bodyInner(prevRaw))
-          prevText = s.text; prevHw = s.hw
-        } catch { /* fine — first save or fetch failed; nothing to preserve */ }
+        const prevRaw = await (await fetchDriveFile(token, selected.notesDriveId)).text()
+        if (!prevRaw.trim()) {
+          throw new Error("Couldn't read the existing note (empty response). Refusing to overwrite — please try Save again.")
+        }
+        const s = splitNoteBody(bodyInner(prevRaw))
+        prevText = s.text; prevHw = s.hw
       }
 
       // ── Handwriting note: upload page PNGs + embed the stroke JSON ──────────
