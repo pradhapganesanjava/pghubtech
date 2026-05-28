@@ -4322,6 +4322,8 @@ body.resizing-h * {
 }
 .hw-canvas-committed { z-index: 0; background: transparent; }
 .hw-canvas-live      { z-index: 1; background: transparent; touch-action: none; }
+.hw-mode-lbl { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); }
+.hw-mode-select { font-size: 11px; padding: 2px 4px; background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 4px; }
 
 /* List Manager modal */
 .adshub-modal-backdrop {
