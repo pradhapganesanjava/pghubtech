@@ -46,7 +46,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
       initialDoc?.pages?.length ? initialDoc.pages.map(p => ({ strokes: p.strokes ?? [] })) : [{ strokes: [] }],
     )
     const [pageIdx, setPageIdx] = useState(0)
-    const [tool, setTool]   = useState<'pen' | 'eraser'>('pen')
+    const [tool, setTool]   = useState<'pen' | 'eraser' | 'pan'>('pen')
     const [color, setColor] = useState(COLORS[0])
     const [size, setSize]   = useState(SIZES[1])
 
@@ -85,6 +85,12 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
       ctx.setTransform(canvas.width / PAGE_W, 0, 0, canvas.height / PAGE_H, 0, 0)
       ctx.clearRect(0, 0, PAGE_W, PAGE_H)
       paintPage(ctx, pagesRef.current[idxRef.current] ?? { strokes: [] })
+      // Also paint the in-progress stroke. Without this, a fast next stroke
+      // started before the previous commit's redraw runs would have its
+      // already-drawn segments wiped — looking like the stroke "didn't take".
+      if (drawing.current && drawing.current.points.length) {
+        paintPage(ctx, { strokes: [drawing.current] })
+      }
     }
 
     useEffect(() => { redraw() }, [pages, pageIdx])
@@ -108,6 +114,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     }
 
     function onDown(e: React.PointerEvent<HTMLCanvasElement>) {
+      if (tool === 'pan') return                       // pan mode → let the wrap scroll
       if (e.pointerType === 'touch') return            // palm / finger rejection
       e.preventDefault()
       canvasRef.current!.setPointerCapture(e.pointerId)
@@ -117,6 +124,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     }
 
     function onMove(e: React.PointerEvent<HTMLCanvasElement>) {
+      if (tool === 'pan') return
       if (e.pointerType === 'touch') return
       if (tool === 'eraser') { if (e.buttons) { const [x, y] = toLogical(e); eraseAt(x, y) } return }
       const cur = drawing.current; if (!cur) return
@@ -134,7 +142,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     }
 
     function onUp() {
-      if (tool === 'eraser') { return }
+      if (tool === 'eraser' || tool === 'pan') { return }
       const cur = drawing.current; drawing.current = null
       if (!cur || !cur.points.length) return
       setPages(prev => prev.map((p, i) => i === idxRef.current ? { strokes: [...p.strokes, cur] } : p))
@@ -161,6 +169,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
         <div className="hw-toolbar">
           <button className={`hw-tool${tool === 'pen' ? ' active' : ''}`} onClick={() => setTool('pen')} title="Pen">✒️</button>
           <button className={`hw-tool${tool === 'eraser' ? ' active' : ''}`} onClick={() => setTool('eraser')} title="Eraser">🩹</button>
+          <button className={`hw-tool${tool === 'pan' ? ' active' : ''}`} onClick={() => setTool('pan')} title="Pan / scroll (no drawing)">🖐</button>
           <span className="hw-sep" />
           {COLORS.map(c => (
             <button key={c} className={`hw-swatch${color === c && tool === 'pen' ? ' active' : ''}`}
@@ -186,6 +195,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
           <canvas
             ref={canvasRef}
             className="hw-canvas"
+            style={tool === 'pan' ? { touchAction: 'auto', cursor: 'grab' } : undefined}
             onPointerDown={onDown}
             onPointerMove={onMove}
             onPointerUp={onUp}
