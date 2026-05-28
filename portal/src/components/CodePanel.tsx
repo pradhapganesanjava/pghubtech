@@ -15,9 +15,14 @@ const MOD_KEY = { python3: 'py3Modified', java: 'javaModified' } as const
 //   headerRight — content pinned to the right of the header (e.g. notes toggle)
 //   overlay     — when set, fills the editor space instead of the code editor
 //                 (used to show the problem's notes in the code area)
-interface Props { slug: string; headerRight?: React.ReactNode; overlay?: React.ReactNode }
+interface Props {
+  slug: string
+  headerRight?: React.ReactNode
+  overlay?: React.ReactNode
+  onHeaderDoubleClick?: () => void
+}
 
-export default function CodePanel({ slug, headerRight, overlay }: Props) {
+export default function CodePanel({ slug, headerRight, overlay, onHeaderDoubleClick }: Props) {
   const { toast } = useToast()
   const [code, setCode]       = useState<ProblemCode>(EMPTY_CODE())
   const [lang, setLang]       = useState<Lang>('python3')
@@ -87,7 +92,7 @@ export default function CodePanel({ slug, headerRight, overlay }: Props) {
 
   return (
     <div className="code-panel">
-      <div className="code-panel-hd">
+      <div className="code-panel-hd" onDoubleClick={onHeaderDoubleClick} title={onHeaderDoubleClick ? 'Double-click to widen / restore the code panel' : undefined}>
         <span className="code-panel-title">Starter Code</span>
         <div className="code-lang-tabs">
           {(['python3', 'java'] as Lang[]).map(l => (

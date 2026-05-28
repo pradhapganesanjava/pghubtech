@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
-import { fetchDriveFile, resolveDriveImagesInHtml, deleteDriveFile } from '../lib/drive'
+import { fetchDriveFile, resolveDriveImagesInHtml } from '../lib/drive'
 import {
   getOrCreateImageFolder, uploadImageBlob, inferFilename, uploadInlineImages,
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
 import {
-  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem, clearProblemNote,
+  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
   loadLists, getCachedLists, addToList, removeFromList, renameList,
 } from '../adapters/adsRepo'
 import type { LCProblem, LCList } from '../adapters/adsRepo'
@@ -201,6 +201,12 @@ export default function AdsHubView() {
   const [tagsRatio, setTagsRatio]           = useState(20)  // sidebar width %
   const [codeRatio, setCodeRatio]           = useState(42)  // code-panel width % within the detail body
   const [codeCollapsed, setCodeCollapsed]   = useState(true) // code/notes panel collapsed to a strip on load
+
+  // Auto-snap the list↔detail divider to its min when a problem is open, and
+  // the details↔code divider to its max when the code/notes panel is expanded.
+  // (Same effect as double-clicking the dividers; the user can still drag.)
+  useEffect(() => { setListRatio(selected ? 15 : 40) }, [selected?.slug])
+  useEffect(() => { setCodeRatio(codeCollapsed ? 42 : 75) }, [codeCollapsed])
   const descCodeRef = useRef<HTMLDivElement>(null)
   const dragCodeRef = useRef(false)
   // Add-to-list menu in the detail header.
@@ -349,23 +355,8 @@ export default function AdsHubView() {
     setNoteMode(selected?.notesDriveId ? 'view' : 'hidden')
   }
 
-  async function deleteNote() {
-    if (!selected?.notesDriveId) return
-    if (!window.confirm('Delete this note? This removes its Drive file and cannot be undone.')) return
-    const target = selected
-    try {
-      const token = GAuth.getToken()
-      if (token) await deleteDriveFile(token, target.notesDriveId).catch(() => { /* keep going */ })
-      await clearProblemNote(target.slug)
-      const patched = { ...target, notesDriveId: '', hasNotes: false }
-      setProblems(prev => prev.map(p => p.slug === target.slug ? patched : p))
-      setSelected(patched)
-      setNoteMode('hidden')
-      toast('Note deleted', 'success')
-    } catch (e) {
-      toast(`Delete failed: ${(e as Error).message}`, 'error')
-    }
-  }
+  // (Delete-note action removed to avoid accidental deletion. clearProblemNote
+  // + deleteDriveFile are still exported by their modules if needed later.)
 
   useEffect(() => {
     if (cached != null) return  // already have data; use ↻ to refresh
@@ -783,10 +774,7 @@ export default function AdsHubView() {
           title={noteMode === 'view' ? 'Hide notes' : 'Show my notes'}
         >{noteMode === 'view' ? '✕ Notes' : '📝 Notes'}</button>
         {noteMode === 'view' && (
-          <>
-            <button className="code-btn" onClick={startEdit} title="Edit notes">✏️</button>
-            <button className="code-btn" onClick={deleteNote} title="Delete notes">🗑</button>
-          </>
+          <button className="code-btn" onClick={startEdit} title="Edit notes">✏️</button>
         )}
       </>
     ) : (
@@ -1165,8 +1153,8 @@ export default function AdsHubView() {
               <div
                 className="col-hd doc-detail-hd"
                 style={{ padding: '10px 12px', flexShrink: 0 }}
-                onDoubleClick={() => setViewerExpanded(v => !v)}
-                title="Double-click to expand / restore"
+                onDoubleClick={() => setListRatio(r => r <= 18 ? 40 : 15)}
+                title="Double-click to widen / restore the detail pane"
               >
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {selected.frontendId && <>#{selected.frontendId} · </>}{selected.title}
@@ -1288,6 +1276,7 @@ export default function AdsHubView() {
                       <CodePanel
                         key={selected.slug}
                         slug={selected.slug}
+                        onHeaderDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
                         headerRight={<>
                           {renderNotesToggle()}
                           <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
