@@ -74,6 +74,30 @@ function contractHtmlEmbeds(html: string): string {
   return c.innerHTML
 }
 
+// Pull the body inner from a stored note HTML document.
+function bodyInner(html: string): string {
+  const m = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+  return m ? m[1] : html
+}
+
+// Split a note body into its handwriting section (.hw-doc + .hw-page <img>s)
+// and the remaining rich-text content, plus the parsed HwDoc if present.
+// Uses DOMParser so attribute values containing '>' (e.g. data-doc JSON)
+// don't trip naive regexes. Used by startEdit (load both) and handleSaveNote
+// (preserve the other side so saving one never wipes the other).
+function splitNoteBody(body: string): { text: string; hw: string; hwDoc: HwDoc | null } {
+  const doc = new DOMParser().parseFromString(`<!doctype html><html><body>${body}</body></html>`, 'text/html')
+  const hwDocEl = doc.querySelector('.hw-doc') as HTMLElement | null
+  const hwImgs  = Array.from(doc.querySelectorAll('img.hw-page')) as HTMLElement[]
+  const hw = (hwDocEl?.outerHTML ?? '') + hwImgs.map(i => i.outerHTML).join('')
+  let hwDoc: HwDoc | null = null
+  if (hwDocEl) {
+    try { hwDoc = JSON.parse(hwDocEl.getAttribute('data-doc') ?? '') as HwDoc } catch { /* keep null */ }
+  }
+  hwDocEl?.remove(); hwImgs.forEach(i => i.remove())
+  return { text: doc.body.innerHTML.trim(), hw, hwDoc }
+}
+
 // Cap the rendered list so a 3,900-row archive stays snappy; filters/search
 // narrow it down and the toolbar shows the true match count.
 const LIST_CAP = 400
@@ -224,21 +248,16 @@ export default function AdsHubView() {
       const token = GAuth.getToken()
       if (!token) throw new Error('Not signed in')
       const raw  = await (await fetchDriveFile(token, selected.notesDriveId)).text()
-      // Handwriting note? rehydrate the strokes into the Draw pad.
-      const hwMatch = raw.match(/<div class="hw-doc" data-doc="([^"]*)"/)
-      if (hwMatch) {
-        try {
-          const json = hwMatch[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-          setHwInitialDoc(JSON.parse(json) as HwDoc)
-          setEditorView('draw')
-          return
-        } catch { /* fall through to text edit */ }
-      }
-      const body = contractHtmlEmbeds(extractEditableBody(raw))
-      // Swap Drive image URLs → blob: URLs so they render in the editor; the
-      // reverse map lets save() restore the Drive URLs.
-      const resolved = await resolveDriveImagesInHtml(body, token, blobUrlsRef.current, blobToDriveRef.current)
+      // Load BOTH the text and the handwriting (if present) so the user can
+      // switch tabs and edit either independently. Save preserves the other side.
+      const split = splitNoteBody(extractEditableBody(raw))
+      const textForEditor = contractHtmlEmbeds(split.text)
+      const resolved = await resolveDriveImagesInHtml(textForEditor, token, blobUrlsRef.current, blobToDriveRef.current)
       setEditorHtml(resolved)
+      if (split.hwDoc) {
+        setHwInitialDoc(split.hwDoc)
+        setEditorView('draw')   // default to Draw when there's handwriting
+      }
     } catch (e) {
       toast(`Couldn't load note: ${(e as Error).message}`, 'error')
       setNoteMode(selected?.notesDriveId ? 'view' : 'hidden')
@@ -265,6 +284,18 @@ export default function AdsHubView() {
       const token = GAuth.getToken()
       if (!token) throw new Error('Not signed in')
 
+      // Fetch the existing note body once so we can preserve whichever side
+      // (text or handwriting) the user is NOT actively editing in this save.
+      // Without this, saving from Draw would wipe rich text and vice versa.
+      let prevText = '', prevHw = ''
+      if (selected.notesDriveId) {
+        try {
+          const prevRaw = await (await fetchDriveFile(token, selected.notesDriveId)).text()
+          const s = splitNoteBody(bodyInner(prevRaw))
+          prevText = s.text; prevHw = s.hw
+        } catch { /* fine — first save or fetch failed; nothing to preserve */ }
+      }
+
       // ── Handwriting note: upload page PNGs + embed the stroke JSON ──────────
       if (editorView === 'draw' && hwPadRef.current) {
         const doc  = hwPadRef.current.getDoc()
@@ -280,7 +311,9 @@ export default function AdsHubView() {
         data.setAttribute('data-doc', JSON.stringify(doc))   // outerHTML escapes the attribute
         root.appendChild(data)
         for (const u of urls) { const img = document.createElement('img'); img.className = 'hw-page'; img.src = u; root.appendChild(img) }
-        const id = await saveProblemNote(selected, root.innerHTML)
+        const hwBody = root.innerHTML
+        const finalBody = prevText ? `${prevText}\n${hwBody}` : hwBody
+        const id = await saveProblemNote(selected, finalBody)
         const patched = { ...selected, notesDriveId: id, hasNotes: true }
         setProblems(prev => prev.map(p => p.slug === selected.slug ? patched : p))
         setSelected(patched)
@@ -294,7 +327,8 @@ export default function AdsHubView() {
       html = await uploadInlineImages(html, token)   // upload any leftover data:/blob: images
       html = sanitizeHtml(html)
       html = expandHtmlEmbeds(html)                  // raw HTML sections, preserved verbatim
-      const id = await saveProblemNote(selected, html)
+      const finalBody = prevHw ? `${html}\n${prevHw}` : html
+      const id = await saveProblemNote(selected, finalBody)
       const patched = { ...selected, notesDriveId: id, hasNotes: true }
       setProblems(prev => prev.map(p => p.slug === selected.slug ? patched : p))
       setSelected(patched)
