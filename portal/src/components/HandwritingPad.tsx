@@ -1,5 +1,16 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { getStroke } from 'perfect-freehand'
+
+// A committed stroke is immutable — once it's in the strokes array its
+// reference never changes — so React.memo here means each old <path> is
+// skipped on subsequent renders. Without this, every commit re-ran
+// perfect-freehand's getStroke() for ALL strokes on the page; rapid bursts
+// (e.g. 4 circles in 2 s) blew the frame budget and stalled the UI thread,
+// queueing pointer events and dropping/delaying later strokes. pointerEvents
+// =none keeps every move from hit-testing through every path.
+const CommittedPath = memo(function CommittedPath({ stroke }: { stroke: HwStroke }) {
+  return <path d={strokeToSvgD(stroke)} fill={stroke.color} pointerEvents="none" />
+})
 
 // ── GoodNotes-style handwriting pad — multi-mode ─────────────────────────────
 // Same data model and toolbar across all modes; only the input + render path
@@ -349,7 +360,7 @@ function SvgPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadProp
     <div className="hw-canvas-stack">
       <svg ref={svgRef} className="hw-canvas hw-canvas-live" viewBox={`0 0 ${PAGE_W} ${PAGE_H}`} preserveAspectRatio="xMidYMid meet"
         style={style} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-        {page.strokes.map((s, i) => <path key={`${pageKey}-${i}`} d={strokeToSvgD(s)} fill={s.color} />)}
+        {page.strokes.map((s, i) => <CommittedPath key={`${pageKey}-${i}`} stroke={s} />)}
       </svg>
     </div>
   )
@@ -427,12 +438,14 @@ function ReactPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadPr
         onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       >
         {/* Committed strokes — keys are STABLE across commits, so React keeps
-            each <path> in place and only appends one new node per commit. */}
+            each <path> in place and only appends one new node per commit.
+            Each is wrapped in React.memo so old strokes never re-run the
+            (expensive) perfect-freehand pass on subsequent renders. */}
         {page.strokes.map((s, i) => (
-          <path key={`${pageKey}-c-${i}`} d={strokeToSvgD(s)} fill={s.color} />
+          <CommittedPath key={`${pageKey}-c-${i}`} stroke={s} />
         ))}
         {active && active.points.length > 0 && (
-          <path key={`${pageKey}-a`} d={strokeToSvgD(active)} fill={active.color} />
+          <path key={`${pageKey}-a`} d={strokeToSvgD(active)} fill={active.color} pointerEvents="none" />
         )}
       </svg>
     </div>
