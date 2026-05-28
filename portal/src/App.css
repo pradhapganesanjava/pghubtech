@@ -4167,6 +4167,19 @@ body.resizing-h * {
 .adshub-desc-col { flex: 1 1 0; min-width: 0; overflow-y: auto; padding-right: 4px; }
 .adshub-code-col { flex: 0 0 42%; min-width: 0; display: flex; padding-left: 4px; }
 
+/* Collapsed code/notes strip — Code + Notes launcher icons */
+.adshub-code-strip {
+  display: flex; flex-direction: column; gap: 8px; align-items: stretch;
+  padding: 8px 4px; border-left: 1px solid var(--border); width: 100%;
+}
+.adshub-strip-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 2px; border-radius: 8px; cursor: pointer;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text); font-size: 14px;
+}
+.adshub-strip-btn:hover { border-color: var(--primary); color: var(--primary); }
+.adshub-strip-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
+
 /* Code panel (Python3 / Java starter code editor) */
 .code-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
 .code-panel-hd { display: flex; align-items: center; gap: 10px; padding: 2px 0 8px; }
@@ -4223,6 +4236,47 @@ body.resizing-h * {
   .adshub-desc-col { padding-right: 0; }
   .adshub-desc-code-split > .qa-divider { display: none; }
 }
+
+/* Mobile: stack problem + code/notes as two tall, individually-scrolling
+   sections (each ~viewport height) so the problem text is actually readable.
+   Desktop layout is unchanged. */
+@media (max-width: 768px) {
+  .adshub-detail-body { max-height: none; }
+  .adshub-desc-code-split { flex-direction: column; }
+  .adshub-desc-code-split > .qa-divider { display: none; }
+  .adshub-desc-col {
+    flex: 0 0 auto; height: 82vh; overflow-y: auto; padding-right: 0;
+  }
+  .adshub-code-col {
+    flex: 0 0 auto !important; min-height: 82vh; overflow-y: auto;
+    padding-left: 0; margin-top: 8px; border-top: 1px solid var(--border);
+  }
+  /* Collapsed → pin the Code/Notes launcher as a sticky bottom bar so it
+     never scrolls out of reach. */
+  .adshub-code-col.collapsed {
+    min-height: 0 !important; position: sticky; bottom: 0; z-index: 5;
+    margin-top: 0; background: var(--bg2); border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 12px rgba(0,0,0,.18);
+  }
+  .adshub-code-col.collapsed .adshub-code-strip {
+    flex-direction: row; gap: 10px; border-left: 0; padding: 8px;
+  }
+  .adshub-code-col.collapsed .adshub-strip-btn {
+    flex: 1; flex-direction: row; gap: 6px; justify-content: center; padding: 10px 2px;
+  }
+}
+
+/* Add-a-problem form (inside the modal) */
+.adshub-add-form {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px;
+  padding: 14px; overflow-y: auto;
+}
+.adshub-add-form label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em;
+}
+.adshub-add-form .rf-input, .adshub-add-form .rf-textarea { width: 100%; font-weight: 400; text-transform: none; }
+.adshub-add-form .adshub-add-full { grid-column: 1 / -1; }
 
 /* List Manager modal */
 .adshub-modal-backdrop {

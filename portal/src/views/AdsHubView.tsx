@@ -6,7 +6,7 @@ import {
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
 import {
-  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags,
+  loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
   loadLists, getCachedLists, addToList, removeFromList, renameList,
 } from '../adapters/adsRepo'
 import type { LCProblem, LCList } from '../adapters/adsRepo'
@@ -121,10 +121,12 @@ function NoteViewer({ driveId }: { driveId: string }) {
   if (loading) return <div className="doc-viewer-state"><div className="spinner" /><span>Loading notes…</span></div>
   if (error)   return <div className="doc-viewer-state error">Failed to load notes: {error}</div>
   if (html == null) return null
-  // sandbox without allow-scripts: notes are static HTML; this both isolates
-  // their <style> blocks from the portal and keeps same-origin so the
-  // parent-created blob: image URLs resolve.
-  return <iframe title="Notes" className="adshub-note-iframe" sandbox="allow-same-origin" srcDoc={html} />
+  // allow-scripts so embedded HTML sections (which may carry <script>) run, and
+  // allow-same-origin so the parent-created blob: image URLs resolve. This is
+  // the user's own note content — same sandbox posture as DocViewer for
+  // user-uploaded docs. (Browsers log an advisory that this combo can escape
+  // the sandbox; that's expected, not a block.)
+  return <iframe title="Notes" className="adshub-note-iframe" sandbox="allow-scripts allow-same-origin allow-popups" srcDoc={html} />
 }
 
 export default function AdsHubView() {
@@ -152,6 +154,12 @@ export default function AdsHubView() {
   const [selectedList, setSelectedList]    = useState<string | null>(null)
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage'>('browse')
   const [lineageFocus, setLineageFocus]    = useState<number | null>(null)
+  // Add-a-problem modal.
+  const EMPTY_ADD = { frontendId: '', title: '', slug: '', difficulty: 'Medium', topics: '', companies: '', tags: '', leetcodeUrl: '', description: '' }
+  const [addOpen, setAddOpen] = useState(false)
+  const [addForm, setAddForm] = useState({ ...EMPTY_ADD })
+  const [addErr, setAddErr]   = useState('')
+  const [addBusy, setAddBusy] = useState(false)
   // Tag editing on the selected problem.
   const [editingTags, setEditingTags] = useState(false)
   const [tagDraft, setTagDraft]       = useState<string[]>([])
@@ -164,6 +172,7 @@ export default function AdsHubView() {
   const [listRatio, setListRatio]           = useState(40)  // list width % when a problem is open
   const [tagsRatio, setTagsRatio]           = useState(20)  // sidebar width %
   const [codeRatio, setCodeRatio]           = useState(42)  // code-panel width % within the detail body
+  const [codeCollapsed, setCodeCollapsed]   = useState(true) // code/notes panel collapsed to a strip on load
   const descCodeRef = useRef<HTMLDivElement>(null)
   const dragCodeRef = useRef(false)
   // Add-to-list menu in the detail header.
@@ -296,7 +305,16 @@ export default function AdsHubView() {
     setEditorHtml('')
     setNoteMode('hidden')
     setEditingTags(false)
+    setCodeCollapsed(true)   // code/notes start collapsed for each problem
   }, [selected?.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Expand the right panel into code or notes.
+  function openCode()  { setNoteMode('hidden'); setCodeCollapsed(false) }
+  function openNotes() {
+    setCodeCollapsed(false)
+    if (selected?.hasNotes && selected.notesDriveId) setNoteMode('view')
+    else startCreate()   // no note yet → open the editor to add one
+  }
 
   // Load MyList collections once (unless cached).
   useEffect(() => {
@@ -339,6 +357,41 @@ export default function AdsHubView() {
   }
   function clearAllFilters() {
     setTags([]); setCompanies([]); setSelectedList(null)
+  }
+
+  // ── Add a new problem ───────────────────────────────────────────────────
+  const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  function openAddProblem() { setAddForm({ ...EMPTY_ADD }); setAddErr(''); setAddOpen(true) }
+  function setAdd(k: keyof typeof EMPTY_ADD, v: string) { setAddForm(f => ({ ...f, [k]: v })) }
+  async function saveNewProblem() {
+    const id = addForm.frontendId.trim()
+    const title = addForm.title.trim()
+    const slug = addForm.slug.trim() || slugify(title)
+    if (!id)    { setAddErr('Problem id (#) is required'); return }
+    if (!title) { setAddErr('Title is required'); return }
+    if (!slug)  { setAddErr('Enter a slug (could not derive one from the title)'); return }
+    if (problems.some(p => p.frontendId === id))   { setAddErr(`Id #${id} is already taken`); return }
+    if (problems.some(p => p.slug === slug))        { setAddErr(`Slug "${slug}" already exists`); return }
+    const list = (s: string) => s.split(/\s*[;,]\s*/).map(x => x.trim()).filter(Boolean)
+    const desc = addForm.description.trim()
+    const p: LCProblem = {
+      slug, frontendId: id, title, difficulty: addForm.difficulty,
+      topics: list(addForm.topics), companies: list(addForm.companies), companiesRecent: [],
+      tags: list(addForm.tags),
+      leetcodeUrl: addForm.leetcodeUrl.trim() || `https://leetcode.com/problems/${slug}/`,
+      descriptionHtml: desc && !/</.test(desc) ? `<p>${desc}</p>` : desc,
+      notesDriveId: '', hasNotes: false,
+    }
+    setAddBusy(true); setAddErr('')
+    try {
+      await appendProblem(p)
+      setProblems(prev => [...prev, p])
+      setSelected(p)
+      setAddOpen(false)
+      toast(`Added #${id} ${title}`, 'success')
+    } catch (e) {
+      setAddErr((e as Error).message)
+    } finally { setAddBusy(false) }
   }
 
   // ── Tag editing on the selected problem ─────────────────────────────────
@@ -690,6 +743,54 @@ export default function AdsHubView() {
 
   return (
     <div className="browse-body-wrap" ref={bodyWrapRef}>
+      {/* ── Add-a-problem modal ────────────────────────────────────────── */}
+      {addOpen && (
+        <div className="adshub-modal-backdrop" onClick={() => setAddOpen(false)}>
+          <div className="adshub-manager" onClick={e => e.stopPropagation()}>
+            <div className="adshub-manager-hd">
+              <span>Add a problem</span>
+              <button className="detail-close-btn" onClick={() => setAddOpen(false)}>✕</button>
+            </div>
+            <div className="adshub-add-form">
+              <label>Id (#) *
+                <input className="rf-input" value={addForm.frontendId} onChange={e => setAdd('frontendId', e.target.value)} placeholder="e.g. 3001" disabled={addBusy} autoFocus />
+              </label>
+              <label>Difficulty
+                <select className="rf-input" value={addForm.difficulty} onChange={e => setAdd('difficulty', e.target.value)} disabled={addBusy}>
+                  {['Easy', 'Medium', 'Hard'].map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </label>
+              <label className="adshub-add-full">Title *
+                <input className="rf-input" value={addForm.title} onChange={e => setAdd('title', e.target.value)} placeholder="Problem title" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">Slug
+                <input className="rf-input" value={addForm.slug} onChange={e => setAdd('slug', e.target.value)} placeholder={slugify(addForm.title) || 'auto from title'} disabled={addBusy} />
+              </label>
+              <label>Topics
+                <input className="rf-input" value={addForm.topics} onChange={e => setAdd('topics', e.target.value)} placeholder="Array; Hash Table" disabled={addBusy} />
+              </label>
+              <label>Companies
+                <input className="rf-input" value={addForm.companies} onChange={e => setAdd('companies', e.target.value)} placeholder="Amazon; Google" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">Tags (:: lineage)
+                <input className="rf-input" value={addForm.tags} onChange={e => setAdd('tags', e.target.value)} placeholder="_ds::array::subset; _prob::sum::pair" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">LeetCode URL
+                <input className="rf-input" value={addForm.leetcodeUrl} onChange={e => setAdd('leetcodeUrl', e.target.value)} placeholder="auto: https://leetcode.com/problems/<slug>/" disabled={addBusy} />
+              </label>
+              <label className="adshub-add-full">Description
+                <textarea className="rf-textarea" rows={5} value={addForm.description} onChange={e => setAdd('description', e.target.value)} placeholder="Plain text or HTML…" disabled={addBusy} />
+              </label>
+              {addErr && <div className="login-error adshub-add-full">{addErr}</div>}
+              <div className="rf-actions adshub-add-full">
+                <button className="rf-btn-cancel" onClick={() => setAddOpen(false)} disabled={addBusy}>Cancel</button>
+                <button className="rf-btn-save" onClick={saveNewProblem} disabled={addBusy}>{addBusy ? 'Saving…' : 'Add problem'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── List Manager modal ─────────────────────────────────────────── */}
       {managerOpen && (
         <div className="adshub-modal-backdrop" onClick={() => setManagerOpen(false)}>
@@ -845,6 +946,7 @@ export default function AdsHubView() {
             disabled={refreshing || loading}
             title="Reload problems from the sheet"
           >{refreshing ? '…' : '↻'}</button>
+          <button className="rf-btn-save" onClick={openAddProblem} title="Add a new problem">＋ Add</button>
           <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
             {filtered.length.toLocaleString()} / {problems.length.toLocaleString()}
           </span>
@@ -1054,22 +1156,41 @@ export default function AdsHubView() {
                     )}
                     <div className="adshub-end-footer">· end of problem ·</div>
                   </div>
-                  <div
-                    className="qa-divider"
-                    onPointerDown={startCodeDrag}
-                    onPointerMove={moveCodeDrag}
-                    onPointerUp={endCodeDrag}
-                    onPointerCancel={endCodeDrag}
-                    onDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
-                    title="Drag to resize · double-click to widen the code panel"
-                  />
-                  <div className="adshub-code-col" style={{ flex: `0 0 ${codeRatio}%` }}>
-                    <CodePanel
-                      key={selected.slug}
-                      slug={selected.slug}
-                      headerRight={renderNotesToggle()}
-                      overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
+                  {!codeCollapsed && (
+                    <div
+                      className="qa-divider"
+                      onPointerDown={startCodeDrag}
+                      onPointerMove={moveCodeDrag}
+                      onPointerUp={endCodeDrag}
+                      onPointerCancel={endCodeDrag}
+                      onDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
+                      title="Drag to resize · double-click to widen the code panel"
                     />
+                  )}
+                  <div
+                    className={`adshub-code-col${codeCollapsed ? ' collapsed' : ''}`}
+                    style={codeCollapsed ? { flex: '0 0 48px' } : { flex: `0 0 ${codeRatio}%` }}
+                  >
+                    {codeCollapsed ? (
+                      <div className="adshub-code-strip">
+                        <button className="adshub-strip-btn" onClick={openCode} title="Show code">
+                          <span>{'{ }'}</span><span className="adshub-strip-lbl">Code</span>
+                        </button>
+                        <button className="adshub-strip-btn" onClick={openNotes} title="Show notes">
+                          <span>📝</span><span className="adshub-strip-lbl">Notes</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <CodePanel
+                        key={selected.slug}
+                        slug={selected.slug}
+                        headerRight={<>
+                          {renderNotesToggle()}
+                          <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
+                        </>}
+                        overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
