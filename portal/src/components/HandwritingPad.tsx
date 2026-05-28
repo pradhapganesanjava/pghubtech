@@ -113,10 +113,22 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
       }))
     }
 
+    // Commit the in-progress stroke (if any) into the current page. Shared by
+    // onUp and onDown — on iPad, very fast Pencil writing can drop a stroke's
+    // pointerup entirely, so the next pointerdown has to flush the pending
+    // stroke before starting a new one, otherwise it'd be silently overwritten.
+    function commitCurrent() {
+      const cur = drawing.current
+      drawing.current = null
+      if (!cur || !cur.points.length) return
+      setPages(prev => prev.map((p, i) => i === idxRef.current ? { strokes: [...p.strokes, cur] } : p))
+    }
+
     function onDown(e: React.PointerEvent<HTMLCanvasElement>) {
       if (tool === 'pan') return                       // pan mode → let the wrap scroll
       if (e.pointerType === 'touch') return            // palm / finger rejection
       e.preventDefault()
+      commitCurrent()                                   // flush any stroke whose pointerup was missed
       canvasRef.current!.setPointerCapture(e.pointerId)
       const [x, y] = toLogical(e)
       if (tool === 'eraser') { eraseAt(x, y); return }
@@ -142,10 +154,8 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
     }
 
     function onUp() {
-      if (tool === 'eraser' || tool === 'pan') { return }
-      const cur = drawing.current; drawing.current = null
-      if (!cur || !cur.points.length) return
-      setPages(prev => prev.map((p, i) => i === idxRef.current ? { strokes: [...p.strokes, cur] } : p))
+      if (tool === 'eraser' || tool === 'pan') return
+      commitCurrent()
     }
 
     function undo() {
