@@ -366,7 +366,7 @@ export default function BrowseView() {
           {/* Card list — hidden when viewer is expanded */}
           {!viewerExpanded && (
           <div
-            className="browse-col-cards"
+            className="browse-col-cards has-inner-toolbar"
             style={selectedNote ? { flex: `0 0 ${browseRatio}%` } : undefined}
           >
             {/* Toolbar lives INSIDE the cards column so when the detail

@@ -1141,16 +1141,27 @@ body.resizing-h * {
 }
 .browse-col-cards {
   flex: 1 1 0; min-height: 0; min-width: 0;
-  display: flex; flex-direction: column;
-  /* Hard cap so the flex chain resolves to a definite pixel height — the
-     inner .browse-col-cards-scroll wrapper is the actual scroller. */
-  max-height: calc(100vh - 56px); /* viewport - topbar */
+  /* Hard cap mirrors the ToDo pattern: without a concrete max-height the
+     flex chain may not resolve to a definite pixel height, so overflow-y
+     never engages and the list/table is clipped by the parent overflow. */
+  max-height: calc(100vh - 56px - 52px); /* viewport - topbar - toolbar */
+  overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior-y: contain;
   border-right: 1px solid var(--border);
+}
+/* BrowseView-only opt-in: the toolbar lives INSIDE the cards column, so the
+   column flips to flex-column with a non-scrolling toolbar slot and an
+   inner scroll wrapper. AdsHubView and any other consumer of
+   .browse-col-cards keeps the default overflow-y:auto behavior. */
+.browse-col-cards.has-inner-toolbar {
+  display: flex; flex-direction: column;
+  /* The toolbar lives inside the column so we reclaim the topbar-only height
+     here (no separate top-row toolbar to subtract). */
+  max-height: calc(100vh - 56px);
   overflow: hidden;
 }
-/* Toolbar slot inside the cards column — fixed height, never scrolls. */
 .browse-cards-toolbar-slot { flex: 0 0 auto; }
-/* The actual scrolling area below the toolbar. */
+/* The actual scrolling area below the toolbar (BrowseView only). */
 .browse-col-cards-scroll {
   flex: 1 1 0; min-height: 0;
   overflow-y: auto; overflow-x: hidden;
