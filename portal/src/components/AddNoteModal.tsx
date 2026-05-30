@@ -115,9 +115,10 @@ interface Props {
   existingDecks: string[]
   existingTags:  string[]
   onNoteAdded:   (note: AnkiNote) => void
+  defaultDeck?:  string  // optional pre-fill for the Deck field (used by sidebar "+ Deck" affordance)
 }
 
-export default function AddNoteModal({ open, onClose, templates, existingDecks, existingTags, onNoteAdded }: Props) {
+export default function AddNoteModal({ open, onClose, templates, existingDecks, existingTags, onNoteAdded, defaultDeck }: Props) {
   const { toast } = useToast()
   const tplList = [...templates.values()]
 
@@ -137,6 +138,8 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
   useEffect(() => {
     if (!open) return
     if (tplList.length > 0 && !tplId) setTplId(tplList[0].id)
+    // Pre-fill the Deck field when the caller passed one (e.g. sidebar "+ Deck").
+    if (defaultDeck) setDeck(defaultDeck)
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset fields whenever template changes

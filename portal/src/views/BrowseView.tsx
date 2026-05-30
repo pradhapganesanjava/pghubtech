@@ -62,6 +62,9 @@ export default function BrowseView() {
   const [selectedNote, setSelectedNote] = useState<AnkiNote | null>(null)
 
   const [showAdd,      setShowAdd]      = useState(false)
+  // When the sidebar "+ Deck" affordance is used, we prompt for a name and
+  // open the Add Note modal pre-filled with it. Cleared after the modal closes.
+  const [newDeckDraft, setNewDeckDraft] = useState<string>('')
   const [showUpload,   setShowUpload]   = useState(false)
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set())
   const [deleting,     setDeleting]     = useState(false)
@@ -231,6 +234,12 @@ export default function BrowseView() {
               setLeftCollapsed(c => !c)
             }
           }}
+          onNewDeck={() => {
+            const name = window.prompt('New deck name (use :: for nesting, e.g. Snowflake::Coding):')?.trim()
+            if (!name) return
+            setNewDeckDraft(name)
+            setShowAdd(true)
+          }}
         />
       </div>
 
@@ -242,11 +251,12 @@ export default function BrowseView() {
       {/* Add + CSV upload modals */}
       <AddNoteModal
         open={showAdd}
-        onClose={() => setShowAdd(false)}
+        onClose={() => { setShowAdd(false); setNewDeckDraft('') }}
         templates={templates}
         existingDecks={existingDecks}
         existingTags={existingTags}
         onNoteAdded={handleNoteAdded}
+        defaultDeck={newDeckDraft}
       />
       <CsvUploadModal
         open={showUpload}
