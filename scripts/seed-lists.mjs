@@ -118,7 +118,8 @@ const LISTS = {
     252, 253, 759, 1229, 2402,          // Meeting Assistant: meeting rooms / scheduler / employee free time
     215, 460, 703,                      // Leaderboard / bucketed count + streaming Kth (Best Sellers pattern; 460 closest non-premium)
     279, 322, 518,                      // Coin DP family (Coin Change overpay pattern is #10009; 322 is canonical base)
-    10044,                              // Custom: Best Sellers (book sales leaderboard)
+    269, 444,                           // Topo sort with implicit edges (Course Completion Time uses #10019+#10012 customs; 2050 already in)
+    10044, 10045,                       // Custom: Best Sellers, Course Completion Time
   ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
