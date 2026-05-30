@@ -384,6 +384,15 @@ export default function HomeView() {
         <div
           className="col-main"
           style={answerVisible ? { flexBasis: qaRatio + '%', flex: `0 0 ${qaRatio}%` } : undefined}
+          onDoubleClick={e => {
+            // Double-click anywhere in the middle pane toggles the left
+            // tag/deck sidebar. Ignore double-clicks on interactive elements
+            // (buttons / text inputs / links) so we don't fight the reveal /
+            // rating clicks.
+            const t = e.target as HTMLElement
+            if (t.closest('button, a, input, textarea, select, .rating-btn, .show-answer-btn')) return
+            setLeftCollapsed(c => !c)
+          }}
         >
           <div className="col-main-scroll">
             {/* Mobile-only "open tag drawer" trigger */}
