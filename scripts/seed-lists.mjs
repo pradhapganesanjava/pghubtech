@@ -66,6 +66,45 @@ const LISTS = {
     435,452,
     739,901,
   ],
+  // Snowflake-focused interview prep (curated 2026-05-29 from observed
+  // Snowflake screens + LC discuss posts). Topics: intervals, greedy,
+  // graphs/topo sort, DP, arrays/math/bit, strings, trees, 2D prefix sums.
+  'Snowflake': [
+    56, 57, 435, 1851,                  // Intervals
+    729, 1353, 1751,                    //   + My Calendar I, Max Events I/II
+    330, 1235, 621, 2439,               // Greedy
+    55,                                 //   + Jump Game
+    207, 210, 261, 323,                 // Graphs & Topo
+    785, 1494,                          //   + Is Graph Bipartite, Parallel Courses II
+    1143, 1639, 2002,                   // DP
+    5, 95, 139,                         //   + Longest Palindromic Substring, Unique BSTs II, Word Break
+    1643,                               // Arrays/Math/Bit (2439 above)
+    136, 2449,                          //   + Single Number, Min Ops to Make Arrays Similar
+    3, 2062,                            // Strings
+    271, 917, 2303,                     //   + Encode/Decode Strings, Reverse Only Letters, Taxes
+    94,                                 // Trees
+    572, 872, 2096,                     //   + Subtree of Another Tree, Leaf-Similar Trees, Step-By-Step Directions
+    236, 559, 1110, 1644, 1650,         //   + LCA Binary Tree, Max Depth N-ary, Delete Nodes Forest, LCA II, LCA III
+    304,                                // Matrix (2D prefix sums)
+    146, 155, 295, 588, 981,            // Design: LRU Cache, Min Stack, Median Stream, In-Memory FS, Time-Based KV Store
+    23,                                 // Heap: Merge k Sorted Lists
+    410, 875, 1011, 1898, 2141, 2517,   // Binary search on answer (Job Execution pattern; 2141 is closest analog)
+    542, 2858,                          // Multi-source BFS / tree propagation (Thread Count pattern)
+    589,                                // N-ary Pre-order Traversal (Active Order traversal pattern)
+    821, 849, 1769,                     // 1D nearest-of-type two-pass scan (Eat Cake pattern)
+    802, 851, 1462, 1857, 2192,         // DAG topo-sort + per-node propagation (Privilege Resolution pattern; 2192 is direct match)
+    126, 127, 433, 752,                 // BFS shortest path in implicit graph (Wiki Bot pattern; 127 is direct match)
+    10000, 10001, 10002, 10003, 10004, 10005,  // Custom: Job Execution, Thread Count, Active Order, Eat Cake, Privilege Resolution, Wiki Bot
+    // ── Prachub Snowflake batch (added 2026-05-29) ──
+    1091, 340, 20, 794, 224, 470, 545, 622, 2694, 1242,  // LC analogs from Group A (premium ones may be missing)
+    10006, 10007, 10008, 10009, 10010,  // Tree-delete-height, valid tic-tac-toe ext, coin overpay, max one query
+    10011, 10012, 10013, 10014, 10015,  // Doc predicate, retake schedule, sched+tree path, subtree-sum map, trie serde
+    10016, 10017, 10018, 10019, 10020,  // 2D nearest, 4 OA, expr eval, total time courses, hier paths
+    10021, 10022, 10023, 10024, 10025,  // Recipe subseq, error detect, txn KV, rate limiter, layered services
+    10026, 10027, 10028, 10029,         // DFS+topo, 3Sum scale, cost-sensitive cls, RNG derivations
+    10030, 10031, 10032, 10033, 10034,  // Cron sched, disk KV, REST abstraction, ACL service, dedup object store
+    10035, 10036, 10037, 10038, 10039, 10040,  // Quota, distributed tree count, DAG cache, multi-core sched, resilient auth, distributed e2e
+  ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
     125,392,167,11,15,

@@ -1,0 +1,11 @@
+{
+  "slug": "custom-active-order",
+  "frontend_id": "10002",
+  "title": "Active Order",
+  "difficulty": "Medium",
+  "topics": ["Design", "Tree", "Depth-First Search", "Hash Table"],
+  "companies": ["Snowflake"],
+  "tags": ["_prob::design::tree", "_ds::tree::n-ary", "_prob::dfs::pre-order", "_prob::soft-delete"],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are managing a hierarchy of entities. There is one root entity. Each entity may have children, and children are ordered by the time they were added: earlier children come before later children.</p>\n  <p>Entities can become <em>inactive</em>, but inactive entities should remain in the hierarchy because their children may still be active.</p>\n  <p>Implement a data structure that supports:</p>\n  <ul>\n    <li><code>addChild(parentId, childId)</code></li>\n    <li><code>markInactive(entityId)</code></li>\n    <li><code>getActiveOrder()</code></li>\n  </ul>\n  <p><code>getActiveOrder()</code> should return all active entities in hierarchy order:</p>\n  <ul>\n    <li>Start from the root.</li>\n    <li>Visit an entity before its children.</li>\n    <li>Visit children from oldest to newest.</li>\n    <li>Skip inactive entities themselves, but still traverse their children.</li>\n  </ul>\n  <h3>Example</h3>\n  <pre>root = \"A\"\n\naddChild(\"A\", \"B\")\naddChild(\"A\", \"C\")\naddChild(\"B\", \"D\")\n\nHierarchy:\nA\n├── B\n│   └── D\n└── C\n\ngetActiveOrder() -&gt; [\"A\", \"B\", \"D\", \"C\"]\n\nmarkInactive(\"B\")\n\ngetActiveOrder() -&gt; [\"A\", \"D\", \"C\"]</pre>\n  <h3>Approach hint</h3>\n  <p>Keep a <code>Map&lt;id, Node&gt;</code> where each <code>Node</code> stores <code>{ active: boolean, children: id[] }</code>. <code>addChild</code> pushes to <code>parent.children</code> (preserving insertion order). <code>markInactive</code> flips the flag. <code>getActiveOrder</code> is pre-order DFS that <em>emits</em> the current node only when active, but always recurses into its children. Patterns: <strong>LC 588</strong> (Design FS), <strong>LC 589</strong> (N-ary pre-order), <strong>LC 1110</strong> (delete + preserve children).</p>\n</div>"
+}

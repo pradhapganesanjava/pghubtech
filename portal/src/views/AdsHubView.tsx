@@ -166,6 +166,11 @@ export default function AdsHubView() {
   const [selected, setSelected]   = useState<LCProblem | null>(null)
   const [search, setSearch]       = useState('')
   const [diff, setDiff]           = useState<Diff>('All')
+  // Custom problems live at frontend_id >= 10000 (see scripts/add-custom-problem.mjs).
+  // A toggle is friendlier than substring-searching "1000" (which only catches
+  // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
+  const CUSTOM_ID_MIN = 10000
+  const [customOnly, setCustomOnly] = useState(false)
   const [selectedTags, setTags]   = useState<string[]>([])
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
@@ -439,16 +444,21 @@ export default function AdsHubView() {
       if (selectedCompanies.length > 0 && !selectedCompanies.some(c => p.companies.includes(c))) return false
       // MyList membership.
       if (listSlugs && !listSlugs.has(p.slug)) return false
+      // Custom-only toggle: hide everything below the custom id range.
+      if (customOnly) {
+        const n = Number(p.frontendId)
+        if (!Number.isFinite(n) || n < CUSTOM_ID_MIN) return false
+      }
       if (s) {
         const hay = `#${p.frontendId} ${p.frontendId} ${p.title} ${p.slug} ${p.tags.join(' ')} ${p.topics.join(' ')} ${p.companies.join(' ')}`.toLowerCase()
         if (!hay.includes(s)) return false
       }
       return true
     })
-  }, [problems, diff, selectedTags, selectedCompanies, listSlugs, search])
+  }, [problems, diff, selectedTags, selectedCompanies, listSlugs, search, customOnly])
 
   const shown = filtered.slice(0, LIST_CAP)
-  const activeFilterCount = selectedTags.length + selectedCompanies.length + (selectedList ? 1 : 0)
+  const activeFilterCount = selectedTags.length + selectedCompanies.length + (selectedList ? 1 : 0) + (customOnly ? 1 : 0)
 
   function toggleTag(t: string) {
     setTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
@@ -462,7 +472,22 @@ export default function AdsHubView() {
 
   // ── Add a new problem ───────────────────────────────────────────────────
   const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  function openAddProblem() { setAddForm({ ...EMPTY_ADD }); setAddErr(''); setAddOpen(true) }
+  // Custom (non-LeetCode) problems live in the 10000+ id range to avoid any
+  // collision with a real LC number. Suggest max(existing 10000+) + 1, or
+  // 10000 if none yet — the user can still type a different id.
+  const CUSTOM_ID_BASE = 10000
+  function nextCustomId(): string {
+    let max = CUSTOM_ID_BASE - 1
+    for (const p of problems) {
+      const n = Number(p.frontendId)
+      if (Number.isFinite(n) && n >= CUSTOM_ID_BASE && n > max) max = n
+    }
+    return String(max + 1)
+  }
+  function openAddProblem() {
+    setAddForm({ ...EMPTY_ADD, frontendId: nextCustomId() })
+    setAddErr(''); setAddOpen(true)
+  }
   function setAdd(k: keyof typeof EMPTY_ADD, v: string) { setAddForm(f => ({ ...f, [k]: v })) }
   async function saveNewProblem() {
     const id = addForm.frontendId.trim()
@@ -859,7 +884,7 @@ export default function AdsHubView() {
             </div>
             <div className="adshub-add-form">
               <label>Id (#) *
-                <input className="rf-input" value={addForm.frontendId} onChange={e => setAdd('frontendId', e.target.value)} placeholder="e.g. 3001" disabled={addBusy} autoFocus />
+                <input className="rf-input" value={addForm.frontendId} onChange={e => setAdd('frontendId', e.target.value)} placeholder="LC # or 10000+ for custom" disabled={addBusy} autoFocus />
               </label>
               <label>Difficulty
                 <select className="rf-input" value={addForm.difficulty} onChange={e => setAdd('difficulty', e.target.value)} disabled={addBusy}>
@@ -1038,6 +1063,12 @@ export default function AdsHubView() {
                 onClick={() => setDiff(d)}
               >{d}</button>
             ))}
+            {/* Custom-only chip — see all problems with frontend_id >= 10000. */}
+            <button
+              className={`adshub-diff-pill${customOnly ? ' active' : ''}`}
+              onClick={() => setCustomOnly(v => !v)}
+              title="Show only custom problems (id ≥ 10000)"
+            >✨ Custom</button>
           </div>
           <input
             className="col-search"
