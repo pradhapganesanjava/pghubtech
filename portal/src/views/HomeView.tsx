@@ -305,14 +305,21 @@ export default function HomeView() {
 
   return (
     <div className="review-body">
-      {/* Floating Audio-mode reader — anchored top-right of the viewport,
-          mirrors the Ask AI panel positioning. Shows the question reader
-          first (auto-plays on new card), then swaps to the answer reader
-          when Show Answer is clicked. Each is keyed by note id so the
-          reader remounts on card change and auto-plays chunk 1. */}
-      {audioMode && !isDone && currentNote && currentTmpl && (
+      {/* Floating Audio mode controls — anchored top-right of the viewport,
+          mirrors the Ask AI panel positioning. Always renders the toggle
+          while a card is in view; when audio mode is ON, the chunk reader
+          (Q first, then A when Show Answer is clicked) sits right next to
+          the toggle in the same pill. */}
+      {!isDone && currentNote && currentTmpl && (
         <div className="audio-reader-float">
-          {!answerVisible ? (
+          <button
+            className={`audio-reader-btn audio-toggle${audioMode ? ' active' : ''}`}
+            onClick={toggleAudioMode}
+            title={audioMode
+              ? 'Audio mode ON — questions auto-read; Show Answer reads the answer. Click to disable.'
+              : 'Audio mode OFF — click to auto-read each card aloud (code blocks skipped).'}
+          >{audioMode ? '🔊' : '🔇'}</button>
+          {audioMode && (!answerVisible ? (
             <AudioReader
               key={`q-${currentNote.noteId}`}
               text={htmlToSpokenText(getCardFrontHtml(displayNote ?? currentNote, currentTmpl))}
@@ -326,7 +333,7 @@ export default function HomeView() {
               autoPlay
               label="A"
             />
-          )}
+          ))}
         </div>
       )}
 
@@ -452,14 +459,9 @@ export default function HomeView() {
                 <div className="queue-progress">
                   <div className="queue-fill" style={{ width: `${pct}%` }} />
                 </div>
-                <button
-                  className={`btn btn-secondary${audioMode ? ' active' : ''}`}
-                  onClick={toggleAudioMode}
-                  title={audioMode
-                    ? 'Audio mode ON — questions auto-read; Show Answer reads the answer. Click to disable.'
-                    : 'Audio mode OFF — click to auto-read each card aloud (code blocks skipped).'}
-                  style={{ marginLeft: 8, fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}
-                >{audioMode ? '🔊 Audio: ON' : '🔇 Audio: OFF'}</button>
+                {/* Audio toggle moved to the floating top-right pill (see
+                    .audio-reader-float below) so it lives with the chunk
+                    controls — single place for everything audio. */}
               </div>
             )}
 
