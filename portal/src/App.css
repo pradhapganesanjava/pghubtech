@@ -2127,6 +2127,25 @@ body.resizing-h * {
   .msg-audio-btn { width: 26px; height: 26px; font-size: 11px; }
 }
 
+/* Home → review card → Audio mode reader pill. Used inside .question-card
+   and .col-answer when audioMode is on. Mirrors the .msg-audio look. */
+.audio-reader {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 8px; border-radius: 999px;
+  background: var(--bg2); border: 1px solid var(--border);
+  font-size: 12px; color: var(--text2);
+}
+.audio-reader-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  cursor: pointer; font-size: 13px; line-height: 1;
+  padding: 0;
+}
+.audio-reader-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.audio-reader-btn:disabled { opacity: .5; cursor: wait; }
+.audio-reader-label { font-variant-numeric: tabular-nums; }
+.audio-reader-err { color: #e34545; font-weight: 700; }
+
 /* ─── Ask AI floating panel (anchored top-right) ─────────── */
 .ai-panel {
   position: fixed;

@@ -11,6 +11,8 @@ import { resolveDriveImagesInHtml } from '../lib/drive'
 import { GAuth } from '../lib/gauth'
 import TagDeckTree from '../components/TagDeckTree'
 import { useToast } from '../components/Toast'
+import AudioReader from '../components/AudioReader'
+import { htmlToSpokenText } from '../lib/audioMode'
 
 const REVIEWED_IDS_KEY = 'pghub_reviewed'
 
@@ -67,6 +69,20 @@ export default function HomeView() {
 
   // ── Card state ─────────────────────────────────────────────────────────────
   const [answerVisible, setAnswerVisible] = useState(false)
+  // Audio mode: when on, each new question auto-reads aloud via TTS, and
+  // Show Answer triggers the answer read. Code blocks are stripped before
+  // TTS so the voice doesn't recite curly braces and semicolons. Persisted
+  // in localStorage so the preference survives page reloads. Off by default.
+  const [audioMode, setAudioMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('pghub.audioMode') === '1' } catch { return false }
+  })
+  function toggleAudioMode() {
+    setAudioMode(v => {
+      const next = !v
+      try { localStorage.setItem('pghub.audioMode', next ? '1' : '0') } catch {}
+      return next
+    })
+  }
 
   // ── Layout ─────────────────────────────────────────────────────────────────
   // Default closed on phones (drawer pattern), open on desktops.
@@ -411,6 +427,14 @@ export default function HomeView() {
                 <div className="queue-progress">
                   <div className="queue-fill" style={{ width: `${pct}%` }} />
                 </div>
+                <button
+                  className={`btn btn-secondary${audioMode ? ' active' : ''}`}
+                  onClick={toggleAudioMode}
+                  title={audioMode
+                    ? 'Audio mode ON — questions auto-read; Show Answer reads the answer. Click to disable.'
+                    : 'Audio mode OFF — click to auto-read each card aloud (code blocks skipped).'}
+                  style={{ marginLeft: 8, fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}
+                >{audioMode ? '🔊 Audio: ON' : '🔇 Audio: OFF'}</button>
               </div>
             )}
 
@@ -425,6 +449,17 @@ export default function HomeView() {
                   className="question-html"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardFrontHtml(displayNote ?? currentNote, currentTmpl)) }}
                 />
+                {audioMode && (
+                  <div onClick={e => e.stopPropagation()} style={{ marginTop: 10 }}>
+                    {/* keyed by note id so a new card mounts a fresh reader → auto-plays chunk 0 */}
+                    <AudioReader
+                      key={`q-${currentNote.noteId}`}
+                      text={htmlToSpokenText(getCardFrontHtml(displayNote ?? currentNote, currentTmpl))}
+                      autoPlay
+                      label="Q"
+                    />
+                  </div>
+                )}
                 {!answerVisible && (
                   <div style={{ marginTop: 16 }}>
                     <button className="show-answer-btn" onClick={handleReveal}>
@@ -456,6 +491,16 @@ export default function HomeView() {
                 className="answer-html"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardBackHtml(displayNote ?? currentNote, currentTmpl)) }}
               />
+              {audioMode && (
+                <div style={{ marginTop: 10 }}>
+                  <AudioReader
+                    key={`a-${currentNote.noteId}`}
+                    text={htmlToSpokenText(getCardBackHtml(displayNote ?? currentNote, currentTmpl))}
+                    autoPlay
+                    label="A"
+                  />
+                </div>
+              )}
 
               {/* Rating buttons */}
               <div className="rating-grid">
