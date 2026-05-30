@@ -1,4 +1,5 @@
 // Google Identity Services — OAuth 2.0 token flow
+import { Config } from '../services/config'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const google: any
 
@@ -39,6 +40,33 @@ export const GAuth = {
   getToken(): string | null { return this._token },
   getUser(): GoogleUser | null  { return this._user },
   isSignedIn(): boolean { return !!this._token },
+
+  // Run a fetch-returning function; if the response is HTTP 401 (token
+  // expired or revoked), attempt silent re-authorization and retry once.
+  // The caller passes a thunk (not a Response) so the retried call rebuilds
+  // its Authorization header against the FRESH token after re-auth.
+  //
+  // Used by adapters' write paths so saves don't dead-end on expired tokens —
+  // user content is never lost (callers can keep their dirty state on
+  // failure and offer Retry, but with re-auth the retry is automatic).
+  _reauthInFlight: null as Promise<void> | null,
+  async withAuthRetry(makeRequest: () => Promise<Response>): Promise<Response> {
+    let res = await makeRequest()
+    if (res.status !== 401) return res
+    // Coalesce concurrent re-auth attempts so 10 saves firing in parallel
+    // don't trigger 10 token clients.
+    if (!this._reauthInFlight) {
+      const clientId = Config.googleClientId
+      this._reauthInFlight = clientId
+        ? this.signIn(clientId).then(() => undefined).catch(() => undefined)
+        : Promise.resolve()
+      this._reauthInFlight.finally(() => { this._reauthInFlight = null })
+    }
+    try { await this._reauthInFlight } catch { /* keep original 401 below */ }
+    // If re-auth didn't actually land a new token, don't bother retrying.
+    if (!this._token) return res
+    return makeRequest()
+  },
 
   signIn(clientId: string): Promise<GoogleUser> {
     return new Promise((resolve, reject) => {
