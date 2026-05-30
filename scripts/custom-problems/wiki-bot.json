@@ -1,0 +1,11 @@
+{
+  "slug": "custom-wiki-bot",
+  "frontend_id": "10005",
+  "title": "Wiki Bot",
+  "difficulty": "Medium",
+  "topics": ["Breadth-First Search", "Graph", "Hash Table"],
+  "companies": ["Snowflake"],
+  "tags": ["_prob::bfs::shortest-path", "_prob::bfs::bidirectional", "_ds::graph::implicit", "_prob::api-driven"],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Your company is assessing the comprehensiveness of their internal wiki by hosting a competition to navigate between wiki pages. Competitors must navigate from a starting wiki page to the ending wiki page in the fewest number of clicks.</p>\n  <p>You don't have enough free time to participate in the competition directly, but you can spare the time to build a bot to compete for you instead. You've dug up some code to visit and parse wiki pages, so all that's left for you to do is implement an algorithm for your bot!</p>\n  <p><em>Note: for the purpose of this competition, it is sufficient to return the <strong>length</strong> of the shortest path between wiki pages.</em></p>\n  <h3>API</h3>\n  <pre>from typing import List\n\ndef get_linked_pages(uri: str) -&gt; List[str]:\n    \"\"\"Returns a list of pages linked to by the wiki page at the specified URI.\"\"\"</pre>\n  <h3>Approach hint</h3>\n  <p><strong>BFS</strong> from the start URI. Queue of <code>(uri, depth)</code>; <code>seen</code> set to avoid revisits. Expand a node by calling <code>get_linked_pages(uri)</code>; first time you dequeue the end URI, return its depth.</p>\n  <p>Optimization: <strong>bidirectional BFS</strong> — frontier from start AND from end, expand whichever is smaller each step, stop when the frontiers meet. Reduces work from O(b<sup>d</sup>) to O(b<sup>d/2</sup>) where b is the branching factor.</p>\n  <p>Practical concern: <code>get_linked_pages</code> is the bottleneck (network/IO). Memoize results per URI to never re-fetch a page.</p>\n  <p>Closest LC patterns: <strong>LC 127</strong> (Word Ladder) is the direct algorithmic analog; <strong>LC 433</strong> (Min Genetic Mutation), <strong>LC 752</strong> (Open the Lock) are siblings.</p>\n</div>"
+}

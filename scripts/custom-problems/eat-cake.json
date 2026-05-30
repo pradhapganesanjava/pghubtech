@@ -1,0 +1,11 @@
+{
+  "slug": "custom-eat-cake",
+  "frontend_id": "10003",
+  "title": "Eat Cake",
+  "difficulty": "Easy",
+  "topics": ["Array", "Two Pointers", "Prefix Sum"],
+  "companies": ["Snowflake"],
+  "tags": ["_prob::array::1d-nearest", "_prob::two-pass-scan", "_ds::array"],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You're given an array where <code>0</code> represents an empty spot, <code>1</code> represents a person, and <code>2</code> represents a cake.</p>\n  <p>The <em>distance</em> is defined as the number of <strong>empty spots between</strong> a person and a cake (not the index difference).</p>\n  <p>For a given array, what's the <strong>shortest distance</strong> between any person and any cake?</p>\n  <h3>Examples</h3>\n  <pre>[1, 0, 2] → 1\n[1, 1, 2] → 0</pre>\n  <h3>Follow-up</h3>\n  <p>Assume each person always goes for the closest cake. Given a person's index, return <strong>which cake</strong> they would end up eating. You don't need to handle conflicts (multiple people going for the same cake) or ties (one person equidistant to multiple cakes).</p>\n  <h3>Approach hint</h3>\n  <p>1D nearest-of-type: two-pass scan. Forward pass tracks the last cake index seen (or <code>+∞</code>); for each person, candidate distance is <code>i − lastCake − 1</code>. Backward pass does the symmetric thing. Take the min per person, then the global min across persons.</p>\n  <p>For the follow-up: store both the nearest-left-cake-index and nearest-right-cake-index per person; the chosen cake is whichever is closer (ties → either).</p>\n  <p>Patterns: <strong>LC 821</strong> (Shortest Distance to a Character) is the direct analog with the off-by-one distance tweak; <strong>LC 849</strong> (Maximize Distance to Closest Person) is the max-distance sibling; <strong>LC 1769</strong> (Min Ops to Move Balls) is the per-index distance-sum sibling.</p>\n</div>"
+}
