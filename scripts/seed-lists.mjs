@@ -116,6 +116,9 @@ const LISTS = {
     256, 265, 276, 1473,                // Coloring Houses: paint-house DP (k colors / 3 colors / paint fence)
     1834, 1882, 2365,                   // Efficient Deployments: server / task scheduling (1235, 621 already above)
     252, 253, 759, 1229, 2402,          // Meeting Assistant: meeting rooms / scheduler / employee free time
+    215, 460, 703,                      // Leaderboard / bucketed count + streaming Kth (Best Sellers pattern; 460 closest non-premium)
+    279, 322, 518,                      // Coin DP family (Coin Change overpay pattern is #10009; 322 is canonical base)
+    10044,                              // Custom: Best Sellers (book sales leaderboard)
   ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
