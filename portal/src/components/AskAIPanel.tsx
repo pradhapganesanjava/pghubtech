@@ -75,8 +75,44 @@ export default function AskAIPanel({ open, onClose }: Props) {
     try {
       // Pass the conversation as context so multi-turn works.
       const history = [...currentMsgs, userMsg].map(m => ({ role: m.role, content: m.content }))
-      const reply = await LLM.chat(history)
-      const aiMsg: AIMessage = { convId, ts: new Date().toISOString(), role: 'assistant', content: reply }
+      const { content, finishReason } = await LLM.chatWithMeta(history)
+      const display = finishReason === 'length'
+        ? `${content}\n\n_⚠️ Response truncated by the token cap — click 🔄 below to regenerate, or ask for a shorter/scoped answer._`
+        : content
+      const aiMsg: AIMessage = { convId, ts: new Date().toISOString(), role: 'assistant', content: display }
+      setAllMsgs(prev => [...prev, aiMsg])
+      appendMessage(aiMsg).catch(() => { /* ignore */ })
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Regenerate: re-runs the chat using the conversation as it stood right
+  // BEFORE the latest assistant reply, replacing that reply with a new one.
+  // Triggered from the 🔄 button on the most-recent assistant message.
+  async function retryLast() {
+    if (busy) return
+    // Find the last user message; everything after it (the orphan assistant
+    // reply, if any) gets dropped from the in-memory transcript.
+    let lastUserIdx = -1
+    for (let i = currentMsgs.length - 1; i >= 0; i--) {
+      if (currentMsgs[i].role === 'user') { lastUserIdx = i; break }
+    }
+    if (lastUserIdx < 0) return
+    const replayHistory = currentMsgs.slice(0, lastUserIdx + 1).map(m => ({ role: m.role, content: m.content }))
+    // Drop the orphan assistant message(s) from the UI. We don't try to also
+    // delete from the sheet — keeping the old reply as history is harmless,
+    // and the sheet schema has no per-message delete API.
+    setAllMsgs(prev => prev.filter(m => !(m.convId === convId && currentMsgs.indexOf(m) > lastUserIdx)))
+    setBusy(true); setError('')
+    try {
+      const { content, finishReason } = await LLM.chatWithMeta(replayHistory)
+      const display = finishReason === 'length'
+        ? `${content}\n\n_⚠️ Response truncated by the token cap — click 🔄 below to regenerate, or ask for a shorter/scoped answer._`
+        : content
+      const aiMsg: AIMessage = { convId, ts: new Date().toISOString(), role: 'assistant', content: display }
       setAllMsgs(prev => [...prev, aiMsg])
       appendMessage(aiMsg).catch(() => { /* ignore */ })
     } catch (e) {
@@ -267,6 +303,17 @@ export default function AskAIPanel({ open, onClose }: Props) {
             {m.role === 'assistant' && (
               <div className="msg-audio-track">
                 <MessageAudio text={m.content} cacheKey={`${m.convId}|${m.ts}`} />
+                {/* Retry only on the LATEST assistant message — reverse[0] is
+                    the most recent — to keep the UX unambiguous. */}
+                {i === 0 && (
+                  <button
+                    className="ai-icon-btn"
+                    onClick={retryLast}
+                    disabled={busy}
+                    title="Regenerate this response (replays the last prompt with the same context)"
+                    style={{ marginLeft: 6 }}
+                  >🔄</button>
+                )}
               </div>
             )}
           </div>
@@ -308,13 +355,30 @@ function fmtDate(iso: string): string {
 
 // Tiny markdown-ish formatter — bold, italic, code, code blocks, line breaks.
 // Output is then run through DOMPurify so any unintended HTML is neutralised.
+//
+// Code blocks are extracted FIRST and replaced with a placeholder, so that the
+// later \n → <br/> transform doesn't break their formatting (and the inner
+// `<` / `>` / `&` aren't pre-escaped before the code-block regex sees them).
+// Placeholder uses NUL bytes which never appear in normal text or in code.
 function simpleMd(s: string): string {
-  return s
+  const blocks: string[] = []
+  s = s.replace(/```(?:\w+)?\n?([\s\S]*?)```/g, (_, c) => {
+    const i = blocks.push(c) - 1
+    return `__MDCODEBLOCK${i}__`
+  })
+  // Now escape + run inline transforms on the remaining (non-code) text.
+  s = s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c}</code></pre>`)
     .replace(/`([^`\n]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>')
+  // Reinsert code blocks with their contents escaped (preserves real newlines).
+  return s.replace(/__MDCODEBLOCK(\d+)__/g, (_, i) => {
+    const c = blocks[Number(i)]
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return `<pre><code>${c}</code></pre>`
+  })
 }
