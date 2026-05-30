@@ -104,6 +104,18 @@ const LISTS = {
     10026, 10027, 10028, 10029,         // DFS+topo, 3Sum scale, cost-sensitive cls, RNG derivations
     10030, 10031, 10032, 10033, 10034,  // Cron sched, disk KV, REST abstraction, ACL service, dedup object store
     10035, 10036, 10037, 10038, 10039, 10040,  // Quota, distributed tree count, DAG cache, multi-core sched, resilient auth, distributed e2e
+    30, 76, 209, 819,                   // Min window substring + word-based + sliding-window template (Document Search pattern; 76 is direct)
+    150, 227, 736, 1106,                // Interpreter / parser-evaluator (SnowCal pattern; 736 is direct)
+    347, 692, 933,                      // Sliding-window rate limiter + top-K (Dropped Requests pattern; 933 is direct)
+    278, 329, 547, 2050,                // First-bad-version BS + longest path in DAG + connected components (Service Error pattern; 278 / 329 are direct)
+    124, 337, 543, 814, 968,            // Tree DP family + drop-subtree pruning (Flatten Org Chart Part 2 pattern; 968 is closest)
+    10041, 10042, 10043,                // Custom: Document Search, SnowCal, Dropped Requests
+    // ── Topic-tagged batch (added 2026-05-30) — user-supplied LC mappings ──
+    743, 787, 1334, 1928, 2477, 2492,   // City Path: Dijkstra / Floyd–Warshall / weighted shortest path
+    44, 290, 291, 890, 1023,            // String Patterns: word pattern + bijection backtracking + wildcard
+    256, 265, 276, 1473,                // Coloring Houses: paint-house DP (k colors / 3 colors / paint fence)
+    1834, 1882, 2365,                   // Efficient Deployments: server / task scheduling (1235, 621 already above)
+    252, 253, 759, 1229, 2402,          // Meeting Assistant: meeting rooms / scheduler / employee free time
   ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
