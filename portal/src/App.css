@@ -1137,6 +1137,21 @@ body.resizing-h * {
   flex: 1; min-height: 0; min-width: 0;
   display: flex; overflow: hidden;
   height: 100%; /* concrete height so children can resolve % and overflow */
+  position: relative; /* anchor for .browse-vertical-actions */
+}
+/* Vertical Add/Upload strip — pinned top-right of the cards split when a
+   record is open. Frees the top toolbar's right end so the toolbar feels
+   less crowded while reading a card. z-index above the table so it's
+   tappable; backed by a subtle pill so it reads as a control group. */
+.browse-vertical-actions {
+  position: absolute; top: 6px; right: 6px;
+  display: flex; flex-direction: column; gap: 4px;
+  z-index: 5;
+}
+.browse-vertical-actions .browse-add-btn,
+.browse-vertical-actions .browse-upload-btn {
+  margin: 0;
+  white-space: nowrap;
 }
 .browse-col-cards {
   flex: 1 1 0; min-height: 0; min-width: 0;

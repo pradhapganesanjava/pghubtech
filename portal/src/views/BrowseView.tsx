@@ -9,6 +9,12 @@ import NoteDetailPanel from '../components/NoteDetailPanel'
 import AddNoteModal from '../components/AddNoteModal'
 import CsvUploadModal from '../components/CsvUploadModal'
 import { useToast } from '../components/Toast'
+import { loadFilters, saveFilters } from '../lib/persistedFilters'
+
+// Filter state persisted across logout/login (see lib/persistedFilters.ts).
+const BROWSE_FILTERS_KEY = 'pghub.browse.filters'
+interface BrowseFilters { tags: string[]; decks: string[]; search: string }
+const BROWSE_FILTERS_DEFAULTS: BrowseFilters = { tags: [], decks: [], search: '' }
 
 // ── Schedule cell ─────────────────────────────────────────────────────────────
 
@@ -69,9 +75,19 @@ export default function BrowseView() {
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set())
   const [deleting,     setDeleting]     = useState(false)
 
-  const [search,        setSearch]        = useState('')
-  const [selectedTags,  setSelectedTags]  = useState<string[]>([])
-  const [selectedDecks, setSelectedDecks] = useState<string[]>([])
+  // Persisted filters — load once on mount; saved via the effect below.
+  const _persisted = useMemo(() => loadFilters(BROWSE_FILTERS_KEY, BROWSE_FILTERS_DEFAULTS), [])
+  const [search,        setSearch]        = useState<string>(_persisted.search)
+  const [selectedTags,  setSelectedTags]  = useState<string[]>(_persisted.tags)
+  const [selectedDecks, setSelectedDecks] = useState<string[]>(_persisted.decks)
+
+  // Persist filter changes — Clear All triggers the effect too (state goes
+  // to defaults; effect writes those back).
+  useEffect(() => {
+    saveFilters<BrowseFilters>(BROWSE_FILTERS_KEY, {
+      tags: selectedTags, decks: selectedDecks, search,
+    })
+  }, [selectedTags, selectedDecks, search])
   const [leftCollapsed, setLeftCollapsed] = useState(true)
   const [viewerExpanded, setViewerExpanded] = useState(false)
 
@@ -267,7 +283,17 @@ export default function BrowseView() {
       />
 
       {/* Main: cards table + detail split */}
-      <div className="browse-main">
+      <div
+        className="browse-main"
+        onDoubleClick={e => {
+          // Double-click anywhere in the middle pane toggles the left
+          // tag/deck sidebar. Skip clicks on interactive elements so we
+          // don't fight buttons, rows, inputs, etc.
+          const t = e.target as HTMLElement
+          if (t.closest('button, a, input, textarea, select, .bgt tbody tr')) return
+          setLeftCollapsed(c => !c)
+        }}
+      >
         {/* Toolbar */}
         <div className="browse-toolbar">
           <button
@@ -297,16 +323,25 @@ export default function BrowseView() {
                 title={`Delete ${selectedIds.size} selected card${selectedIds.size === 1 ? '' : 's'}`}
               >{deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}</button>
             )}
-            <button
-              className="browse-add-btn"
-              onClick={() => setShowAdd(true)}
-              title="Add a new note"
-            >+ Add</button>
-            <button
-              className="browse-upload-btn"
-              onClick={() => setShowUpload(true)}
-              title="Bulk import notes from CSV"
-            >↑ Upload</button>
+            {/* When no record is selected, +Add / ↑Upload live here at the
+                toolbar's right end. When a record IS selected, they move
+                into a small vertical strip in the cards column header so
+                the detail pane breathes — see .browse-vertical-actions
+                rendered inside .browse-cards-split below. */}
+            {!selectedNote && (
+              <>
+                <button
+                  className="browse-add-btn"
+                  onClick={() => setShowAdd(true)}
+                  title="Add a new note"
+                >+ Add</button>
+                <button
+                  className="browse-upload-btn"
+                  onClick={() => setShowUpload(true)}
+                  title="Bulk import notes from CSV"
+                >↑ Upload</button>
+              </>
+            )}
           </div>
 
           {hasFilters && (
@@ -333,6 +368,24 @@ export default function BrowseView() {
 
         {/* Cards + detail split */}
         <div className="browse-cards-split" ref={browseContainerRef}>
+          {/* Floating vertical Add/Upload strip — only when a record is open.
+              Pinned to the top-right corner of the cards-split, so it's
+              tucked between the cards list and the detail pane and doesn't
+              steal toolbar real estate. */}
+          {selectedNote && (
+            <div className="browse-vertical-actions">
+              <button
+                className="browse-add-btn"
+                onClick={() => setShowAdd(true)}
+                title="Add a new note"
+              >+ Add</button>
+              <button
+                className="browse-upload-btn"
+                onClick={() => setShowUpload(true)}
+                title="Bulk import notes from CSV"
+              >↑ Upload</button>
+            </div>
+          )}
 
           {/* Card list — hidden when viewer is expanded */}
           {!viewerExpanded && (
