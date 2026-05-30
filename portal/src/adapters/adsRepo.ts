@@ -407,15 +407,15 @@ export async function saveCode(slug: string, code: ProblemCode): Promise<void> {
   await ensureCodeTab()
   const row = [slug, code.python3, code.java, code.py3Modified, code.javaModified, JSON.stringify(code.pins)]
   const rowNum = await findCodeRow(slug)
-  if (rowNum < 0) {
-    await fetch(`${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A:F')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-      { method: 'POST', headers: auth(), body: JSON.stringify({ values: [row] }) })
-      .then(r => { if (!r.ok) throw new Error(`Save code failed: ${r.status}`) })
-  } else {
-    await fetch(`${BASE}/${sid()}/values/${encodeURIComponent(`${CODE_TAB}!A${rowNum}:F${rowNum}`)}?valueInputOption=RAW`,
-      { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [row] }) })
-      .then(r => { if (!r.ok) throw new Error(`Save code failed: ${r.status}`) })
-  }
+  // Wrapped in withAuthRetry so a 401 (expired/revoked token) triggers a
+  // silent re-auth + one retry instead of dead-ending the save. The thunk
+  // pattern means auth() is recomputed against the fresh token on retry.
+  const url  = rowNum < 0
+    ? `${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A:F')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
+    : `${BASE}/${sid()}/values/${encodeURIComponent(`${CODE_TAB}!A${rowNum}:F${rowNum}`)}?valueInputOption=RAW`
+  const method: 'POST' | 'PUT' = rowNum < 0 ? 'POST' : 'PUT'
+  const r = await GAuth.withAuthRetry(() => fetch(url, { method, headers: auth(), body: JSON.stringify({ values: [row] }) }))
+  if (!r.ok) throw new Error(`Save code failed: ${r.status}${r.status === 401 ? ' (session expired and re-auth failed — try signing in again)' : ''}`)
 }
 
 export async function removeFromList(listName: string, slug: string): Promise<void> {
