@@ -5,6 +5,17 @@ import {
   getOrCreateImageFolder, uploadImageBlob, inferFilename, uploadInlineImages,
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
+import { loadFilters, saveFilters } from '../lib/persistedFilters'
+
+// Filter state persisted across logout/login (see lib/persistedFilters.ts).
+const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
+interface AdsHubFilters {
+  tags: string[]; companies: string[]; list: string | null
+  diff: 'All' | 'Easy' | 'Medium' | 'Hard'; customOnly: boolean; search: string
+}
+const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
+  tags: [], companies: [], list: null, diff: 'All', customOnly: false, search: '',
+}
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
   loadLists, getCachedLists, addToList, removeFromList, renameList,
@@ -164,14 +175,18 @@ export default function AdsHubView() {
   const [loading, setLoading]     = useState(cached == null)
   const [refreshing, setRefresh]  = useState(false)
   const [selected, setSelected]   = useState<LCProblem | null>(null)
-  const [search, setSearch]       = useState('')
-  const [diff, setDiff]           = useState<Diff>('All')
+  // Persisted filter state — load once on mount; an effect below saves on
+  // every change. Clear All resets state, the effect writes empty back so the
+  // next session starts cleared too.
+  const _persisted = useMemo(() => loadFilters(ADSHUB_FILTERS_KEY, ADSHUB_FILTERS_DEFAULTS), [])
+  const [search, setSearch]       = useState<string>(_persisted.search)
+  const [diff, setDiff]           = useState<Diff>(_persisted.diff)
   // Custom problems live at frontend_id >= 10000 (see scripts/add-custom-problem.mjs).
   // A toggle is friendlier than substring-searching "1000" (which only catches
   // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
   const CUSTOM_ID_MIN = 10000
-  const [customOnly, setCustomOnly] = useState(false)
-  const [selectedTags, setTags]   = useState<string[]>([])
+  const [customOnly, setCustomOnly] = useState<boolean>(_persisted.customOnly)
+  const [selectedTags, setTags]   = useState<string[]>(_persisted.tags)
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
   const [editorHtml, setEditorHtml] = useState('')
@@ -182,9 +197,17 @@ export default function AdsHubView() {
   const [savingNote, setSavingNote] = useState(false)
   const blobUrlsRef    = useRef<string[]>([])
   const blobToDriveRef = useRef<Map<string, string>>(new Map())
-  const [selectedCompanies, setCompanies] = useState<string[]>([])
+  const [selectedCompanies, setCompanies] = useState<string[]>(_persisted.companies)
   const [lists, setLists]                  = useState<LCList[]>(getCachedLists() ?? [])
-  const [selectedList, setSelectedList]    = useState<string | null>(null)
+  const [selectedList, setSelectedList]    = useState<string | null>(_persisted.list)
+
+  // Persist all filter state — Clear All triggers this too via state resets.
+  useEffect(() => {
+    saveFilters<AdsHubFilters>(ADSHUB_FILTERS_KEY, {
+      tags: selectedTags, companies: selectedCompanies, list: selectedList,
+      diff, customOnly, search,
+    })
+  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage'>('browse')
   const [lineageFocus, setLineageFocus]    = useState<number | null>(null)
   // Add-a-problem modal.

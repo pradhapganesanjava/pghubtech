@@ -13,6 +13,12 @@ import TagDeckTree from '../components/TagDeckTree'
 import { useToast } from '../components/Toast'
 import AudioReader from '../components/AudioReader'
 import { htmlToSpokenText } from '../lib/audioMode'
+import { loadFilters, saveFilters } from '../lib/persistedFilters'
+
+// Filter state persisted across logout/login (see lib/persistedFilters.ts).
+const HOME_FILTERS_KEY = 'pghub.home.filters'
+interface HomeFilters { tags: string[]; decks: string[]; studyAll: boolean }
+const HOME_FILTERS_DEFAULTS: HomeFilters = { tags: [], decks: [], studyAll: false }
 
 const REVIEWED_IDS_KEY = 'pghub_reviewed'
 
@@ -63,7 +69,9 @@ export default function HomeView() {
   const [queue,         setQueue]         = useState<AnkiNote[]>([])
   const [qIdx,          setQIdx]          = useState(0)
   const [candidateCount, setCandidateCount] = useState(0)
-  const [studyAllMode,  setStudyAllMode]  = useState(false)
+  // Persisted filters — load once on mount; saved via the effect below.
+  const _persisted = useMemo(() => loadFilters(HOME_FILTERS_KEY, HOME_FILTERS_DEFAULTS), [])
+  const [studyAllMode,  setStudyAllMode]  = useState<boolean>(_persisted.studyAll)
   const [_reviewedInit] = useState(loadReviewedIds)
   const reviewedIdsRef = useRef<Set<string>>(_reviewedInit)
 
@@ -94,8 +102,16 @@ export default function HomeView() {
   const isDividerDragging                 = useRef(false)
 
   // ── Filters ────────────────────────────────────────────────────────────────
-  const [selectedTags,  setSelectedTags]  = useState<string[]>([])
-  const [selectedDecks, setSelectedDecks] = useState<string[]>([])
+  const [selectedTags,  setSelectedTags]  = useState<string[]>(_persisted.tags)
+  const [selectedDecks, setSelectedDecks] = useState<string[]>(_persisted.decks)
+
+  // Persist filter changes — fires on Clear All too (state goes to defaults,
+  // which the effect writes back, so next login starts cleared).
+  useEffect(() => {
+    saveFilters<HomeFilters>(HOME_FILTERS_KEY, {
+      tags: selectedTags, decks: selectedDecks, studyAll: studyAllMode,
+    })
+  }, [selectedTags, selectedDecks, studyAllMode])
 
   // ── notDueIds — cards that are not due (reviewed, scheduled for future) ────
   const notDueIds = useMemo(() => {

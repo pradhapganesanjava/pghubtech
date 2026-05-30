@@ -9,6 +9,12 @@ import NoteDetailPanel from '../components/NoteDetailPanel'
 import AddNoteModal from '../components/AddNoteModal'
 import CsvUploadModal from '../components/CsvUploadModal'
 import { useToast } from '../components/Toast'
+import { loadFilters, saveFilters } from '../lib/persistedFilters'
+
+// Filter state persisted across logout/login (see lib/persistedFilters.ts).
+const BROWSE_FILTERS_KEY = 'pghub.browse.filters'
+interface BrowseFilters { tags: string[]; decks: string[]; search: string }
+const BROWSE_FILTERS_DEFAULTS: BrowseFilters = { tags: [], decks: [], search: '' }
 
 // ── Schedule cell ─────────────────────────────────────────────────────────────
 
@@ -69,9 +75,19 @@ export default function BrowseView() {
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set())
   const [deleting,     setDeleting]     = useState(false)
 
-  const [search,        setSearch]        = useState('')
-  const [selectedTags,  setSelectedTags]  = useState<string[]>([])
-  const [selectedDecks, setSelectedDecks] = useState<string[]>([])
+  // Persisted filters — load once on mount; saved via the effect below.
+  const _persisted = useMemo(() => loadFilters(BROWSE_FILTERS_KEY, BROWSE_FILTERS_DEFAULTS), [])
+  const [search,        setSearch]        = useState<string>(_persisted.search)
+  const [selectedTags,  setSelectedTags]  = useState<string[]>(_persisted.tags)
+  const [selectedDecks, setSelectedDecks] = useState<string[]>(_persisted.decks)
+
+  // Persist filter changes — Clear All triggers the effect too (state goes
+  // to defaults; effect writes those back).
+  useEffect(() => {
+    saveFilters<BrowseFilters>(BROWSE_FILTERS_KEY, {
+      tags: selectedTags, decks: selectedDecks, search,
+    })
+  }, [selectedTags, selectedDecks, search])
   const [leftCollapsed, setLeftCollapsed] = useState(true)
   const [viewerExpanded, setViewerExpanded] = useState(false)
 
