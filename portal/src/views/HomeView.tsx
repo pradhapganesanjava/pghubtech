@@ -305,6 +305,31 @@ export default function HomeView() {
 
   return (
     <div className="review-body">
+      {/* Floating Audio-mode reader — anchored top-right of the viewport,
+          mirrors the Ask AI panel positioning. Shows the question reader
+          first (auto-plays on new card), then swaps to the answer reader
+          when Show Answer is clicked. Each is keyed by note id so the
+          reader remounts on card change and auto-plays chunk 1. */}
+      {audioMode && !isDone && currentNote && currentTmpl && (
+        <div className="audio-reader-float">
+          {!answerVisible ? (
+            <AudioReader
+              key={`q-${currentNote.noteId}`}
+              text={htmlToSpokenText(getCardFrontHtml(displayNote ?? currentNote, currentTmpl))}
+              autoPlay
+              label="Q"
+            />
+          ) : (
+            <AudioReader
+              key={`a-${currentNote.noteId}`}
+              text={htmlToSpokenText(getCardBackHtml(displayNote ?? currentNote, currentTmpl))}
+              autoPlay
+              label="A"
+            />
+          )}
+        </div>
+      )}
+
       {/* Mobile-only backdrop — tap closes the tag drawer */}
       {!leftCollapsed && (
         <div className="drawer-backdrop" onClick={() => setLeftCollapsed(true)} />
@@ -449,17 +474,6 @@ export default function HomeView() {
                   className="question-html"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardFrontHtml(displayNote ?? currentNote, currentTmpl)) }}
                 />
-                {audioMode && (
-                  <div onClick={e => e.stopPropagation()} style={{ marginTop: 10 }}>
-                    {/* keyed by note id so a new card mounts a fresh reader → auto-plays chunk 0 */}
-                    <AudioReader
-                      key={`q-${currentNote.noteId}`}
-                      text={htmlToSpokenText(getCardFrontHtml(displayNote ?? currentNote, currentTmpl))}
-                      autoPlay
-                      label="Q"
-                    />
-                  </div>
-                )}
                 {!answerVisible && (
                   <div style={{ marginTop: 16 }}>
                     <button className="show-answer-btn" onClick={handleReveal}>
@@ -491,16 +505,6 @@ export default function HomeView() {
                 className="answer-html"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(getCardBackHtml(displayNote ?? currentNote, currentTmpl)) }}
               />
-              {audioMode && (
-                <div style={{ marginTop: 10 }}>
-                  <AudioReader
-                    key={`a-${currentNote.noteId}`}
-                    text={htmlToSpokenText(getCardBackHtml(displayNote ?? currentNote, currentTmpl))}
-                    autoPlay
-                    label="A"
-                  />
-                </div>
-              )}
 
               {/* Rating buttons */}
               <div className="rating-grid">

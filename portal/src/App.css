@@ -2127,12 +2127,20 @@ body.resizing-h * {
   .msg-audio-btn { width: 26px; height: 26px; font-size: 11px; }
 }
 
-/* Home → review card → Audio mode reader pill. Used inside .question-card
-   and .col-answer when audioMode is on. Mirrors the .msg-audio look. */
+/* Home → Audio mode reader. Anchored top-right (mirrors .ai-panel
+   positioning); a single pill shown for the question initially, swapped
+   to the answer when Show Answer is clicked. */
+.audio-reader-float {
+  position: fixed;
+  top: 60px; right: 16px;
+  z-index: 8500;             /* below .ai-panel (9000) so AI panel wins when both open */
+  max-width: calc(100vw - 32px);
+}
 .audio-reader {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 4px 8px; border-radius: 999px;
+  padding: 6px 10px; border-radius: 999px;
   background: var(--bg2); border: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
   font-size: 12px; color: var(--text2);
 }
 .audio-reader-btn {
