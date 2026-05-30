@@ -116,6 +116,21 @@ const LISTS = {
     256, 265, 276, 1473,                // Coloring Houses: paint-house DP (k colors / 3 colors / paint fence)
     1834, 1882, 2365,                   // Efficient Deployments: server / task scheduling (1235, 621 already above)
     252, 253, 759, 1229, 2402,          // Meeting Assistant: meeting rooms / scheduler / employee free time
+    215, 460, 703,                      // Leaderboard / bucketed count + streaming Kth (Best Sellers pattern; 460 closest non-premium)
+    279, 322, 518,                      // Coin DP family (Coin Change overpay pattern is #10009; 322 is canonical base)
+    269, 444,                           // Topo sort with implicit edges (Course Completion Time uses #10019+#10012 customs; 2050 already in)
+    10044, 10045,                       // Custom: Best Sellers, Course Completion Time
+    // ── 2026-05-30 second user-supplied topic batch ─────────────────────────
+    174, 348, 490, 877, 909, 1219, 1958, 2017,    // Board Game: BFS on board / two-player / grid DP / tic-tac-toe / Othello
+    1136, 3408,                         //   Task Execution: parallel courses baseline (premium) + design task manager
+    198, 2398,                          //   Server Investment: house robber DP + max robots within budget
+    72, 161, 1153,                      //   String Transformation: edit distance + 1-edit + string-transforms-into-another
+    1114, 1115, 1117, 2406,             //   Thread Count: concurrency primitives + min intervals into groups
+    1338, 1481, 1717, 2208, 2659,       //   Array Reduction: halve / least-unique / max-score / make-empty
+    983, 1335, 1547, 1937, 2611,        //   Efficient Cost: min-cost DP family (tickets / job-schedule / cut-stick / mice-cheese)
+    286, 924, 994, 1162,                //   Radio Waves: multi-source BFS (rotting oranges / walls-and-gates / malware spread)
+    459, 1062, 1291, 1446, 1668,        //   Sequential String: consecutive chars / repeating substring / sequential digits
+    287, 945, 1207, 1647,               //   Unequal Elements: duplicate / min-increment-to-unique / unique-occurrences / freq-unique
   ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
