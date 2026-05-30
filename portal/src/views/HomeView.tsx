@@ -11,6 +11,8 @@ import { resolveDriveImagesInHtml } from '../lib/drive'
 import { GAuth } from '../lib/gauth'
 import TagDeckTree from '../components/TagDeckTree'
 import { useToast } from '../components/Toast'
+import AudioReader from '../components/AudioReader'
+import { htmlToSpokenText } from '../lib/audioMode'
 
 const REVIEWED_IDS_KEY = 'pghub_reviewed'
 
@@ -67,6 +69,20 @@ export default function HomeView() {
 
   // ── Card state ─────────────────────────────────────────────────────────────
   const [answerVisible, setAnswerVisible] = useState(false)
+  // Audio mode: when on, each new question auto-reads aloud via TTS, and
+  // Show Answer triggers the answer read. Code blocks are stripped before
+  // TTS so the voice doesn't recite curly braces and semicolons. Persisted
+  // in localStorage so the preference survives page reloads. Off by default.
+  const [audioMode, setAudioMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('pghub.audioMode') === '1' } catch { return false }
+  })
+  function toggleAudioMode() {
+    setAudioMode(v => {
+      const next = !v
+      try { localStorage.setItem('pghub.audioMode', next ? '1' : '0') } catch {}
+      return next
+    })
+  }
 
   // ── Layout ─────────────────────────────────────────────────────────────────
   // Default closed on phones (drawer pattern), open on desktops.
@@ -289,6 +305,38 @@ export default function HomeView() {
 
   return (
     <div className="review-body">
+      {/* Floating Audio mode controls — anchored top-right of the viewport,
+          mirrors the Ask AI panel positioning. Always renders the toggle
+          while a card is in view; when audio mode is ON, the chunk reader
+          (Q first, then A when Show Answer is clicked) sits right next to
+          the toggle in the same pill. */}
+      {!isDone && currentNote && currentTmpl && (
+        <div className="audio-reader-float">
+          <button
+            className={`audio-reader-btn audio-toggle${audioMode ? ' active' : ''}`}
+            onClick={toggleAudioMode}
+            title={audioMode
+              ? 'Audio mode ON — questions auto-read; Show Answer reads the answer. Click to disable.'
+              : 'Audio mode OFF — click to auto-read each card aloud (code blocks skipped).'}
+          >{audioMode ? '🔊' : '🔇'}</button>
+          {audioMode && (!answerVisible ? (
+            <AudioReader
+              key={`q-${currentNote.noteId}`}
+              text={htmlToSpokenText(getCardFrontHtml(displayNote ?? currentNote, currentTmpl))}
+              autoPlay
+              label="Q"
+            />
+          ) : (
+            <AudioReader
+              key={`a-${currentNote.noteId}`}
+              text={htmlToSpokenText(getCardBackHtml(displayNote ?? currentNote, currentTmpl))}
+              autoPlay
+              label="A"
+            />
+          ))}
+        </div>
+      )}
+
       {/* Mobile-only backdrop — tap closes the tag drawer */}
       {!leftCollapsed && (
         <div className="drawer-backdrop" onClick={() => setLeftCollapsed(true)} />
@@ -411,6 +459,9 @@ export default function HomeView() {
                 <div className="queue-progress">
                   <div className="queue-fill" style={{ width: `${pct}%` }} />
                 </div>
+                {/* Audio toggle moved to the floating top-right pill (see
+                    .audio-reader-float below) so it lives with the chunk
+                    controls — single place for everything audio. */}
               </div>
             )}
 

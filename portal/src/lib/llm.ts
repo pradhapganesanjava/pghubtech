@@ -19,7 +19,19 @@ export const LLM = {
     return `${ep}/openai/deployments/${dep}/chat/completions?api-version=${ver}`
   },
 
-  async chat(messages: ChatMessage[], maxTokens = 800): Promise<string> {
+  // Default bumped from 800 → 4000 so code-heavy answers (e.g. binary-search
+  // explanations with a few cpp/python snippets) don't get truncated mid-block.
+  // Azure typically caps deployments at 4096–16384; we leave headroom.
+  async chat(messages: ChatMessage[], maxTokens = 4000): Promise<string> {
+    const { content } = await this.chatWithMeta(messages, maxTokens)
+    return content
+  },
+
+  // Same as chat() but exposes finish_reason so callers can detect when the
+  // response was cut by the token cap (finishReason === 'length') vs ended
+  // naturally ('stop'). The Ask AI panel uses this to surface a truncation
+  // banner and offer Retry.
+  async chatWithMeta(messages: ChatMessage[], maxTokens = 4000): Promise<{ content: string; finishReason: string }> {
     if (!this.isConfigured()) {
       throw new Error('Azure OpenAI is not configured — open Settings to add the endpoint and API key.')
     }
@@ -35,8 +47,11 @@ export const LLM = {
       const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
       throw new Error(err.error?.message || `HTTP ${res.status}`)
     }
-    const data = await res.json() as { choices: { message: { content: string } }[] }
-    return data.choices?.[0]?.message?.content?.trim() ?? ''
+    const data = await res.json() as { choices: { message: { content: string }; finish_reason: string }[] }
+    return {
+      content:      data.choices?.[0]?.message?.content?.trim() ?? '',
+      finishReason: data.choices?.[0]?.finish_reason ?? 'stop',
+    }
   },
 
   // Single-prompt helper for the floating Ask AI panel.

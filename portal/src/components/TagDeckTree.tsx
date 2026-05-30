@@ -11,6 +11,7 @@ interface Props {
   collapsed: boolean
   onCollapse: () => void
   notDueIds?: Set<string>
+  onNewDeck?: () => void   // sidebar "+ Deck" affordance (visible only on Decks tab)
 }
 
 // ── Trie ──────────────────────────────────────────────────────────────────────
@@ -132,6 +133,7 @@ export default function TagDeckTree({
   collapsed,
   onCollapse,
   notDueIds,
+  onNewDeck,
 }: Props) {
   const [tab,      setTab]      = useState<TabMode>('tags')
   const [viewMode, setViewMode] = useState<ViewMode>('tree')
@@ -241,6 +243,14 @@ export default function TagDeckTree({
           )}
         </button>
 
+        {tab === 'decks' && onNewDeck && (
+          <button
+            className="vm-btn"
+            onClick={onNewDeck}
+            title="Create a new deck — opens Add Note pre-filled with the new deck name"
+            style={{ marginLeft: 4 }}
+          >＋</button>
+        )}
         <div className="view-mode-toggle">
           <button
             className={`vm-btn${viewMode === 'tree' ? ' active' : ''}`}
