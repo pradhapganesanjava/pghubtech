@@ -227,6 +227,70 @@ export default function BrowseView() {
   }, [selectedNote?.noteId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Render ────────────────────────────────────────────────────────────────
+  // Toolbar lives inside the cards column (so it shrinks with it when the
+  // detail pane opens). Defined here once and referenced inside the column.
+  const toolbarNode = (
+    <div className="browse-toolbar">
+      <button
+        className={`mobile-filter-btn${hasFilters ? ' has-active' : ''}`}
+        onClick={() => setLeftCollapsed(false)}
+        title="Filter by tag or deck"
+      >
+        ☰ Filter{hasFilters ? ` (${selectedTags.length + selectedDecks.length})` : ''}
+      </button>
+      <input
+        className="col-search"
+        style={{ width: 240 }}
+        placeholder="Search cards…"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
+        {filteredNotes.length.toLocaleString()} / {notes.length.toLocaleString()} cards
+      </span>
+      <div className="browse-action-btns">
+        {someSelected && (
+          <button
+            className="browse-delete-btn"
+            onClick={handleDeleteSelected}
+            disabled={deleting}
+            title={`Delete ${selectedIds.size} selected card${selectedIds.size === 1 ? '' : 's'}`}
+          >{deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}</button>
+        )}
+        <button
+          className="browse-add-btn"
+          onClick={() => setShowAdd(true)}
+          title="Add a new note"
+        >+ Add</button>
+        <button
+          className="browse-upload-btn"
+          onClick={() => setShowUpload(true)}
+          title="Bulk import notes from CSV"
+        >↑ Upload</button>
+      </div>
+      {hasFilters && (
+        <div className="applied-filter-chips">
+          {selectedDecks.map(d => (
+            <span key={d} className="applied-chip deck-chip" title={d}>
+              <span className="chip-icon">⬡</span>
+              <span className="chip-label">{chipLabel(d)}</span>
+              <button className="chip-rm" onClick={() => setSelectedDecks(prev => prev.filter(x => x !== d))}>×</button>
+            </span>
+          ))}
+          {selectedTags.map(t => (
+            <span key={t} className="applied-chip tag-chip" title={t}>
+              <span className="chip-label">{chipLabel(t)}</span>
+              <button className="chip-rm" onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>×</button>
+            </span>
+          ))}
+          <button className="applied-clear-all" onClick={() => { setSelectedTags([]); setSelectedDecks([]) }}>
+            Clear all
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="browse-body-wrap">
       {/* Left: tag/deck tree (collapsed when viewer is expanded so the
@@ -294,105 +358,23 @@ export default function BrowseView() {
           setLeftCollapsed(c => !c)
         }}
       >
-        {/* Toolbar */}
-        <div className="browse-toolbar">
-          <button
-            className={`mobile-filter-btn${hasFilters ? ' has-active' : ''}`}
-            onClick={() => setLeftCollapsed(false)}
-            title="Filter by tag or deck"
-          >
-            ☰ Filter{hasFilters ? ` (${selectedTags.length + selectedDecks.length})` : ''}
-          </button>
-          <input
-            className="col-search"
-            style={{ width: 240 }}
-            placeholder="Search cards…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
-            {filteredNotes.length.toLocaleString()} / {notes.length.toLocaleString()} cards
-          </span>
-
-          <div className="browse-action-btns">
-            {someSelected && (
-              <button
-                className="browse-delete-btn"
-                onClick={handleDeleteSelected}
-                disabled={deleting}
-                title={`Delete ${selectedIds.size} selected card${selectedIds.size === 1 ? '' : 's'}`}
-              >{deleting ? 'Deleting…' : `Delete ${selectedIds.size}`}</button>
-            )}
-            {/* When no record is selected, +Add / ↑Upload live here at the
-                toolbar's right end. When a record IS selected, they move
-                into a small vertical strip in the cards column header so
-                the detail pane breathes — see .browse-vertical-actions
-                rendered inside .browse-cards-split below. */}
-            {!selectedNote && (
-              <>
-                <button
-                  className="browse-add-btn"
-                  onClick={() => setShowAdd(true)}
-                  title="Add a new note"
-                >+ Add</button>
-                <button
-                  className="browse-upload-btn"
-                  onClick={() => setShowUpload(true)}
-                  title="Bulk import notes from CSV"
-                >↑ Upload</button>
-              </>
-            )}
-          </div>
-
-          {hasFilters && (
-            <div className="applied-filter-chips">
-              {selectedDecks.map(d => (
-                <span key={d} className="applied-chip deck-chip" title={d}>
-                  <span className="chip-icon">⬡</span>
-                  <span className="chip-label">{chipLabel(d)}</span>
-                  <button className="chip-rm" onClick={() => setSelectedDecks(prev => prev.filter(x => x !== d))}>×</button>
-                </span>
-              ))}
-              {selectedTags.map(t => (
-                <span key={t} className="applied-chip tag-chip" title={t}>
-                  <span className="chip-label">{chipLabel(t)}</span>
-                  <button className="chip-rm" onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>×</button>
-                </span>
-              ))}
-              <button className="applied-clear-all" onClick={() => { setSelectedTags([]); setSelectedDecks([]) }}>
-                Clear all
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Toolbar now lives INSIDE .browse-col-cards (see toolbarNode above)
+            so it shrinks with the cards column when the detail pane opens. */}
 
         {/* Cards + detail split */}
         <div className="browse-cards-split" ref={browseContainerRef}>
-          {/* Floating vertical Add/Upload strip — only when a record is open.
-              Pinned to the top-right corner of the cards-split, so it's
-              tucked between the cards list and the detail pane and doesn't
-              steal toolbar real estate. */}
-          {selectedNote && (
-            <div className="browse-vertical-actions">
-              <button
-                className="browse-add-btn"
-                onClick={() => setShowAdd(true)}
-                title="Add a new note"
-              >+ Add</button>
-              <button
-                className="browse-upload-btn"
-                onClick={() => setShowUpload(true)}
-                title="Bulk import notes from CSV"
-              >↑ Upload</button>
-            </div>
-          )}
-
           {/* Card list — hidden when viewer is expanded */}
           {!viewerExpanded && (
           <div
             className="browse-col-cards"
             style={selectedNote ? { flex: `0 0 ${browseRatio}%` } : undefined}
           >
+            {/* Toolbar lives INSIDE the cards column so when the detail
+                pane opens and the cards column shrinks, the toolbar
+                (count / search / + Add / ↑ Upload / filter chips) shrinks
+                with it — no overlap with the detail's own edit buttons. */}
+            <div className="browse-cards-toolbar-slot">{toolbarNode}</div>
+            <div className="browse-col-cards-scroll">
             {loading ? (
               <div className="browse-stream-init">
                 <div className="browse-stream-spinner" />
@@ -463,6 +445,7 @@ export default function BrowseView() {
                 </tbody>
               </table>
             )}
+            </div>
           </div>
           )}
 

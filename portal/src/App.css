@@ -1139,29 +1139,22 @@ body.resizing-h * {
   height: 100%; /* concrete height so children can resolve % and overflow */
   position: relative; /* anchor for .browse-vertical-actions */
 }
-/* Vertical Add/Upload strip — pinned top-right of the cards split when a
-   record is open. Frees the top toolbar's right end so the toolbar feels
-   less crowded while reading a card. z-index above the table so it's
-   tappable; backed by a subtle pill so it reads as a control group. */
-.browse-vertical-actions {
-  position: absolute; top: 6px; right: 6px;
-  display: flex; flex-direction: column; gap: 4px;
-  z-index: 5;
-}
-.browse-vertical-actions .browse-add-btn,
-.browse-vertical-actions .browse-upload-btn {
-  margin: 0;
-  white-space: nowrap;
-}
 .browse-col-cards {
   flex: 1 1 0; min-height: 0; min-width: 0;
-  /* Hard cap mirrors the ToDo pattern: without a concrete max-height the
-     flex chain may not resolve to a definite pixel height, so overflow-y
-     never engages and the table is clipped by the parent overflow:hidden. */
-  max-height: calc(100vh - 56px - 52px); /* viewport - topbar - toolbar */
+  display: flex; flex-direction: column;
+  /* Hard cap so the flex chain resolves to a definite pixel height — the
+     inner .browse-col-cards-scroll wrapper is the actual scroller. */
+  max-height: calc(100vh - 56px); /* viewport - topbar */
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+/* Toolbar slot inside the cards column — fixed height, never scrolls. */
+.browse-cards-toolbar-slot { flex: 0 0 auto; }
+/* The actual scrolling area below the toolbar. */
+.browse-col-cards-scroll {
+  flex: 1 1 0; min-height: 0;
   overflow-y: auto; overflow-x: hidden;
   overscroll-behavior-y: contain;
-  border-right: 1px solid var(--border);
 }
 .browse-col-detail {
   flex: 1; min-height: 0; min-width: 0;
