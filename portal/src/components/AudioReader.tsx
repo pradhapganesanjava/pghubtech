@@ -137,8 +137,9 @@ export default function AudioReader({ text, autoPlay, label }: Props) {
           className="audio-reader-btn"
           onClick={() => play(idx + 1)}
           disabled={busy}
-          title="Continue with the next chunk"
-        >⏭ Continue</button>
+          title={`Continue — play chunk ${idx + 2} / ${chunks.length}`}
+          aria-label="Continue with next chunk"
+        >⏭</button>
       )}
       {err && <span className="audio-reader-err" title={err}>!</span>}
       {url && <audio ref={audioRef} src={url} preload="metadata" />}
