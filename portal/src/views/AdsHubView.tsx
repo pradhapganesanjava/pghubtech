@@ -6,6 +6,7 @@ import {
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
 import { loadFilters, saveFilters } from '../lib/persistedFilters'
+import { csvFromRows, htmlToCsvText, downloadCsv } from '../lib/csvExport'
 
 // Filter state persisted across logout/login (see lib/persistedFilters.ts).
 const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
@@ -491,6 +492,28 @@ export default function AdsHubView() {
   }
   function clearAllFilters() {
     setTags([]); setCompanies([]); setSelectedList(null)
+  }
+
+  // Download the currently-filtered problem list as a CSV. Columns mirror
+  // what's most useful for offline review / sharing:
+  //   id, title, difficulty, topics, tags, slug, statement
+  // The statement column is HTML-stripped to plain text. Filename is
+  // timestamped so multiple exports don't collide in Downloads.
+  function exportFilteredCsv() {
+    if (filtered.length === 0) { toast('No problems to export (filter is empty)', 'info'); return }
+    const header = ['id', 'title', 'difficulty', 'topics', 'tags', 'slug', 'statement']
+    const rows = filtered.map(p => [
+      p.frontendId,
+      p.title,
+      p.difficulty,
+      p.topics.join('; '),
+      p.tags.join('; '),
+      p.slug,
+      htmlToCsvText(p.descriptionHtml),
+    ])
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    downloadCsv(csvFromRows(header, rows), `adshub-problems-${ts}.csv`)
+    toast(`Exported ${filtered.length.toLocaleString()} problem${filtered.length === 1 ? '' : 's'} to CSV`, 'success')
   }
 
   // ── Add a new problem ───────────────────────────────────────────────────
@@ -1107,6 +1130,12 @@ export default function AdsHubView() {
             title="Reload problems from the sheet"
           >{refreshing ? '…' : '↻'}</button>
           <button className="rf-btn-save" onClick={openAddProblem} title="Add a new problem">＋ Add</button>
+          <button
+            className="rf-btn-cancel"
+            onClick={exportFilteredCsv}
+            disabled={loading || filtered.length === 0}
+            title={`Export the ${filtered.length.toLocaleString()} currently-filtered problem${filtered.length === 1 ? '' : 's'} as CSV (id, title, difficulty, topics, tags, slug, statement)`}
+          >⬇ Export CSV</button>
           <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
             {filtered.length.toLocaleString()} / {problems.length.toLocaleString()}
           </span>
