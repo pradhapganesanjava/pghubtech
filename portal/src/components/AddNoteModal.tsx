@@ -8,8 +8,20 @@ import { appendAnkiNote } from '../adapters/ankiRepo'
 import { generateAnkiNoteForTemplate } from '../lib/ankiNoteGen'
 import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
+import { GAuth } from '../lib/gauth'
+import {
+  uploadInlineImages, uploadImageBlob, inferFilename, getOrCreateImageFolder,
+} from '../lib/driveImages'
 import RichEditor from './RichEditor'
 import { useToast } from './Toast'
+
+// Google Sheets caps any single cell at 50,000 characters. Embedding a
+// pasted image as a base64 data: URL blows past that very quickly, so we
+// (a) upload pasted images to Drive at paste time, (b) sweep the field on
+// save in case a blob:/data: URL slipped in via HTML paste, and (c)
+// pre-flight the cell-size limit and surface a clear error if anything is
+// still too long — without losing the user's typed content.
+const SHEETS_CELL_LIMIT = 50_000
 
 type EditMode = 'rich' | 'html' | 'preview'
 
@@ -20,11 +32,13 @@ function FieldEditor({
   value,
   onChange,
   disabled,
+  onPasteImage,
 }: {
   field:    AnkiField
   value:    string
   onChange: (v: string) => void
   disabled: boolean
+  onPasteImage?: (blob: Blob) => Promise<string>
 }) {
   const [mode, setMode] = useState<EditMode>('rich')
   const isRich = field.type === 'html' || field.isFront || field.isBack
@@ -68,7 +82,7 @@ function FieldEditor({
         </div>
         <div className="rf-html-body anote-editor-body">
           {mode === 'rich' && (
-            <RichEditor value={value} onChange={onChange} />
+            <RichEditor value={value} onChange={onChange} onPasteImage={onPasteImage} />
           )}
           {mode === 'html' && (
             <textarea
@@ -211,17 +225,67 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
     t => !tags.includes(t) && (!draftTag || t.toLowerCase().includes(draftTag.toLowerCase()))
   ).slice(0, 10)
 
+  // Upload a pasted-image blob to Drive and return the Drive URL — used by
+  // RichEditor's onPasteImage so the inserted <img> never carries a giant
+  // base64 data: URL (which would bloat the cell past Sheets' 50k limit).
+  async function pasteImageToDrive(blob: Blob): Promise<string> {
+    const token = GAuth.getToken()
+    if (!token) throw new Error('Not signed in — sign in first')
+    const folderId = await getOrCreateImageFolder(token)
+    return uploadImageBlob(token, folderId, blob, inferFilename(blob))
+  }
+
   async function handleSave() {
     if (!selectedTemplate) { setError('Pick a template.'); return }
     if (!deck.trim())       { setError('Enter a deck name.'); return }
     setSaving(true); setError('')
     try {
+      // Pre-flight #1: sweep any blob:/data:image/ URLs that slipped past
+      // the paste handler (e.g. user pasted HTML from another tab) and
+      // upload them to Drive in place. Without this they'd either explode
+      // the cell size (data:) or break on reload (blob:).
+      const token = GAuth.getToken()
+      let processedFields = fields
+      if (token) {
+        const next: Record<string, string> = { ...fields }
+        let touched = false
+        for (const f of selectedTemplate.fields) {
+          const v = next[f.key]
+          if (!v) continue
+          if (!(f.type === 'html' || f.isFront || f.isBack)) continue
+          if (!/<img[^>]+src="(?:data:image\/|blob:)/i.test(v)) continue
+          next[f.key] = await uploadInlineImages(v, token)
+          touched = true
+        }
+        if (touched) {
+          processedFields = next
+          // Reflect the upload in the open modal so the user sees the
+          // Drive-hosted URLs (helps if the next pre-flight check below
+          // still flags an oversized field — they can edit knowingly).
+          setFields(next)
+        }
+      }
+
+      // Pre-flight #2: Sheets caps each cell at 50,000 characters. Refuse
+      // the save (without losing typed content) and tell the user which
+      // field is too long and by how much.
+      for (const f of selectedTemplate.fields) {
+        const v = processedFields[f.key] ?? ''
+        if (v.length > SHEETS_CELL_LIMIT) {
+          throw new Error(
+            `Field "${f.label}" is ${v.length.toLocaleString()} characters — ` +
+            `Google Sheets caps each cell at ${SHEETS_CELL_LIMIT.toLocaleString()}. ` +
+            `Trim or split the content, then save again.`
+          )
+        }
+      }
+
       const note: AnkiNote = {
         noteId:     `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
         deck:       deck.trim(),
         ankiMod:    String(Date.now()),
         templateId: selectedTemplate.id,
-        fields,
+        fields:     processedFields,
         tags: resolvedTags(),
       }
       await appendAnkiNote(note, selectedTemplate)
@@ -313,6 +377,7 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
               value={fields[f.key] ?? ''}
               onChange={v => setFields(prev => ({ ...prev, [f.key]: v }))}
               disabled={saving}
+              onPasteImage={pasteImageToDrive}
             />
           ))}
 
