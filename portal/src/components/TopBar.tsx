@@ -66,7 +66,15 @@ export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen,
   return (
     <div className="topbar">
       <div className="topbar-left">
-        <span className="logo">PG Hub Tech</span>
+        <span
+          className="logo"
+          onClick={() => onNav('home')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNav('home') } }}
+          style={{ cursor: 'pointer' }}
+          title="Go to Home"
+        >PG Hub Tech</span>
         <nav className="topbar-nav">
           {NAVS.map(n => (
             <button

@@ -17,6 +17,23 @@
     <link rel="icon" type="image/svg+xml" href="/pghubtech/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PG Hub Tech</title>
+    <!-- SPA decoder for the GitHub Pages 404.html redirect (rafgraph/spa-github-pages).
+         When 404.html bounces /pghubtech/AdsHub → /pghubtech/?/AdsHub, this snippet
+         rewrites the URL back to /pghubtech/AdsHub via replaceState BEFORE React mounts,
+         so the routing code in App reads the original path. Inline + first so it runs
+         before any other script. -->
+    <script>
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
     <!-- Sync theme before React mounts to avoid flash -->
     <script src="./theme-init.js"></script>
     <!-- Google Identity Services -->

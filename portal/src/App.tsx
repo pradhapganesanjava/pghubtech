@@ -15,10 +15,10 @@ import AdsView from './views/AdsView'
 import AdsHubView from './views/AdsHubView'
 import SettingsView from './views/SettingsView'
 import AskAIPanel from './components/AskAIPanel'
+import { viewFromPath, pathForView, type View } from './lib/routing'
 import './App.css'
 
 type AuthState = 'loading' | 'unauthenticated' | 'needs-sheet' | 'authenticated'
-type View = 'home' | 'browse' | 'docs' | 'notes' | 'utils' | 'ads' | 'ads-hub' | 'ai-skills' | 'settings'
 
 const GOOGLE_SVG = (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -31,7 +31,10 @@ const GOOGLE_SVG = (
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>('loading')
-  const [view, setView]           = useState<View>('home')
+  // Initial view is read from the URL so direct links like /pghubtech/AdsHub
+  // land on the right tab. See lib/routing.ts + public/404.html for the
+  // GitHub Pages SPA fallback wiring.
+  const [view, setView]           = useState<View>(() => viewFromPath(window.location.pathname))
   const [theme, setTheme]         = useState<string>(Config.theme)
   const [loginError, setLoginError] = useState('')
   const [aiOpen, setAiOpen]       = useState(false)
@@ -74,6 +77,22 @@ export default function App() {
       document.documentElement.setAttribute('data-theme', theme)
     }
   }, [theme])
+
+  // Sync view → URL (pushState). Guarded so we don't push a redundant entry
+  // when view was just set FROM the URL (popstate handler, initial mount).
+  useEffect(() => {
+    const target = pathForView(view)
+    if (window.location.pathname !== target) {
+      window.history.pushState({ view }, '', target)
+    }
+  }, [view])
+
+  // Sync URL → view on browser back/forward.
+  useEffect(() => {
+    function onPop() { setView(viewFromPath(window.location.pathname)) }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   function handleTheme(t: string) {
     setTheme(t)

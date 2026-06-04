@@ -414,6 +414,56 @@ export default function AdsHubView() {
     })()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Deep-linking via URL query string ───────────────────────────────────
+  // Supported on initial load AND on browser back/forward:
+  //
+  //   /pghubtech/adshub?id=223          ← open problem #223
+  //   /pghubtech/adshub?q={id:223}      ← same (user's documented format —
+  //                                       we extract id:NNN from the q value)
+  //   /pghubtech/adshub?q=trees         ← set search filter to "trees"
+  //   /pghubtech/adshub?id=223&q=hash   ← both
+  //
+  // Selection from the UI then writes ?id= back via replaceState so the URL
+  // is shareable. We use replaceState (not pushState) for clicks within the
+  // tab so the browser back button leaves the tab rather than undoing
+  // individual selections (which would be noisy).
+  const urlAppliedRef = useRef(false)
+  useEffect(() => {
+    function apply() {
+      const sp = new URLSearchParams(window.location.search)
+      let id = sp.get('id') ?? ''
+      let q  = sp.get('q')  ?? ''
+      // User's documented format: ?q={id:223} — pull the id out of q.
+      const m = q.match(/\bid\s*:\s*(\d+)/i)
+      if (m) { id = id || m[1]; q = q.replace(/\{?\s*id\s*:\s*\d+\s*\}?/i, '').trim() }
+      if (q) setSearch(q)
+      if (id && problems.length > 0) {
+        const num = String(parseInt(id, 10))
+        const p = problems.find(p => p.frontendId === id || p.frontendId === num)
+        if (p) setSelected(p)
+      }
+    }
+    apply()
+    function onPop() { urlAppliedRef.current = false; apply() }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [problems]) // re-run once data lands so a hard-load on ?id=NNN selects after fetch
+
+  // Write the current selection back into the URL (?id=NNN) so the link is
+  // shareable. We only manage the URL while we're actually on the adshub
+  // path — App's view-routing effect owns the path itself.
+  useEffect(() => {
+    if (!/\/adshub\b/i.test(window.location.pathname)) return
+    const sp = new URLSearchParams(window.location.search)
+    if (selected?.frontendId) sp.set('id', selected.frontendId)
+    else                       sp.delete('id')
+    const qs = sp.toString()
+    const next = window.location.pathname + (qs ? '?' + qs : '')
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.replaceState({}, '', next)
+    }
+  }, [selected?.frontendId])
+
   async function refresh() {
     if (refreshing) return
     setRefresh(true)
