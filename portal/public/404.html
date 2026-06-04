@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PG Hub Tech</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // SPA fallback for GitHub Pages — rafgraph/spa-github-pages.
+    // GH Pages doesn't natively support client-side routing: a hard nav to
+    // /pghubtech/AdsHub 404s because no AdsHub file exists. This 404.html
+    // captures the requested path, encodes it as a query string, and
+    // redirects to the app's index.html under the configured base. The
+    // matching decode snippet in index.html (head) rewrites the URL back
+    // via history.replaceState before React mounts, so the app reads
+    // window.location.pathname as the original requested URL.
+    //
+    // segmentCount = number of path segments to keep BEFORE the SPA prefix.
+    // We're hosted at /pghubtech/<view> → keep 1 segment ("pghubtech").
+    var segmentCount = 1;
+    var l = window.location;
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/?/' +
+      l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+      l.hash
+    );
+  </script>
+</head>
+<body></body>
+</html>
