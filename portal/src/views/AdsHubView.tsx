@@ -427,7 +427,12 @@ export default function AdsHubView() {
   // is shareable. We use replaceState (not pushState) for clicks within the
   // tab so the browser back button leaves the tab rather than undoing
   // individual selections (which would be noisy).
-  const urlAppliedRef = useRef(false)
+  //
+  // urlApplied gates the selection→URL sync effect below. Without the gate,
+  // both effects fire on mount and the sync effect (seeing selected=null
+  // because the parse effect's setSelected hasn't re-rendered yet) would
+  // wipe the ?id= out of the URL BEFORE the parse effect could honour it.
+  const [urlApplied, setUrlApplied] = useState(false)
   useEffect(() => {
     function apply() {
       const sp = new URLSearchParams(window.location.search)
@@ -442,17 +447,21 @@ export default function AdsHubView() {
         const p = problems.find(p => p.frontendId === id || p.frontendId === num)
         if (p) setSelected(p)
       }
+      // Open the gate only once problems are loaded — otherwise the sync
+      // effect would wipe a ?id= we still need to honour after fetch.
+      if (problems.length > 0) setUrlApplied(true)
     }
     apply()
-    function onPop() { urlAppliedRef.current = false; apply() }
+    function onPop() { apply() }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [problems]) // re-run once data lands so a hard-load on ?id=NNN selects after fetch
+  }, [problems])
 
   // Write the current selection back into the URL (?id=NNN) so the link is
-  // shareable. We only manage the URL while we're actually on the adshub
-  // path — App's view-routing effect owns the path itself.
+  // shareable. Gated on urlApplied so we don't wipe a still-pending ?id=
+  // before the parse effect has had a chance to read it.
   useEffect(() => {
+    if (!urlApplied) return
     if (!/\/adshub\b/i.test(window.location.pathname)) return
     const sp = new URLSearchParams(window.location.search)
     if (selected?.frontendId) sp.set('id', selected.frontendId)
@@ -462,7 +471,7 @@ export default function AdsHubView() {
     if (next !== window.location.pathname + window.location.search) {
       window.history.replaceState({}, '', next)
     }
-  }, [selected?.frontendId])
+  }, [selected?.frontendId, urlApplied])
 
   async function refresh() {
     if (refreshing) return
