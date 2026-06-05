@@ -37,11 +37,13 @@ sheetRows.forEach((r, i) => {
 function inferDs(lcTopics) {
   const t = new Set(lcTopics.split(/[;\n]+/).map(s => s.trim()))
   if (t.has('Linked List'))                                  return 'linked-list'
-  if (t.has('Binary Search Tree'))                            return 'bst'
-  if (t.has('Trie'))                                          return 'trie'
+  if (t.has('Binary Search Tree') && !t.has('Data Stream'))   return 'bst'
   if (t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) return 'tree'
   if (t.has('Graph') || t.has('Graph Theory') || t.has('Topological Sort') || t.has('Shortest Path')) return 'graph'
   if (t.has('Matrix'))                                        return 'matrices'
+  if (t.has('Trie')  && t.has('Design')) return 'trie'
+  if (t.has('Stack') && t.has('Design')) return 'stack'
+  if (t.has('Queue') && t.has('Design')) return 'queue'
   if (t.has('String'))                                        return 'string'
   if (t.has('Array'))                                         return 'array'
   if (t.has('Math') || t.has('Bit Manipulation') || t.has('Dynamic Programming')

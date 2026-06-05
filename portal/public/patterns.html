@@ -1157,15 +1157,27 @@ const DS_TOPIC_LINKS = {
   'trie':        [],
 }
 
+// Prefer the CSV-derived list; fall back to the hand-coded DS_TOPIC_LINKS
+// constant (offline file:// or first-load before fetch resolves).
+//
+// EXCEPTION: an EXPLICITLY EMPTY hand-coded list (e.g. DS_TOPIC_LINKS.stack
+// = []) is an intentional input-purity decision — those DS pages should
+// stay pure even if the CSV derivation surfaces noise from inferDs
+// misclassifications. Respect the empty even when derived is populated.
 function linkedTopics(dsId) {
-  const ids = DS_TOPIC_LINKS[dsId] || []
+  const handCoded = DS_TOPIC_LINKS[dsId]
+  if (Array.isArray(handCoded) && handCoded.length === 0) return []
+  const ids = (DERIVED?.dsTopics?.[dsId]) || handCoded || []
   return ids.map(id => PATTERNS.find(p => p.id === id)).filter(Boolean)
 }
 
-// Inverse of DS_TOPIC_LINKS — for a Topic, which DSes is it applied on?
-// Derived (not a second source of truth) so adding a DS_TOPIC_LINKS entry
-// auto-propagates to the topic side.
+// For a Topic, which DSes is it applied on? Same preference order: derived
+// from tag soup first, hand-coded inverse of DS_TOPIC_LINKS as fallback.
 function applicableDses(topicId) {
+  if (DERIVED?.topicDses?.[topicId]) {
+    return DERIVED.topicDses[topicId]
+      .map(id => PATTERNS.find(x => x.id === id)).filter(Boolean)
+  }
   const out = []
   for (const dsId of Object.keys(DS_TOPIC_LINKS)) {
     if ((DS_TOPIC_LINKS[dsId] || []).includes(topicId)) {
@@ -1325,12 +1337,16 @@ const TOPIC_DS_MICROS = {
 }
 
 // Return the topic's micros filtered for embedding under a specific DS.
-// If no allowlist exists for the pair, return all (the topic's micros
-// all apply uniformly — e.g. sliding-window or math).
+// Preference order:
+//   1) CSV-derived allowlist (DERIVED.dsTopicMicros) — populated from
+//      every pat_ds::<ds>::<topic>::<micro> tag that exists in the sheet
+//   2) hand-coded TOPIC_DS_MICROS allowlist
+//   3) all the topic's micros (no allowlist → uniform fit)
 function microsForEmbed(topicId, dsId) {
   const t = PATTERNS.find(p => p.id === topicId)
   if (!t) return []
-  const allow = (TOPIC_DS_MICROS[topicId] || {})[dsId]
+  const derived = DERIVED?.dsTopicMicros?.[dsId]?.[topicId]
+  const allow   = derived || (TOPIC_DS_MICROS[topicId] || {})[dsId]
   if (!allow) return t.micros
   const order = new Map(allow.map((id, i) => [id, i]))
   return t.micros
@@ -1357,6 +1373,12 @@ function microsForEmbed(topicId, dsId) {
 let ANCHOR_DATA = null    // { coreAnchors[dsId][microId] = [ids],
                           //   topicAnchors[topicId][microId] = [ids],
                           //   dsTopicAnchors[dsId][topicId][microId] = [ids] }
+let DERIVED = null        // computed from ANCHOR_DATA after CSV load —
+                          // { dsTopics[ds] = [topicIds],          (replaces hand-coded DS_TOPIC_LINKS)
+                          //   dsTopicMicros[ds][topic] = [micros],(replaces TOPIC_DS_MICROS)
+                          //   topicDses[topic] = [dsIds]   }       (powers applicableDses)
+                          // Linked/applicable helpers prefer DERIVED when present
+                          // and fall back to the hand-coded constants below.
 
 async function loadAnchorData() {
   try {
@@ -1403,6 +1425,35 @@ function parsePatternData(csvText) {
     }
   }
   return out
+}
+
+// Compute the cross-link maps PURELY from the data file. Adding a new tag
+// in the sheet (and re-running build-patterns-csv) now propagates to:
+//   • DS-tab tree:           which Topics show under each DS
+//   • DS-tab embed sections: which micros appear under each (DS, Topic)
+//   • Topic-tab "Applies to": which DSes appear under each Topic
+// without any patterns.html code edit.
+function computeDerivedMaps(data) {
+  if (!data) return null
+  const dsTopics      = {}    // dsId    → Set<topicId>
+  const dsTopicMicros = {}    // dsId    → topicId → Set<microId>
+  const topicDses     = {}    // topicId → Set<dsId>
+  for (const dsId of Object.keys(data.dsTopic || {})) {
+    dsTopics[dsId]      = new Set()
+    dsTopicMicros[dsId] = {}
+    for (const topicId of Object.keys(data.dsTopic[dsId])) {
+      dsTopics[dsId].add(topicId)
+      dsTopicMicros[dsId][topicId] = new Set(Object.keys(data.dsTopic[dsId][topicId]))
+      ;(topicDses[topicId] = topicDses[topicId] || new Set()).add(dsId)
+    }
+  }
+  const toArr = (s) => [...s]
+  return {
+    dsTopics:      Object.fromEntries(Object.entries(dsTopics     ).map(([k, v]) => [k, toArr(v)])),
+    dsTopicMicros: Object.fromEntries(Object.entries(dsTopicMicros).map(([k, v]) =>
+                     [k, Object.fromEntries(Object.entries(v).map(([t, ms]) => [t, toArr(ms)]))])),
+    topicDses:     Object.fromEntries(Object.entries(topicDses    ).map(([k, v]) => [k, toArr(v)])),
+  }
 }
 
 // Anchor lookup used by renderMicroCard. Order of preference:
@@ -1891,13 +1942,16 @@ window.addEventListener('hashchange', applyHash)
 // micro — the UI stays functional offline.
 loadAnchorData().then(data => {
   ANCHOR_DATA = data
+  DERIVED     = computeDerivedMaps(data)
   if (data) {
     const coreCount  = Object.values(data.core   ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
     const topicCount = Object.values(data.topic  ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
     const dsTopCount = Object.values(data.dsTopic).reduce((s, ds) => s + Object.values(ds).reduce((a, t) => a + Object.values(t).reduce((x, ids) => x + ids.length, 0), 0), 0)
-    console.info(`[patterns] anchor CSV loaded — ${coreCount} DS-core, ${topicCount} topic, ${dsTopCount} DS-of-topic anchors`)
+    const dsLinks = Object.values(DERIVED?.dsTopics      || {}).reduce((s, a) => s + a.length, 0)
+    const tLinks  = Object.values(DERIVED?.topicDses     || {}).reduce((s, a) => s + a.length, 0)
+    console.info(`[patterns] CSV loaded — ${coreCount} DS-core, ${topicCount} topic, ${dsTopCount} DS-of-topic anchors  ·  derived: ${dsLinks} DS→topic edges, ${tLinks} topic→DS edges`)
   } else {
-    console.info('[patterns] no CSV found, using inline m.anchors arrays')
+    console.info('[patterns] no CSV found, using inline m.anchors arrays + hand-coded link maps')
   }
   applyHash()
 })

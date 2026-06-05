@@ -48,17 +48,23 @@ const COL_TAGS    = 7    // H
 function inferDs(lcTopics) {
   const t = new Set(lcTopics.split(/[;\n]+/).map(s => s.trim()))
   if (t.has('Linked List'))                                  return 'linked-list'
-  if (t.has('Binary Search Tree'))                            return 'bst'
-  if (t.has('Trie'))                                          return 'trie'
+  // "Binary Search Tree" + "Data Stream" usually means BST is the TOOL on
+  // a stream input (e.g. LC 703 Kth Largest in Stream), not BST input.
+  // Demote in that case.
+  if (t.has('Binary Search Tree') && !t.has('Data Stream'))   return 'bst'
   if (t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) return 'tree'
   // LC uses "Graph Theory" in the topics list, NOT "Graph" — accept both.
   // Also catches the topo-sort and shortest-path families.
   if (t.has('Graph') || t.has('Graph Theory') || t.has('Topological Sort') || t.has('Shortest Path')) return 'graph'
   if (t.has('Matrix'))                                        return 'matrices'
-  // Stack/Queue as DS-input are RARE in LC tags — usually those tags
-  // indicate tool-use, not input shape. We fall through to String/Array
-  // unless the title clearly says "Implement Stack/Queue" (handled by
-  // explicit overrides below if needed).
+  // Trie / Stack / Queue: only when the problem is explicitly a DESIGN
+  // problem ("implement / design X"). LC tags Trie/Stack/Queue on any
+  // problem whose solution uses one — those are TOOL uses, not input
+  // shape, and they'd otherwise pollute DS=Trie/Stack/Queue pages with
+  // micros that belong under Array/String/Matrices.
+  if (t.has('Trie')  && t.has('Design')) return 'trie'
+  if (t.has('Stack') && t.has('Design')) return 'stack'
+  if (t.has('Queue') && t.has('Design')) return 'queue'
   if (t.has('String'))                                        return 'string'
   if (t.has('Array'))                                         return 'array'
   // Fallback for the scalar-leaning families: number / single-int /
