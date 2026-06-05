@@ -1338,6 +1338,101 @@ function microsForEmbed(topicId, dsId) {
     .sort((a, b) => order.get(a.id) - order.get(b.id))
 }
 
+// ── Data file (CSV) ──────────────────────────────────────────────────────
+// Anchors used to live as inline `anchors: [...]` arrays on each micro.
+// They now live in /portal/public/patterns-data.csv so that adding a
+// problem in AdsHub + tagging it with `pat_*::*` flows through here on
+// the next CSV regen — no patterns.html edit needed. CSV columns:
+//   anchor_id, tag
+// where tag ∈ {
+//   pat_ds::<dsId>::core::<microId>            (DS-core micro anchor)
+//   pat_topic::<topicId>::<microId>            (Topic micro, DS unknown)
+//   pat_ds::<dsId>::<topicId>::<microId>       (full path — Topic embedded
+//                                                under specific DS; lets the
+//                                                renderer build DS-specific
+//                                                allowlists from data)
+// }
+// If the fetch fails (offline / not regenerated), we fall back to the
+// inline `m.anchors` arrays still present on each micro — UI keeps working.
+let ANCHOR_DATA = null    // { coreAnchors[dsId][microId] = [ids],
+                          //   topicAnchors[topicId][microId] = [ids],
+                          //   dsTopicAnchors[dsId][topicId][microId] = [ids] }
+
+async function loadAnchorData() {
+  try {
+    // Relative to where patterns.html is served. Cache-busted so a fresh
+    // CSV is picked up without manual reload juggling.
+    const r = await fetch('patterns-data.csv?ts=' + Date.now(), { cache: 'no-store' })
+    if (!r.ok) return null
+    const text = await r.text()
+    return parsePatternData(text)
+  } catch (e) {
+    console.warn('[patterns] CSV fetch failed, using inline anchors:', e)
+    return null
+  }
+}
+
+function parsePatternData(csvText) {
+  const lines = csvText.split('\n').filter(l => l.trim())
+  if (!lines.length) return null
+  // Header assumed: anchor_id,tag (we don't enforce — just skip line 1).
+  const out = { core: {}, topic: {}, dsTopic: {} }
+  for (let i = 1; i < lines.length; i++) {
+    const m = lines[i].match(/^(\d+)\s*,\s*(?:"([^"]*)"|([^\n]*))$/)
+    if (!m) continue
+    const id  = m[1]
+    const tag = (m[2] ?? m[3] ?? '').trim()
+    const parts = tag.split('::')
+    if (parts[0] === 'pat_ds' && parts.length === 4 && parts[2] === 'core') {
+      // pat_ds::<ds>::core::<micro>
+      const ds = parts[1], micro = parts[3]
+      ;(((out.core[ds] = out.core[ds] || {})[micro] = out.core[ds][micro] || [])).push(id)
+    } else if (parts[0] === 'pat_topic' && parts.length === 3) {
+      // pat_topic::<topic>::<micro>
+      const topic = parts[1], micro = parts[2]
+      ;(((out.topic[topic] = out.topic[topic] || {})[micro] = out.topic[topic][micro] || [])).push(id)
+    } else if (parts[0] === 'pat_ds' && parts.length === 4 && parts[2] !== 'core') {
+      // pat_ds::<ds>::<topic>::<micro>  — Topic micro embedded under DS.
+      // Counts under both the Topic-tab view (out.topic) and the DS-tab
+      // embedded-section view (out.dsTopic).
+      const ds = parts[1], topic = parts[2], micro = parts[3]
+      ;(((out.topic[topic] = out.topic[topic] || {})[micro] = out.topic[topic][micro] || [])).push(id)
+      const a = (out.dsTopic[ds] = out.dsTopic[ds] || {})
+      const b = (a[topic] = a[topic] || {})
+      ;((b[micro] = b[micro] || [])).push(id)
+    }
+  }
+  return out
+}
+
+// Anchor lookup used by renderMicroCard. Order of preference:
+//   1) parent is DS  + ANCHOR_DATA has DS-core anchors           → use those
+//   2) parent is Topic + ANCHOR_DATA has Topic anchors           → use those
+//   3) DS-embed-of-topic + ANCHOR_DATA.dsTopic has the entry     → use those
+//   4) fallback: inline m.anchors (back-compat)
+function anchorsFor(parentPattern, micro, embeddedUnderDsId = null) {
+  if (ANCHOR_DATA) {
+    if (embeddedUnderDsId) {
+      // Embedded under a DS — prefer DS-specific anchors if available,
+      // else fall through to the topic's full anchor union (which is what
+      // the user sees if we never tagged per-DS).
+      const dsSpec = ANCHOR_DATA.dsTopic?.[embeddedUnderDsId]?.[parentPattern.id]?.[micro.id]
+      if (dsSpec && dsSpec.length) return dsSpec
+      const topicAll = ANCHOR_DATA.topic?.[parentPattern.id]?.[micro.id]
+      if (topicAll) return topicAll
+    } else if ((parentPattern.tab || 'ds') === 'ds') {
+      const a = ANCHOR_DATA.core?.[parentPattern.id]?.[micro.id]
+      if (a) return a
+    } else {
+      const a = ANCHOR_DATA.topic?.[parentPattern.id]?.[micro.id]
+      if (a) return a
+    }
+  }
+  // Back-compat fallback — uses the literal anchors still embedded
+  // alongside each micro definition.
+  return micro.anchors || []
+}
+
 // ── Render ───────────────────────────────────────────────────────────────
 let view = 'tree'         // 'tree' | 'flat'
 let activeTab = 'ds'      // 'ds' | 'topic' — filters which PATTERNS show
@@ -1617,7 +1712,7 @@ function renderMain() {
       </h3>
       <p class="lede" style="margin-top:-2px">${t.intro}</p>
       <div class="micro-grid">
-        ${embedded.map(m => renderMicroCard(t, m)).join('')}
+        ${embedded.map(m => renderMicroCard(t, m, p.id /* embeddedUnderDsId */)).join('')}
       </div>
     </div>`
   }).join('')
@@ -1684,8 +1779,9 @@ function onBrowseLinkClick(e, q) {
   window.parent.postMessage({ type: 'pghub-search', q }, '*')
 }
 
-function renderMicroCard(p, m) {
-  const anchors = m.anchors.map(id => `
+function renderMicroCard(p, m, embeddedUnderDsId = null) {
+  const ids = anchorsFor(p, m, embeddedUnderDsId)
+  const anchors = ids.map(id => `
     <a class="anchor" href="adshub?id=${id}" target="_blank" rel="noopener"
        onclick="onAnchorClick(event, ${id})">
       <span class="num">#${id}</span>
@@ -1787,7 +1883,24 @@ function syncTabButtons() {
   const tb = $('#tab-' + activeTab); if (tb) tb.classList.add('active')
 }
 window.addEventListener('hashchange', applyHash)
-applyHash()
+
+// Boot: try to fetch the CSV first (if served alongside this file). If the
+// fetch resolves, ANCHOR_DATA is populated and every renderMicroCard call
+// pulls live data; if it rejects (e.g. opening the html via file://) we
+// fall through to the inline `m.anchors` arrays still attached to each
+// micro — the UI stays functional offline.
+loadAnchorData().then(data => {
+  ANCHOR_DATA = data
+  if (data) {
+    const coreCount  = Object.values(data.core   ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
+    const topicCount = Object.values(data.topic  ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
+    const dsTopCount = Object.values(data.dsTopic).reduce((s, ds) => s + Object.values(ds).reduce((a, t) => a + Object.values(t).reduce((x, ids) => x + ids.length, 0), 0), 0)
+    console.info(`[patterns] anchor CSV loaded — ${coreCount} DS-core, ${topicCount} topic, ${dsTopCount} DS-of-topic anchors`)
+  } else {
+    console.info('[patterns] no CSV found, using inline m.anchors arrays')
+  }
+  applyHash()
+})
 </script>
 </body>
 </html>
