@@ -259,7 +259,9 @@ export default function AdsHubView() {
       } else if (d.type === 'pghub-search' && typeof d.q === 'string') {
         // 'Browse all <topic>' link → flip to Browse mode and apply the
         // filter (that's the whole point of the link — leave Patterns).
-        setSearch(d.q); setAdsMode('browse')
+        // Also clear any previously-selected problem so the user lands
+        // on a clean filtered list, not a stale problem-detail pane.
+        setSearch(d.q); setAdsMode('browse'); setSelected(null)
       }
     }
     window.addEventListener('message', onMsg)
