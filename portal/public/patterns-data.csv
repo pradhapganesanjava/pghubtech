@@ -20,6 +20,7 @@ anchor_id,tag
 16,pat_ds::array::two-pointers::tp-converging
 16,pat_topic::sorting::sort-then-twoptr
 16,pat_ds::array::sorting::sort-then-twoptr
+17,pat_ds::string::backtrack::permutation
 18,pat_topic::sorting::sort-then-twoptr
 18,pat_ds::array::sorting::sort-then-twoptr
 19,pat_ds::linked-list::core::nth-from-end
@@ -30,6 +31,7 @@ anchor_id,tag
 21,pat_ds::linked-list::core::dummy-head-merge
 21,pat_topic::two-pointers::tp-merge-walk
 21,pat_ds::linked-list::two-pointers::tp-merge-walk
+22,pat_ds::string::backtrack::partition-on-string
 23,pat_ds::linked-list::core::dummy-head-merge
 23,pat_topic::heap::k-way-merge
 23,pat_ds::linked-list::heap::k-way-merge
@@ -86,6 +88,7 @@ anchor_id,tag
 53,pat_topic::greedy::running-extreme
 53,pat_ds::array::greedy::running-extreme
 54,pat_ds::matrices::core::mat-spiral
+55,pat_ds::array::greedy::running-extreme
 56,pat_topic::greedy::sort-and-sweep
 56,pat_ds::array::greedy::sort-and-sweep
 57,pat_topic::greedy::sort-and-sweep
@@ -158,6 +161,7 @@ anchor_id,tag
 98,pat_ds::bst::core::inorder-bst
 98,pat_ds::bst::core::bst-bounds-validate
 99,pat_ds::bst::core::inorder-bst
+101,pat_ds::tree::dfs::dfs-template
 102,pat_topic::bfs::bfs-level-order
 102,pat_ds::tree::bfs::bfs-level-order
 103,pat_topic::bfs::bfs-level-order
@@ -170,6 +174,7 @@ anchor_id,tag
 110,pat_ds::tree::core::post-order-depth
 112,pat_ds::tree::core::path-sum-dfs
 113,pat_ds::tree::core::path-sum-dfs
+114,pat_ds::tree::dfs::dfs-tree-orders
 115,pat_topic::dp::dp-2-strings
 115,pat_ds::string::dp::dp-2-strings
 121,pat_topic::dp::state-machine-dp
@@ -198,6 +203,7 @@ anchor_id,tag
 127,pat_ds::string::bfs::bfs-shortest-unweighted
 127,pat_topic::bfs::bfs-bidirectional
 127,pat_ds::string::bfs::bfs-bidirectional
+128,pat_ds::array::hash::seen-set
 129,pat_ds::tree::core::path-sum-dfs
 130,pat_ds::graph::core::cc-dfs-uf
 130,pat_ds::matrices::core::mat-grid-dfs-bfs
@@ -211,10 +217,11 @@ anchor_id,tag
 136,pat_ds::array::bits::xor-cancel
 137,pat_topic::bits::xor-cancel
 137,pat_ds::array::bits::xor-cancel
+138,pat_ds::linked-list::hash::seen-set
 139,pat_topic::dp::dp-1d-linear
-139,pat_ds::trie::dp::dp-1d-linear
+139,pat_ds::string::dp::dp-1d-linear
 140,pat_topic::backtrack::partition-on-string
-140,pat_ds::trie::backtrack::partition-on-string
+140,pat_ds::string::backtrack::partition-on-string
 141,pat_ds::linked-list::core::floyd-cycle
 141,pat_topic::hash::seen-set
 141,pat_ds::linked-list::hash::seen-set
@@ -232,6 +239,7 @@ anchor_id,tag
 145,pat_ds::tree::dfs::dfs-tree-orders
 145,pat_topic::dfs::dfs-iterative-stack
 145,pat_ds::tree::dfs::dfs-iterative-stack
+148,pat_ds::linked-list::sorting::merge-sort-counting
 150,pat_topic::stack-topic::expression-eval
 150,pat_ds::array::stack-topic::expression-eval
 151,pat_ds::array::core::rotate-reverse
@@ -299,9 +307,9 @@ anchor_id,tag
 211,pat_ds::trie::core::trie-basic
 211,pat_ds::trie::core::trie-wildcard
 212,pat_topic::backtrack::word-search-dfs
-212,pat_ds::trie::backtrack::word-search-dfs
+212,pat_ds::matrices::backtrack::word-search-dfs
 212,pat_topic::trie-topic::trie-grid-dfs
-212,pat_ds::trie::trie-topic::trie-grid-dfs
+212,pat_ds::matrices::trie-topic::trie-grid-dfs
 213,pat_topic::dp::dp-1d-linear
 213,pat_ds::array::dp::dp-1d-linear
 215,pat_topic::heap::top-k
@@ -335,6 +343,7 @@ anchor_id,tag
 235,pat_ds::tree::core::lca-dfs
 235,pat_ds::bst::core::bst-lca
 236,pat_ds::tree::core::lca-dfs
+238,pat_ds::array::prefix-sum::ps-1d
 239,pat_topic::deque-topic::monotonic-deque
 239,pat_ds::array::deque-topic::monotonic-deque
 242,pat_ds::string::core::anagram-keying
@@ -462,7 +471,7 @@ anchor_id,tag
 417,pat_topic::dfs::dfs-template
 417,pat_ds::matrices::dfs::dfs-template
 421,pat_topic::trie-topic::trie-xor-max
-421,pat_ds::trie::trie-topic::trie-xor-max
+421,pat_ds::array::trie-topic::trie-xor-max
 433,pat_ds::string::core::word-ladder-bfs
 433,pat_topic::bfs::bfs-shortest-unweighted
 433,pat_ds::string::bfs::bfs-shortest-unweighted
@@ -538,9 +547,11 @@ anchor_id,tag
 567,pat_topic::sliding-window::sw-fixed
 567,pat_ds::string::sliding-window::sw-fixed
 572,pat_ds::tree::core::serialize-tree
+581,pat_ds::array::stack-topic::monotonic-stack
 583,pat_ds::string::core::edit-distance-dp
 583,pat_topic::dp::dp-2-strings
 583,pat_ds::string::dp::dp-2-strings
+617,pat_ds::tree::dfs::dfs-template
 621,pat_topic::heap::event-driven-scheduling
 621,pat_ds::array::heap::event-driven-scheduling
 622,pat_ds::queue::core::queue-from-stacks
@@ -548,12 +559,12 @@ anchor_id,tag
 632,pat_ds::array::heap::k-way-merge
 641,pat_ds::queue::core::queue-from-stacks
 642,pat_topic::trie-topic::trie-autocomplete
-642,pat_ds::trie::trie-topic::trie-autocomplete
+642,pat_ds::string::trie-topic::trie-autocomplete
 643,pat_topic::sliding-window::sw-fixed
 643,pat_ds::array::sliding-window::sw-fixed
 647,pat_ds::string::core::expand-around-center
 648,pat_topic::trie-topic::trie-autocomplete
-648,pat_ds::trie::trie-topic::trie-autocomplete
+648,pat_ds::string::trie-topic::trie-autocomplete
 652,pat_ds::tree::core::serialize-tree
 653,pat_ds::array::core::two-sum-hash
 653,pat_topic::hash::complement-lookup
@@ -568,9 +579,9 @@ anchor_id,tag
 685,pat_ds::graph::union-find::uf-basic
 687,pat_ds::tree::core::post-order-depth
 692,pat_topic::heap::top-k
-692,pat_ds::trie::heap::top-k
+692,pat_ds::string::heap::top-k
 692,pat_topic::sorting::bucket-sort-freq
-692,pat_ds::trie::sorting::bucket-sort-freq
+692,pat_ds::string::sorting::bucket-sort-freq
 695,pat_ds::graph::core::cc-dfs-uf
 695,pat_ds::matrices::core::mat-grid-dfs-bfs
 695,pat_topic::dfs::dfs-template
@@ -582,7 +593,7 @@ anchor_id,tag
 700,pat_ds::bst::core::bst-insert-delete
 701,pat_ds::bst::core::bst-insert-delete
 703,pat_topic::heap::top-k
-703,pat_ds::bst::heap::top-k
+703,pat_ds::array::heap::top-k
 704,pat_topic::binary-search::bs-textbook
 704,pat_ds::array::binary-search::bs-textbook
 714,pat_topic::dp::state-machine-dp
@@ -616,6 +627,7 @@ anchor_id,tag
 752,pat_ds::string::bfs::bfs-bidirectional
 759,pat_topic::greedy::sort-and-sweep
 759,pat_ds::array::greedy::sort-and-sweep
+763,pat_ds::string::greedy::sort-and-sweep
 772,pat_topic::stack-topic::expression-eval
 772,pat_ds::string::stack-topic::expression-eval
 778,pat_topic::heap::dijkstra
@@ -760,7 +772,7 @@ anchor_id,tag
 1255,pat_topic::bits::bitmask-enumerate
 1255,pat_ds::string::bits::bitmask-enumerate
 1268,pat_topic::trie-topic::trie-autocomplete
-1268,pat_ds::trie::trie-topic::trie-autocomplete
+1268,pat_ds::string::trie-topic::trie-autocomplete
 1292,pat_topic::prefix-sum::ps-2d
 1292,pat_ds::matrices::prefix-sum::ps-2d
 1295,pat_topic::math::sum-formulas
@@ -813,13 +825,13 @@ anchor_id,tag
 1697,pat_topic::union-find::uf-weighted
 1697,pat_ds::graph::union-find::uf-weighted
 1707,pat_topic::trie-topic::trie-xor-max
-1707,pat_ds::trie::trie-topic::trie-xor-max
+1707,pat_ds::array::trie-topic::trie-xor-max
 1730,pat_topic::bfs::bfs-shortest-unweighted
 1730,pat_ds::matrices::bfs::bfs-shortest-unweighted
 1765,pat_topic::bfs::bfs-multi-source
 1765,pat_ds::matrices::bfs::bfs-multi-source
 1803,pat_topic::trie-topic::trie-xor-max
-1803,pat_ds::trie::trie-topic::trie-xor-max
+1803,pat_ds::array::trie-topic::trie-xor-max
 1825,pat_topic::heap::two-heap-median
 1825,pat_ds::array::heap::two-heap-median
 1834,pat_topic::heap::event-driven-scheduling
