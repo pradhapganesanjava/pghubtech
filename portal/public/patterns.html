@@ -339,46 +339,32 @@ const PATTERNS = [
     ],
   },
 
-  // ── Stack (DS) ───────────────────────────────────────────────────────
-  // Stack appears in BOTH tabs. Under DS the problem itself is stack-shaped
-  // (bracket matching, expression evaluation, nested decoding). The
-  // monotonic-stack family — where a stack is used as a TOOL on arrays —
-  // lives under `stack-topic` in the Topic tab.
+  // ── Stack (DS — STRICT: problem input IS a stack) ────────────────────
+  // After review: bracket-match / expression-eval / decode-string all have
+  // STRING inputs (solved using a stack as a tool) — they moved into the
+  // `stack-topic` entry under the Topic tab. Under DS we keep only problems
+  // where the INPUT itself is stack-shaped (design ops, push/pop sequences).
   { tab: 'ds', id: 'stack', name: 'Stack', icon: '🥞', topicTag: 'Stack',
-    intro: 'LIFO. Use under DS when the problem itself is stack-shaped: balanced brackets, nested decoding, expression evaluation. For monotonic-stack-on-array, see the Topic tab.',
+    intro: 'LIFO. Problems where the INPUT itself is a stack — design variants (min stack, queue-from-stacks) and push/pop sequence validation. For stack used as a tool on Array / String inputs (monotonic stack, bracket matching, expression eval) see the Topic tab → 🥞 Stack (as Tool).',
     micros: [
-      { id: 'bracket-match', name: 'Bracket Matching',
-        when: 'Validate balanced parens / find longest valid.',
-        how: 'Push openers; on closer, top must match.',
-        cost: 'O(n) time, O(n) space.',
-        contrast: 'Longest-valid uses indices on the stack rather than the bracket chars.',
-        anchors: [20, 32, 921, 1249] },
-      { id: 'expression-eval', name: 'Expression Evaluation',
-        when: 'Evaluate +, −, ×, ÷, parens, variables.',
-        how: 'Two stacks (operand + operator) with precedence checks, OR shunting-yard.',
-        cost: 'O(n) time, O(n) space.',
-        contrast: 'Calc I (224) handles parens + addition; II (227) adds ×/÷ precedence; III (772) combines.',
-        anchors: [224, 227, 772, 150, 394] },
-      { id: 'decode-string', name: 'Decode String (Nested Counts)',
-        when: 'k[encoded[…]] style nesting.',
-        how: 'Stack of (count, accumulated-prefix); on \']\' pop and repeat.',
-        cost: 'O(n + output) time.',
-        contrast: 'Generalises to nested integer / nested JSON parsing.',
-        anchors: [394, 726, 1106] },
-      { id: 'min-stack-design', name: 'Stack Design (Min / Queue-from-Stack)',
-        when: 'Implement a stack with extra ops in O(1): getMin, freq-stack, queue-via-two-stacks.',
+      { id: 'min-stack-design', name: 'Stack Design (Min / Max / Queue-from-Stack)',
+        when: 'Implement a stack with extra ops in O(1): getMin, getMax, freq-stack, queue-via-two-stacks.',
         how: 'Pair every push with the running aux (min so far) OR use a second stack as the buffer.',
         cost: 'O(1) amortised per op.',
         contrast: 'Whenever you need O(1) auxiliary aggregate over a LIFO history.',
-        anchors: [155, 716, 232, 225, 895] },
+        anchors: [155, 716, 232, 225, 895, 1381] },
+      { id: 'validate-stack-seq', name: 'Validate Stack Sequence',
+        when: 'Given pushed[] and popped[] arrays, decide if they could have come from a single stack.',
+        how: 'Simulate: push pushed[i] one by one; whenever top == popped[j], pop and advance j.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Same simulate-with-aux-stack idea solves "asteroid collision" (735) and "online stock span" (901).',
+        anchors: [946, 735, 901, 1441] },
     ],
   },
 
-  // ── Queue (DS — small, mostly design) ────────────────────────────────
-  // Queue is mainly a TOOL inside BFS / monotonic-deque (see Topic tab).
-  // Under DS we only keep the few problems that are queue-design at heart.
+  // ── Queue (DS — STRICT: problem input IS a queue / stream) ───────────
   { tab: 'ds', id: 'queue', name: 'Queue', icon: '🚌', topicTag: 'Queue',
-    intro: 'FIFO. Under DS use for queue-design problems. For BFS / monotonic-deque (queue used as a tool) see the Topic tab.',
+    intro: 'FIFO. Problems where the INPUT itself is a queue, a stream, or queue/stack design. For queue used as the engine of BFS (tree / graph / grid traversal) or for sliding-window extremes (monotonic deque) see the Topic tab → 🌐 BFS / 🔁 Deque.',
     micros: [
       { id: 'queue-from-stacks', name: 'Queue / Stack — Implement Each Via the Other',
         when: 'Implement queue using stacks (or vice versa); circular queue with fixed capacity.',
@@ -434,12 +420,9 @@ const PATTERNS = [
     ],
   },
 
-  // ── Trie (DS) ────────────────────────────────────────────────────────
-  // Trie appears in BOTH tabs. Under DS the problem is to BUILD/QUERY a
-  // trie (insert + startsWith, prefix matching). Trie-as-a-tool — e.g.
-  // pruning grid DFS, top-K autocomplete — lives under `trie-topic`.
+  // ── Trie (DS — STRICT: design a trie data structure) ────────────────
   { tab: 'ds', id: 'trie', name: 'Trie', icon: '🔤', topicTag: 'Trie',
-    intro: 'Prefix tree. Under DS use for trie design problems. For trie used as a TOOL to accelerate DFS / autocomplete see the Topic tab.',
+    intro: 'Prefix tree. Problems where the INPUT is to BUILD / QUERY a trie (insert, startsWith, wildcard search, magic dictionary). For trie used as a TOOL to accelerate problems whose input is something else (grid DFS, autocomplete, max-XOR on arrays) see the Topic tab → 🔤 Trie (as Tool).',
     micros: [
       { id: 'trie-basic', name: 'Trie Insert + StartsWith',
         when: 'Many words, "exists?" and "startsWith?" queries.',
@@ -1052,6 +1035,26 @@ const PATTERNS = [
         cost: 'O(n).',
         contrast: 'Pattern is "greedy build + local undo via stack" — distinct from monotonic-stack which tracks indices.',
         anchors: [1047, 1209, 402, 316, 1249] },
+      // ── String parsing with a stack (moved here from DS=Stack — these
+      //    have STRING input, stack is just the tool).
+      { id: 'bracket-match', name: 'Bracket Matching',
+        when: 'Validate balanced parens in a STRING / find longest valid.',
+        how: 'Push openers; on closer, top must match. For longest-valid, push indices instead of chars.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Longest-valid uses indices on the stack rather than the bracket chars.',
+        anchors: [20, 32, 921, 1249] },
+      { id: 'expression-eval', name: 'Expression Evaluation',
+        when: 'Evaluate a STRING expression with +, −, ×, ÷, parens, variables.',
+        how: 'Two stacks (operand + operator) with precedence checks, OR shunting-yard.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Basic-Calc I (224) = parens + addition; II (227) adds ×/÷; III (772) combines.',
+        anchors: [224, 227, 772, 150, 394, 1006] },
+      { id: 'decode-string', name: 'Decode String (Nested Counts)',
+        when: 'Parse a STRING with k[encoded[…]] nested counters.',
+        how: 'Stack of (count, accumulated-prefix); on \']\' pop and repeat.',
+        cost: 'O(n + output) time.',
+        contrast: 'Generalises to nested integer / nested JSON parsing.',
+        anchors: [394, 726, 1106, 736] },
     ],
   },
 
@@ -1144,9 +1147,14 @@ const DS_TOPIC_LINKS = {
   'bst':         ['dfs', 'binary-search'],
   'graph':       ['dfs', 'bfs', 'union-find', 'heap', 'dp', 'greedy'],
   'matrices':    ['dfs', 'bfs', 'dp', 'prefix-sum'],
-  'stack':       ['stack-topic'],
-  'queue':       ['bfs', 'deque-topic'],
-  'trie':        ['trie-topic', 'dfs'],
+  // For Stack / Queue / Trie the topic-as-tool variants don't apply: by
+  // definition those techniques run on Array / String / Tree / Grid /
+  // Graph inputs, not on a stack / queue / trie. So we leave these three
+  // DS pages topic-less — the page is a pure input-shape view. Pointer
+  // to the corresponding Topic-tab entry is in each intro.
+  'stack':       [],
+  'queue':       [],
+  'trie':        [],
 }
 
 function linkedTopics(dsId) {
@@ -1178,14 +1186,12 @@ const TOPIC_DS_NOTES = {
     'bst':      'In-order yields sorted values (validate, Kth, iterator); bounds-DFS for streaming validation.',
     'graph':    'Standard visit-recurse-mark; 3-color for cycle detection in directed graphs; post-order = topological sort.',
     'matrices': 'Grid flood-fill / island count — mark visited in-place to avoid a side set.',
-    'trie':     'Descend the trie alongside grid DFS to prune dead branches; wildcard / regex-lite search.',
   },
   bfs: {
     'string':   'Word-ladder shortest transformation; bidirectional BFS halves the search depth.',
     'tree':     'Level-order traversal for right-view, level sums, vertical / zigzag order.',
     'graph':    'Shortest path on unweighted edges; 0-1 BFS via deque when weights are {0,1}.',
     'matrices': 'Shortest path on a grid; multi-source BFS for nearest-source distance to every cell.',
-    'queue':    'Queue is the data structure BFS rides on — rotting oranges, walls-and-gates, moving aggregates.',
   },
   hash: {
     'array':       'Two-sum complement lookup; prefix-sum hashmap for subarray-sum-K (handles negatives).',
@@ -1226,12 +1232,10 @@ const TOPIC_DS_NOTES = {
   },
   'stack-topic': {
     'array':  'Monotonic stack for next-greater / largest-rectangle / trap-rainwater / sub-array minimums.',
-    'string': 'Stack to rewrite/minify — remove K adjacent duplicates, build smallest after K removes.',
-    'stack':  'These techniques USE a stack as their active scratchpad — see the DS-tab Stack page for stack-design.',
+    'string': 'Stack as parser: bracket validation, expression eval, decode k[…] nesting, remove K-duplicates / smallest-after-removes.',
   },
   'deque-topic': {
     'array': 'Monotonic deque for sliding-window max/min in O(n); window-constraint DP front lookup.',
-    'queue': 'Deque is the queue variant these techniques need — front-pop or back-pop based on the invariant.',
   },
   math: {
     'array': 'Closed-form sums (missing-number), sieve for prime-count batched queries, fast power for modular.',
@@ -1241,7 +1245,6 @@ const TOPIC_DS_NOTES = {
   },
   'trie-topic': {
     'string': 'Wildcard / regex-lite search; bit-trie for max-XOR pair; autocomplete with top-K cached at nodes.',
-    'trie':   'These ARE the trie tool patterns — see the DS-tab Trie page for plain trie design problems.',
   },
   backtrack: {
     'string': 'Palindrome partitioning; valid IP addresses; word break with memo on bad indices.',
@@ -1297,27 +1300,23 @@ const TOPIC_DS_MICROS = {
     'graph': ['sort-and-sweep'],                          // MST = sort edges + UF
   },
   'stack-topic': {
-    'string': ['parens-rewrite'],                         // monotonic-stack is array-shaped
-    'stack':  ['monotonic-stack', 'monotonic-stack-2pass', 'parens-rewrite'],  // reference
+    // String-input problems solved with a stack (parens, brackets,
+    // expression eval, decode-string). monotonic-stack is array-shaped.
+    'string': ['parens-rewrite', 'bracket-match', 'expression-eval', 'decode-string'],
   },
-  'deque-topic': {
-    'queue': ['monotonic-deque', 'deque-window-constraint'],  // reference
-  },
-  'trie-topic': {
-    'trie': ['trie-grid-dfs', 'trie-autocomplete', 'trie-xor-max'],  // reference
-  },
+  // (trie-topic / bfs / dfs entries no longer carry stack/queue/trie
+  //  allowlists — DS_TOPIC_LINKS for those DSes is now empty per the
+  //  input-DS rule.)
   bfs: {
     'string':   ['bfs-shortest-unweighted', 'bfs-bidirectional'],     // word-ladder family
     'tree':     ['bfs-level-order'],                                  // pure tree case
     'matrices': ['bfs-shortest-unweighted', 'bfs-multi-source', 'bfs-zero-one'],
-    'queue':    ['bfs-level-order', 'bfs-shortest-unweighted', 'bfs-multi-source', 'bfs-bidirectional', 'bfs-zero-one'],
   },
   dfs: {
     'tree':     ['dfs-template', 'dfs-tree-orders', 'dfs-backtrack-undo', 'dfs-iterative-stack'],
     'bst':      ['dfs-tree-orders', 'dfs-iterative-stack'],
     'graph':    ['dfs-template', 'dfs-backtrack-undo', 'dfs-iterative-stack'],
     'matrices': ['dfs-template', 'dfs-grid-flood', 'dfs-backtrack-undo'],
-    'trie':     ['dfs-template'],
   },
   backtrack: {
     'string': ['partition-on-string', 'word-search-dfs'],
