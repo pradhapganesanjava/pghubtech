@@ -139,6 +139,21 @@
   .ds-topic-hd .topic-jump { font-size: 11px; color: var(--text3); padding: 3px 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; }
   .ds-topic-hd .topic-jump:hover { color: var(--primary); border-color: var(--primary); text-decoration: none; }
   .hd-count { color: var(--text3); font-size: 11px; font-weight: 400; margin-left: 6px; }
+  /* ── Topic detail pane: "Applies to N data structures" cards ─────── */
+  .topic-ds-block { margin-top: 28px; }
+  .topic-ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 10px 0 8px; }
+  .topic-ds-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+                   cursor: pointer; transition: border-color .1s, transform .1s; }
+  .topic-ds-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .topic-ds-card-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .topic-ds-card-hd .topic-ds-ico { font-size: 16px; }
+  .topic-ds-card-hd .topic-ds-name { font-weight: 600; font-size: 14px; color: var(--text); }
+  .topic-ds-card-hd .topic-ds-arrow { margin-left: auto; color: var(--text3); }
+  .topic-ds-card:hover .topic-ds-arrow { color: var(--primary); }
+  .topic-ds-note { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .topic-ds-note em { color: var(--text3); }
+  /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
+  .tree-applies-row { padding-left: 22px; }
 </style>
 </head>
 <body>
@@ -1138,6 +1153,111 @@ function linkedTopics(dsId) {
   return ids.map(id => PATTERNS.find(p => p.id === id)).filter(Boolean)
 }
 
+// Inverse of DS_TOPIC_LINKS — for a Topic, which DSes is it applied on?
+// Derived (not a second source of truth) so adding a DS_TOPIC_LINKS entry
+// auto-propagates to the topic side.
+function applicableDses(topicId) {
+  const out = []
+  for (const dsId of Object.keys(DS_TOPIC_LINKS)) {
+    if ((DS_TOPIC_LINKS[dsId] || []).includes(topicId)) {
+      const p = PATTERNS.find(x => x.id === dsId)
+      if (p) out.push(p)
+    }
+  }
+  return out
+}
+
+// Per-(topic, DS) one-line prose: how the topic actually shows up on
+// that DS. Fills the "what are the ways the topic is applied on the DS"
+// gap that pure cross-links can't answer. Pairs missing here fall back
+// to a generic "click to see this topic embedded under [DS]" message.
+const TOPIC_DS_NOTES = {
+  dfs: {
+    'tree':     'Pre/in/post-order traversal; tree DP returns subtree results; LCA via subtree containment.',
+    'bst':      'In-order yields sorted values (validate, Kth, iterator); bounds-DFS for streaming validation.',
+    'graph':    'Standard visit-recurse-mark; 3-color for cycle detection in directed graphs; post-order = topological sort.',
+    'matrices': 'Grid flood-fill / island count — mark visited in-place to avoid a side set.',
+    'trie':     'Descend the trie alongside grid DFS to prune dead branches; wildcard / regex-lite search.',
+  },
+  bfs: {
+    'string':   'Word-ladder shortest transformation; bidirectional BFS halves the search depth.',
+    'tree':     'Level-order traversal for right-view, level sums, vertical / zigzag order.',
+    'graph':    'Shortest path on unweighted edges; 0-1 BFS via deque when weights are {0,1}.',
+    'matrices': 'Shortest path on a grid; multi-source BFS for nearest-source distance to every cell.',
+    'queue':    'Queue is the data structure BFS rides on — rotting oranges, walls-and-gates, moving aggregates.',
+  },
+  hash: {
+    'array':       'Two-sum complement lookup; prefix-sum hashmap for subarray-sum-K (handles negatives).',
+    'string':      'Anagram fingerprint key (sorted or 26-count); freq counter to drive sliding-window invariants.',
+    'linked-list': 'Seen-set for cycle detection; node→clone map for deep-copy of linked list with random ptr.',
+  },
+  'two-pointers': {
+    'array':       'Converging from ends (3-sum, water-area, palindrome); in-place read/write (dedupe, move-zeros).',
+    'string':      'Palindrome validation; merge-walk between two strings; expand-around-center.',
+    'linked-list': 'Floyd tortoise-hare cycle; slow/fast middle; N-th from end via offset; aligned intersect.',
+  },
+  'sliding-window': {
+    'array':  'Fixed-K best statistic; variable-K shrink-on-violation for longest-with-condition (positive vals).',
+    'string': 'Minimum window substring; longest substring with K distinct chars; anagram detection.',
+  },
+  'binary-search': {
+    'array': 'Textbook lower/upper-bound; binary-search-on-answer when feasibility(X) is monotone over a range.',
+    'bst':   'O(h) search / insert / delete walking left vs right per comparator; BST LCA via ordering.',
+  },
+  sorting: {
+    'array':       'Sort + two-pointer for tuple sums; bucket sort by freq; quickselect for Kth without full sort.',
+    'linked-list': 'Merge sort is the standard O(n log n) for linked lists — constant aux space, stable.',
+  },
+  'prefix-sum': {
+    'array':    '1D prefix sum for range-sum queries; + hashmap for subarray-sum-equals-K.',
+    'matrices': '2D prefix sum (inclusion-exclusion) for sub-matrix region-sum in O(1) per query.',
+  },
+  dp: {
+    'array':    '1D linear DP (house robber, climbing stairs); Kadane for max subarray; coin-change.',
+    'string':   '2D string DP — edit distance, LCS, regex, distinct subseq; palindrome substring DP.',
+    'tree':     'Tree DP — post-order returns (use, skip) tuple, combined at parent (house robber III, max camera).',
+    'graph':    'DP on DAG (longest / critical path via topo order); bitmask DP for small subsets (TSP-style).',
+    'matrices': '2D grid path DP — count paths / min cost from corner to corner with obstacles & multipliers.',
+  },
+  greedy: {
+    'array': 'Interval merge / sweep; exchange-argument custom sort; running min/max (best buy-sell).',
+    'graph': 'MST (Kruskal sorts edges, Prim grows from heap); scheduling problems on intervals.',
+  },
+  'stack-topic': {
+    'array':  'Monotonic stack for next-greater / largest-rectangle / trap-rainwater / sub-array minimums.',
+    'string': 'Stack to rewrite/minify — remove K adjacent duplicates, build smallest after K removes.',
+    'stack':  'These techniques USE a stack as their active scratchpad — see the DS-tab Stack page for stack-design.',
+  },
+  'deque-topic': {
+    'array': 'Monotonic deque for sliding-window max/min in O(n); window-constraint DP front lookup.',
+    'queue': 'Deque is the queue variant these techniques need — front-pop or back-pop based on the invariant.',
+  },
+  math: {
+    'array': 'Closed-form sums (missing-number), sieve for prime-count batched queries, fast power for modular.',
+  },
+  bits: {
+    'array': 'XOR cancellation for single-number variants; bitmask subset enumeration (n ≤ ~20).',
+  },
+  'trie-topic': {
+    'string': 'Wildcard / regex-lite search; bit-trie for max-XOR pair; autocomplete with top-K cached at nodes.',
+    'trie':   'These ARE the trie tool patterns — see the DS-tab Trie page for plain trie design problems.',
+  },
+  backtrack: {
+    'string': 'Palindrome partitioning; valid IP addresses; word break with memo on bad indices.',
+    'tree':   'Root-to-leaf path collection; all-paths enumeration with push/pop on the path stack.',
+  },
+  'union-find': {
+    'graph': 'Incremental component count; cycle detection in undirected graphs; reverse-time for offline deletes.',
+  },
+  heap: {
+    'graph': 'Dijkstra (shortest path with non-negative weights); MST via Prim; event-driven scheduling.',
+  },
+}
+
+function topicDsNote(topicId, dsId) {
+  return (TOPIC_DS_NOTES[topicId] || {})[dsId] || null
+}
+
 // ── Render ───────────────────────────────────────────────────────────────
 let view = 'tree'         // 'tree' | 'flat'
 let activeTab = 'ds'      // 'ds' | 'topic' — filters which PATTERNS show
@@ -1215,6 +1335,39 @@ function renderTree(root, filter) {
       l2.onclick = e => { e.preventDefault(); selectPattern(p.id, m.id) }
       sub.appendChild(l2)
     })
+
+    // ─── Topic-tab only: list the DSes this topic applies to ─────────
+    if (activeTab === 'topic') {
+      const dses = applicableDses(p.id)
+      if (dses.length) {
+        const hdr = document.createElement('div')
+        hdr.className = 'tree-topics-hdr'
+        hdr.textContent = `Applies to (${dses.length})`
+        sub.appendChild(hdr)
+        dses.forEach(d => {
+          if (filter
+              && !d.name.toLowerCase().includes(filter)
+              && !p.name.toLowerCase().includes(filter)) return
+          const a = document.createElement('a')
+          a.className = 'tree-topic-row tree-applies-row'
+          a.innerHTML = `
+            <span class="ico">${d.icon}</span>
+            <span class="lbl">${d.name}</span>`
+          a.onclick = () => {
+            // If we're already on the topic page, scroll to the matching
+            // card inside the Applies-To grid; otherwise jump to the DS.
+            if (activePatternId === p.id) {
+              const el = document.querySelector(`.topic-ds-card[onclick*="${d.id}"]`)
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              else selectPattern(d.id)
+            } else {
+              selectPattern(d.id)
+            }
+          }
+          sub.appendChild(a)
+        })
+      }
+    }
 
     // ─── DS-tab only: linked topics for this DS as expandable rows ────
     // Each topic chip can be expanded inline to show that topic's micros
@@ -1352,9 +1505,12 @@ function renderMain() {
   const tabLabel = isDS ? '📦 Data Structure' : '🧰 Topic'
 
   // For DS patterns: embed the topics that apply to this DS (with their
-  // full micro card grids). For Topic patterns: just the core micros.
+  // full micro card grids).
+  // For Topic patterns: show which DSes this topic is applied on, each
+  // with a one-line "how" note and a click-through to the DS page.
   const topics = isDS ? linkedTopics(p.id) : []
-  const coreLabel = isDS && topics.length
+  const dses   = !isDS ? applicableDses(p.id) : []
+  const coreLabel = (isDS && topics.length) || (!isDS && dses.length)
     ? `Core ${p.name} micros`
     : `${p.micros.length} micro-patterns`
 
@@ -1374,6 +1530,34 @@ function renderMain() {
     </div>
   `).join('')
 
+  // "Applies to" — one card per DS that lists this topic in DS_TOPIC_LINKS.
+  // The note explains HOW this topic shows up on that DS (e.g. DFS on
+  // Tree = "pre/in/post-order + tree DP"). Where no per-pair note exists
+  // we degrade to a generic prompt.
+  const dsSection = dses.length ? `
+    <div class="topic-ds-block">
+      <h3>Applies to ${dses.length} data structure${dses.length>1?'s':''}</h3>
+      <p class="lede" style="margin-top:-4px">
+        How this topic is typically used on each DS. Click any card to jump to that DS's page,
+        where the topic appears embedded under its own section.
+      </p>
+      <div class="topic-ds-grid">
+        ${dses.map(d => {
+          const note = topicDsNote(p.id, d.id)
+          return `
+          <div class="topic-ds-card" onclick="selectPattern('${d.id}')">
+            <div class="topic-ds-card-hd">
+              <span class="topic-ds-ico">${d.icon}</span>
+              <span class="topic-ds-name">${d.name}</span>
+              <span class="topic-ds-arrow">→</span>
+            </div>
+            <div class="topic-ds-note">${note || `<em>Click to see ${p.name} embedded under ${d.name}.</em>`}</div>
+          </div>`
+        }).join('')}
+      </div>
+    </div>
+  ` : ''
+
   main.innerHTML = `
     <div class="breadcrumb">${tabLabel}</div>
     <h2>${p.icon} ${p.name}</h2>
@@ -1382,11 +1566,12 @@ function renderMain() {
        onclick="onBrowseLinkClick(event, ${JSON.stringify(p.topicTag || p.name)})">
       ↗ Browse all "${p.topicTag || p.name}"-tagged problems in AdsHub
     </a>
-    <h3>${coreLabel}${isDS && topics.length ? ` <span class="hd-count">(${p.micros.length})</span>` : ''}</h3>
+    <h3>${coreLabel}${((isDS&&topics.length)||(!isDS&&dses.length)) ? ` <span class="hd-count">(${p.micros.length})</span>` : ''}</h3>
     <div class="micro-grid">
       ${p.micros.map(m => renderMicroCard(p, m)).join('')}
     </div>
     ${topicSections}
+    ${dsSection}
   `
 }
 
@@ -1451,11 +1636,12 @@ function renderHome(main) {
     </p>
     <div class="home-grid">
       ${here.map(p => {
-        const tCount = isDS ? linkedTopics(p.id).length : 0
+        const extraCount = isDS ? linkedTopics(p.id).length : applicableDses(p.id).length
+        const extraLabel = isDS ? 'topics' : 'DSes'
         return `
         <div class="home-card" onclick="selectPattern('${p.id}')">
           <h4>${p.icon} ${p.name}</h4>
-          <div class="micro-count">${p.micros.length} micro${tCount ? ` <span style="color:var(--text3);font-weight:400">· ${tCount} topics</span>` : ''}</div>
+          <div class="micro-count">${p.micros.length} micro${extraCount ? ` <span style="color:var(--text3);font-weight:400">· ${extraCount} ${extraLabel}</span>` : ''}</div>
           <div class="meta">${p.intro.slice(0, 90)}${p.intro.length > 90 ? '…' : ''}</div>
         </div>`
       }).join('')}
