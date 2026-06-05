@@ -950,7 +950,8 @@ function renderMain() {
     <div class="breadcrumb">Pattern</div>
     <h2>${p.icon} ${p.name}</h2>
     <p class="lede">${p.intro}</p>
-    <a class="browse-link" href="${browseUrl}" target="_blank" rel="noopener">
+    <a class="browse-link" href="${browseUrl}" target="_blank" rel="noopener"
+       onclick="onBrowseLinkClick(event, ${JSON.stringify(p.topicTag || p.name)})">
       ↗ Browse all "${p.topicTag || p.name}"-tagged problems in AdsHub
     </a>
     <h3>${p.micros.length} micro-patterns</h3>
@@ -960,9 +961,27 @@ function renderMain() {
   `
 }
 
+// True when this page is loaded inside an iframe (e.g. AdsHub's Patterns
+// mode embeds /patterns.html). When embedded we postMessage instead of
+// navigating so the host can switch its own state to "browse + select
+// this problem" — same UX as clicking a row in the AdsHub list.
+const EMBEDDED = (() => { try { return window.parent && window.parent !== window } catch { return false } })()
+
+function onAnchorClick(e, id) {
+  if (!EMBEDDED) return  // normal target=_blank navigation kicks in
+  e.preventDefault()
+  window.parent.postMessage({ type: 'pghub-open-problem', id }, '*')
+}
+function onBrowseLinkClick(e, q) {
+  if (!EMBEDDED) return
+  e.preventDefault()
+  window.parent.postMessage({ type: 'pghub-search', q }, '*')
+}
+
 function renderMicroCard(p, m) {
   const anchors = m.anchors.map(id => `
-    <a class="anchor" href="adshub?id=${id}" target="_blank" rel="noopener">
+    <a class="anchor" href="adshub?id=${id}" target="_blank" rel="noopener"
+       onclick="onAnchorClick(event, ${id})">
       <span class="num">#${id}</span>
     </a>`).join('')
   return `

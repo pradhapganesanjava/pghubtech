@@ -234,6 +234,29 @@ export default function AdsHubView() {
     })
   }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
+
+  // Patterns iframe (public/patterns.html) → parent message bridge. When
+  // the user clicks an anchor #NNN or a "Browse all <topic>" link inside
+  // the embedded reference, we switch back to browse mode and either
+  // select the problem (expanded) or apply the search filter — same UX
+  // as clicking a row in the AdsHub list. Avoids opening a new tab +
+  // re-login flow.
+  useEffect(() => {
+    function onMsg(e: MessageEvent) {
+      const d = e.data
+      if (!d || typeof d !== 'object') return
+      if (d.type === 'pghub-open-problem' && (typeof d.id === 'number' || typeof d.id === 'string')) {
+        const id = String(d.id)
+        const num = String(parseInt(id, 10))
+        const p = problems.find(x => x.frontendId === id || x.frontendId === num)
+        if (p) { setSelected(p); setViewerExpanded(true); setAdsMode('browse') }
+      } else if (d.type === 'pghub-search' && typeof d.q === 'string') {
+        setSearch(d.q); setAdsMode('browse')
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [problems])
   const [lineageFocus, setLineageFocus]    = useState<number | null>(null)
   // Add-a-problem modal.
   const EMPTY_ADD = { frontendId: '', title: '', slug: '', difficulty: 'Medium', topics: '', companies: '', tags: '', leetcodeUrl: '', description: '' }
