@@ -136,6 +136,67 @@ const BATCH = {
 
   // Greedy on arrays / intervals
   1024:['pat_ds::array::greedy::sort-and-sweep'],                    // Video Stitching
+
+  // ── Batch 3 (this turn) ──────────────────────────────────────────────
+  // First, the 5 problems that motivated NEW sub-micros in the schema.
+  // ─────────────────────────────────────────────────────────────────────
+  2:   ['pat_ds::linked-list::core::list-digit-arithmetic'],        // Add Two Numbers
+  445: ['pat_ds::linked-list::core::list-digit-arithmetic'],        // Add Two Numbers II
+  369: ['pat_ds::linked-list::core::list-digit-arithmetic'],        // Plus One Linked List
+  28:  ['pat_ds::string::core::string-match-kmp'],                  // Implement strStr
+  459: ['pat_ds::string::core::string-match-kmp'],                  // Repeated Substring Pattern
+  214: ['pat_ds::string::core::string-match-kmp'],                  // Shortest Palindrome
+  686: ['pat_ds::string::core::string-match-kmp'],                  // Repeated String Match
+  1392:['pat_ds::string::core::string-match-kmp'],                  // Longest Happy Prefix
+  1408:['pat_ds::string::core::string-match-kmp'],                  // String Matching in Array
+  146: ['pat_ds::linked-list::core::dll-cache-design'],             // LRU Cache
+  460: ['pat_ds::linked-list::core::dll-cache-design'],             // LFU Cache
+  432: ['pat_ds::linked-list::core::dll-cache-design'],             // All O`one
+  1756:['pat_ds::linked-list::core::dll-cache-design'],             // Design Most Recently Used Queue
+  332: ['pat_ds::graph::core::euler-tour'],                          // Reconstruct Itinerary
+  753: ['pat_ds::graph::core::euler-tour'],                          // Cracking the Safe
+  2097:['pat_ds::graph::core::euler-tour'],                          // Valid Arrangement of Pairs
+  4:   ['pat_ds::array::binary-search::bs-partition-2sorted'],      // Median 2 Sorted Arrays
+
+  // ── Batch 3 continued — more Top 100 Liked anchors (existing micros) ─
+  // Strings
+  71:  ['pat_ds::string::stack-topic::parens-rewrite'],             // Simplify Path
+  187: ['pat_ds::string::hash::seen-set'],                          // Repeated DNA Sequences
+  241: ['pat_ds::string::backtrack::partition-on-string'],          // Different Ways to Add Parens
+  282: ['pat_ds::string::backtrack::partition-on-string'],          // Expression Add Operators
+  299: ['pat_ds::string::hash::freq-counter'],                      // Bulls and Cows
+  336: ['pat_ds::string::trie-topic::trie-grid-dfs'],               // Palindrome Pairs (trie of reversed)
+  392: ['pat_ds::string::two-pointers::tp-merge-walk'],             // Is Subsequence
+  395: ['pat_ds::string::sliding-window::sw-at-most-k'],            // Longest Substring K Repeating
+  409: ['pat_ds::string::hash::freq-counter'],                      // Longest Palindrome
+  415: ['pat_ds::string::two-pointers::tp-converging'],             // Add Strings (both-end carry walk)
+  67:  ['pat_ds::string::two-pointers::tp-converging'],             // Add Binary
+
+  // Arrays — search / sort / dp / greedy
+  220: ['pat_ds::array::sliding-window::sw-fixed'],                 // Contains Duplicate III
+  264: ['pat_ds::array::dp::dp-1d-linear'],                          // Ugly Number II (3-pointer DP)
+  274: ['pat_ds::array::sorting::bucket-sort-freq'],                 // H-Index
+  275: ['pat_ds::array::binary-search::bs-textbook'],                // H-Index II
+  324: ['pat_ds::array::sorting::sort-then-twoptr'],                 // Wiggle Sort II
+  334: ['pat_ds::array::greedy::running-extreme'],                  // Increasing Triplet
+  350: ['pat_ds::array::hash::freq-counter'],                       // Intersection 2 Arrays II
+  354: ['pat_ds::array::dp::dp-1d-linear'],                          // Russian Doll Envelopes
+  374: ['pat_ds::array::binary-search::bs-textbook'],                // Guess Number Higher Lower
+  413: ['pat_ds::array::dp::dp-1d-linear'],                          // Arithmetic Slices
+  436: ['pat_ds::array::binary-search::bs-textbook'],                // Find Right Interval
+
+  // Trees
+  222: ['pat_ds::tree::core::post-order-depth'],                    // Count Complete Tree Nodes
+
+  // Graphs
+  310: ['pat_ds::graph::core::topo-sort'],                          // Minimum Height Trees
+
+  // Matrices
+  174: ['pat_ds::matrices::dp::dp-2d-grid'],                         // Dungeon Game
+
+  // Math/DP
+  343: ['pat_ds::array::dp::dp-1d-linear'],                          // Integer Break
+  403: ['pat_ds::array::dp::dp-1d-linear'],                          // Frog Jump
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
