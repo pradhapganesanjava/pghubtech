@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Per-(micro, LC-id) application notes — explain HOW the micro's strategy applies to that specific problem. Surfaced in the UI as the anchor chip's tooltip. Audit batch grows over time; see git log.",
     "format": "{ <microId>: { <lcId>: '<one-line note>' } }",
-    "status": "Audit passes 1-4 — covers 20 micros (~145 notes). Latest pass added: bs-textbook, bs-on-answer, dfs-tree-orders, post-order-depth, topo-sort."
+    "status": "Audit passes 1-5 — covers 26 micros. Latest pass added: dp-2d-grid, prefix-sum-hashmap, lca-dfs, top-k, palindrome-two-ptr, iterative-reverse."
   },
 
   "complement-lookup": {
@@ -212,5 +212,55 @@
     "2050": "Parallel Courses III. Topo + DP — for each course, finishTime = max(prereqFinishes) + duration. Tracking max over a DAG.",
     "1857": "Largest Color Value in DAG. Topo + DP — count[v][color] = max over incoming neighbours; add 1 for v's own color.",
     "1136": "Parallel Courses. Topo by LEVELS (Kahn drains entire in-deg-0 batch per round); answer = number of rounds; −1 if cycle."
+  },
+
+  "dp-2d-grid": {
+    "62":  "Unique Paths. dp[r][c] = dp[r-1][c] + dp[r][c-1]. Base dp[0][*]=1, dp[*][0]=1. Rolling 1D row works for O(n) space.",
+    "63":  "Unique Paths II (obstacles). Same recurrence; if grid[r][c]==1 set dp[r][c]=0 (obstacle blocks the path).",
+    "64":  "Min Path Sum. dp[r][c] = grid[r][c] + min(dp[r-1][c], dp[r][c-1]). Edges have a single inbound direction.",
+    "174": "Dungeon Game. REVERSE direction — fill from bottom-right backward. dp[r][c] = max(1, min(dp[r+1][c], dp[r][c+1]) − grid[r][c]). Forward DP fails because future damage matters.",
+    "931": "Min Falling Path Sum. dp[r][c] = grid[r][c] + min(dp[r-1][c-1], dp[r-1][c], dp[r-1][c+1]). Skip out-of-bound diagonals at edges.",
+    "120": "Triangle (bottom-up). dp[c] = triangle[r][c] + min(dp[c], dp[c+1]) sweeping r from bottom-1 → 0. One-array rolling, O(n) space."
+  },
+
+  "prefix-sum-hashmap": {
+    "560": "Subarray Sum K. Map[prefix] = count of prior occurrences. For each new prefix, answer += map.get(prefix − K, 0); then ++map[prefix]. Handles negatives (sliding window can't).",
+    "974": "Subarray Sums Divisible by K. Map[prefix mod K] = count. Same engine, but key on residue. Normalise negative mods via ((mod + K) % K).",
+    "525": "Contiguous Array (equal 0s and 1s). Treat 0 as −1; problem becomes 'longest subarray summing to 0' → Map[prefix] = FIRST index seen; on re-encounter update max length.",
+    "523": "Continuous Subarray Sum (length ≥ 2, sum % K == 0). Map[prefix mod K] = first index. If two prefixes share mod AND |idx diff| ≥ 2, found.",
+    "304": "Range Sum Query 2D (immutable). Build 2D prefix sum via inclusion-exclusion: pre[r][c] = pre[r-1][c] + pre[r][c-1] − pre[r-1][c-1] + mat[r-1][c-1]. Query is O(1).",
+    "363": "Max Sum Rectangle ≤ K. For each pair of cols (l, r), compute row sums between them; treat as 1D 'max subarray sum ≤ K' via TreeSet of prefixes — for each prefix, find ceiling(prefix − K)."
+  },
+
+  "lca-dfs": {
+    "236":  "LCA of Binary Tree. def f(n): if !n || n==p || n==q: return n; l=f(n.left); r=f(n.right); if both: return n; else l || r. The first node where the recursion has matches from BOTH sides IS the LCA.",
+    "235":  "LCA of BST. Walk from root: if p,q both < node go left; both > go right; else (split or hit) return node. O(h), no recursion needed.",
+    "1644": "LCA of BT II (nodes might NOT exist). Track found-flags as out-params; return non-null only if BOTH found.",
+    "1650": "LCA of BT III (each node has parent pointer). Two-pointer alignment trick: walk both UP; on null restart at the other start; they meet at LCA. O(h) space-free.",
+    "1123": "LCA of Deepest Leaves. Post-order returning (depth, lca); combine left/right at each node: if depths equal lca=node, else carry the deeper side.",
+    "1676": "LCA of BT IV (k nodes). Generalisation of #236 — same recursion but checking against a SET of targets; return current node if its subtree contains all targets."
+  },
+
+  "top-k": {
+    "215":  "Kth Largest in Array. Min-heap of size K — push each, pop if size > K; final top = K-th largest. Quickselect is O(n) average alternative.",
+    "347":  "Top K Frequent. Counter → min-heap of size K keyed on freq. OR bucket sort by freq (O(n)) when frequencies fit a small range.",
+    "692":  "Top K Frequent Words. Min-heap of (freq, word) with custom comparator: freq asc, word DESC (so the lexicographically larger word pops out when freq ties).",
+    "973":  "K Closest Points to Origin. Max-heap of size K keyed on dist² (so the FARTHEST pops on overflow). Quickselect alternative.",
+    "703":  "Kth Largest in Stream. Min-heap of size K maintained across add() calls; top = current K-th largest. O(log K) per add.",
+    "1337": "K Weakest Rows. Per row count soldiers (or BS for first 0); min-heap of (count, rowIdx) trimmed to K. Or partial sort."
+  },
+
+  "palindrome-two-ptr": {
+    "125": "Valid Palindrome. l=0, r=n-1; skip non-alphanumeric on each side; lowercase compare; advance.",
+    "680": "Valid Palindrome II (allow one delete). Walk converging; on first mismatch try EITHER skip-left or skip-right and verify rest. At most one delete allowed.",
+    "234": "Palindrome Linked List. O(1) space: find middle (slow/fast), reverse second half, compare first vs reversed-second. Restoring the list is optional."
+  },
+
+  "iterative-reverse": {
+    "206": "Reverse Linked List. 3 pointers (prev=null, cur=head, next): while cur: next=cur.next; cur.next=prev; prev=cur; cur=next. Return prev.",
+    "92":  "Reverse LL II (positions m..n). Walk to m-1; reverse the next (n-m+1) nodes using the 3-ptr template; splice back to the surrounding tail.",
+    "25":  "Reverse Nodes in K-Group. Check K nodes ahead; if K available reverse them via the template, then recurse/iterate on the rest. Leftover < K typically left alone.",
+    "234": "Palindrome LL (uses iterative-reverse). After finding middle (slow/fast), apply the 3-ptr template to second half, then compare with first half.",
+    "24":  "Swap Nodes in Pairs. Special case of K-group with K=2 — or write a small dedicated 4-ptr swap (dummy → first → second → swap → advance)."
   }
 }
