@@ -549,6 +549,19 @@ export default function AdsHubView() {
   const shown = filtered.slice(0, LIST_CAP)
   const activeFilterCount = selectedTags.length + selectedCompanies.length + (selectedList ? 1 : 0) + (customOnly ? 1 : 0)
 
+  // The auto-open rules below should only fire in response to LIVE search
+  // input — not on initial mount when search is rehydrated from
+  // localStorage and the URL has its own ?id= that we should honour.
+  // searchTouchedRef flips true the first time the user types in the
+  // search box; both rules gate on it so a hard load on
+  //   /pghubtech/adshub?id=9
+  // (with a stale persisted search of, say, '8') opens #9 — not #8.
+  const searchTouchedRef = useRef(false)
+  function handleSearchChange(v: string) {
+    searchTouchedRef.current = true
+    setSearch(v)
+  }
+
   // Exact-frontend_id match: when the search box value is a pure integer
   // that equals an existing frontend_id, open THAT problem — even when
   // substring search surfaces many other IDs containing the same digits
@@ -557,7 +570,7 @@ export default function AdsHubView() {
   // strictly more specific. Same expanded-view side effect as the
   // deep-link parse so the two feel identical.
   useEffect(() => {
-    if (!urlApplied) return
+    if (!urlApplied || !searchTouchedRef.current) return
     const s = search.trim()
     if (!/^\d+$/.test(s)) return
     const exact = problems.find(p => p.frontendId === s)
@@ -571,9 +584,9 @@ export default function AdsHubView() {
   // Lone-match: when the current filter narrows to exactly one problem
   // (e.g. the user typed a specific title fragment), open it. Skipped
   // when the search is an exact-id match because the rule above will
-  // have handled it already.
+  // have handled it already. Same searchTouchedRef gate as above.
   useEffect(() => {
-    if (!urlApplied) return
+    if (!urlApplied || !searchTouchedRef.current) return
     if (filtered.length !== 1) return
     const onlyMatch = filtered[0]
     if (selected?.slug !== onlyMatch.slug) {
@@ -1219,7 +1232,7 @@ export default function AdsHubView() {
             style={{ width: 220 }}
             placeholder="Search #id, title, tag, company…  ↵ to open top match"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
             onKeyDown={e => {
               // Enter opens the top filtered match (already auto-selected
               // when there's exactly one, but this gives a clear path when
