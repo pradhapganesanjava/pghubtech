@@ -38,14 +38,18 @@ const COL_TAGS   = 7   // H
 // Keep this in sync with seed-pat-tags.mjs's inferDs.
 function inferDs(lcTopics) {
   const t = new Set(lcTopics.split(/[;\n]+/).map(s => s.trim()))
+  // Data Stream problems are stream-of-numbers (array-shape) by INPUT —
+  // even if the solution uses BST / Tree / Stack / Queue / Heap as
+  // scratch. Demote DS keywords that hint at solution-side use only.
+  const isStream = t.has('Data Stream')
   if (t.has('Linked List'))                                  return 'linked-list'
-  if (t.has('Binary Search Tree') && !t.has('Data Stream'))   return 'bst'
-  if (t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) return 'tree'
+  if (t.has('Binary Search Tree') && !isStream)               return 'bst'
+  if ((t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) && !isStream) return 'tree'
   if (t.has('Graph') || t.has('Graph Theory') || t.has('Topological Sort') || t.has('Shortest Path')) return 'graph'
   if (t.has('Matrix'))                                        return 'matrices'
-  if (t.has('Trie')  && t.has('Design')) return 'trie'
-  if (t.has('Stack') && t.has('Design')) return 'stack'
-  if (t.has('Queue') && t.has('Design')) return 'queue'
+  if (t.has('Trie')  && t.has('Design') && !isStream) return 'trie'
+  if (t.has('Stack') && t.has('Design') && !isStream) return 'stack'
+  if (t.has('Queue') && t.has('Design') && !isStream) return 'queue'
   if (t.has('String'))                                        return 'string'
   if (t.has('Array'))                                         return 'array'
   if (t.has('Math') || t.has('Bit Manipulation') || t.has('Dynamic Programming')

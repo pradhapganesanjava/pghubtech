@@ -47,24 +47,26 @@ const COL_TAGS    = 7    // H
 // we genuinely can't tell.
 function inferDs(lcTopics) {
   const t = new Set(lcTopics.split(/[;\n]+/).map(s => s.trim()))
+  // Data Stream problems are stream-of-values by INPUT (array-shape), no
+  // matter what BST / Tree / Stack / Queue / Heap tags also appear (those
+  // are SOLUTION hints, not input shape). e.g. LC 703 Kth Largest in
+  // Stream, LC 901 Online Stock Span, LC 295 Find Median from Stream.
+  const isStream = t.has('Data Stream')
   if (t.has('Linked List'))                                  return 'linked-list'
-  // "Binary Search Tree" + "Data Stream" usually means BST is the TOOL on
-  // a stream input (e.g. LC 703 Kth Largest in Stream), not BST input.
-  // Demote in that case.
-  if (t.has('Binary Search Tree') && !t.has('Data Stream'))   return 'bst'
-  if (t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) return 'tree'
+  if (t.has('Binary Search Tree') && !isStream)               return 'bst'
+  if ((t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) && !isStream) return 'tree'
   // LC uses "Graph Theory" in the topics list, NOT "Graph" — accept both.
   // Also catches the topo-sort and shortest-path families.
   if (t.has('Graph') || t.has('Graph Theory') || t.has('Topological Sort') || t.has('Shortest Path')) return 'graph'
   if (t.has('Matrix'))                                        return 'matrices'
   // Trie / Stack / Queue: only when the problem is explicitly a DESIGN
-  // problem ("implement / design X"). LC tags Trie/Stack/Queue on any
-  // problem whose solution uses one — those are TOOL uses, not input
-  // shape, and they'd otherwise pollute DS=Trie/Stack/Queue pages with
-  // micros that belong under Array/String/Matrices.
-  if (t.has('Trie')  && t.has('Design')) return 'trie'
-  if (t.has('Stack') && t.has('Design')) return 'stack'
-  if (t.has('Queue') && t.has('Design')) return 'queue'
+  // problem ("implement / design X") AND not a stream problem. LC tags
+  // Trie/Stack/Queue on any problem whose solution uses one — those are
+  // TOOL uses, not input shape, and they'd otherwise pollute the DS
+  // pages with micros that belong under Array/String/Matrices.
+  if (t.has('Trie')  && t.has('Design') && !isStream) return 'trie'
+  if (t.has('Stack') && t.has('Design') && !isStream) return 'stack'
+  if (t.has('Queue') && t.has('Design') && !isStream) return 'queue'
   if (t.has('String'))                                        return 'string'
   if (t.has('Array'))                                         return 'array'
   // Fallback for the scalar-leaning families: number / single-int /
