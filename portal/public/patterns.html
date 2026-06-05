@@ -47,9 +47,13 @@
   .tab-toggle button { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
                        padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
   .tab-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
-  .view-toggle { display: flex; gap: 4px; margin-top: 6px; }
-  .view-toggle button { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
-                        padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  /* Icon-only — render style is a small affordance, not a primary axis
+     like the tab toggle above. Fixed-width chips, right-aligned. */
+  .view-toggle { display: flex; gap: 4px; margin-top: 6px; justify-content: flex-end; }
+  .view-toggle button { width: 28px; height: 22px; padding: 0; background: var(--bg3); border: 1px solid var(--border);
+                        color: var(--text2); border-radius: 4px; cursor: pointer; font-size: 13px; line-height: 1;
+                        display: inline-flex; align-items: center; justify-content: center; }
+  .view-toggle button:hover { color: var(--text); }
   .view-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
   .nav-search { width: 100%; padding: 6px 8px; margin-top: 8px; background: var(--bg3); border: 1px solid var(--border);
                 color: var(--text); border-radius: 4px; font-size: 12px; }
@@ -149,9 +153,14 @@
         <button id="tab-ds"    class="active" onclick="setTab('ds')">📦 Data Structure</button>
         <button id="tab-topic"           onclick="setTab('topic')">🧰 Topic</button>
       </div>
-      <div class="view-toggle">
-        <button id="vt-tree"  class="active" onclick="setView('tree')">Tree</button>
-        <button id="vt-flat"           onclick="setView('flat')">Flat</button>
+      <!-- View toggle = render-style only (hierarchy vs flat list) so it
+           sits as small icon-only buttons next to the search field, not
+           full-width labelled buttons like the tab toggle above. -->
+      <div class="view-toggle" title="Sidebar render style">
+        <button id="vt-tree" class="active" onclick="setView('tree')"
+                title="Tree view (grouped by pattern)" aria-label="Tree view">🗂️</button>
+        <button id="vt-flat"             onclick="setView('flat')"
+                title="Flat view (all micros A-Z)"    aria-label="Flat view">≡</button>
       </div>
       <input class="nav-search" id="navSearch" placeholder="Filter patterns…" oninput="renderNav()">
     </div>
