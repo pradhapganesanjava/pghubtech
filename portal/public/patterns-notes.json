@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Per-(micro, LC-id) application notes — explain HOW the micro's strategy applies to that specific problem. Surfaced in the UI as the anchor chip's tooltip. Audit batch grows over time; see git log.",
     "format": "{ <microId>: { <lcId>: '<one-line note>' } }",
-    "status": "Audit passes 1-2 — covers 10 micros: complement-lookup, freq-counter, seen-set, dp-1d-linear (residual), dfs-template (residual), tp-converging (residual), dp-2-strings, bfs-shortest-unweighted, monotonic-stack (residual), subset-combination."
+    "status": "Audit passes 1-3 — covers 15 micros: complement-lookup, freq-counter, seen-set, dp-1d-linear, dfs-template, tp-converging, dp-2-strings, bfs-shortest-unweighted, monotonic-stack, subset-combination, kadane, floyd-cycle, bracket-match, monotonic-deque, index-as-hash."
   },
 
   "complement-lookup": {
@@ -116,5 +116,42 @@
     "216": "Combination Sum III (use digits 1..9, exactly k numbers, sum n). Backtrack with start index 1..9, depth ≤ k, prune if sum > n or remaining can't reach.",
     "491": "Increasing Subsequences. Backtrack; only pick if >= last picked; depth-local 'seen values' set to dedupe (can't sort first because we'd lose original order).",
     "77":  "Combinations (k from n). Backtrack(start, path): if len==k emit; for j in [start..n]: include j, recurse(j+1), exclude."
+  },
+
+  "kadane": {
+    "53":   "Max Subarray. cur = max(x, cur + x); best = max(best, cur). Single pass O(n).",
+    "152":  "Max Product Subarray. Track BOTH cur_max and cur_min (negative × negative flips sign). cur_max' = max(x, x·cur_max, x·cur_min); cur_min similarly.",
+    "918":  "Max Sum Circular Subarray. Two answers: (a) standard kadane non-wrap; (b) wrap = total − minSubarray. Answer = max(a, b). Edge: all-negative → answer = a (b would be 0).",
+    "1567": "Max Length Positive-Product Subarray. Track lengths of (current positive run, current negative run). Walk; reset on zero; swap pos/neg on negative element."
+  },
+
+  "floyd-cycle": {
+    "141": "Linked List Cycle. slow=head, fast=head; both step (slow 1, fast 2). If they ever meet, cycle exists. O(1) extra space.",
+    "142": "Linked List Cycle II — find cycle START. After meeting, reset slow to head; both step 1; they meet at cycle start. Math: distance head→start = distance meeting→start (mod cycle len).",
+    "287": "Find Duplicate Number. Treat nums as a linked list — nums[i] is the 'next' pointer. Cycle MUST exist because some value repeats. Cycle start = the duplicate.",
+    "202": "Happy Number. Treat digit-square-sum sequence as implicit list. Floyd detects cycle; if cycle reaches 1, happy; else unhappy."
+  },
+
+  "bracket-match": {
+    "20":   "Valid Parentheses. Push openers; on closer, top must match else fail. Empty stack at end ⇒ valid.",
+    "32":   "Longest Valid Parentheses. Stack of INDICES with −1 sentinel for 'last invalid before'. On '(' push i; on ')' pop; if stack empty push i as new sentinel; else max(answer, i − top).",
+    "921":  "Min Add to Make Parens Valid. Two counters: openNeeded, closeUnmatched. Single pass. Answer = sum at end.",
+    "1249": "Min Remove to Make Valid. Pass 1: stack of '(' indices; pop on each ')'; leftover stack = '(' to remove; also collect unmatched ')'. Pass 2: build result skipping marked indices."
+  },
+
+  "monotonic-deque": {
+    "239":  "Sliding Window Maximum. Deque of INDICES, monotonic decreasing on values. For each i: pop front if i − k ≥ front; pop back while nums[back] < nums[i]; push i. Front is window max.",
+    "1438": "Longest Subarray Abs Diff ≤ Limit. TWO deques — one max-decreasing, one min-increasing. For each r expand; while (max − min) > limit, shrink l updating both deques.",
+    "862":  "Shortest Subarray Sum ≥ K. Prefix sums; monotonic INCREASING deque of indices. For each i: while pre[i] − pre[front] ≥ K, pop front and update answer; while pre[back] ≥ pre[i], pop back (later prefix is better); push i.",
+    "918":  "Max Sum Circular Subarray. Alternative deque approach using prefix sums; standard solve is kadane-twice (see kadane note). Listed here for the deque option.",
+    "1696": "Jump Game VI. dp[i] = nums[i] + max(dp[i−k..i−1]). Monotonic decreasing deque of dp values to get O(1) max-lookup over the sliding K window."
+  },
+
+  "index-as-hash": {
+    "41":  "First Missing Positive. Place each nums[i] at index nums[i]−1 via swapping (while in [1..n] and not already correct). Then find first i where nums[i] != i+1 ⇒ answer = i+1.",
+    "268": "Missing Number. Many ways: index-as-hash via swap-to-correct-slot; XOR (xor all + 0..n); or sum-formula (n(n+1)/2 − sum). All O(n) / O(1).",
+    "287": "Find Duplicate Number. Sign-flip variant: for each x, flip sign of nums[abs(x)−1]; if already negative, x is the duplicate. (Floyd's cycle is the other O(1)-space approach.)",
+    "442": "Find All Duplicates. Sign-flip: for each x, flip nums[abs(x)−1]; if already negative, append abs(x) to answer.",
+    "448": "Find All Disappeared Numbers. Sign-flip pass; indices STILL POSITIVE at end correspond to missing numbers (i+1)."
   }
 }

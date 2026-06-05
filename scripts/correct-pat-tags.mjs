@@ -1,0 +1,172 @@
+#!/usr/bin/env node
+/**
+ * scripts/correct-pat-tags.mjs
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Apply per-(LC-id) tag corrections discovered during audit. For each
+ * correction, DROP specific tags and ADD others. Idempotent — drops that
+ * aren't present are no-ops; adds that are already present are skipped.
+ *
+ *   node scripts/correct-pat-tags.mjs            # dry-run
+ *   node scripts/correct-pat-tags.mjs --write    # actually patches the sheet
+ *
+ * Each CORRECTION entry has the audit-source as a comment so we can trace
+ * why it was made.
+ */
+
+import { google }              from 'googleapis'
+import { readFile, writeFile } from 'fs/promises'
+import { createServer }        from 'http'
+import { exec }                from 'child_process'
+import { dirname, join }       from 'path'
+import { fileURLToPath }       from 'url'
+
+const __dir      = dirname(fileURLToPath(import.meta.url))
+const CREDS_PATH = join(__dir, 'credentials.json')
+const TOKEN_PATH = join(__dir, '.token.json')
+const DO_WRITE   = process.argv.includes('--write')
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+const TAB    = 'LCProblems'
+const COL_ID   = 1
+const COL_TAGS = 7
+
+// ─── Corrections — derived from audit passes ────────────────────────────
+const CORRECTIONS = [
+  // Audit pass 1 — drop suboptimal tags where a better tag also exists.
+  { id: 287, drop: ['pat_topic::hash::seen-set', 'pat_ds::array::hash::seen-set'],
+    why: 'Floyd cycle (tp-fast-slow) is O(1) — seen-set is O(n) suboptimal.' },
+  { id: 141, drop: ['pat_topic::hash::seen-set', 'pat_ds::linked-list::hash::seen-set'],
+    why: 'Floyd cycle (tp-fast-slow / floyd-cycle) is O(1) — seen-set is O(n) suboptimal.' },
+  { id: 167, drop: ['pat_topic::two-pointers::tp-converging', 'pat_ds::array::two-pointers::tp-converging'],
+    why: 'tp-k-sum is the more specific optimal tag for Two Sum II Sorted; converging is residual.' },
+
+  // Audit pass 2 — relocate to the new sub-micros added this turn.
+  { id: 1192, drop: ['pat_topic::dfs::dfs-template', 'pat_ds::graph::dfs::dfs-template'],
+    add:  ['pat_ds::graph::core::tarjan-bridges'],
+    why: 'Tarjan bridge-finding — own sub-micro now exists.' },
+  { id: 1568, add: ['pat_ds::graph::core::tarjan-bridges'],
+    why: 'Min Days to Disconnect Island — articulation/bridge variant on grid.' },
+
+  { id: 489, drop: ['pat_topic::dfs::dfs-template', 'pat_ds::graph::dfs::dfs-template'],
+    add:  ['pat_ds::graph::dfs::dfs-motion-undo'],
+    why: 'Robot Room Cleaner — DFS with physical motion + move-back, own sub-micro.' },
+
+  { id: 1284, drop: ['pat_ds::matrices::bfs::bfs-shortest-unweighted'],
+    add:  ['pat_ds::matrices::bfs::bfs-encoded-state'],
+    why: 'Min Flips Convert Binary Matrix — encode matrix as int state; bfs-encoded-state fits.' },
+  { id: 752, add: ['pat_ds::array::bfs::bfs-encoded-state'],
+    why: 'Open the Lock — 4-digit string state encoding; ALSO fits encoded-state.' },
+  { id: 773, add: ['pat_ds::matrices::bfs::bfs-encoded-state'],
+    why: 'Sliding Puzzle — board as string; canonical encoded-state.' },
+
+  { id: 1293, drop: ['pat_ds::matrices::bfs::bfs-shortest-unweighted'],
+    add:  ['pat_ds::matrices::bfs::bfs-state-augmented'],
+    why: 'Shortest Path with Obstacles Elim — (r,c,k) state-augmented BFS.' },
+  { id: 864, add: ['pat_ds::matrices::bfs::bfs-state-augmented'],
+    why: 'Shortest Path to Get All Keys — (r,c,keysBitmask) state-augmented.' },
+  { id: 1102, add: ['pat_ds::matrices::bfs::bfs-state-augmented'],
+    why: 'Path With Maximum Minimum Value — alternative formulation, bfs over (r,c,minSoFar).' },
+]
+
+// ── env + auth ──────────────────────────────────────────────────────────
+async function loadEnv() {
+  const text = await readFile(join(__dir, '../portal/.env.local'), 'utf8')
+  const env = {}
+  for (const line of text.split('\n')) {
+    const eq = line.indexOf('=')
+    if (eq > 0) env[line.slice(0, eq).trim()] = line.slice(eq + 1).trim()
+  }
+  if (!env.VITE_SHEET_ID) throw new Error('Missing VITE_SHEET_ID in portal/.env.local')
+  return { sheetId: env.VITE_SHEET_ID }
+}
+async function authorize() {
+  const creds = JSON.parse(await readFile(CREDS_PATH, 'utf8'))
+  const cfg = creds.installed ?? creds.web
+  const c = new google.auth.OAuth2(cfg.client_id, cfg.client_secret, 'http://localhost:3000')
+  try {
+    const token = JSON.parse(await readFile(TOKEN_PATH, 'utf8'))
+    const granted = (token.scope ?? '').split(/\s+/)
+    if (!SCOPES.every(s => granted.includes(s))) return getNewToken(c)
+    c.setCredentials(token)
+    c.on('tokens', t => writeFile(TOKEN_PATH, JSON.stringify({ ...token, ...t })))
+    return c
+  } catch { return getNewToken(c) }
+}
+function getNewToken(c) {
+  const url = c.generateAuthUrl({ access_type: 'offline', prompt: 'consent', scope: SCOPES })
+  return new Promise((resolve, reject) => {
+    const server = createServer(async (req, res) => {
+      const code = new URL(req.url, 'http://localhost:3000').searchParams.get('code')
+      if (!code) { res.end('No code'); return }
+      res.end('<h2>✓ Authorized — close this tab.</h2>'); server.close()
+      try { const { tokens } = await c.getToken(code); c.setCredentials(tokens); await writeFile(TOKEN_PATH, JSON.stringify(tokens)); resolve(c) } catch (e) { reject(e) }
+    })
+    server.listen(3000, () => { console.log('\nAuthorize in browser:\n  ' + url + '\n'); exec(`open "${url}"`) })
+    server.on('error', reject)
+  })
+}
+
+async function main() {
+  const { sheetId } = await loadEnv()
+  const auth        = await authorize()
+  const sheets      = google.sheets({ version: 'v4', auth })
+  const { data }    = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId, range: `${TAB}!A2:H`,
+  })
+  const rows = data.values || []
+
+  const byId = new Map()
+  rows.forEach((r, i) => {
+    const id = (r[COL_ID] || '').trim()
+    if (id) byId.set(id, { rowIdx: i, tags: r[COL_TAGS] || '' })
+  })
+
+  console.log(`\n  Read ${rows.length} LCProblems rows.`)
+  console.log(`  ${CORRECTIONS.length} corrections queued.\n`)
+
+  const writeRequests = []
+  let totalDropped = 0, totalAdded = 0, rowsTouched = 0
+
+  for (const corr of CORRECTIONS) {
+    const row = byId.get(String(corr.id))
+    if (!row) { console.log(`    LC ${corr.id} not in sheet — skipping`); continue }
+
+    const existing = new Set(row.tags.split(/[;\n]+/).map(s => s.trim()).filter(Boolean))
+    const droppedHere = (corr.drop || []).filter(t => existing.has(t))
+    const addedHere   = (corr.add  || []).filter(t => !existing.has(t))
+
+    if (!droppedHere.length && !addedHere.length) {
+      console.log(`    LC ${String(corr.id).padStart(4)}  (no change needed)`)
+      continue
+    }
+
+    droppedHere.forEach(t => existing.delete(t))
+    addedHere  .forEach(t => existing.add(t))
+
+    rowsTouched++
+    totalDropped += droppedHere.length
+    totalAdded   += addedHere.length
+
+    console.log(`    LC ${String(corr.id).padStart(4)}  ${corr.why}`)
+    droppedHere.forEach(t => console.log(`             − ${t}`))
+    addedHere  .forEach(t => console.log(`             + ${t}`))
+
+    writeRequests.push({
+      range: `${TAB}!H${row.rowIdx + 2}`,
+      values: [[ [...existing].join('; ') ]],
+    })
+  }
+
+  console.log(`\n  ${rowsTouched} rows would change; ${totalDropped} tags dropped, ${totalAdded} tags added.\n`)
+
+  if (!DO_WRITE) { console.log('  [dry-run] no sheet writes performed.  Pass --write to apply.\n'); return }
+  if (!writeRequests.length) { console.log('  Nothing to write.\n'); return }
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: sheetId,
+    requestBody: { valueInputOption: 'RAW', data: writeRequests },
+  })
+  console.log(`  ✓ Patched ${writeRequests.length} rows.\n`)
+  console.log(`  Next: node scripts/build-patterns-csv.mjs --write\n`)
+}
+
+main().catch(e => { console.error(e); process.exit(1) })
