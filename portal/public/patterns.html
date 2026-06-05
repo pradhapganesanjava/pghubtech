@@ -1139,7 +1139,8 @@ const DS_TOPIC_LINKS = {
   'array':       ['hash', 'two-pointers', 'sliding-window', 'binary-search', 'sorting', 'prefix-sum', 'dp', 'greedy', 'stack-topic', 'deque-topic', 'math', 'bits'],
   'string':      ['hash', 'two-pointers', 'sliding-window', 'dp', 'trie-topic', 'stack-topic', 'bfs', 'backtrack'],
   'linked-list': ['two-pointers', 'hash', 'sorting'],
-  'tree':        ['dfs', 'bfs', 'dp', 'backtrack'],
+  'tree':        ['dfs', 'bfs', 'dp'],   // (no backtrack — none of its micros fit cleanly under Tree;
+                                          //  tree-path enumeration lives in Tree's own core micros.)
   'bst':         ['dfs', 'binary-search'],
   'graph':       ['dfs', 'bfs', 'union-find', 'heap', 'dp', 'greedy'],
   'matrices':    ['dfs', 'bfs', 'dp', 'prefix-sum'],
@@ -1256,6 +1257,86 @@ const TOPIC_DS_NOTES = {
 
 function topicDsNote(topicId, dsId) {
   return (TOPIC_DS_NOTES[topicId] || {})[dsId] || null
+}
+
+// Per-(topic, DS) ALLOWLIST of which of the topic's micros actually apply
+// to that DS. Fixes the "Two-Pointers shown under String → Fast-Slow Same
+// Direction → LC 141 (Linked-List Cycle)" surprise: tp-fast-slow doesn't
+// belong under String, so we don't show it there.
+//
+// Pairs missing from this map fall back to showing ALL the topic's
+// micros (current behaviour) — that's fine for topics whose micros all
+// apply uniformly (e.g. sliding-window on array vs string).
+const TOPIC_DS_MICROS = {
+  hash: {
+    'string':      ['freq-counter', 'seen-set'],          // not complement-lookup
+    'linked-list': ['seen-set'],                          // freq / complement aren't list-y
+  },
+  'two-pointers': {
+    'string':      ['tp-converging'],                     // tp-fast-slow is list-only
+    'linked-list': ['tp-fast-slow', 'tp-merge-walk'],     // tp-converging is for sorted seq
+  },
+  'binary-search': {
+    'bst': ['bs-textbook'],                               // on-answer / rotated are array-only
+  },
+  sorting: {
+    'linked-list': ['merge-sort-counting'],               // merge sort is the list sort
+  },
+  'prefix-sum': {
+    'array':    ['ps-1d', 'ps-hashmap', 'difference-array'],
+    'matrices': ['ps-2d'],
+  },
+  dp: {
+    'array':    ['dp-1d-linear', 'knapsack-01', 'knapsack-unbounded', 'state-machine-dp', 'bitmask-dp', 'interval-dp'],
+    'string':   ['dp-2-strings', 'interval-dp'],
+    'tree':     ['tree-dp'],
+    'graph':    ['bitmask-dp'],                           // (DAG longest-path lives in Graph core)
+    'matrices': ['dp-2d-grid'],
+  },
+  greedy: {
+    'graph': ['sort-and-sweep'],                          // MST = sort edges + UF
+  },
+  'stack-topic': {
+    'string': ['parens-rewrite'],                         // monotonic-stack is array-shaped
+    'stack':  ['monotonic-stack', 'monotonic-stack-2pass', 'parens-rewrite'],  // reference
+  },
+  'deque-topic': {
+    'queue': ['monotonic-deque', 'deque-window-constraint'],  // reference
+  },
+  'trie-topic': {
+    'trie': ['trie-grid-dfs', 'trie-autocomplete', 'trie-xor-max'],  // reference
+  },
+  bfs: {
+    'string':   ['bfs-shortest-unweighted', 'bfs-bidirectional'],     // word-ladder family
+    'tree':     ['bfs-level-order'],                                  // pure tree case
+    'matrices': ['bfs-shortest-unweighted', 'bfs-multi-source', 'bfs-zero-one'],
+    'queue':    ['bfs-level-order', 'bfs-shortest-unweighted', 'bfs-multi-source', 'bfs-bidirectional', 'bfs-zero-one'],
+  },
+  dfs: {
+    'tree':     ['dfs-template', 'dfs-tree-orders', 'dfs-backtrack-undo', 'dfs-iterative-stack'],
+    'bst':      ['dfs-tree-orders', 'dfs-iterative-stack'],
+    'graph':    ['dfs-template', 'dfs-backtrack-undo', 'dfs-iterative-stack'],
+    'matrices': ['dfs-template', 'dfs-grid-flood', 'dfs-backtrack-undo'],
+    'trie':     ['dfs-template'],
+  },
+  backtrack: {
+    'string': ['partition-on-string', 'word-search-dfs'],
+    // tree: removed from DS_TOPIC_LINKS (no backtrack micros fit cleanly)
+  },
+}
+
+// Return the topic's micros filtered for embedding under a specific DS.
+// If no allowlist exists for the pair, return all (the topic's micros
+// all apply uniformly — e.g. sliding-window or math).
+function microsForEmbed(topicId, dsId) {
+  const t = PATTERNS.find(p => p.id === topicId)
+  if (!t) return []
+  const allow = (TOPIC_DS_MICROS[topicId] || {})[dsId]
+  if (!allow) return t.micros
+  const order = new Map(allow.map((id, i) => [id, i]))
+  return t.micros
+    .filter(m => order.has(m.id))
+    .sort((a, b) => order.get(a.id) - order.get(b.id))
 }
 
 // ── Render ───────────────────────────────────────────────────────────────
@@ -1382,10 +1463,17 @@ function renderTree(root, filter) {
         sub.appendChild(hdr)
 
         topics.forEach(t => {
+          // Filter to micros that apply on THIS DS (allowlist) — keeps
+          // the tree in sync with what the main pane will actually
+          // render. If the allowlist eliminates everything, skip the
+          // topic entirely.
+          const embedded = microsForEmbed(t.id, p.id)
+          if (!embedded.length) return
+
           // Honour the search filter for embedded topics too.
           const tMatches = !filter
             || t.name.toLowerCase().includes(filter)
-            || t.micros.some(m => m.name.toLowerCase().includes(filter))
+            || embedded.some(m => m.name.toLowerCase().includes(filter))
           if (!tMatches) return
 
           // Topic header row — click toggles inline expansion, anchor link
@@ -1396,7 +1484,7 @@ function renderTree(root, filter) {
             <span class="caret">▶</span>
             <span class="ico">${t.icon}</span>
             <span class="lbl">${t.name}</span>
-            <span class="count">${t.micros.length}</span>`
+            <span class="count">${embedded.length}</span>`
           tHdr.onclick = () => {
             tHdr.classList.toggle('expanded')
             // Also scroll the main-pane to the matching topic section.
@@ -1410,7 +1498,7 @@ function renderTree(root, filter) {
           // L3 wrap with the topic's own micros (deeper indent).
           const tSub = document.createElement('div')
           tSub.className = 'tree-l3-wrap'
-          t.micros.forEach(m => {
+          embedded.forEach(m => {
             if (filter && !m.name.toLowerCase().includes(filter) && !t.name.toLowerCase().includes(filter)) return
             const l3 = document.createElement('a')
             l3.className = 'tree-l3'
@@ -1514,21 +1602,26 @@ function renderMain() {
     ? `Core ${p.name} micros`
     : `${p.micros.length} micro-patterns`
 
-  const topicSections = topics.map(t => `
+  const topicSections = topics.map(t => {
+    // Filter to micros that ACTUALLY apply to this DS (e.g. don't show
+    // tp-fast-slow under String — its anchors are all linked-list).
+    const embedded = microsForEmbed(t.id, p.id)
+    const filtered = embedded.length !== t.micros.length
+    return `
     <div class="ds-topic-block" id="ds-topic-${p.id}-${t.id}">
       <h3 class="ds-topic-hd">
         <span><span class="ds-topic-ico">${t.icon}</span> ${t.name}
-          <span class="ds-topic-count">${t.micros.length} micros</span>
+          <span class="ds-topic-count">${embedded.length}${filtered ? ` of ${t.micros.length}` : ''} micros${filtered ? ` apply to ${p.name}` : ''}</span>
         </span>
         <a class="topic-jump" href="#topic/${t.id}"
            onclick="event.preventDefault(); selectPattern('${t.id}')">→ open in Topic tab</a>
       </h3>
       <p class="lede" style="margin-top:-2px">${t.intro}</p>
       <div class="micro-grid">
-        ${t.micros.map(m => renderMicroCard(t, m)).join('')}
+        ${embedded.map(m => renderMicroCard(t, m)).join('')}
       </div>
-    </div>
-  `).join('')
+    </div>`
+  }).join('')
 
   // "Applies to" — one card per DS that lists this topic in DS_TOPIC_LINKS.
   // The note explains HOW this topic shows up on that DS (e.g. DFS on
