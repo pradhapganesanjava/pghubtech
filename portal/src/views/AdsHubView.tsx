@@ -233,7 +233,7 @@ export default function AdsHubView() {
       diff, customOnly, search,
     })
   }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
-  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage'>('browse')
+  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
   const [lineageFocus, setLineageFocus]    = useState<number | null>(null)
   // Add-a-problem modal.
   const EMPTY_ADD = { frontendId: '', title: '', slug: '', difficulty: 'Medium', topics: '', companies: '', tags: '', leetcodeUrl: '', description: '' }
@@ -902,7 +902,7 @@ export default function AdsHubView() {
   useEffect(() => { setListMenuOpen(false); setNewListName('') }, [selected?.slug])
   useEffect(() => { if (!selected) setViewerExpanded(false) }, [selected])
 
-  const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage'
+  const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns'
 
   // Difficulty/topics row + editable lineage tags. Sits at the top of the
   // detail's left content in every mode (so it lines up with Starter Code).
@@ -1227,17 +1227,14 @@ export default function AdsHubView() {
               className={`adshub-diff-pill${adsMode === 'lineage' ? ' active' : ''}`}
               onClick={() => setAdsMode('lineage')}
             >🌳 Lineage</button>
-            {/* Patterns launcher — opens the standalone DS→micro-pattern
-                reference (portal/public/patterns.html) in a new tab. Lives
-                here next to the mode toggles so it's discoverable but
-                doesn't change the active view. */}
-            <a
-              className="adshub-diff-pill"
-              href={`${import.meta.env.BASE_URL}patterns.html`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open the DS → micro-pattern reference (new tab)"
-            >📐 Patterns ↗</a>
+            {/* Patterns mode — renders the standalone reference
+                (public/patterns.html) inline in the same right pane via
+                iframe, matching how 🌳 Lineage embeds its visualizer. */}
+            <button
+              className={`adshub-diff-pill${adsMode === 'patterns' ? ' active' : ''}`}
+              onClick={() => setAdsMode('patterns')}
+              title="DS → micro-pattern reference"
+            >📐 Patterns</button>
           </div>
           {adsMode === 'browse' && <>
           <button
@@ -1368,6 +1365,17 @@ export default function AdsHubView() {
               const p = problems.find(x => x.frontendId === String(num) || x.frontendId === String(Number(num)))
               if (p) { setSelected(p); setAdsMode('browse') }
             }}
+          />
+        ) : adsMode === 'patterns' ? (
+          /* Embed the standalone reference in an iframe so we don't have
+             to duplicate its data/markup. Same-origin so internal anchor
+             links (#dp/dp-2d-grid) and outbound /pghubtech/adshub?id=N
+             links still work; AdsHub's URL routing catches the id click
+             on top-level navigation. */
+          <iframe
+            title="Micro-Pattern Reference"
+            src={`${import.meta.env.BASE_URL}patterns.html`}
+            style={{ width: '100%', height: '100%', border: 0, flex: 1, minHeight: 0 }}
           />
         ) : (
         <div className="browse-cards-split" ref={splitRef}>
