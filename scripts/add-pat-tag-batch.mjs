@@ -313,6 +313,64 @@ const BATCH = {
   // 1004 was tagged earlier as sw-shrink-violation; the K-distinct framing
   // also applies (max consecutive ones III is essentially "at most K zeros").
   // Skip retag — already in BATCH at line above; prune will handle dual.
+
+  // ── Batch 7 (this turn) — Cross-list pick: Snowflake / HelloIntCode / Premium Algo ─
+  // ~40 problems, all using existing micros. No schema additions.
+  // ────────────────────────────────────────────────────────────────────
+
+  // Strings
+  727: ['pat_ds::string::dp::dp-2-strings'],                          // Min Window Subseq
+  758: ['pat_ds::string::greedy::sort-and-sweep'],                   // Bold Words in String
+  819: ['pat_ds::string::hash::freq-counter'],                       // Most Common Word
+  1153:['pat_ds::string::hash::freq-counter'],                       // String Transforms Into Another
+  1657:['pat_ds::string::hash::freq-counter'],                       // Determine if Two Strings Are Close
+  161: ['pat_ds::string::two-pointers::tp-converging'],              // One Edit Distance
+  266: ['pat_ds::string::hash::freq-counter'],                       // Palindrome Permutation
+  408: ['pat_ds::string::two-pointers::tp-merge-walk'],              // Valid Word Abbreviation
+
+  // Arrays — DP / greedy / sorting / hash / two-ptr / bs
+  837: ['pat_ds::array::dp::dp-1d-linear'],                           // New 21 Game (sliding-sum DP)
+  879: ['pat_ds::array::dp::knapsack-01'],                            // Profitable Schemes
+  1356:['pat_ds::array::sorting::sort-then-twoptr'],                  // Sort Integers by Bit Count
+  1366:['pat_ds::array::sorting::sort-then-twoptr'],                  // Rank Teams by Votes (custom comparator)
+  1488:['pat_ds::array::hash::seen-set'],                             // Avoid Flood in The City
+  1610:['pat_ds::array::sliding-window::sw-shrink-violation'],       // Max Number of Visible Points
+  1648:['pat_ds::array::binary-search::bs-on-answer'],                // Sell Diminishing-Valued Colored Balls
+  1452:['pat_ds::array::hash::seen-set'],                             // People Whose List Contains All Companies
+  1481:['pat_ds::array::hash::freq-counter'],                         // Least Unique Ints After K Removals
+  243: ['pat_ds::array::two-pointers::tp-converging'],               // Shortest Word Distance
+  244: ['pat_ds::array::two-pointers::tp-merge-walk'],               // Shortest Word Distance II (design + merge)
+  245: ['pat_ds::array::two-pointers::tp-merge-walk'],               // Shortest Word Distance III
+  277: ['pat_ds::array::greedy::running-extreme'],                   // Find the Celebrity (elim pass)
+  360: ['pat_ds::array::two-pointers::tp-converging'],               // Sort Transformed Array
+  734: ['pat_ds::array::hash::freq-counter'],                        // Sentence Similarity
+
+  // Trees
+  1376:['pat_ds::tree::dfs::dfs-template'],                          // Time Needed to Inform All Employees
+  1457:['pat_ds::tree::dfs::dfs-tree-orders'],                       // Pseudo-Palindromic Paths (DFS bitmask)
+  1530:['pat_ds::tree::dfs::dfs-template'],                          // Number of Good Leaf Pairs
+
+  // Graph
+  489: ['pat_ds::graph::dfs::dfs-template'],                          // Robot Room Cleaner (DFS + backtrack motion)
+  1192:['pat_ds::graph::dfs::dfs-template'],                          // Critical Connections (Tarjan)
+  1197:['pat_ds::graph::bfs::bfs-shortest-unweighted'],               // Minimum Knight Moves
+  444: ['pat_ds::graph::core::topo-sort'],                            // Sequence Reconstruction
+  582: ['pat_ds::graph::dfs::dfs-template'],                          // Kill Process
+  737: ['pat_ds::graph::union-find::uf-with-size'],                   // Sentence Similarity II (UF on word groups)
+
+  // Matrices
+  1219:['pat_ds::matrices::backtrack::word-search-dfs'],              // Path with Maximum Gold
+  1284:['pat_ds::matrices::bfs::bfs-shortest-unweighted'],            // Min Flips Convert Binary Matrix
+  1293:['pat_ds::matrices::bfs::bfs-shortest-unweighted'],            // Shortest Path with Obstacles Elimination
+  1337:['pat_ds::matrices::heap::top-k'],                             // K Weakest Rows
+  1351:['pat_ds::matrices::binary-search::bs-textbook'],              // Count Negatives in Sorted Matrix
+
+  // Linked-list
+  708: ['pat_ds::linked-list::core::dummy-head-merge'],               // Insert into Sorted Cyclic List
+
+  // Trie (pure design — DS=trie)
+  1166:['pat_ds::trie::core::trie-basic'],                            // Design File System
+  588: ['pat_ds::trie::core::trie-basic'],                            // Design In-Memory File System
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
