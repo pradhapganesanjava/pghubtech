@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Per-(micro, LC-id) application notes — explain HOW the micro's strategy applies to that specific problem. Surfaced in the UI as the anchor chip's tooltip. Audit batch grows over time; see git log.",
     "format": "{ <microId>: { <lcId>: '<one-line note>' } }",
-    "status": "Audit passes 1-3 — covers 15 micros: complement-lookup, freq-counter, seen-set, dp-1d-linear, dfs-template, tp-converging, dp-2-strings, bfs-shortest-unweighted, monotonic-stack, subset-combination, kadane, floyd-cycle, bracket-match, monotonic-deque, index-as-hash."
+    "status": "Audit passes 1-4 — covers 20 micros (~145 notes). Latest pass added: bs-textbook, bs-on-answer, dfs-tree-orders, post-order-depth, topo-sort."
   },
 
   "complement-lookup": {
@@ -153,5 +153,64 @@
     "287": "Find Duplicate Number. Sign-flip variant: for each x, flip sign of nums[abs(x)−1]; if already negative, x is the duplicate. (Floyd's cycle is the other O(1)-space approach.)",
     "442": "Find All Duplicates. Sign-flip: for each x, flip nums[abs(x)−1]; if already negative, append abs(x) to answer.",
     "448": "Find All Disappeared Numbers. Sign-flip pass; indices STILL POSITIVE at end correspond to missing numbers (i+1)."
+  },
+
+  "bs-textbook": {
+    "34":   "Find First and Last Position. Two binary searches — lower_bound (first ≥ target) and upper_bound (first > target). If lower_bound's value != target return [-1,-1].",
+    "35":   "Search Insert Position. Plain lower_bound — return l at end (works whether target found or insertion point).",
+    "704":  "Binary Search. Textbook l ≤ r loop; mid = l + (r-l)/2 to avoid overflow.",
+    "278":  "First Bad Version. lower_bound on the bad-flag predicate; bad() is the monotone API.",
+    "744":  "Smallest Letter Greater Than Target. upper_bound on chars; if past end, wrap to letters[0].",
+    "540":  "Single Element in Sorted Array. Pairs at even indices; check if pair starting at mid (rounded down to even) is intact — if a[mid]==a[mid+1], single is to the right; else left.",
+    "374":  "Guess Number Higher or Lower. Textbook BS using guess() API as the comparator.",
+    "275":  "H-Index II (sorted). Find smallest i where citations[i] ≥ n − i. Answer = n − i.",
+    "222":  "Count Complete Tree Nodes. Per subtree: compare full-left vs full-right depths; if equal, perfect subtree = 2^h − 1; else recurse both. Binary-search on last-level index gives O(log² n).",
+    "436":  "Find Right Interval. Sort intervals by START with original index; for each interval's END, lower_bound to find first start ≥ end.",
+    "74":   "Search a 2D Matrix. Treat as 1D flattened sorted array; mid → (mid/n, mid%n). O(log(m·n)).",
+    "240":  "Search a 2D Matrix II. Rows+cols sorted but NOT globally — staircase from top-right (or bottom-left): on > target go left/down; on < go right/up. O(m+n).",
+    "1351": "Count Negatives Sorted Matrix. Each row sorted descending; per row, binary-search for first negative; accumulate (n − idx). Alternative: staircase like 240, O(m+n)."
+  },
+
+  "bs-on-answer": {
+    "875":  "Koko Eating Bananas. Find min speed K such that totalHours(K) ≤ H. lo=1, hi=max(piles); feasibility is monotone in K.",
+    "1011": "Capacity to Ship Packages in D Days. Find min capacity C s.t. shipsNeeded(C) ≤ D. lo=max(weights), hi=sum(weights).",
+    "410":  "Split Array Largest Sum. Find min largest-sum across K splits. lo=max(arr), hi=sum.",
+    "1482": "Min Days to Make M Bouquets. Find min day d s.t. canMakeBouquets(d) ≥ m. Feasibility: scan and count contiguous runs ≥ k.",
+    "2141": "Max Running Time of N Computers. Find max time t s.t. all n computers can run for t (sum of min(battery, t) across all ≥ n·t).",
+    "1898": "Max Removable Chars Still Subseq. Find max k s.t. removing first k indices still leaves p as a subseq of s. Two-pointer check is the feasibility predicate.",
+    "2616": "Min Max Diff via K Pairs. Find min threshold t s.t. we can form k disjoint pairs with |diff| ≤ t. Sort, greedy-pair adjacent.",
+    "2517": "Max Tastiness of K-Candy Basket. Find max gap g s.t. we can pick k items with pairwise diff ≥ g. Sort + greedy feasibility.",
+    "719":  "K-th Smallest Pair Distance. Binary-search on distance value; countPairs(d) ≤ d uses sliding window after sort.",
+    "1648": "Sell Diminishing-Valued Balls. Find max base sell-count k s.t. total balls sold (using floor-and-leftover) ≥ orders."
+  },
+
+  "dfs-tree-orders": {
+    "144": "BT Preorder. visit, recurse left, recurse right. Iterative: stack of nodes; pop, visit, push right then left so left pops first.",
+    "94":  "BT Inorder. recurse left, visit, recurse right. Iterative: go-left pushing each, pop visit, then recurse right.",
+    "145": "BT Postorder. recurse left, recurse right, visit. Iterative: easiest is modified preorder (root → right → left) collected in reverse.",
+    "104": "Max Depth. Post-order — 1 + max(leftDepth, rightDepth).",
+    "543": "Diameter. Post-order — return height (1 + max children); update global with leftHeight + rightHeight at current node.",
+    "124": "BT Max Path Sum. Post-order — return max single-side gain CLAMPED to 0 (don't take negative subtrees); update global with leftGain + rightGain + node.val."
+  },
+
+  "post-order-depth": {
+    "104":  "Max Depth. 1 + max(leftDepth, rightDepth). Base null = 0.",
+    "543":  "Diameter. At each node, candidate = leftDepth + rightDepth; return 1 + max(left, right) upward.",
+    "110":  "Balanced Tree. Return height OR sentinel −1 if any subtree unbalanced. Propagate −1 upward to short-circuit.",
+    "687":  "Longest Univalue Path. Per node return univalue-path-length downward; if child.val == node.val, length includes child; combine left + right at the node for the global max.",
+    "1245": "Tree Diameter (general N-ary graph). Same shape but n-ary; track TOP-2 child depths for diameter; or 2-BFS sweep.",
+    "124":  "BT Max Path Sum. Return max single-side gain (clamped to 0); update global with left + right + val.",
+    "222":  "Count Complete Tree Nodes. Hybrid post-order + binary-search: compare leftmost vs rightmost path lengths; if equal, perfect = 2^h − 1; else recurse both. O(log² n)."
+  },
+
+  "topo-sort": {
+    "207":  "Course Schedule — can you finish? Kahn: queue of in-deg 0; decrement neighbours' in-deg; if final processed count == n, yes. Alternative: DFS 3-color cycle detect.",
+    "210":  "Course Schedule II — output order. Same Kahn; record pop order. Result is the topological ordering (any valid one).",
+    "269":  "Alien Dictionary. Build chars + edges from adjacent word pairs (first mismatch ⇒ a < b). Edge case: word1 is prefix of word2 with len1 > len2 ⇒ invalid. Then topo-sort.",
+    "444":  "Sequence Reconstruction. Kahn + UNIQUENESS check: at each step, EXACTLY ONE in-deg-0 node remains AND it matches the expected next of the original sequence.",
+    "802":  "Find Eventual Safe States. Reverse the graph; topo from out-deg-0 originals (sinks). Safe = nodes reaching a sink only.",
+    "2050": "Parallel Courses III. Topo + DP — for each course, finishTime = max(prereqFinishes) + duration. Tracking max over a DAG.",
+    "1857": "Largest Color Value in DAG. Topo + DP — count[v][color] = max over incoming neighbours; add 1 for v's own color.",
+    "1136": "Parallel Courses. Topo by LEVELS (Kahn drains entire in-deg-0 batch per round); answer = number of rounds; −1 if cycle."
   }
 }
