@@ -285,6 +285,34 @@ const BATCH = {
   22:  ['pat_ds::string::backtrack::combinatorial-product'],         // Generate Parentheses (constrained product)
   1087:['pat_ds::string::backtrack::combinatorial-product'],         // Brace Expansion
   2266:['pat_ds::string::backtrack::combinatorial-product'],         // Count Number of Texts
+
+  // ── Batch 6 (this turn) ──────────────────────────────────────────────
+  // 3 new sub-micro splits + their anchors. Run prune-coarse-pat-tags
+  // AFTER applying these to drop the redundant coarse parents.
+  // ─────────────────────────────────────────────────────────────────────
+
+  // monotonic-stack-spans (NEW) — histogram-rectangle / span-at-pop
+  84:  ['pat_ds::array::stack-topic::monotonic-stack-spans'],        // Largest Rectangle Histogram
+  85:  ['pat_ds::matrices::stack-topic::monotonic-stack-spans'],     // Maximal Rectangle
+  1856:['pat_ds::array::stack-topic::monotonic-stack-spans'],        // Maximum Subarray Min-Product
+  907: ['pat_ds::array::stack-topic::monotonic-stack-spans'],        // Sum of Subarray Minimums
+  2334:['pat_ds::array::stack-topic::monotonic-stack-spans'],        // Subarray With Elements Greater Than Varying Threshold
+  2104:['pat_ds::array::stack-topic::monotonic-stack-spans'],        // Sum of Subarray Ranges
+
+  // dp-2d-square (NEW) — min-of-3-neighbours + 1 for square submatrices
+  221: ['pat_ds::matrices::dp::dp-2d-square'],                       // Maximal Square
+  1277:['pat_ds::matrices::dp::dp-2d-square'],                       // Count Square Submatrices with All Ones
+  1139:['pat_ds::matrices::dp::dp-2d-square'],                       // Largest 1-Bordered Square
+  1727:['pat_ds::matrices::dp::dp-2d-square'],                       // Largest Submatrix With Rearrangements (related shape)
+
+  // sw-distinct-count (NEW) — freq-map + distinct-counter family
+  3:   ['pat_ds::string::sliding-window::sw-distinct-count'],        // Longest Substring Without Repeating
+  159: ['pat_ds::string::sliding-window::sw-distinct-count'],        // Longest Substring With At Most 2 Distinct
+  340: ['pat_ds::string::sliding-window::sw-distinct-count'],        // Longest Substring With At Most K Distinct
+  904: ['pat_ds::array::sliding-window::sw-distinct-count'],         // Fruit Into Baskets (≤ 2 distinct)
+  // 1004 was tagged earlier as sw-shrink-violation; the K-distinct framing
+  // also applies (max consecutive ones III is essentially "at most K zeros").
+  // Skip retag — already in BATCH at line above; prune will handle dual.
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
