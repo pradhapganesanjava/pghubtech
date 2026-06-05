@@ -249,8 +249,16 @@ export default function AdsHubView() {
         const id = String(d.id)
         const num = String(parseInt(id, 10))
         const p = problems.find(x => x.frontendId === id || x.frontendId === num)
-        if (p) { setSelected(p); setViewerExpanded(true); setAdsMode('browse') }
+        // STAY in patterns mode (don't setAdsMode('browse')) — selected
+        // problem appears in the detail pane to the right of the iframe;
+        // user can keep browsing patterns and opening more problems
+        // without losing context. Also don't auto-expand the detail —
+        // user keeps both panes visible (they can dblclick the detail
+        // header to widen if they want).
+        if (p) setSelected(p)
       } else if (d.type === 'pghub-search' && typeof d.q === 'string') {
+        // 'Browse all <topic>' link → flip to Browse mode and apply the
+        // filter (that's the whole point of the link — leave Patterns).
         setSearch(d.q); setAdsMode('browse')
       }
     }
@@ -1389,23 +1397,49 @@ export default function AdsHubView() {
               if (p) { setSelected(p); setAdsMode('browse') }
             }}
           />
-        ) : adsMode === 'patterns' ? (
-          /* Embed the standalone reference in an iframe so we don't have
-             to duplicate its data/markup. Same-origin so internal anchor
-             links (#dp/dp-2d-grid) and outbound /pghubtech/adshub?id=N
-             links still work; AdsHub's URL routing catches the id click
-             on top-level navigation. */
-          <iframe
-            title="Micro-Pattern Reference"
-            src={`${import.meta.env.BASE_URL}patterns.html`}
-            style={{ width: '100%', height: '100%', border: 0, flex: 1, minHeight: 0 }}
-          />
         ) : (
+        /* Shared split layout for BOTH Browse and Patterns modes. In
+           Patterns mode the left column hosts the iframe (always mounted
+           — selecting a problem doesn't reload it); the right column
+           shows the same detail pane Browse uses. In Browse the left
+           column is the toolbar+table as before. */
         <div className="browse-cards-split" ref={splitRef}>
-          {/* Problem list — hidden when the detail viewer is expanded */}
+          {/* Left column — Patterns iframe (mode==='patterns') OR problem
+              list (mode==='browse'). Hidden when detail is maximized. */}
           {!viewerExpanded && (
-          <div className="browse-col-cards" style={selected ? { flex: `0 0 ${listRatio}%` } : undefined}>
-            {loading ? (
+          <div
+            className="browse-col-cards"
+            style={{
+              ...(selected ? { flex: `0 0 ${listRatio}%` } : {}),
+              // Patterns mode: make the column a flex container so the
+              // <iframe flex:1> can fill remaining vertical space, and
+              // drop the column's own overflow:auto (iframe scrolls).
+              ...(adsMode === 'patterns'
+                ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 56px)' }
+                : {}),
+            }}
+          >
+            {adsMode === 'patterns' ? (
+              <>
+                {/* Small header strip so the section has a doc-detail-hd-style
+                    affordance: double-click snaps the list↔detail divider
+                    (widen the iframe / restore split). Mirrors the detail
+                    pane's header doubleclick. */}
+                <div
+                  className="col-hd doc-detail-hd"
+                  style={{ padding: '10px 12px', flexShrink: 0 }}
+                  onDoubleClick={() => setListRatio(r => r >= 78 ? 60 : 85)}
+                  title="📐 Patterns Reference — double-click to widen / restore"
+                >
+                  <span>📐 Patterns Reference</span>
+                </div>
+                <iframe
+                  title="Micro-Pattern Reference"
+                  src={`${import.meta.env.BASE_URL}patterns.html`}
+                  style={{ width: '100%', flex: 1, minHeight: 0, border: 0 }}
+                />
+              </>
+            ) : loading ? (
               <div className="browse-stream-init">
                 <div className="browse-stream-spinner" />
                 <span>Loading…</span>
