@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Micro-Pattern Reference · PG Hub Tech</title>
+<style>
+  :root {
+    --bg: #0f1115; --bg2: #1a1d24; --bg3: #232730;
+    --text: #e6e9ef; --text2: #9ba3b3; --text3: #5e6776;
+    --border: #2c313c; --primary: #5b8def;
+    --easy: #21c46a; --med: #f0a020; --hard: #e34545;
+    --code: #f2c2a1;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #fafbfc; --bg2: #ffffff; --bg3: #f0f2f5;
+      --text: #1f2328; --text2: #57606a; --text3: #8c959f;
+      --border: #d8dee4;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
+               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+  a { color: var(--primary); text-decoration: none; } a:hover { text-decoration: underline; }
+  code { background: var(--bg3); padding: 1px 4px; border-radius: 3px; font-size: 90%; color: var(--code); }
+  .layout { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .sidebar.open { display: block; position: fixed; inset: 0 30% 0 0; z-index: 50; box-shadow: 4px 0 20px rgba(0,0,0,.5); } }
+  /* ── Sidebar ─────────────────────────────────────────────────────── */
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; }
+  .side-hd { padding: 14px 14px 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg2); z-index: 1; }
+  .side-hd h1 { font-size: 14px; margin: 0 0 6px; letter-spacing: .3px; }
+  .side-hd .sub { font-size: 11px; color: var(--text2); }
+  .view-toggle { display: flex; gap: 4px; margin-top: 8px; }
+  .view-toggle button { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+                        padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  .view-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .nav-search { width: 100%; padding: 6px 8px; margin-top: 8px; background: var(--bg3); border: 1px solid var(--border);
+                color: var(--text); border-radius: 4px; font-size: 12px; }
+  .nav-list { padding: 8px 6px 40px; font-size: 13px; }
+  .tree-group { margin-bottom: 4px; }
+  .tree-l1 { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 4px; cursor: pointer; user-select: none; }
+  .tree-l1:hover { background: var(--bg3); }
+  .tree-l1.active { background: rgba(91,141,239,.15); color: var(--primary); }
+  .tree-l1 .caret { color: var(--text3); transition: transform .15s; }
+  .tree-l1.expanded .caret { transform: rotate(90deg); }
+  .tree-l1 .count { margin-left: auto; font-size: 10px; color: var(--text3); padding: 1px 5px; background: var(--bg3); border-radius: 10px; }
+  .tree-l2-wrap { display: none; padding-left: 22px; margin: 2px 0 4px; border-left: 1px dashed var(--border); margin-left: 12px; }
+  .tree-l1.expanded + .tree-l2-wrap { display: block; }
+  .tree-l2 { display: block; padding: 3px 8px; color: var(--text2); cursor: pointer; border-radius: 4px; font-size: 12px; }
+  .tree-l2:hover { background: var(--bg3); color: var(--text); }
+  .tree-l2.active { background: rgba(91,141,239,.18); color: var(--primary); }
+  .flat-list { padding: 4px 6px 40px; }
+  .flat-list .flat-item { display: block; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text2); font-size: 12px; }
+  .flat-list .flat-item:hover { background: var(--bg3); color: var(--text); }
+  .flat-list .flat-item .flat-cat { color: var(--text3); font-size: 10px; }
+  .flat-list .flat-item.active { background: rgba(91,141,239,.18); color: var(--primary); }
+  /* ── Main ────────────────────────────────────────────────────────── */
+  .main { overflow-y: auto; padding: 24px 32px; }
+  .main h2 { margin: 0 0 6px; font-size: 22px; }
+  .main h3 { margin: 24px 0 10px; font-size: 15px; color: var(--text); padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .main h4 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
+  .lede { color: var(--text2); font-size: 13px; max-width: 70ch; line-height: 1.55; margin: 0 0 18px; }
+  .breadcrumb { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .browse-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg3); border: 1px solid var(--border);
+                 border-radius: 4px; font-size: 11px; color: var(--text2); margin-top: 6px; }
+  .browse-link:hover { background: var(--primary); color: white; text-decoration: none; }
+  .micro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin: 12px 0 28px; }
+  .micro { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .micro h4 { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+  .micro h4 .id { font-size: 9px; color: var(--text3); padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-family: monospace; text-transform: uppercase; }
+  .micro p { margin: 6px 0; font-size: 13px; line-height: 1.5; color: var(--text); }
+  .micro p.contrast { color: var(--text2); font-size: 12px; border-left: 2px solid var(--primary); padding-left: 8px; margin-top: 10px; }
+  .micro .meta { display: flex; gap: 12px; font-size: 11px; color: var(--text3); margin-top: 6px; }
+  .anchor-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .anchor { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: var(--bg3); border: 1px solid var(--border);
+            border-radius: 3px; font-size: 11px; font-family: -apple-system, monospace; }
+  .anchor .num { color: var(--text3); }
+  .anchor.easy { border-left: 3px solid var(--easy); }
+  .anchor.medium { border-left: 3px solid var(--med); }
+  .anchor.hard { border-left: 3px solid var(--hard); }
+  .mobile-burger { display: none; position: fixed; top: 8px; left: 8px; z-index: 60; background: var(--bg2); border: 1px solid var(--border);
+                   color: var(--text); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+  @media (max-width: 800px) { .mobile-burger { display: block; } .main { padding: 56px 14px 24px; } }
+  .empty { color: var(--text2); padding: 24px; text-align: center; }
+  .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 12px 0; }
+  .home-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer;
+               transition: transform .1s, border-color .1s; }
+  .home-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .home-card h4 { margin: 0 0 4px; font-size: 14px; }
+  .home-card .meta { color: var(--text3); font-size: 11px; margin-top: 4px; }
+  .home-card .micro-count { color: var(--primary); font-size: 12px; font-weight: 600; }
+</style>
+</head>
+<body>
+<button class="mobile-burger" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="side-hd">
+      <h1>📐 Micro-Pattern Reference</h1>
+      <div class="sub">DS → clue → micro-pattern → anchors. Links open in AdsHub.</div>
+      <div class="view-toggle">
+        <button id="vt-tree"  class="active" onclick="setView('tree')">Tree</button>
+        <button id="vt-flat"           onclick="setView('flat')">Flat</button>
+      </div>
+      <input class="nav-search" id="navSearch" placeholder="Filter patterns…" oninput="renderNav()">
+    </div>
+    <div id="navList" class="nav-list"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+// HIGH-LEVEL pattern → micro-patterns. Each micro carries:
+//   when: the clue / problem shape that triggers this pattern
+//   how:  one-line implementation sketch
+//   cost: time + space
+//   contrast: how it differs from sibling micros
+//   anchors: LC ids — click opens the AdsHub deep-link
+//
+// `topicTag` (optional) goes into the "Browse all in AdsHub" link as a
+// search query so the user can pull the full set of LC-tagged problems
+// for that high-level pattern.
+
+const PATTERNS = [
+  // ── Array ────────────────────────────────────────────────────────────
+  { id: 'array', name: 'Array', icon: '📦', topicTag: 'Array',
+    intro: 'Random-access linear sequence. Most LC problems are at heart array problems — the trick is choosing the right pattern from the clue words.',
+    micros: [
+      { id: 'two-sum-hash', name: 'Two-Sum Hash Lookup',
+        when: 'Two numbers must sum to target; array UNSORTED.',
+        how: 'Single pass; map[complement] = index; check before insert.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'vs Two-Pointers Converging — that needs the array sorted but uses O(1) extra space.',
+        anchors: [1, 167, 653] },
+      { id: 'prefix-sum-hashmap', name: 'Prefix Sum + Hash Map',
+        when: 'Count / find subarrays summing to K; array may contain NEGATIVES.',
+        how: 'Running prefix; map[prefix] = count; answer += map[prefix − K].',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'vs Sliding Window — sliding only works when all values are positive (so the window sum is monotone).',
+        anchors: [560, 974, 525, 523, 304, 363] },
+      { id: 'kadane', name: 'Kadane (Max Subarray Sum)',
+        when: 'Max contiguous-subarray sum; allow negatives.',
+        how: 'cur = max(x, cur + x); best = max(best, cur).',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs Prefix Sum — Kadane resets the local running sum; prefix sum tracks every cumulative position.',
+        anchors: [53, 152, 918, 1567] },
+      { id: 'index-as-hash', name: 'Index as Hash (Cyclic Sort / Sign Flip)',
+        when: 'Find missing / duplicate in array of size n with values in [1..n].',
+        how: 'Place each value at its index, OR mark visited by negating arr[abs(x)-1].',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs Hash Set — same O(n) but O(1) space. Only works when value range bounds the index.',
+        anchors: [41, 268, 287, 442, 448] },
+      { id: 'in-place-read-write', name: 'In-place Two Pointers (Read / Write)',
+        when: 'Remove / dedupe / move elements in place; output size differs.',
+        how: 'write = 0; for read 0..n: if keep(read), arr[write++] = arr[read].',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs filter into new array — same logic but constant extra space.',
+        anchors: [26, 27, 80, 283, 75] },
+      { id: 'rotate-reverse', name: 'Rotate via Triple-Reverse',
+        when: 'Rotate array by K in place.',
+        how: 'Reverse [0..n), reverse [0..K), reverse [K..n).',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs auxiliary array — triple reverse is the in-place trick.',
+        anchors: [189, 48, 151] },
+    ],
+  },
+
+  // ── String ───────────────────────────────────────────────────────────
+  { id: 'string', name: 'String', icon: '📝', topicTag: 'String',
+    intro: 'Char sequences. Many problems are sliding-window / two-pointer disguised as string; some need DP or trie.',
+    micros: [
+      { id: 'anagram-keying', name: 'Anagram by Fingerprint Key',
+        when: 'Group / detect anagrams.',
+        how: 'Key = sorted(str) OR tuple of 26 letter counts. Bucket by key.',
+        cost: 'O(n·k log k) sort key OR O(n·k) count key.',
+        contrast: 'Count key beats sort key for long strings; sort key is shorter code.',
+        anchors: [242, 49, 438] },
+      { id: 'palindrome-two-ptr', name: 'Palindrome via Converging Pointers',
+        when: 'Check / build palindrome.',
+        how: 'l=0, r=n-1; while l<r: if s[l]!=s[r] fail; else l++, r--.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs DP — two-pointer for VALIDATION; DP for LONGEST palindromic subseq.',
+        anchors: [125, 680, 234] },
+      { id: 'expand-around-center', name: 'Expand Around Center',
+        when: 'Find longest palindromic SUBSTRING.',
+        how: 'For each center i (and i,i+1), expand while s[l]==s[r].',
+        cost: 'O(n²) time, O(1) space.',
+        contrast: 'vs Manacher (O(n) but tricky) — expand-around-center is the interview-friendly version.',
+        anchors: [5, 647, 1312] },
+      { id: 'minimum-window', name: 'Minimum Window Substring',
+        when: 'Smallest window covering all chars of target.',
+        how: 'need map + matched counter; shrink window while matched == |need|.',
+        cost: 'O(n + m) time, O(charset) space.',
+        contrast: 'Templates extend to "longest with K distinct" / "fruits in basket" — same skeleton.',
+        anchors: [76, 567, 438, 30] },
+      { id: 'word-ladder-bfs', name: 'Word Ladder BFS',
+        when: 'Shortest transform between two words via valid intermediates.',
+        how: 'BFS over implicit graph; bi-BFS halves the depth.',
+        cost: 'O(N·L·26) time.',
+        contrast: 'vs DP — BFS for SHORTEST; DP for COUNT of paths.',
+        anchors: [127, 433, 752, 126] },
+      { id: 'edit-distance-dp', name: 'Edit Distance 2D DP',
+        when: 'Minimum operations to transform one string into another.',
+        how: 'dp[i][j] = match? dp[i-1][j-1] : 1 + min(insert, delete, replace).',
+        cost: 'O(n·m) time, O(n·m) or O(min) space.',
+        contrast: 'Generalizes to LCS, Distinct Subseq, Regex match — all 2D char × char DP.',
+        anchors: [72, 583, 1143, 10, 44, 583] },
+    ],
+  },
+
+  // ── Linked List ──────────────────────────────────────────────────────
+  { id: 'linked-list', name: 'Linked List', icon: '🔗', topicTag: 'Linked List',
+    intro: 'Sequential nodes with next-pointer. Two-pointer tricks (slow/fast, offset, alignment) dominate.',
+    micros: [
+      { id: 'floyd-cycle', name: 'Floyd Tortoise-Hare (Cycle Detection)',
+        when: 'Does the list contain a cycle? Where does it start?',
+        how: 'slow=1, fast=2 step; if they meet, restart slow from head, both step 1, meet at start.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs Hash Set of seen nodes — Floyd is O(1) space.',
+        anchors: [141, 142, 287, 202] },
+      { id: 'slow-fast-middle', name: 'Slow/Fast Find Middle',
+        when: 'Need middle node in one pass.',
+        how: 'slow=1, fast=2 step; when fast hits null, slow = middle.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'Used before reverse-second-half tricks (palindrome, reorder).',
+        anchors: [876, 234, 143] },
+      { id: 'nth-from-end', name: 'N-th From End via Offset',
+        when: 'Remove / find the N-th node from the end.',
+        how: 'fast advances N first; then both advance till fast hits null; slow points to target.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs two-pass (count then walk) — same complexity, one fewer pass.',
+        anchors: [19] },
+      { id: 'iterative-reverse', name: 'Iterative Reverse (3 Pointers)',
+        when: 'Reverse list or segment of K nodes.',
+        how: 'prev=null; while cur: next=cur.next; cur.next=prev; prev=cur; cur=next.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'Recursive reverse: cleaner code, O(n) stack. Iterative for production.',
+        anchors: [206, 92, 25, 234] },
+      { id: 'aligned-intersect', name: 'Aligned-Length Walk (List Intersection)',
+        when: 'Find intersection node of two singly-linked lists.',
+        how: 'a=headA, b=headB; while a!=b: a=a?a.next:headB; b=b?b.next:headA.',
+        cost: 'O(m+n) time, O(1) space.',
+        contrast: 'Elegant alignment trick — equivalent to "skip the length difference".',
+        anchors: [160] },
+      { id: 'dummy-head-merge', name: 'Dummy-Head Merge',
+        when: 'Merge two (or K) sorted lists.',
+        how: 'tail=dummy; pick smaller head, append, advance.',
+        cost: 'O(n+m) time, O(1) space (heap → O(N log K) for K-way).',
+        contrast: 'K-way merge: same idea + min-heap of stream heads.',
+        anchors: [21, 23] },
+    ],
+  },
+
+  // ── Stack ────────────────────────────────────────────────────────────
+  { id: 'stack', name: 'Stack', icon: '🥞', topicTag: 'Stack',
+    intro: 'LIFO. Bracket matching, expression eval, and the monotonic stack family for next-greater style problems.',
+    micros: [
+      { id: 'bracket-match', name: 'Bracket Matching',
+        when: 'Validate balanced parens / find longest valid.',
+        how: 'Push openers; on closer, top must match.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Longest-valid uses indices on the stack rather than the bracket chars.',
+        anchors: [20, 32, 921, 1249] },
+      { id: 'expression-eval', name: 'Expression Evaluation',
+        when: 'Evaluate +, −, ×, ÷, parens, variables.',
+        how: 'Two stacks (operand + operator) with precedence checks, OR shunting-yard.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Calc I (224) handles parens + addition; II (227) adds ×/÷ precedence; III (772) combines.',
+        anchors: [224, 227, 772, 150, 394] },
+      { id: 'monotonic-stack', name: 'Monotonic Stack (Next-Greater Family)',
+        when: '"Next greater / smaller", largest rectangle, daily temperature span.',
+        how: 'Push indices; before pushing i, pop while stack-top breaks the invariant — that top\'s answer is i.',
+        cost: 'O(n) amortised time, O(n) space.',
+        contrast: 'vs O(n²) brute force — monotonic stack drops each index O(1) on average.',
+        anchors: [496, 503, 739, 84, 85, 42, 901, 1019] },
+      { id: 'decode-string', name: 'Decode String (Nested Counts)',
+        when: 'k[encoded[…]] style nesting.',
+        how: 'Stack of (count, accumulated-prefix); on \']\' pop and repeat.',
+        cost: 'O(n + output) time.',
+        contrast: 'Generalises to nested integer / nested JSON parsing.',
+        anchors: [394, 726, 1106] },
+    ],
+  },
+
+  // ── Queue / Deque ────────────────────────────────────────────────────
+  { id: 'queue', name: 'Queue / Deque', icon: '🚌', topicTag: 'Queue',
+    intro: 'FIFO. Backbone of BFS, level-order, sliding-window extremes (with deque), and streaming aggregations.',
+    micros: [
+      { id: 'level-order-bfs', name: 'Level-Order BFS (Batched)',
+        when: 'Tree/graph traversal where YOU need to know levels.',
+        how: 'Queue snapshot of size; loop that many to consume current level; collect next-level children.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Plain BFS doesn\'t batch by level; level-order does for "rightmost node", "level sum", etc.',
+        anchors: [102, 103, 199, 515, 1161, 314] },
+      { id: 'multi-source-bfs', name: 'Multi-Source BFS',
+        when: 'Distance from EACH cell to nearest source(s); multiple sources spread simultaneously.',
+        how: 'Seed queue with ALL sources at dist 0; standard BFS from there.',
+        cost: 'O(V + E) time.',
+        contrast: 'vs single-source BFS from each source — multi-source is one pass total.',
+        anchors: [994, 542, 286, 1162, 317, 1765] },
+      { id: 'monotonic-deque', name: 'Monotonic Deque (Sliding Max/Min)',
+        when: 'Running max/min over a sliding window of size K.',
+        how: 'Deque of indices; pop back while new value ≥ tail; front is the window max.',
+        cost: 'O(n) time, O(K) space.',
+        contrast: 'vs heap (O(n log K)) — deque is cleaner O(n) and supports min in same shape.',
+        anchors: [239, 1438, 862, 918] },
+      { id: 'zero-one-bfs', name: '0-1 BFS (Deque)',
+        when: 'Shortest path with edge weights in {0, 1}.',
+        how: 'Deque; push 0-edges to FRONT, 1-edges to BACK. Treats 0 as "free hop".',
+        cost: 'O(V + E) time.',
+        contrast: 'vs Dijkstra (O((V+E) log V)) — 0-1 BFS is asymptotically faster for the {0,1} case.',
+        anchors: [1368, 2290, 934] },
+    ],
+  },
+
+  // ── Tree ─────────────────────────────────────────────────────────────
+  { id: 'tree', name: 'Binary Tree', icon: '🌳', topicTag: 'Tree',
+    intro: 'Hierarchical: each node has up to 2 children. Most problems are DFS (height, sums, paths, validation) or BFS (level views).',
+    micros: [
+      { id: 'post-order-depth', name: 'Post-Order Depth / Height',
+        when: 'Max depth, diameter, longest-univalue, balanced-tree.',
+        how: 'def f(n): if !n: return 0; l=f(n.left); r=f(n.right); update global; return 1+max(l,r).',
+        cost: 'O(n) time, O(h) space.',
+        contrast: 'The single most common tree pattern — anything that depends on subtree height fits.',
+        anchors: [104, 543, 110, 687, 1245, 124] },
+      { id: 'path-sum-dfs', name: 'Pre-Order Path Accumulation',
+        when: 'Root-to-leaf paths summing to target; collect them.',
+        how: 'def f(n, rem, path): if !n: return; rem-=n.val; if leaf && rem==0: emit(path+[n.val]); else recurse.',
+        cost: 'O(n) time, O(h) space.',
+        contrast: 'Path Sum III (437) needs prefix-sum hashmap because path doesn\'t start at root.',
+        anchors: [112, 113, 437, 129, 257] },
+      { id: 'inorder-bst', name: 'In-Order Traversal (BST→Sorted)',
+        when: 'Validate BST, Kth smallest in BST, build sorted iterator.',
+        how: 'In-order yields ascending values. Track prev / counter.',
+        cost: 'O(n) time, O(h) space.',
+        contrast: 'vs explicit min/max bounds — in-order is shorter, bounds-DFS handles non-recursive easily.',
+        anchors: [98, 230, 173, 285, 270] },
+      { id: 'lca-dfs', name: 'LCA via Subtree Containment',
+        when: 'Lowest common ancestor of p, q.',
+        how: 'def f(n): if !n||n==p||n==q: return n; l=f(n.left); r=f(n.right); if l&&r: return n; return l||r.',
+        cost: 'O(n) time, O(h) space.',
+        contrast: 'BST LCA (235) is O(log n) using sort order; binary tree LCA (236) is O(n).',
+        anchors: [236, 235, 1644, 1650, 1123, 1676] },
+      { id: 'construct-from-traversals', name: 'Construct From Traversals',
+        when: 'Build tree from preorder+inorder (or post+in).',
+        how: 'Pre[0] is root; find in inorder → left/right subtree spans. Recurse with index map.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Variant: pre+post lets multiple trees fit (non-unique); pre+in / post+in are unique.',
+        anchors: [105, 106, 889] },
+      { id: 'serialize-tree', name: 'Pre-Order Serialize with Null Markers',
+        when: 'Serialize / deserialize binary tree.',
+        how: 'Pre-order; emit "null" for missing children so structure round-trips.',
+        cost: 'O(n) time/space.',
+        contrast: 'BFS-with-levels works too but pre-order is more compact for sparse trees.',
+        anchors: [297, 449, 572, 652] },
+    ],
+  },
+
+  // ── Trie ─────────────────────────────────────────────────────────────
+  { id: 'trie', name: 'Trie', icon: '🔤', topicTag: 'Trie',
+    intro: 'Prefix tree. When you need many words and FAST prefix queries (autocomplete, word search in grid, regex-lite).',
+    micros: [
+      { id: 'trie-basic', name: 'Trie Insert + StartsWith',
+        when: 'Many words, "exists?" and "startsWith?" queries.',
+        how: 'Map<char, TrieNode> at each node + isWord flag.',
+        cost: 'O(L) per op.',
+        contrast: 'vs hash set — trie wins when prefix queries dominate.',
+        anchors: [208, 211] },
+      { id: 'trie-grid-dfs', name: 'Trie + Grid DFS',
+        when: 'Find all dictionary words present in an m×n character grid.',
+        how: 'Build trie; DFS from each cell descending the trie; prune dead branches; mark visited.',
+        cost: 'O(M·N·4^L).',
+        contrast: 'Without trie you\'d run word-search per word — orders slower for large dictionaries.',
+        anchors: [212, 79] },
+      { id: 'trie-autocomplete', name: 'Trie Nodes Carry Top-K',
+        when: 'Autocomplete / search suggestions; rank by frequency.',
+        how: 'At each node, store sorted top-K matching words below.',
+        cost: 'O(insert: L·K), O(query: L).',
+        contrast: 'vs walking subtree to find K — pre-aggregating top-K is O(L) per query.',
+        anchors: [642, 1268, 648] },
+    ],
+  },
+
+  // ── Heap ─────────────────────────────────────────────────────────────
+  { id: 'heap', name: 'Heap (Priority Queue)', icon: '⛰️', topicTag: 'Heap',
+    intro: 'Min/max access in O(log n). Often the TOOL behind top-K, median, scheduling, Dijkstra.',
+    micros: [
+      { id: 'top-k', name: 'Top-K via Min-Heap of Size K',
+        when: 'K largest / K most frequent in a stream or unsorted array.',
+        how: 'Keep a min-heap of size K; push each; if size > K pop. Final heap = top K.',
+        cost: 'O(n log K) time, O(K) space.',
+        contrast: 'vs Quickselect (O(n) average, in-place but trickier).',
+        anchors: [215, 347, 692, 973, 703] },
+      { id: 'two-heap-median', name: 'Two-Heap Running Median',
+        when: 'Maintain median of a stream.',
+        how: 'max-heap low half + min-heap high half; rebalance so |sizes| ≤ 1.',
+        cost: 'O(log n) insert, O(1) median.',
+        contrast: 'Sliding-window median (480) adds a lazy-deletion map on top.',
+        anchors: [295, 480, 1825] },
+      { id: 'k-way-merge', name: 'K-Way Merge (Heap of Stream Heads)',
+        when: 'Merge K sorted streams.',
+        how: 'Push each stream\'s head into a min-heap; pop smallest, push its successor.',
+        cost: 'O(N log K) time.',
+        contrast: 'vs divide-and-conquer merge of pairs — same asymptotic, heap is simpler to code.',
+        anchors: [23, 632, 378, 373] },
+      { id: 'event-driven-scheduling', name: 'Event-Driven Scheduling (Min-Heap of Next-Available)',
+        when: 'CPU/server tasks with priorities + ready times.',
+        how: 'Heap of (next-free-time, id); also a heap or queue of ready tasks.',
+        cost: 'O(n log n).',
+        contrast: 'Task Scheduler (621) uses freq-bucket trick; for k-server jobs use this pattern.',
+        anchors: [621, 1834, 1882, 1942] },
+      { id: 'dijkstra', name: 'Dijkstra (Shortest Path, Non-Neg Weights)',
+        when: 'Shortest distance from source in weighted graph (weights ≥ 0).',
+        how: 'Min-heap of (dist, node); pop, relax outgoing edges, push improved.',
+        cost: 'O((V+E) log V).',
+        contrast: 'Negative weights → Bellman-Ford. {0,1} weights → 0-1 BFS deque.',
+        anchors: [743, 787, 1631, 778, 2812, 2642] },
+    ],
+  },
+
+  // ── Graph ────────────────────────────────────────────────────────────
+  { id: 'graph', name: 'Graph', icon: '🕸️', topicTag: 'Graph',
+    intro: 'Nodes + edges. Pattern depends on directedness and weights; many problems reduce to BFS / DFS / topo sort / DP-on-DAG.',
+    micros: [
+      { id: 'cc-dfs-uf', name: 'Connected Components (DFS / BFS / Union-Find)',
+        when: 'Count groups; check if nodes belong to same group.',
+        how: 'DFS/BFS from each unvisited node → +1 cc; OR Union-Find each edge.',
+        cost: 'O(V + E).',
+        contrast: 'Use UF when edges arrive incrementally (online); DFS/BFS when graph is static.',
+        anchors: [200, 547, 323, 695, 130, 1971] },
+      { id: 'topo-sort', name: 'Topological Sort (Kahn / DFS Post-Order)',
+        when: 'Order tasks respecting "must come before" constraints; cycle detection in directed graph.',
+        how: 'Kahn: queue of in-deg-0 nodes, pop+decrement. DFS: post-order then reverse.',
+        cost: 'O(V + E).',
+        contrast: 'Kahn detects cycle if result size < V. DFS uses 3-color (white/gray/black).',
+        anchors: [207, 210, 269, 444, 802, 2050, 1857, 1136] },
+      { id: 'cycle-3color', name: '3-Color DFS Cycle Detection',
+        when: 'Cycle in DIRECTED graph (undirected uses simple visited+parent).',
+        how: 'Colors {unvisited, in-stack, done}; back-edge to in-stack = cycle.',
+        cost: 'O(V + E).',
+        contrast: 'Topological-sort failure (Kahn) is the iterative equivalent.',
+        anchors: [207, 802] },
+      { id: 'bipartite', name: 'Bipartite Check (2-Coloring)',
+        when: 'Can nodes be split into 2 sets with all edges crossing?',
+        how: 'BFS/DFS; assign color, neighbours must take opposite. Conflict = not bipartite.',
+        cost: 'O(V + E).',
+        contrast: 'Possible-Bipartition (886) just frames same problem on a list of dislike pairs.',
+        anchors: [785, 886] },
+      { id: 'dag-longest-path', name: 'DAG Longest / Critical Path (Topo + DP)',
+        when: 'Longest path in DAG, or critical-path scheduling.',
+        how: 'Topo order; dp[v] = max(dp[u]) + cost over incoming edges.',
+        cost: 'O(V + E).',
+        contrast: 'Generalizes to per-color count (1857) and Parallel-Courses-III (2050).',
+        anchors: [329, 1857, 2050, 2127] },
+      { id: 'mst', name: 'Minimum Spanning Tree (Kruskal / Prim)',
+        when: 'Connect all nodes at minimum total edge weight.',
+        how: 'Kruskal: sort edges, add if disjoint (Union-Find). Prim: heap-based BFS.',
+        cost: 'Kruskal O(E log E); Prim O((V+E) log V).',
+        contrast: 'Kruskal is simpler when edges are explicit; Prim wins on dense graphs.',
+        anchors: [1135, 1584, 1489] },
+      { id: 'ancestor-reachability', name: 'Ancestor / Reachability via DAG Walks',
+        when: 'For each node, find all ancestors (or whether u reaches v).',
+        how: 'BFS/DFS from each node (sparse) or O(V²) topo propagation (dense).',
+        cost: 'O(V·(V+E)).',
+        contrast: 'For one-shot pairs use BFS; for many queries pre-compute closure.',
+        anchors: [1462, 2192, 851, 802] },
+    ],
+  },
+
+  // ── Hash Table ───────────────────────────────────────────────────────
+  { id: 'hash', name: 'Hash Table', icon: '🗂️', topicTag: 'Hash Table',
+    intro: 'Sub-Θ(1) lookup/insert. Usually the TOOL inside another pattern (two-sum, prefix-sum, frequency) rather than the headline DS.',
+    micros: [
+      { id: 'seen-set', name: 'Seen-Set / Has-Visited',
+        when: 'Detect duplicates / track visited.',
+        how: 'Set; before insert check membership.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Tiny pattern, used as a sub-step everywhere (Floyd cycle, BFS visited, etc.).',
+        anchors: [217, 219, 287, 141] },
+      { id: 'freq-counter', name: 'Frequency Counter (Counter / Map)',
+        when: 'Count occurrences; find majority; group anagrams.',
+        how: 'Counter[x] += 1; iterate.',
+        cost: 'O(n) time, O(k) space.',
+        contrast: 'Use bucket sort by freq for top-K (347).',
+        anchors: [387, 169, 49, 242, 567] },
+      { id: 'complement-lookup', name: 'Complement Lookup',
+        when: '"For each x, does (target − x) exist before me?"',
+        how: 'Single pass: check map for target−x; then add x → index.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'This is the engine of Two-Sum and Prefix-Sum-equals-K.',
+        anchors: [1, 167, 653, 560, 974] },
+    ],
+  },
+
+  // ── DP ───────────────────────────────────────────────────────────────
+  { id: 'dp', name: 'Dynamic Programming', icon: '🧮', topicTag: 'Dynamic Programming',
+    intro: 'Overlapping subproblems + optimal substructure. The micro-pattern is the SHAPE of the dp[…] state.',
+    micros: [
+      { id: 'dp-1d-linear', name: '1D Linear DP',
+        when: 'Decision at each index depends on a few previous indices.',
+        how: 'dp[i] = f(dp[i-1], dp[i-2], …, x[i]).',
+        cost: 'O(n) time, often O(1) space (rolling vars).',
+        contrast: 'House Robber line: pick or skip; Climbing Stairs: sum two prior.',
+        anchors: [70, 198, 213, 300, 91, 139, 322, 198, 746] },
+      { id: 'dp-2d-grid', name: '2D Grid Path DP',
+        when: 'Count paths / min cost in m×n grid.',
+        how: 'dp[r][c] = combine(dp[r-1][c], dp[r][c-1]) + cost[r][c].',
+        cost: 'O(m·n) time, O(min(m,n)) space.',
+        contrast: 'Variants: with obstacles, with multipliers, with min-falling-sum.',
+        anchors: [62, 63, 64, 221, 174, 931] },
+      { id: 'dp-2-strings', name: '2D String DP (Char × Char)',
+        when: 'Compare two sequences: LCS, edit distance, regex.',
+        how: 'dp[i][j] over the two indices; transition by match vs mismatch.',
+        cost: 'O(n·m).',
+        contrast: 'Distinct-subseq, regex, wildcard, interleaving all fit.',
+        anchors: [72, 583, 1143, 10, 44, 97, 115] },
+      { id: 'knapsack-01', name: '0/1 Knapsack',
+        when: 'Each item used at most once; reach target weight/sum.',
+        how: 'dp[i][w]; iterate items OUTER, weight INNER (reverse for 1D rolling).',
+        cost: 'O(n·W).',
+        contrast: 'vs Unbounded — same shape but inner loop NOT reversed (item reusable).',
+        anchors: [416, 494, 1049, 879, 474] },
+      { id: 'knapsack-unbounded', name: 'Unbounded Knapsack / Coin Change',
+        when: 'Each item used any number of times; min coins / # ways.',
+        how: 'dp[w] iterates items outer, weight ascending inner.',
+        cost: 'O(n·W).',
+        contrast: 'Min vs Count: change min op (322) to count op (518).',
+        anchors: [322, 518, 377, 279, 983, 1449] },
+      { id: 'interval-dp', name: 'Interval DP (Length-Loop Outer)',
+        when: 'Optimal way to split / merge an interval; burst-balloon-style.',
+        how: 'OUTER loop = length; INNER loops = (left, right) and split point k.',
+        cost: 'O(n³).',
+        contrast: 'Easy to spot when answer depends on splitting [i,j] at some k inside.',
+        anchors: [312, 1130, 1547, 96, 95, 87] },
+      { id: 'state-machine-dp', name: 'State-Machine DP',
+        when: 'Sequential decisions with a small set of states (e.g. holding/cash).',
+        how: 'dp[i][state] = best of transitions into state at step i.',
+        cost: 'O(n·S).',
+        contrast: 'Stock-buy-sell variants (121, 122, 123, 188, 309, 714) are the canonical instances.',
+        anchors: [121, 122, 123, 188, 309, 714, 188] },
+      { id: 'bitmask-dp', name: 'Bitmask DP (Visited Subset)',
+        when: 'Enumerate subsets of small set (n ≤ ~20); TSP-style.',
+        how: 'state = (mask, last); dp[mask|bit][bit] = …',
+        cost: 'O(2^n · n²).',
+        contrast: 'When n > 20 you need approximation or DP-relaxation.',
+        anchors: [847, 943, 698, 1125, 1255, 526] },
+      { id: 'tree-dp', name: 'Tree DP (Post-Order Returning Struct)',
+        when: 'Best/worst answer over a tree with subtree decisions.',
+        how: 'Post-order returns (use, skip) or richer tuple; combine at parent.',
+        cost: 'O(n).',
+        contrast: 'House Robber III, max camera coverage, BST validation all fit.',
+        anchors: [337, 124, 968, 543, 1372] },
+    ],
+  },
+
+  // ── Backtracking ─────────────────────────────────────────────────────
+  { id: 'backtrack', name: 'Backtracking', icon: '🔁', topicTag: 'Backtracking',
+    intro: 'DFS over decision space with explicit undo. Choose → recurse → un-choose. Almost all "enumerate all X" problems.',
+    micros: [
+      { id: 'subset-combination', name: 'Subset / Combination (Include-Exclude)',
+        when: 'All subsets / combinations summing to target.',
+        how: 'def bt(i, path): emit; for j in [i..n): pick arr[j], bt(j+1), unpick.',
+        cost: 'O(n · 2^n) for subsets.',
+        contrast: 'Pass `i` (not `0`) to avoid duplicate orderings — that\'s subset vs permutation.',
+        anchors: [78, 90, 39, 40, 216, 491] },
+      { id: 'permutation', name: 'Permutation (Used-Set)',
+        when: 'All orderings of a list.',
+        how: 'used[]; for j in range(n): if !used[j]: used[j]=true, recurse, used[j]=false.',
+        cost: 'O(n!).',
+        contrast: 'Duplicate values: sort first + skip when used[j-1]==false && arr[j]==arr[j-1].',
+        anchors: [46, 47, 31, 60, 526] },
+      { id: 'partition-on-string', name: 'Partition-on-String (Try Each Split)',
+        when: 'Partition a string by some predicate (palindrome, valid-IP).',
+        how: 'def bt(i, parts): if i==n: emit; for j in [i+1..n]: if ok(s[i:j]): bt(j, parts+[s[i:j]]).',
+        cost: 'Exponential worst case.',
+        contrast: 'Add memo[i] when checking ok() is expensive.',
+        anchors: [131, 93, 282, 140] },
+      { id: 'board-fill', name: 'Board Fill (N-Queens / Sudoku)',
+        when: 'Place pieces on a board respecting row/col/diag/region constraints.',
+        how: 'Sets for col, diag, anti-diag (or 3 sets for sudoku); place, recurse, undo.',
+        cost: 'Exponential; pruning is everything.',
+        contrast: 'Bitmask sets > boolean arrays for tight loops.',
+        anchors: [51, 52, 37] },
+      { id: 'word-search-dfs', name: 'Word Search (DFS with Visit Mark)',
+        when: 'Search for a word path in m×n grid.',
+        how: 'DFS; mark cell visited; recurse; restore.',
+        cost: 'O(m·n·4^L).',
+        contrast: 'With dictionary → use Trie + DFS (#79 → #212).',
+        anchors: [79, 212, 980] },
+    ],
+  },
+
+  // ── Two Pointers ─────────────────────────────────────────────────────
+  { id: 'two-pointers', name: 'Two Pointers', icon: '👉', topicTag: 'Two Pointers',
+    intro: 'Two indices walking the same array. Sub-patterns: converging from ends, fast-slow, or read/write in place.',
+    micros: [
+      { id: 'tp-converging', name: 'Converging (Both Ends Inward)',
+        when: 'Sorted array; pair/triple sum; max water area; palindrome check.',
+        how: 'l=0, r=n-1; based on comparison, advance l or r.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'vs Hash Map (Two-Sum) — converging needs sorted but uses O(1) space.',
+        anchors: [11, 15, 16, 42, 167, 125, 680] },
+      { id: 'tp-fast-slow', name: 'Fast-Slow Same Direction',
+        when: 'Cycle, middle, Nth-from-end (when offset of 2).',
+        how: 'Two pointers same direction at different speeds.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'Same-direction same-speed → that\'s read/write below.',
+        anchors: [141, 142, 287, 876, 234, 19] },
+      { id: 'tp-merge-walk', name: 'Two-Stream Merge Walk',
+        when: 'Merge two sorted streams / lists / arrays.',
+        how: 'i, j advance independently; always consume smaller.',
+        cost: 'O(n+m).',
+        contrast: 'Extends to "intersection" / "diff" of sorted arrays.',
+        anchors: [88, 21, 4, 349] },
+    ],
+  },
+
+  // ── Sliding Window ───────────────────────────────────────────────────
+  { id: 'sliding-window', name: 'Sliding Window', icon: '🪟', topicTag: 'Sliding Window',
+    intro: 'Same-direction two pointers maintaining an invariant. Two sub-flavors: fixed-size and variable-size (shrink-on-violation).',
+    micros: [
+      { id: 'sw-fixed', name: 'Fixed-Size Window',
+        when: 'Best statistic over every window of size K.',
+        how: 'Init first window; slide by adding right, removing left.',
+        cost: 'O(n).',
+        contrast: 'Cleanest when K is given upfront and constant.',
+        anchors: [643, 1456, 1423, 2461, 567, 438] },
+      { id: 'sw-shrink-violation', name: 'Variable Window — Shrink on Violation',
+        when: 'Longest / smallest substring meeting a condition; needs invariant to hold.',
+        how: 'Expand r; while invariant violated, shrink l until valid; update answer.',
+        cost: 'O(n).',
+        contrast: 'Requires the invariant to be MONOTONE under shrinking — works for all-positive sums, distinct counts.',
+        anchors: [3, 209, 76, 159, 340, 904] },
+      { id: 'sw-at-most-k', name: 'Exactly-K via "AtMostK − AtMost(K−1)"',
+        when: '"Exactly K distinct" — direct sliding doesn\'t work but DIFFERENCE does.',
+        how: 'ans = atMostK(K) − atMostK(K−1) using the variable-window template twice.',
+        cost: 'O(n).',
+        contrast: 'Classic "subarrays with exactly K distinct" trick.',
+        anchors: [992, 930, 1248] },
+    ],
+  },
+
+  // ── Binary Search ────────────────────────────────────────────────────
+  { id: 'binary-search', name: 'Binary Search', icon: '🎯', topicTag: 'Binary Search',
+    intro: 'O(log n). Beyond sorted-array search, the killer pattern is "binary search on the ANSWER" when the predicate is monotone over a value range.',
+    micros: [
+      { id: 'bs-textbook', name: 'Textbook Bounds (Lower / Upper)',
+        when: 'Find insertion point / first occurrence / last occurrence.',
+        how: 'Two-pointer half-interval, careful with l/r/mid update.',
+        cost: 'O(log n).',
+        contrast: 'Use lower_bound (≥ target) and upper_bound (> target) as building blocks.',
+        anchors: [34, 35, 704, 278, 744, 875] },
+      { id: 'bs-on-answer', name: 'Binary Search on the Answer Space',
+        when: 'Answer is an INTEGER X in a known range, and feasibility(X) is monotone.',
+        how: 'lo, hi = bounds; while lo<hi: mid; if feasible(mid): hi=mid else lo=mid+1.',
+        cost: 'O(log(range) · check).',
+        contrast: 'The trick is recognising the monotone predicate — capacity, time, speed all fit.',
+        anchors: [875, 1011, 410, 1482, 2141, 1898, 2616, 2517] },
+      { id: 'bs-rotated', name: 'Rotated / Peak Binary Search',
+        when: 'Rotated sorted array; find peak; unimodal arrays.',
+        how: 'Compare nums[mid] to a boundary; decide which half is sorted; constrain to that half.',
+        cost: 'O(log n).',
+        contrast: 'With duplicates (81, 154) you sometimes need to step l/r linearly.',
+        anchors: [33, 81, 153, 154, 162, 852] },
+    ],
+  },
+
+  // ── Greedy ───────────────────────────────────────────────────────────
+  { id: 'greedy', name: 'Greedy', icon: '⚡', topicTag: 'Greedy',
+    intro: 'Local choice → global optimum. Hard to recognise; usually justified by an exchange argument or sorting.',
+    micros: [
+      { id: 'sort-and-sweep', name: 'Interval Sort + Sweep',
+        when: 'Merge intervals, attend meetings, min rooms.',
+        how: 'Sort by start (or by end); sweep maintaining current frontier.',
+        cost: 'O(n log n).',
+        contrast: 'Sort by end for "max non-overlapping"; sort by start for merge.',
+        anchors: [56, 57, 252, 253, 435, 452, 759, 1851] },
+      { id: 'exchange-argument', name: 'Exchange Argument (Custom Sort)',
+        when: 'Best permutation; pair items so swapping any adjacent never helps.',
+        how: 'Sort by a custom comparator derived from the cost of swapping.',
+        cost: 'O(n log n).',
+        contrast: 'Largest Number (179), Queue Reconstruction (406), Boats (881).',
+        anchors: [179, 406, 881, 1029, 870] },
+      { id: 'running-extreme', name: 'Running Min/Max Greedy',
+        when: 'Best buy/sell stock; max product subarray.',
+        how: 'Track best-so-far; at each step, update answer using current vs best.',
+        cost: 'O(n).',
+        contrast: 'Same idea as Kadane but framed as "buy low, sell high".',
+        anchors: [121, 122, 152, 53] },
+    ],
+  },
+
+  // ── Bit Manipulation ────────────────────────────────────────────────
+  { id: 'bits', name: 'Bit Manipulation', icon: '⚙️', topicTag: 'Bit Manipulation',
+    intro: 'Tricks that turn O(n) into O(1) or O(2^n) into something feasible. Common when input mentions XOR, single number, subsets ≤ 20.',
+    micros: [
+      { id: 'xor-cancel', name: 'XOR Cancellation',
+        when: 'Find the unique number when others appear twice.',
+        how: 'XOR all → result is the odd-one-out.',
+        cost: 'O(n) time, O(1) space.',
+        contrast: 'Three-times variant (137) uses bit-by-bit count mod 3.',
+        anchors: [136, 137, 260, 268, 389] },
+      { id: 'kernighan-popcount', name: 'Brian Kernighan Popcount',
+        when: 'Count set bits.',
+        how: 'while n: n &= n-1; count++.',
+        cost: 'O(set bits).',
+        contrast: 'Faster than naive shift-and-count for sparse bitmasks.',
+        anchors: [191, 338, 461] },
+      { id: 'power-of-two-trick', name: 'n & (n − 1) Tricks',
+        when: 'Power of two; isolate lowest set bit.',
+        how: '(n & (n-1)) == 0 ⇒ power of two. n & -n ⇒ lowest set bit.',
+        cost: 'O(1).',
+        contrast: 'Power of four uses an additional mask (231 → 342).',
+        anchors: [231, 342, 191, 191] },
+      { id: 'bitmask-enumerate', name: 'Bitmask Subset Enumeration',
+        when: 'Enumerate subsets of small set (n ≤ ~20).',
+        how: 'for mask in 0..2^n: for bit in 0..n: if mask & (1<<bit): …',
+        cost: 'O(2^n · n).',
+        contrast: 'Pairs naturally with Bitmask DP (state = mask).',
+        anchors: [78, 90, 187, 1239, 1255] },
+    ],
+  },
+
+  // ── Math / Number Theory ─────────────────────────────────────────────
+  { id: 'math', name: 'Math', icon: '🧠', topicTag: 'Math',
+    intro: 'Closed-form, identities, modular arithmetic. Always look for a math identity before coding the brute force.',
+    micros: [
+      { id: 'sieve', name: 'Sieve of Eratosthenes',
+        when: 'Enumerate primes ≤ N; count primes in range.',
+        how: 'is_prime[2..N] = true; for p ≤ √N: if is_prime[p]: mark multiples false.',
+        cost: 'O(N log log N).',
+        contrast: 'Trial-division per number is O(N√N) — sieve dominates for batched queries.',
+        anchors: [204, 2761] },
+      { id: 'fast-power', name: 'Binary Exponentiation',
+        when: 'Compute a^n (mod m) fast; matrix power for linear recurrences.',
+        how: 'while n: if n & 1: res *= a; a *= a; n >>= 1.',
+        cost: 'O(log n).',
+        contrast: 'Matrix version solves Fibonacci-class recurrences in O(log n).',
+        anchors: [50, 372, 1622, 1359] },
+      { id: 'gcd-lcm', name: 'GCD / LCM (Euclidean)',
+        when: 'Fraction simplification; sync periods; many number-theory problems.',
+        how: 'gcd(a, b) = gcd(b, a % b). lcm = a*b/gcd.',
+        cost: 'O(log min(a, b)).',
+        contrast: 'Extended Euclidean also yields Bezout coefficients (Diophantine).',
+        anchors: [1071, 914, 365] },
+      { id: 'sum-formulas', name: 'Closed-Form Sums',
+        when: '"Sum 1..n", "missing single number".',
+        how: 'expected − actual; n(n+1)/2; etc.',
+        cost: 'O(n) or O(1).',
+        contrast: 'Often a simpler alternative to XOR or hash-set for missing-number problems.',
+        anchors: [268, 1295, 728] },
+    ],
+  },
+
+  // ── Sorting ──────────────────────────────────────────────────────────
+  { id: 'sorting', name: 'Sorting', icon: '🔢', topicTag: 'Sorting',
+    intro: 'Reorder elements to enable two-pointer, binary search, greedy. Cost is usually O(n log n); choose comparator carefully.',
+    micros: [
+      { id: 'sort-then-twoptr', name: 'Sort + Two-Pointer',
+        when: 'Combinations from arrays where ORDER doesn\'t matter.',
+        how: 'Sort; use converging two pointers; skip duplicates.',
+        cost: 'O(n log n) + O(n) scan.',
+        contrast: 'Without sort, hash table works for sums but uses O(n) memory.',
+        anchors: [15, 16, 18, 167, 88] },
+      { id: 'bucket-sort-freq', name: 'Bucket Sort by Frequency',
+        when: 'Top-K frequent when K vs n trade-off favours bucket.',
+        how: 'Bucket[freq] = [items]; walk from highest bucket downward.',
+        cost: 'O(n).',
+        contrast: 'vs heap (O(n log K)) — bucket is faster but uses O(n) buckets.',
+        anchors: [347, 451, 692] },
+      { id: 'quickselect', name: 'Quickselect (Kth Element)',
+        when: 'Find Kth largest/smallest WITHOUT sorting the whole array.',
+        how: 'Lomuto/Hoare partition; recurse only into the side containing K.',
+        cost: 'O(n) average, O(n²) worst case.',
+        contrast: 'vs Heap O(n log K) — quickselect wins for one-shot, heap for streaming.',
+        anchors: [215, 973, 1985] },
+      { id: 'merge-sort-counting', name: 'Merge-Sort for Counting Inversions',
+        when: 'Count inversions / reverse pairs / range pairs.',
+        how: 'Modified merge counts pairs (i in left, j in right) satisfying predicate.',
+        cost: 'O(n log n).',
+        contrast: 'Same shape solves "count smaller after self" (315).',
+        anchors: [315, 327, 493] },
+    ],
+  },
+
+  // ── Prefix Sum ───────────────────────────────────────────────────────
+  { id: 'prefix-sum', name: 'Prefix Sum', icon: '➕', topicTag: 'Prefix Sum',
+    intro: 'Pre-compute cumulative aggregates → O(1) range queries. Naturally pairs with hash maps for subarray queries.',
+    micros: [
+      { id: 'ps-1d', name: '1D Prefix Sum (Range Sum)',
+        when: 'Many range-sum queries on a static array.',
+        how: 'pre[i+1] = pre[i] + arr[i]; sum[l..r] = pre[r+1] − pre[l].',
+        cost: 'O(n) build, O(1) query.',
+        contrast: 'For mutable arrays, switch to Fenwick / Segment Tree.',
+        anchors: [303, 724, 1480] },
+      { id: 'ps-2d', name: '2D Prefix Sum (Matrix Region Sum)',
+        when: 'Many sub-matrix sum queries on a static matrix.',
+        how: 'pre[r][c] = inclusion-exclusion of 4 prior corners + cell.',
+        cost: 'O(R·C) build, O(1) query.',
+        contrast: 'Range Sum Query 2D (304) is the canonical reference.',
+        anchors: [304, 1314, 1292, 363] },
+      { id: 'ps-hashmap', name: 'Prefix Sum + Hash Map (Subarray Sum K)',
+        when: 'Count / find subarrays with sum = K; sum % K; longest balanced 0/1.',
+        how: 'Map[prefix] → first index or count; answer += map[prefix − K].',
+        cost: 'O(n).',
+        contrast: 'Beats sliding window when array contains NEGATIVE values.',
+        anchors: [560, 974, 525, 523, 1248] },
+      { id: 'difference-array', name: 'Difference Array (Range Increment)',
+        when: 'Many range INCREMENT ops, then read final state.',
+        how: 'd[l] += x, d[r+1] -= x; prefix-sum d at the end.',
+        cost: 'O(n + ops).',
+        contrast: 'Inverse of prefix sum — adds at range borders, integrates once.',
+        anchors: [370, 1109, 1854, 1893] },
+    ],
+  },
+
+  // ── Matrices ─────────────────────────────────────────────────────────
+  { id: 'matrices', name: 'Matrices (2D Arrays)', icon: '🟦', topicTag: 'Matrix',
+    intro: '2D grids. Common sub-patterns: in-place rotation, spiral traversal, DFS/BFS on cells, DP on grid.',
+    micros: [
+      { id: 'mat-rotate', name: 'In-Place Rotate (Transpose + Reverse)',
+        when: 'Rotate n×n matrix by 90°.',
+        how: 'Transpose (swap a[i][j] ↔ a[j][i]), then reverse each row.',
+        cost: 'O(n²) time, O(1) space.',
+        contrast: 'Layer-by-layer rotation also works but more code.',
+        anchors: [48, 189] },
+      { id: 'mat-spiral', name: 'Spiral Traversal',
+        when: 'Walk matrix in spiral order (in or out).',
+        how: 'Maintain (top, bottom, left, right); walk row/col and shrink bounds.',
+        cost: 'O(R·C).',
+        contrast: 'Generate spiral (59) is the same loop in write mode.',
+        anchors: [54, 59, 885] },
+      { id: 'mat-set-zeros', name: 'In-Place Mark Rows/Cols to Zero',
+        when: 'Set entire row and column to 0 if any cell is 0 — O(1) extra space.',
+        how: 'Use first row + first col as flags; handle them last.',
+        cost: 'O(R·C) time, O(1) space.',
+        contrast: 'O(R+C) extra space is easier; trick is doing it in place.',
+        anchors: [73] },
+      { id: 'mat-grid-dfs-bfs', name: 'Grid DFS/BFS (Islands / Regions)',
+        when: 'Count / size connected regions of cells; flood-fill.',
+        how: 'For each unvisited "1" cell, DFS/BFS marking visited; +1 region.',
+        cost: 'O(R·C).',
+        contrast: 'Multi-source variant (rotting oranges) seeds queue with all sources.',
+        anchors: [200, 695, 130, 463, 733, 1254] },
+    ],
+  },
+]
+
+// ── Render ───────────────────────────────────────────────────────────────
+let view = 'tree'         // 'tree' | 'flat'
+let activePatternId = null
+let activeMicroId = null
+
+const $ = sel => document.querySelector(sel)
+
+function setView(v) {
+  view = v
+  document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'))
+  $('#vt-' + v).classList.add('active')
+  renderNav()
+}
+
+function renderNav() {
+  const filter = $('#navSearch').value.trim().toLowerCase()
+  const list   = $('#navList')
+  list.className = view === 'tree' ? 'nav-list' : 'flat-list'
+  list.innerHTML = ''
+  if (view === 'tree') renderTree(list, filter)
+  else                  renderFlat(list, filter)
+}
+
+function renderTree(root, filter) {
+  PATTERNS.forEach(p => {
+    const matchesPattern = !filter
+      || p.name.toLowerCase().includes(filter)
+      || p.micros.some(m => m.name.toLowerCase().includes(filter))
+    if (!matchesPattern) return
+
+    const grp = document.createElement('div')
+    grp.className = 'tree-group'
+
+    const l1 = document.createElement('div')
+    l1.className = 'tree-l1' + (activePatternId === p.id ? ' active expanded' : '')
+    l1.innerHTML = `
+      <span class="caret">▶</span>
+      <span class="ico">${p.icon}</span>
+      <span class="lbl">${p.name}</span>
+      <span class="count">${p.micros.length}</span>`
+    l1.onclick = () => { selectPattern(p.id); l1.classList.toggle('expanded') }
+    grp.appendChild(l1)
+
+    const sub = document.createElement('div')
+    sub.className = 'tree-l2-wrap'
+    p.micros.forEach(m => {
+      if (filter && !m.name.toLowerCase().includes(filter) && !p.name.toLowerCase().includes(filter)) return
+      const l2 = document.createElement('a')
+      l2.className = 'tree-l2' + (activeMicroId === `${p.id}/${m.id}` ? ' active' : '')
+      l2.href = `#${p.id}/${m.id}`
+      l2.textContent = m.name
+      l2.onclick = e => { e.preventDefault(); selectPattern(p.id, m.id) }
+      sub.appendChild(l2)
+    })
+    grp.appendChild(sub)
+    root.appendChild(grp)
+  })
+}
+
+function renderFlat(root, filter) {
+  const items = []
+  PATTERNS.forEach(p => p.micros.forEach(m => items.push({ p, m })))
+  items.sort((a, b) => a.m.name.localeCompare(b.m.name))
+  items.forEach(({ p, m }) => {
+    if (filter && !m.name.toLowerCase().includes(filter) && !p.name.toLowerCase().includes(filter)) return
+    const it = document.createElement('a')
+    it.className = 'flat-item' + (activeMicroId === `${p.id}/${m.id}` ? ' active' : '')
+    it.href = `#${p.id}/${m.id}`
+    it.innerHTML = `${m.name} <span class="flat-cat">· ${p.name}</span>`
+    it.onclick = e => { e.preventDefault(); selectPattern(p.id, m.id) }
+    root.appendChild(it)
+  })
+}
+
+function selectPattern(pid, mid = null) {
+  activePatternId = pid
+  activeMicroId   = mid ? `${pid}/${mid}` : null
+  location.hash   = mid ? `${pid}/${mid}` : pid
+  renderNav()
+  renderMain()
+  if (mid) {
+    setTimeout(() => {
+      const el = document.getElementById(`m-${pid}-${mid}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 40)
+  }
+}
+
+const DIFF_HINT = {  // Light-weight difficulty hint, just for the card colour. Exact difficulty is in AdsHub.
+  // Most LC problems are medium; we leave class blank where unknown.
+}
+
+function renderMain() {
+  const main = $('#main')
+  if (!activePatternId) { renderHome(main); return }
+  const p = PATTERNS.find(x => x.id === activePatternId)
+  if (!p) { renderHome(main); return }
+  const browseUrl = `adshub?q=${encodeURIComponent(p.topicTag || p.name)}`
+  main.innerHTML = `
+    <div class="breadcrumb">Pattern</div>
+    <h2>${p.icon} ${p.name}</h2>
+    <p class="lede">${p.intro}</p>
+    <a class="browse-link" href="${browseUrl}" target="_blank" rel="noopener">
+      ↗ Browse all "${p.topicTag || p.name}"-tagged problems in AdsHub
+    </a>
+    <h3>${p.micros.length} micro-patterns</h3>
+    <div class="micro-grid">
+      ${p.micros.map(m => renderMicroCard(p, m)).join('')}
+    </div>
+  `
+}
+
+function renderMicroCard(p, m) {
+  const anchors = m.anchors.map(id => `
+    <a class="anchor" href="adshub?id=${id}" target="_blank" rel="noopener">
+      <span class="num">#${id}</span>
+    </a>`).join('')
+  return `
+    <div class="micro" id="m-${p.id}-${m.id}">
+      <h4><span class="id">${m.id}</span>${m.name}</h4>
+      <p><strong>When:</strong> ${m.when}</p>
+      <p><strong>How:</strong> ${m.how}</p>
+      <div class="meta"><strong>Cost:</strong> ${m.cost}</div>
+      <p class="contrast"><strong>Contrast:</strong> ${m.contrast}</p>
+      <div class="anchor-list">${anchors}</div>
+    </div>
+  `
+}
+
+function renderHome(main) {
+  const totalMicros = PATTERNS.reduce((s, p) => s + p.micros.length, 0)
+  main.innerHTML = `
+    <h2>📐 Micro-Pattern Reference</h2>
+    <p class="lede">
+      ${PATTERNS.length} high-level patterns · ${totalMicros} micro-patterns · every anchor link drops you straight into the matching problem in AdsHub.
+      Pick a pattern from the left, or tap a card below.
+    </p>
+    <p class="lede" style="margin-top:-8px">
+      <strong>How to use:</strong> see a new problem → identify the data structure → scan the
+      <em>"When"</em> on each micro-card → the matching one is the trick you need.
+    </p>
+    <div class="home-grid">
+      ${PATTERNS.map(p => `
+        <div class="home-card" onclick="selectPattern('${p.id}')">
+          <h4>${p.icon} ${p.name}</h4>
+          <div class="micro-count">${p.micros.length} micro-patterns</div>
+          <div class="meta">${p.intro.slice(0, 90)}${p.intro.length > 90 ? '…' : ''}</div>
+        </div>
+      `).join('')}
+    </div>
+    <h3>Tie back to AdsHub</h3>
+    <p class="lede">
+      Each pattern's "Browse all in AdsHub" link uses the existing AdsHub search to surface ALL problems tagged with that topic — typically hundreds, vs the ~5-8 anchors shown per micro-card here.
+      Anchor links open the problem directly via <code>?id=NNN</code>.
+    </p>
+  `
+}
+
+// ── URL hash routing ────────────────────────────────────────────────────
+function applyHash() {
+  const h = location.hash.replace(/^#/, '')
+  if (!h) { activePatternId = null; activeMicroId = null; renderNav(); renderMain(); return }
+  const [pid, mid] = h.split('/')
+  activePatternId = pid
+  activeMicroId   = mid ? `${pid}/${mid}` : null
+  renderNav()
+  renderMain()
+  if (mid) {
+    setTimeout(() => {
+      const el = document.getElementById(`m-${pid}-${mid}`)
+      if (el) el.scrollIntoView({ block: 'start' })
+    }, 40)
+  }
+}
+window.addEventListener('hashchange', applyHash)
+applyHash()
+</script>
+</body>
+</html>
