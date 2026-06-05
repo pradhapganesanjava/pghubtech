@@ -168,17 +168,37 @@
   .hd-count { color: var(--text3); font-size: 11px; font-weight: 400; margin-left: 6px; }
   /* ── Topic detail pane: "Applies to N data structures" cards ─────── */
   .topic-ds-block { margin-top: 28px; }
+  /* When ANY card is expanded, flip the grid into a single column so
+     the embedded micro-cards have full width to breathe. */
   .topic-ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 10px 0 8px; }
+  .topic-ds-grid:has(.topic-ds-card.expanded) { grid-template-columns: 1fr; }
   .topic-ds-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
-                   cursor: pointer; transition: border-color .1s, transform .1s; }
-  .topic-ds-card:hover { border-color: var(--primary); transform: translateY(-1px); }
-  .topic-ds-card-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+                   transition: border-color .1s; }
+  .topic-ds-card:hover { border-color: var(--primary); }
+  .topic-ds-card.expanded { border-color: var(--primary); }
+  /* Header is a full-width button now (so the whole row is the click
+     target for toggling) — strip native button styling. */
+  .topic-ds-card-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+                      background: none; border: none; padding: 0; width: 100%; font-family: inherit;
+                      cursor: pointer; text-align: left; color: var(--text); }
+  .topic-ds-card-hd:hover { color: var(--primary); }
   .topic-ds-card-hd .topic-ds-ico { font-size: 16px; }
-  .topic-ds-card-hd .topic-ds-name { font-weight: 600; font-size: 14px; color: var(--text); }
-  .topic-ds-card-hd .topic-ds-arrow { margin-left: auto; color: var(--text3); }
-  .topic-ds-card:hover .topic-ds-arrow { color: var(--primary); }
+  .topic-ds-card-hd .topic-ds-name { font-weight: 600; font-size: 14px; }
+  .topic-ds-card-hd .topic-ds-applies { font-size: 10px; color: var(--text3); font-weight: 400;
+                                        padding: 2px 6px; background: var(--bg3); border-radius: 8px; }
+  .topic-ds-card-hd .topic-ds-caret { margin-left: auto; color: var(--text3); transition: transform .15s; }
+  .topic-ds-card.expanded .topic-ds-card-hd .topic-ds-caret { color: var(--primary); }
   .topic-ds-note { font-size: 12px; color: var(--text2); line-height: 1.5; }
   .topic-ds-note em { color: var(--text3); }
+  /* "↗ open DS page" footer link — only shows when collapsed (no need
+     to navigate while expanded — content is already here). */
+  .topic-ds-open { display: inline-block; margin-top: 6px; font-size: 11px; color: var(--text3); }
+  .topic-ds-open:hover { color: var(--primary); }
+  /* Lazily-rendered expanded content (micros for this topic-under-DS). */
+  .topic-ds-expanded { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .topic-ds-card.expanded .topic-ds-expanded { display: block; }
+  .topic-ds-expanded-hd { font-size: 12px; color: var(--text3); margin-bottom: 8px;
+                          text-transform: uppercase; letter-spacing: .4px; }
   /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
   .tree-applies-row { padding-left: 22px; }
 </style>
@@ -1964,20 +1984,28 @@ function renderMain() {
     <div class="topic-ds-block">
       <h3>Applies to ${dses.length} data structure${dses.length>1?'s':''}</h3>
       <p class="lede" style="margin-top:-4px">
-        How this topic is typically used on each DS. Click any card to jump to that DS's page,
-        where the topic appears embedded under its own section.
+        How this topic is typically used on each DS. Click any card's header to
+        expand the applicable micros inline (no navigation away). The footer
+        link opens the full DS page if you want the broader context.
       </p>
       <div class="topic-ds-grid">
         ${dses.map(d => {
-          const note = topicDsNote(p.id, d.id)
+          const note   = topicDsNote(p.id, d.id)
+          const apMics = microsForEmbed(p.id, d.id)
           return `
-          <div class="topic-ds-card" onclick="selectPattern('${d.id}')">
-            <div class="topic-ds-card-hd">
+          <div class="topic-ds-card" data-topic-id="${p.id}" data-ds-id="${d.id}">
+            <button class="topic-ds-card-hd" onclick="toggleTopicDsCard(this)">
               <span class="topic-ds-ico">${d.icon}</span>
               <span class="topic-ds-name">${d.name}</span>
-              <span class="topic-ds-arrow">→</span>
-            </div>
-            <div class="topic-ds-note">${note || `<em>Click to see ${p.name} embedded under ${d.name}.</em>`}</div>
+              <span class="topic-ds-applies">${apMics.length} micro${apMics.length>1?'s':''} apply</span>
+              <span class="topic-ds-caret">▾</span>
+            </button>
+            <div class="topic-ds-note">${note || `<em>Expand to see ${p.name} embedded under ${d.name}.</em>`}</div>
+            <a class="topic-ds-open" href="#ds/${d.id}"
+               onclick="event.preventDefault(); selectPattern('${d.id}')">
+              ↗ open ${d.icon} ${d.name} page
+            </a>
+            <div class="topic-ds-expanded"><!-- micros injected on first expand --></div>
           </div>`
         }).join('')}
       </div>
@@ -2087,6 +2115,35 @@ function toggleNotes(btn) {
   btn.textContent = open
     ? `▴ hide ${count} note${count>1?'s':''}`
     : `▾ show ${count} note${count>1?'s':''}`
+}
+
+// Expand a "Applies to" card inline. Renders the topic's applicable
+// micros UNDER THIS DS lazily on first open (subsequent toggles just
+// flip the class). This lets the user deep-dive without navigating
+// away from the Topic page.
+function toggleTopicDsCard(btn) {
+  const card    = btn.closest('.topic-ds-card')
+  const open    = card.classList.toggle('expanded')
+  const caret   = btn.querySelector('.topic-ds-caret')
+  if (caret) caret.textContent = open ? '▴' : '▾'
+
+  const slot = card.querySelector('.topic-ds-expanded')
+  if (open && !slot.dataset.rendered) {
+    const topicId = card.dataset.topicId
+    const dsId    = card.dataset.dsId
+    const t       = PATTERNS.find(x => x.id === topicId)
+    if (t) {
+      const micros = microsForEmbed(topicId, dsId)
+      slot.innerHTML = `
+        <div class="topic-ds-expanded-hd">
+          ${t.icon} ${t.name} on ${dsId} — ${micros.length} micro${micros.length>1?'s':''}
+        </div>
+        <div class="micro-grid">
+          ${micros.map(m => renderMicroCard(t, m, dsId)).join('')}
+        </div>`
+      slot.dataset.rendered = '1'
+    }
+  }
 }
 
 // Expand-all toggle in the main pane header — flip every per-micro
