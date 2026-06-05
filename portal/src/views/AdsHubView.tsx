@@ -445,7 +445,13 @@ export default function AdsHubView() {
       if (id && problems.length > 0) {
         const num = String(parseInt(id, 10))
         const p = problems.find(p => p.frontendId === id || p.frontendId === num)
-        if (p) setSelected(p)
+        if (p) {
+          setSelected(p)
+          // Deep links land in expanded/maximized view — the visitor came
+          // for THIS problem, give it the full pane (matches the behavior
+          // when a typed search narrows to one match, see auto-open below).
+          setViewerExpanded(true)
+        }
       }
       // Open the gate only once problems are loaded — otherwise the sync
       // effect would wipe a ?id= we still need to honour after fetch.
@@ -548,11 +554,16 @@ export default function AdsHubView() {
   // Gated on urlApplied so we don't fight the deep-link parse on cold load
   // and only kicks in for a real, non-empty search/filter — typing nothing
   // shouldn't auto-select the only-problem-in-an-empty-list edge case.
+  // Also expands the detail pane so the lone match takes the full width
+  // (same behavior as the deep-link parse — these two paths are siblings).
   useEffect(() => {
     if (!urlApplied) return
     if (filtered.length !== 1) return
     const onlyMatch = filtered[0]
-    if (selected?.slug !== onlyMatch.slug) setSelected(onlyMatch)
+    if (selected?.slug !== onlyMatch.slug) {
+      setSelected(onlyMatch)
+      setViewerExpanded(true)
+    }
   }, [filtered, urlApplied]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggleTag(t: string) {
