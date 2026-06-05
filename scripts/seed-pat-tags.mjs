@@ -51,7 +51,9 @@ function inferDs(lcTopics) {
   if (t.has('Binary Search Tree'))                            return 'bst'
   if (t.has('Trie'))                                          return 'trie'
   if (t.has('Tree') || t.has('Binary Tree') || t.has('N-ary Tree')) return 'tree'
-  if (t.has('Graph') || t.has('Topological Sort'))            return 'graph'
+  // LC uses "Graph Theory" in the topics list, NOT "Graph" — accept both.
+  // Also catches the topo-sort and shortest-path families.
+  if (t.has('Graph') || t.has('Graph Theory') || t.has('Topological Sort') || t.has('Shortest Path')) return 'graph'
   if (t.has('Matrix'))                                        return 'matrices'
   // Stack/Queue as DS-input are RARE in LC tags — usually those tags
   // indicate tool-use, not input shape. We fall through to String/Array
@@ -59,6 +61,16 @@ function inferDs(lcTopics) {
   // explicit overrides below if needed).
   if (t.has('String'))                                        return 'string'
   if (t.has('Array'))                                         return 'array'
+  // Fallback for the scalar-leaning families: number / single-int /
+  // stream problems whose LC topics are ONLY techniques. Most reduce to
+  // an array (or a single int treated as a 1-elem sequence) — bucket
+  // them under DS=array so they get a DS-specific embed somewhere
+  // instead of orphan pat_topic::T::M tags.
+  if (t.has('Math') || t.has('Bit Manipulation') || t.has('Dynamic Programming')
+      || t.has('Backtracking') || t.has('Bitmask') || t.has('Data Stream')
+      || t.has('Recursion') || t.has('Divide and Conquer')
+      || t.has('Combinatorics') || t.has('Number Theory') || t.has('Memoization')
+      || t.has('Interactive') || t.has('Simulation')) return 'array'
   return null
 }
 
