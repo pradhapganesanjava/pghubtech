@@ -4062,10 +4062,12 @@ body.resizing-h * {
 }
 .doc-tag-suggestion:hover { color: var(--primary); border-color: var(--primary); }
 
-/* Doc detail header — double-click toggles expand */
+/* Doc detail header — double-click toggles expand. Text stays
+   SELECTABLE (user-select default) so titles like "Patterns Reference"
+   or a problem name can be copied. The double-click handler still
+   fires for layout toggle. */
 .doc-detail-hd {
   cursor: default;
-  user-select: none;
 }
 .doc-detail-hd > span {
   cursor: pointer;

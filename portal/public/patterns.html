@@ -59,7 +59,12 @@
                 color: var(--text); border-radius: 4px; font-size: 12px; }
   .nav-list { padding: 8px 6px 40px; font-size: 13px; }
   .tree-group { margin-bottom: 4px; }
-  .tree-l1 { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 4px; cursor: pointer; user-select: none; }
+  /* Sidebar rows are clickable but text stays SELECTABLE so the user
+     can copy labels (DS / topic / micro names). cursor:pointer kept;
+     user-select left at the browser default (text). Click handlers
+     also short-circuit when there's an active text selection (see
+     guardTextSelectClick) so dragging across a label doesn't navigate. */
+  .tree-l1 { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
   .tree-l1:hover { background: var(--bg3); }
   .tree-l1.active { background: rgba(91,141,239,.15); color: var(--primary); }
   .tree-l1 .caret { color: var(--text3); transition: transform .15s; }
@@ -72,7 +77,7 @@
   .tree-l2.active { background: rgba(91,141,239,.18); color: var(--primary); }
   /* ── DS-tab linked topics: header + nested L3 micros ───────────────── */
   .tree-topics-hdr { font-size: 9px; color: var(--text3); padding: 8px 8px 2px; text-transform: uppercase; letter-spacing: .6px; }
-  .tree-topic-row { display: flex; align-items: center; gap: 6px; padding: 3px 8px; cursor: pointer; user-select: none; border-radius: 4px; font-size: 12px; color: var(--text2); }
+  .tree-topic-row { display: flex; align-items: center; gap: 6px; padding: 3px 8px; cursor: pointer; border-radius: 4px; font-size: 12px; color: var(--text2); }
   .tree-topic-row:hover { background: var(--bg3); color: var(--text); }
   .tree-topic-row .caret { color: var(--text3); transition: transform .15s; font-size: 9px; }
   .tree-topic-row.expanded .caret { transform: rotate(90deg); }
@@ -113,6 +118,15 @@
   .micro { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
   .micro h4 { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
   .micro h4 .id { font-size: 9px; color: var(--text3); padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-family: monospace; text-transform: uppercase; }
+  .micro h4 .micro-name { flex: 1; }
+  /* ⓘ deep-dive button — opens the detail drawer. Subtle by default,
+     glows on hover so the user knows it's clickable but it doesn't
+     compete with the card content. */
+  .micro-info-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text3);
+                    width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 13px;
+                    line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+                    padding: 0; font-family: inherit; flex-shrink: 0; }
+  .micro-info-btn:hover { color: var(--primary); border-color: var(--primary); transform: scale(1.05); }
   .micro p { margin: 6px 0; font-size: 13px; line-height: 1.5; color: var(--text); }
   .micro p.contrast { color: var(--text2); font-size: 12px; border-left: 2px solid var(--primary); padding-left: 8px; margin-top: 10px; }
   .micro .meta { display: flex; gap: 12px; font-size: 11px; color: var(--text3); margin-top: 6px; }
@@ -199,6 +213,44 @@
   .topic-ds-card.expanded .topic-ds-expanded { display: block; }
   .topic-ds-expanded-hd { font-size: 12px; color: var(--text3); margin-bottom: 8px;
                           text-transform: uppercase; letter-spacing: .4px; }
+
+  /* ── Deep-dive detail drawer ─────────────────────────────────────── */
+  .detail-panel { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
+  .detail-panel[hidden] { display: none; }
+  .detail-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45);
+                     animation: detailFadeIn .15s ease-out; pointer-events: auto; }
+  .detail-drawer { position: absolute; top: 0; right: 0; width: min(620px, 94vw); height: 100vh;
+                   background: var(--bg2); border-left: 1px solid var(--border);
+                   box-shadow: -4px 0 24px rgba(0,0,0,.5); overflow-y: auto;
+                   padding: 18px 26px 32px; pointer-events: auto;
+                   animation: detailSlideIn .18s ease-out; }
+  @keyframes detailFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes detailSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .detail-close { position: absolute; top: 10px; right: 12px; width: 30px; height: 30px;
+                  border-radius: 50%; background: var(--bg3); border: 1px solid var(--border);
+                  color: var(--text); cursor: pointer; font-size: 18px; line-height: 1;
+                  display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  .detail-close:hover { color: var(--danger, #e34545); border-color: var(--danger, #e34545); }
+  .detail-content h2 { margin: 8px 0 4px; font-size: 20px; }
+  .detail-content .detail-eyebrow { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+  .detail-content .detail-id { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+  .detail-content .detail-id code { background: var(--bg3); padding: 1px 6px; border-radius: 3px; }
+  .detail-section { margin-bottom: 16px; }
+  .detail-section h4 { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .6px;
+                       margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .detail-section p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text); }
+  .detail-section--missing p { color: var(--text3); }
+  .detail-pseudo { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+                   padding: 10px 12px; margin: 0; font-size: 12px; line-height: 1.5;
+                   font-family: 'SF Mono', Menlo, Consolas, monospace; color: var(--code, #f2c2a1);
+                   white-space: pre; overflow-x: auto; }
+  .detail-problem-list { margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.6; }
+  .detail-problem-list li { color: var(--text2); padding: 2px 0; }
+  .detail-anchor { font-family: monospace; color: var(--primary); font-weight: 600; text-decoration: none; }
+  .detail-anchor:hover { text-decoration: underline; }
+  .detail-note { color: var(--text); }
+  /* Lock body scroll when drawer open (mostly cosmetic since drawer scrolls itself). */
+  body.detail-open { overflow: hidden; }
   /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
   .tree-applies-row { padding-left: 22px; }
 </style>
@@ -229,6 +281,15 @@
     <div id="navList" class="nav-list"></div>
   </aside>
   <main class="main" id="main"></main>
+  <!-- Slide-out detail drawer for deep-dive on a micro pattern.
+       Hidden by default; openMicroDetail() populates + reveals. -->
+  <div id="micro-detail-panel" class="detail-panel" hidden>
+    <div class="detail-backdrop" onclick="closeMicroDetail()"></div>
+    <aside class="detail-drawer" role="dialog" aria-labelledby="detail-title">
+      <button class="detail-close" onclick="closeMicroDetail()" aria-label="Close">×</button>
+      <div class="detail-content" id="detail-content"></div>
+    </aside>
+  </div>
 </div>
 
 <script>
@@ -1602,6 +1663,19 @@ async function loadPatternNotes() {
   } catch { return {} }
 }
 
+// Per-micro pseudo-code snippets, shown in the deep-dive detail panel.
+// Optional — micros without a snippet just don't get a code block.
+let PATTERN_PSEUDO = {}
+async function loadPatternPseudo() {
+  try {
+    const r = await fetch('patterns-pseudo.json?ts=' + Date.now(), { cache: 'no-store' })
+    if (!r.ok) return {}
+    const j = await r.json()
+    delete j._meta
+    return j
+  } catch { return {} }
+}
+
 function parsePatternData(csvText) {
   const lines = csvText.split('\n').filter(l => l.trim())
   if (!lines.length) return null
@@ -1755,7 +1829,10 @@ function renderTree(root, filter) {
       <span class="ico">${p.icon}</span>
       <span class="lbl">${p.name}</span>
       <span class="count">${p.micros.length}</span>`
-    l1.onclick = () => { selectPattern(p.id); l1.classList.toggle('expanded') }
+    l1.onclick = () => {
+      if (isSelectingText()) return   // let copy-on-drag work
+      selectPattern(p.id); l1.classList.toggle('expanded')
+    }
     grp.appendChild(l1)
 
     const sub = document.createElement('div')
@@ -1839,6 +1916,7 @@ function renderTree(root, filter) {
             <span class="lbl">${t.name}</span>
             <span class="count">${embedded.length}</span>`
           tHdr.onclick = () => {
+            if (isSelectingText()) return
             tHdr.classList.toggle('expanded')
             // Also scroll the main-pane to the matching topic section.
             if (activePatternId === p.id) {
@@ -2047,6 +2125,15 @@ function onBrowseLinkClick(e, q) {
   window.parent.postMessage({ type: 'pghub-search', q }, '*')
 }
 
+// True when the user just released the mouse after dragging across
+// some text (i.e. there's a non-empty active selection). Used to
+// SHORT-CIRCUIT click navigation in the sidebar so that text-select
+// + copy works on row labels without accidentally navigating.
+function isSelectingText() {
+  const sel = window.getSelection && window.getSelection()
+  return !!(sel && sel.toString().trim().length)
+}
+
 // Minimal HTML escape — used wherever user-facing prose (notes) goes
 // into the DOM. We're already producing HTML strings via template
 // literals so this is the right shape.
@@ -2095,7 +2182,14 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
 
   return `
     <div class="micro" id="m-${p.id}-${m.id}">
-      <h4><span class="id">${m.id}</span>${m.name}</h4>
+      <h4>
+        <span class="id">${m.id}</span>
+        <span class="micro-name">${m.name}</span>
+        <button class="micro-info-btn" title="Open deep-dive panel"
+                onclick="openMicroDetail('${m.id}', '${p.id}', ${embeddedUnderDsId ? `'${embeddedUnderDsId}'` : 'null'})">
+          ⓘ
+        </button>
+      </h4>
       <p><strong>When:</strong> ${m.when}</p>
       <p><strong>How:</strong> ${m.how}</p>
       <div class="meta"><strong>Cost:</strong> ${m.cost}</div>
@@ -2116,6 +2210,81 @@ function toggleNotes(btn) {
     ? `▴ hide ${count} note${count>1?'s':''}`
     : `▾ show ${count} note${count>1?'s':''}`
 }
+
+// ── Deep-dive detail panel for a micro ─────────────────────────────────
+// Opens a slide-out drawer with: full prose, pseudo-code (if any), all
+// anchored problems with notes, plus a "Confused with" parsed from the
+// micro's contrast field. parentId is the micro's parent pattern id;
+// embeddedUnderDsId (optional) is set when the micro card was rendered
+// inside a DS-tab embedded section — so we show DS-specific anchors.
+function openMicroDetail(microId, parentId, embeddedUnderDsId) {
+  const p = PATTERNS.find(x => x.id === parentId)
+  const m = p && p.micros.find(mi => mi.id === microId)
+  if (!m) return
+  const notes  = PATTERN_NOTES[microId] || {}
+  const pseudo = PATTERN_PSEUDO[microId]
+  const ids    = anchorsFor(p, m, embeddedUnderDsId || null)
+
+  const allProblems = ids.map(id => {
+    const note = notes[id]
+    return `<li><a class="detail-anchor" href="adshub?id=${id}" target="_blank" rel="noopener"
+            onclick="onAnchorClick(event, ${id})">#${id}</a>${note ? ` — <span class="detail-note">${escHtml(note)}</span>` : ''}</li>`
+  }).join('')
+
+  const isCore  = (p.tab || 'ds') === 'ds'
+  const parentTag = isCore
+    ? `📦 ${p.name} (DS core)`
+    : `🧰 ${p.name} (Topic)`
+
+  const html = `
+    <div class="detail-eyebrow">${parentTag}${embeddedUnderDsId ? ` · embedded under ${embeddedUnderDsId}` : ''}</div>
+    <h2 id="detail-title">${m.name}</h2>
+    <div class="detail-id"><code>${m.id}</code></div>
+
+    <div class="detail-section">
+      <h4>When</h4><p>${m.when}</p>
+    </div>
+    <div class="detail-section">
+      <h4>How</h4><p>${m.how}</p>
+    </div>
+    <div class="detail-section">
+      <h4>Cost</h4><p>${m.cost}</p>
+    </div>
+    <div class="detail-section">
+      <h4>Often confused with</h4><p>${m.contrast}</p>
+    </div>
+
+    ${pseudo ? `
+    <div class="detail-section">
+      <h4>Pseudo-code</h4>
+      <pre class="detail-pseudo">${escHtml(pseudo)}</pre>
+    </div>` : `
+    <div class="detail-section detail-section--missing">
+      <h4>Pseudo-code</h4>
+      <p><em>Not yet added for this micro — see patterns-pseudo.json to contribute.</em></p>
+    </div>`}
+
+    <div class="detail-section">
+      <h4>${ids.length} problem${ids.length !== 1 ? 's' : ''} solvable with this pattern</h4>
+      <ul class="detail-problem-list">${allProblems || '<li><em>No anchors yet.</em></li>'}</ul>
+    </div>
+  `
+
+  document.getElementById('detail-content').innerHTML = html
+  const panel = document.getElementById('micro-detail-panel')
+  panel.hidden = false
+  document.body.classList.add('detail-open')
+}
+
+function closeMicroDetail() {
+  document.getElementById('micro-detail-panel').hidden = true
+  document.body.classList.remove('detail-open')
+}
+
+// ESC closes the drawer.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMicroDetail()
+})
 
 // Expand a "Applies to" card inline. Renders the topic's applicable
 // micros UNDER THIS DS lazily on first open (subsequent toggles just
@@ -2257,10 +2426,11 @@ window.addEventListener('hashchange', applyHash)
 // pulls live data; if it rejects (e.g. opening the html via file://) we
 // fall through to the inline `m.anchors` arrays still attached to each
 // micro — the UI stays functional offline.
-Promise.all([loadAnchorData(), loadPatternNotes()]).then(([data, notes]) => {
-  ANCHOR_DATA   = data
-  DERIVED       = computeDerivedMaps(data)
-  PATTERN_NOTES = notes
+Promise.all([loadAnchorData(), loadPatternNotes(), loadPatternPseudo()]).then(([data, notes, pseudo]) => {
+  ANCHOR_DATA    = data
+  DERIVED        = computeDerivedMaps(data)
+  PATTERN_NOTES  = notes
+  PATTERN_PSEUDO = pseudo
   const noteCount = Object.values(notes).reduce((s, m) => s + Object.keys(m).length, 0)
   console.info(`[patterns] ${noteCount} per-problem application notes loaded`)
   if (data) {
