@@ -543,6 +543,18 @@ export default function AdsHubView() {
   const shown = filtered.slice(0, LIST_CAP)
   const activeFilterCount = selectedTags.length + selectedCompanies.length + (selectedList ? 1 : 0) + (customOnly ? 1 : 0)
 
+  // Auto-open the lone match when the current filter narrows to exactly one
+  // problem (typically the user typed a full frontend_id like 44 or 555).
+  // Gated on urlApplied so we don't fight the deep-link parse on cold load
+  // and only kicks in for a real, non-empty search/filter — typing nothing
+  // shouldn't auto-select the only-problem-in-an-empty-list edge case.
+  useEffect(() => {
+    if (!urlApplied) return
+    if (filtered.length !== 1) return
+    const onlyMatch = filtered[0]
+    if (selected?.slug !== onlyMatch.slug) setSelected(onlyMatch)
+  }, [filtered, urlApplied]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function toggleTag(t: string) {
     setTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
   }
@@ -1178,9 +1190,19 @@ export default function AdsHubView() {
           <input
             className="col-search"
             style={{ width: 220 }}
-            placeholder="Search #id, title, tag, company…"
+            placeholder="Search #id, title, tag, company…  ↵ to open top match"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => {
+              // Enter opens the top filtered match (already auto-selected
+              // when there's exactly one, but this gives a clear path when
+              // there are multiple — the user picks the top result without
+              // touching the list).
+              if (e.key === 'Enter' && filtered.length > 0) {
+                e.preventDefault()
+                setSelected(filtered[0])
+              }
+            }}
           />
           <button
             className="rf-btn-cancel"
