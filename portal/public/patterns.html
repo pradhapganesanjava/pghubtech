@@ -40,7 +40,14 @@
   .side-hd { padding: 14px 14px 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg2); z-index: 1; }
   .side-hd h1 { font-size: 14px; margin: 0 0 6px; letter-spacing: .3px; }
   .side-hd .sub { font-size: 11px; color: var(--text2); }
-  .view-toggle { display: flex; gap: 4px; margin-top: 8px; }
+  /* Primary axis split — Data Structure (problem-input shape) vs Topic
+     (solution technique). Bigger / slightly thicker than the view toggle
+     below since it changes WHICH patterns are visible at all. */
+  .tab-toggle { display: flex; gap: 4px; margin-top: 8px; }
+  .tab-toggle button { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+                       padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .tab-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .view-toggle { display: flex; gap: 4px; margin-top: 6px; }
   .view-toggle button { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
                         padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; }
   .view-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -116,6 +123,11 @@
     <div class="side-hd">
       <h1>📐 Micro-Pattern Reference</h1>
       <div class="sub">DS → clue → micro-pattern → anchors. Links open in AdsHub.</div>
+      <!-- ── Tab toggle: DS = input shape; Topic = solution technique ── -->
+      <div class="tab-toggle">
+        <button id="tab-ds"    class="active" onclick="setTab('ds')">📦 Data Structure</button>
+        <button id="tab-topic"           onclick="setTab('topic')">🧰 Topic</button>
+      </div>
       <div class="view-toggle">
         <button id="vt-tree"  class="active" onclick="setView('tree')">Tree</button>
         <button id="vt-flat"           onclick="setView('flat')">Flat</button>
@@ -142,7 +154,19 @@
 
 const PATTERNS = [
   // ── Array ────────────────────────────────────────────────────────────
-  { id: 'array', name: 'Array', icon: '📦', topicTag: 'Array',
+  // ─────────────────────────────────────────────────────────────────────
+  // Each entry carries a `tab` field:
+  //   'ds'    — the problem INPUT is this data structure (Array, String,
+  //             Tree, Graph, Trie design, Stack design, Matrices…).
+  //   'topic' — this is a SOLUTION TECHNIQUE that's used across many input
+  //             shapes (Two Pointers, DP, BFS, monotonic-stack-as-tool,
+  //             heap-as-tool, hash-table-as-tool…).
+  //
+  // Some categories appear in BOTH tabs (Stack, Trie) with different
+  // micros — see e.g. `stack` (DS: bracket-match, expression-eval) and
+  // `stack-topic` (Topic: monotonic-stack used on arrays).
+  // ─────────────────────────────────────────────────────────────────────
+  { tab: 'ds', id: 'array', name: 'Array', icon: '📦', topicTag: 'Array',
     intro: 'Random-access linear sequence. Most LC problems are at heart array problems — the trick is choosing the right pattern from the clue words.',
     micros: [
       { id: 'two-sum-hash', name: 'Two-Sum Hash Lookup',
@@ -185,7 +209,7 @@ const PATTERNS = [
   },
 
   // ── String ───────────────────────────────────────────────────────────
-  { id: 'string', name: 'String', icon: '📝', topicTag: 'String',
+  { tab: 'ds', id: 'string', name: 'String', icon: '📝', topicTag: 'String',
     intro: 'Char sequences. Many problems are sliding-window / two-pointer disguised as string; some need DP or trie.',
     micros: [
       { id: 'anagram-keying', name: 'Anagram by Fingerprint Key',
@@ -228,7 +252,7 @@ const PATTERNS = [
   },
 
   // ── Linked List ──────────────────────────────────────────────────────
-  { id: 'linked-list', name: 'Linked List', icon: '🔗', topicTag: 'Linked List',
+  { tab: 'ds', id: 'linked-list', name: 'Linked List', icon: '🔗', topicTag: 'Linked List',
     intro: 'Sequential nodes with next-pointer. Two-pointer tricks (slow/fast, offset, alignment) dominate.',
     micros: [
       { id: 'floyd-cycle', name: 'Floyd Tortoise-Hare (Cycle Detection)',
@@ -270,9 +294,13 @@ const PATTERNS = [
     ],
   },
 
-  // ── Stack ────────────────────────────────────────────────────────────
-  { id: 'stack', name: 'Stack', icon: '🥞', topicTag: 'Stack',
-    intro: 'LIFO. Bracket matching, expression eval, and the monotonic stack family for next-greater style problems.',
+  // ── Stack (DS) ───────────────────────────────────────────────────────
+  // Stack appears in BOTH tabs. Under DS the problem itself is stack-shaped
+  // (bracket matching, expression evaluation, nested decoding). The
+  // monotonic-stack family — where a stack is used as a TOOL on arrays —
+  // lives under `stack-topic` in the Topic tab.
+  { tab: 'ds', id: 'stack', name: 'Stack', icon: '🥞', topicTag: 'Stack',
+    intro: 'LIFO. Use under DS when the problem itself is stack-shaped: balanced brackets, nested decoding, expression evaluation. For monotonic-stack-on-array, see the Topic tab.',
     micros: [
       { id: 'bracket-match', name: 'Bracket Matching',
         when: 'Validate balanced parens / find longest valid.',
@@ -286,55 +314,47 @@ const PATTERNS = [
         cost: 'O(n) time, O(n) space.',
         contrast: 'Calc I (224) handles parens + addition; II (227) adds ×/÷ precedence; III (772) combines.',
         anchors: [224, 227, 772, 150, 394] },
-      { id: 'monotonic-stack', name: 'Monotonic Stack (Next-Greater Family)',
-        when: '"Next greater / smaller", largest rectangle, daily temperature span.',
-        how: 'Push indices; before pushing i, pop while stack-top breaks the invariant — that top\'s answer is i.',
-        cost: 'O(n) amortised time, O(n) space.',
-        contrast: 'vs O(n²) brute force — monotonic stack drops each index O(1) on average.',
-        anchors: [496, 503, 739, 84, 85, 42, 901, 1019] },
       { id: 'decode-string', name: 'Decode String (Nested Counts)',
         when: 'k[encoded[…]] style nesting.',
         how: 'Stack of (count, accumulated-prefix); on \']\' pop and repeat.',
         cost: 'O(n + output) time.',
         contrast: 'Generalises to nested integer / nested JSON parsing.',
         anchors: [394, 726, 1106] },
+      { id: 'min-stack-design', name: 'Stack Design (Min / Queue-from-Stack)',
+        when: 'Implement a stack with extra ops in O(1): getMin, freq-stack, queue-via-two-stacks.',
+        how: 'Pair every push with the running aux (min so far) OR use a second stack as the buffer.',
+        cost: 'O(1) amortised per op.',
+        contrast: 'Whenever you need O(1) auxiliary aggregate over a LIFO history.',
+        anchors: [155, 716, 232, 225, 895] },
     ],
   },
 
-  // ── Queue / Deque ────────────────────────────────────────────────────
-  { id: 'queue', name: 'Queue / Deque', icon: '🚌', topicTag: 'Queue',
-    intro: 'FIFO. Backbone of BFS, level-order, sliding-window extremes (with deque), and streaming aggregations.',
+  // ── Queue (DS — small, mostly design) ────────────────────────────────
+  // Queue is mainly a TOOL inside BFS / monotonic-deque (see Topic tab).
+  // Under DS we only keep the few problems that are queue-design at heart.
+  { tab: 'ds', id: 'queue', name: 'Queue', icon: '🚌', topicTag: 'Queue',
+    intro: 'FIFO. Under DS use for queue-design problems. For BFS / monotonic-deque (queue used as a tool) see the Topic tab.',
     micros: [
-      { id: 'level-order-bfs', name: 'Level-Order BFS (Batched)',
-        when: 'Tree/graph traversal where YOU need to know levels.',
-        how: 'Queue snapshot of size; loop that many to consume current level; collect next-level children.',
-        cost: 'O(n) time, O(n) space.',
-        contrast: 'Plain BFS doesn\'t batch by level; level-order does for "rightmost node", "level sum", etc.',
-        anchors: [102, 103, 199, 515, 1161, 314] },
-      { id: 'multi-source-bfs', name: 'Multi-Source BFS',
-        when: 'Distance from EACH cell to nearest source(s); multiple sources spread simultaneously.',
-        how: 'Seed queue with ALL sources at dist 0; standard BFS from there.',
-        cost: 'O(V + E) time.',
-        contrast: 'vs single-source BFS from each source — multi-source is one pass total.',
-        anchors: [994, 542, 286, 1162, 317, 1765] },
-      { id: 'monotonic-deque', name: 'Monotonic Deque (Sliding Max/Min)',
-        when: 'Running max/min over a sliding window of size K.',
-        how: 'Deque of indices; pop back while new value ≥ tail; front is the window max.',
-        cost: 'O(n) time, O(K) space.',
-        contrast: 'vs heap (O(n log K)) — deque is cleaner O(n) and supports min in same shape.',
-        anchors: [239, 1438, 862, 918] },
-      { id: 'zero-one-bfs', name: '0-1 BFS (Deque)',
-        when: 'Shortest path with edge weights in {0, 1}.',
-        how: 'Deque; push 0-edges to FRONT, 1-edges to BACK. Treats 0 as "free hop".',
-        cost: 'O(V + E) time.',
-        contrast: 'vs Dijkstra (O((V+E) log V)) — 0-1 BFS is asymptotically faster for the {0,1} case.',
-        anchors: [1368, 2290, 934] },
+      { id: 'queue-from-stacks', name: 'Queue / Stack — Implement Each Via the Other',
+        when: 'Implement queue using stacks (or vice versa); circular queue with fixed capacity.',
+        how: 'Two stacks: in-stack for push, out-stack for pop; reverse when out is empty.',
+        cost: 'Amortised O(1) per op.',
+        contrast: 'Classic interview "design data structure" question — same shape solves circular queue (622).',
+        anchors: [232, 225, 622, 641] },
+      { id: 'moving-average-stream', name: 'Moving Average / Streaming Window',
+        when: 'Maintain an aggregate (avg, sum, last-K) over the most recent K elements arriving one-by-one.',
+        how: 'Bounded FIFO queue of size K; running sum updated on push/evict.',
+        cost: 'O(1) per insert.',
+        contrast: 'When you need MIN/MAX over the window switch to monotonic-deque (Topic tab).',
+        anchors: [346, 933, 1352] },
     ],
   },
 
-  // ── Tree ─────────────────────────────────────────────────────────────
-  { id: 'tree', name: 'Binary Tree', icon: '🌳', topicTag: 'Tree',
-    intro: 'Hierarchical: each node has up to 2 children. Most problems are DFS (height, sums, paths, validation) or BFS (level views).',
+  // ── Binary Tree (DS) ─────────────────────────────────────────────────
+  // Pure binary tree patterns. BST-specific tricks live in their own
+  // `bst` entry below.
+  { tab: 'ds', id: 'tree', name: 'Binary Tree', icon: '🌳', topicTag: 'Tree',
+    intro: 'Hierarchical: each node has up to 2 children. Most problems are DFS (height, sums, paths, validation) or BFS (level views). BST-only patterns are in their own section.',
     micros: [
       { id: 'post-order-depth', name: 'Post-Order Depth / Height',
         when: 'Max depth, diameter, longest-univalue, balanced-tree.',
@@ -348,12 +368,6 @@ const PATTERNS = [
         cost: 'O(n) time, O(h) space.',
         contrast: 'Path Sum III (437) needs prefix-sum hashmap because path doesn\'t start at root.',
         anchors: [112, 113, 437, 129, 257] },
-      { id: 'inorder-bst', name: 'In-Order Traversal (BST→Sorted)',
-        when: 'Validate BST, Kth smallest in BST, build sorted iterator.',
-        how: 'In-order yields ascending values. Track prev / counter.',
-        cost: 'O(n) time, O(h) space.',
-        contrast: 'vs explicit min/max bounds — in-order is shorter, bounds-DFS handles non-recursive easily.',
-        anchors: [98, 230, 173, 285, 270] },
       { id: 'lca-dfs', name: 'LCA via Subtree Containment',
         when: 'Lowest common ancestor of p, q.',
         how: 'def f(n): if !n||n==p||n==q: return n; l=f(n.left); r=f(n.right); if l&&r: return n; return l||r.',
@@ -375,9 +389,12 @@ const PATTERNS = [
     ],
   },
 
-  // ── Trie ─────────────────────────────────────────────────────────────
-  { id: 'trie', name: 'Trie', icon: '🔤', topicTag: 'Trie',
-    intro: 'Prefix tree. When you need many words and FAST prefix queries (autocomplete, word search in grid, regex-lite).',
+  // ── Trie (DS) ────────────────────────────────────────────────────────
+  // Trie appears in BOTH tabs. Under DS the problem is to BUILD/QUERY a
+  // trie (insert + startsWith, prefix matching). Trie-as-a-tool — e.g.
+  // pruning grid DFS, top-K autocomplete — lives under `trie-topic`.
+  { tab: 'ds', id: 'trie', name: 'Trie', icon: '🔤', topicTag: 'Trie',
+    intro: 'Prefix tree. Under DS use for trie design problems. For trie used as a TOOL to accelerate DFS / autocomplete see the Topic tab.',
     micros: [
       { id: 'trie-basic', name: 'Trie Insert + StartsWith',
         when: 'Many words, "exists?" and "startsWith?" queries.',
@@ -385,23 +402,17 @@ const PATTERNS = [
         cost: 'O(L) per op.',
         contrast: 'vs hash set — trie wins when prefix queries dominate.',
         anchors: [208, 211] },
-      { id: 'trie-grid-dfs', name: 'Trie + Grid DFS',
-        when: 'Find all dictionary words present in an m×n character grid.',
-        how: 'Build trie; DFS from each cell descending the trie; prune dead branches; mark visited.',
-        cost: 'O(M·N·4^L).',
-        contrast: 'Without trie you\'d run word-search per word — orders slower for large dictionaries.',
-        anchors: [212, 79] },
-      { id: 'trie-autocomplete', name: 'Trie Nodes Carry Top-K',
-        when: 'Autocomplete / search suggestions; rank by frequency.',
-        how: 'At each node, store sorted top-K matching words below.',
-        cost: 'O(insert: L·K), O(query: L).',
-        contrast: 'vs walking subtree to find K — pre-aggregating top-K is O(L) per query.',
-        anchors: [642, 1268, 648] },
+      { id: 'trie-wildcard', name: 'Wildcard / Regex-Lite Search',
+        when: 'Dictionary search where the query allows "." (any char) or limited wildcards.',
+        how: 'DFS the trie; on "." branch into every child; otherwise descend the matching child.',
+        cost: 'Worst O(26^L), typical much less.',
+        contrast: 'Hash sets can\'t do wildcard match efficiently — that\'s the trie\'s edge here.',
+        anchors: [211, 676, 745] },
     ],
   },
 
-  // ── Heap ─────────────────────────────────────────────────────────────
-  { id: 'heap', name: 'Heap (Priority Queue)', icon: '⛰️', topicTag: 'Heap',
+  // ── Heap (Topic — almost always a tool) ──────────────────────────────
+  { tab: 'topic', id: 'heap', name: 'Heap (Priority Queue)', icon: '⛰️', topicTag: 'Heap',
     intro: 'Min/max access in O(log n). Often the TOOL behind top-K, median, scheduling, Dijkstra.',
     micros: [
       { id: 'top-k', name: 'Top-K via Min-Heap of Size K',
@@ -437,8 +448,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Graph ────────────────────────────────────────────────────────────
-  { id: 'graph', name: 'Graph', icon: '🕸️', topicTag: 'Graph',
+  // ── Graph (DS) ───────────────────────────────────────────────────────
+  { tab: 'ds', id: 'graph', name: 'Graph', icon: '🕸️', topicTag: 'Graph',
     intro: 'Nodes + edges. Pattern depends on directedness and weights; many problems reduce to BFS / DFS / topo sort / DP-on-DAG.',
     micros: [
       { id: 'cc-dfs-uf', name: 'Connected Components (DFS / BFS / Union-Find)',
@@ -486,8 +497,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Hash Table ───────────────────────────────────────────────────────
-  { id: 'hash', name: 'Hash Table', icon: '🗂️', topicTag: 'Hash Table',
+  // ── Hash Table (Topic — usually a tool) ──────────────────────────────
+  { tab: 'topic', id: 'hash', name: 'Hash Table', icon: '🗂️', topicTag: 'Hash Table',
     intro: 'Sub-Θ(1) lookup/insert. Usually the TOOL inside another pattern (two-sum, prefix-sum, frequency) rather than the headline DS.',
     micros: [
       { id: 'seen-set', name: 'Seen-Set / Has-Visited',
@@ -511,8 +522,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── DP ───────────────────────────────────────────────────────────────
-  { id: 'dp', name: 'Dynamic Programming', icon: '🧮', topicTag: 'Dynamic Programming',
+  // ── DP (Topic) ───────────────────────────────────────────────────────
+  { tab: 'topic', id: 'dp', name: 'Dynamic Programming', icon: '🧮', topicTag: 'Dynamic Programming',
     intro: 'Overlapping subproblems + optimal substructure. The micro-pattern is the SHAPE of the dp[…] state.',
     micros: [
       { id: 'dp-1d-linear', name: '1D Linear DP',
@@ -572,8 +583,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Backtracking ─────────────────────────────────────────────────────
-  { id: 'backtrack', name: 'Backtracking', icon: '🔁', topicTag: 'Backtracking',
+  // ── Backtracking (Topic) ─────────────────────────────────────────────
+  { tab: 'topic', id: 'backtrack', name: 'Backtracking', icon: '🔁', topicTag: 'Backtracking',
     intro: 'DFS over decision space with explicit undo. Choose → recurse → un-choose. Almost all "enumerate all X" problems.',
     micros: [
       { id: 'subset-combination', name: 'Subset / Combination (Include-Exclude)',
@@ -609,8 +620,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Two Pointers ─────────────────────────────────────────────────────
-  { id: 'two-pointers', name: 'Two Pointers', icon: '👉', topicTag: 'Two Pointers',
+  // ── Two Pointers (Topic) ─────────────────────────────────────────────
+  { tab: 'topic', id: 'two-pointers', name: 'Two Pointers', icon: '👉', topicTag: 'Two Pointers',
     intro: 'Two indices walking the same array. Sub-patterns: converging from ends, fast-slow, or read/write in place.',
     micros: [
       { id: 'tp-converging', name: 'Converging (Both Ends Inward)',
@@ -634,8 +645,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Sliding Window ───────────────────────────────────────────────────
-  { id: 'sliding-window', name: 'Sliding Window', icon: '🪟', topicTag: 'Sliding Window',
+  // ── Sliding Window (Topic) ───────────────────────────────────────────
+  { tab: 'topic', id: 'sliding-window', name: 'Sliding Window', icon: '🪟', topicTag: 'Sliding Window',
     intro: 'Same-direction two pointers maintaining an invariant. Two sub-flavors: fixed-size and variable-size (shrink-on-violation).',
     micros: [
       { id: 'sw-fixed', name: 'Fixed-Size Window',
@@ -659,8 +670,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Binary Search ────────────────────────────────────────────────────
-  { id: 'binary-search', name: 'Binary Search', icon: '🎯', topicTag: 'Binary Search',
+  // ── Binary Search (Topic) ────────────────────────────────────────────
+  { tab: 'topic', id: 'binary-search', name: 'Binary Search', icon: '🎯', topicTag: 'Binary Search',
     intro: 'O(log n). Beyond sorted-array search, the killer pattern is "binary search on the ANSWER" when the predicate is monotone over a value range.',
     micros: [
       { id: 'bs-textbook', name: 'Textbook Bounds (Lower / Upper)',
@@ -684,8 +695,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Greedy ───────────────────────────────────────────────────────────
-  { id: 'greedy', name: 'Greedy', icon: '⚡', topicTag: 'Greedy',
+  // ── Greedy (Topic) ───────────────────────────────────────────────────
+  { tab: 'topic', id: 'greedy', name: 'Greedy', icon: '⚡', topicTag: 'Greedy',
     intro: 'Local choice → global optimum. Hard to recognise; usually justified by an exchange argument or sorting.',
     micros: [
       { id: 'sort-and-sweep', name: 'Interval Sort + Sweep',
@@ -709,8 +720,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Bit Manipulation ────────────────────────────────────────────────
-  { id: 'bits', name: 'Bit Manipulation', icon: '⚙️', topicTag: 'Bit Manipulation',
+  // ── Bit Manipulation (Topic) ────────────────────────────────────────
+  { tab: 'topic', id: 'bits', name: 'Bit Manipulation', icon: '⚙️', topicTag: 'Bit Manipulation',
     intro: 'Tricks that turn O(n) into O(1) or O(2^n) into something feasible. Common when input mentions XOR, single number, subsets ≤ 20.',
     micros: [
       { id: 'xor-cancel', name: 'XOR Cancellation',
@@ -740,8 +751,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Math / Number Theory ─────────────────────────────────────────────
-  { id: 'math', name: 'Math', icon: '🧠', topicTag: 'Math',
+  // ── Math / Number Theory (Topic) ─────────────────────────────────────
+  { tab: 'topic', id: 'math', name: 'Math', icon: '🧠', topicTag: 'Math',
     intro: 'Closed-form, identities, modular arithmetic. Always look for a math identity before coding the brute force.',
     micros: [
       { id: 'sieve', name: 'Sieve of Eratosthenes',
@@ -771,8 +782,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Sorting ──────────────────────────────────────────────────────────
-  { id: 'sorting', name: 'Sorting', icon: '🔢', topicTag: 'Sorting',
+  // ── Sorting (Topic) ──────────────────────────────────────────────────
+  { tab: 'topic', id: 'sorting', name: 'Sorting', icon: '🔢', topicTag: 'Sorting',
     intro: 'Reorder elements to enable two-pointer, binary search, greedy. Cost is usually O(n log n); choose comparator carefully.',
     micros: [
       { id: 'sort-then-twoptr', name: 'Sort + Two-Pointer',
@@ -802,8 +813,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Prefix Sum ───────────────────────────────────────────────────────
-  { id: 'prefix-sum', name: 'Prefix Sum', icon: '➕', topicTag: 'Prefix Sum',
+  // ── Prefix Sum (Topic) ───────────────────────────────────────────────
+  { tab: 'topic', id: 'prefix-sum', name: 'Prefix Sum', icon: '➕', topicTag: 'Prefix Sum',
     intro: 'Pre-compute cumulative aggregates → O(1) range queries. Naturally pairs with hash maps for subarray queries.',
     micros: [
       { id: 'ps-1d', name: '1D Prefix Sum (Range Sum)',
@@ -833,8 +844,8 @@ const PATTERNS = [
     ],
   },
 
-  // ── Matrices ─────────────────────────────────────────────────────────
-  { id: 'matrices', name: 'Matrices (2D Arrays)', icon: '🟦', topicTag: 'Matrix',
+  // ── Matrices (DS) ────────────────────────────────────────────────────
+  { tab: 'ds', id: 'matrices', name: 'Matrices (2D Arrays)', icon: '🟦', topicTag: 'Matrix',
     intro: '2D grids. Common sub-patterns: in-place rotation, spiral traversal, DFS/BFS on cells, DP on grid.',
     micros: [
       { id: 'mat-rotate', name: 'In-Place Rotate (Transpose + Reverse)',
@@ -863,14 +874,244 @@ const PATTERNS = [
         anchors: [200, 695, 130, 463, 733, 1254] },
     ],
   },
+
+  // ═════════════════════════════════════════════════════════════════════
+  // NEW DS-tab entry: Binary Search Tree (split out from Binary Tree)
+  // ═════════════════════════════════════════════════════════════════════
+  { tab: 'ds', id: 'bst', name: 'Binary Search Tree', icon: '🔍', topicTag: 'Binary Search Tree',
+    intro: 'Binary tree with the BST ordering invariant (left < node < right). The invariant unlocks sorted-iteration and O(log n) search/insert/delete on balanced inputs.',
+    micros: [
+      { id: 'inorder-bst', name: 'In-Order Traversal (BST→Sorted)',
+        when: 'Validate BST, Kth smallest, build sorted iterator, find closest value.',
+        how: 'In-order yields ascending values. Track prev / counter / closest.',
+        cost: 'O(n) time, O(h) space.',
+        contrast: 'vs explicit min/max bounds — in-order is shorter; bounds-DFS handles non-recursive validation.',
+        anchors: [98, 230, 173, 285, 270, 783, 99] },
+      { id: 'bst-bounds-validate', name: 'Bounds-DFS Validate',
+        when: 'Validate BST without consuming O(n) extra memory; allow streaming check.',
+        how: 'def f(n, lo, hi): if !n: ok; if !(lo<n.val<hi): fail; recurse left (lo, val), right (val, hi).',
+        cost: 'O(n) time, O(h) space.',
+        contrast: 'In-order needs the previous value tracked; bounds-DFS is fully local at each call.',
+        anchors: [98, 333] },
+      { id: 'bst-lca', name: 'BST LCA via Ordering',
+        when: 'Lowest common ancestor of p, q in a BST.',
+        how: 'Walk from root: if p,q both < node go left; both > go right; else return node.',
+        cost: 'O(h) time, O(1) space iterative.',
+        contrast: 'Plain binary-tree LCA (236) is O(n); BST LCA is O(h) thanks to ordering.',
+        anchors: [235, 270, 285] },
+      { id: 'bst-insert-delete', name: 'BST Insert / Delete (Recursive)',
+        when: 'Modify a BST keeping the invariant; "delete node in BST".',
+        how: 'Recurse on the comparator branch; for delete, splice with in-order successor when 2 children.',
+        cost: 'O(h) time.',
+        contrast: 'Self-balancing (AVL / RB) keeps h ≤ log n — outside LC scope but worth naming.',
+        anchors: [701, 450, 700, 938] },
+    ],
+  },
+
+  // ═════════════════════════════════════════════════════════════════════
+  // TOPIC-tab entries: techniques + DS-used-as-tool (Stack, Deque, Trie),
+  // plus the cross-cutting DFS / BFS / Union-Find techniques that span
+  // tree / graph / grid problems.
+  // ═════════════════════════════════════════════════════════════════════
+
+  { tab: 'topic', id: 'dfs', name: 'DFS (Depth-First Search)', icon: '🌊', topicTag: 'Depth-First Search',
+    intro: 'Recursive (or stack-based) exhaustive walk. The same technique drives tree traversals, graph component-find, grid flood-fill, and the choose-recurse-undo skeleton of backtracking.',
+    micros: [
+      { id: 'dfs-template', name: 'DFS Template (Visited + Recurse)',
+        when: 'Walk every reachable node from a source in tree / graph / grid.',
+        how: 'def dfs(u): if visited[u]: return; mark; for v in neighbors(u): dfs(v).',
+        cost: 'O(V + E) time, O(h) stack.',
+        contrast: 'Cycle? add 3-color (cycle-3color). Need shortest path? use BFS — DFS finds A path, not THE shortest.',
+        anchors: [200, 695, 547, 133, 417] },
+      { id: 'dfs-tree-orders', name: 'Pre / In / Post-Order Choice',
+        when: 'Tree problem — what data do you need at each node?',
+        how: 'Pre-order: top-down (path accumulation). In-order: BST sorted. Post-order: subtree results bubble up.',
+        cost: 'O(n) time, O(h) stack.',
+        contrast: 'Post-order is the workhorse for "compute X from subtrees" (height, diameter, tree-DP).',
+        anchors: [144, 94, 145, 104, 543, 124] },
+      { id: 'dfs-grid-flood', name: 'Grid DFS / Flood Fill',
+        when: 'Connected regions of cells; mark / count / size.',
+        how: 'DFS the 4 neighbours; mark visited in-place (e.g. flip "1"→"0") to avoid a separate set.',
+        cost: 'O(R·C) time.',
+        contrast: 'BFS works too but DFS is shorter; BFS wins when you also need shortest distance.',
+        anchors: [200, 695, 130, 733, 463] },
+      { id: 'dfs-backtrack-undo', name: 'Backtrack DFS (Choose → Recurse → Undo)',
+        when: 'Enumerate all solutions, not just find one.',
+        how: 'state.push(choice); dfs(state); state.pop(choice) — restores for siblings.',
+        cost: 'Exponential; pruning is everything.',
+        contrast: 'Same shape as Backtracking pattern — listed here as the DFS technique it really is.',
+        anchors: [46, 78, 39, 51, 79] },
+      { id: 'dfs-iterative-stack', name: 'Iterative DFS with Explicit Stack',
+        when: 'Stack-overflow risk on deep recursion; need to pause/resume traversal.',
+        how: 'stack = [root]; while stack: u = stack.pop(); visit; push children in REVERSE order.',
+        cost: 'O(V + E) time, O(V) explicit stack.',
+        contrast: 'For in-order use the "go left, push, then current" idiom (BST iterator 173).',
+        anchors: [173, 341, 94, 144, 145] },
+    ],
+  },
+
+  { tab: 'topic', id: 'bfs', name: 'BFS (Breadth-First Search)', icon: '🌐', topicTag: 'Breadth-First Search',
+    intro: 'FIFO walk that visits in level order — the SHORTEST-PATH technique for unweighted edges. Generalises to multi-source, bidirectional, and 0-1 BFS.',
+    micros: [
+      { id: 'bfs-level-order', name: 'Level-Order BFS (Batched)',
+        when: 'Tree/graph traversal where YOU need to know levels.',
+        how: 'Queue snapshot of size; loop that many to consume current level; collect next-level children.',
+        cost: 'O(n) time, O(n) space.',
+        contrast: 'Plain BFS doesn\'t batch by level; level-order does for "rightmost node", "level sum", etc.',
+        anchors: [102, 103, 199, 515, 1161, 314] },
+      { id: 'bfs-shortest-unweighted', name: 'Shortest Path — Unit Edges',
+        when: 'Shortest distance in unweighted graph / grid.',
+        how: 'BFS; dist[u] = dist[parent] + 1; first time you pop the target is the answer.',
+        cost: 'O(V + E) time.',
+        contrast: 'Weighted edges? Switch to Dijkstra (Heap topic). {0,1} weights? Use bfs-zero-one.',
+        anchors: [127, 752, 1091, 433, 433, 1730] },
+      { id: 'bfs-multi-source', name: 'Multi-Source BFS',
+        when: 'Distance from EACH cell to nearest of MANY sources.',
+        how: 'Seed queue with ALL sources at dist 0; standard BFS from there.',
+        cost: 'O(V + E) time.',
+        contrast: 'vs single-source BFS from each source — multi-source is one pass total.',
+        anchors: [994, 542, 286, 1162, 317, 1765] },
+      { id: 'bfs-bidirectional', name: 'Bidirectional BFS',
+        when: 'Shortest path between two KNOWN endpoints; branching factor is high.',
+        how: 'Expand from both ends; meet in the middle. At each step expand the SMALLER frontier.',
+        cost: 'O(b^(d/2)) time — square-root vs one-sided BFS.',
+        contrast: 'Word Ladder (127) goes from TLE to fast once you switch sides each step.',
+        anchors: [127, 126, 752] },
+      { id: 'bfs-zero-one', name: '0-1 BFS (Deque)',
+        when: 'Shortest path with edge weights in {0, 1}.',
+        how: 'Deque; push 0-edges to FRONT, 1-edges to BACK. Treats 0 as "free hop".',
+        cost: 'O(V + E) time.',
+        contrast: 'vs Dijkstra (O((V+E) log V)) — 0-1 BFS is asymptotically faster for the {0,1} case.',
+        anchors: [1368, 2290, 934] },
+    ],
+  },
+
+  { tab: 'topic', id: 'stack-topic', name: 'Stack (as Tool)', icon: '🥞', topicTag: 'Stack',
+    intro: 'Stack used as a TOOL on arrays — not a stack problem per se. The dominant technique is the monotonic-stack family for next-greater style answers.',
+    micros: [
+      { id: 'monotonic-stack', name: 'Monotonic Stack (Next-Greater Family)',
+        when: '"Next greater / smaller", largest rectangle, daily temperature span, trap rainwater.',
+        how: 'Push indices; before pushing i, pop while stack-top breaks the invariant — that top\'s answer is i.',
+        cost: 'O(n) amortised time, O(n) space.',
+        contrast: 'vs O(n²) brute force — monotonic stack drops each index O(1) on average.',
+        anchors: [496, 503, 739, 84, 85, 42, 901, 1019] },
+      { id: 'monotonic-stack-2pass', name: 'Two-Pass Monotonic Stack (Surrounding Extremes)',
+        when: 'For each i, need BOTH "previous smaller" and "next smaller" — area-of-histogram, sub-array minimums sum.',
+        how: 'One left-to-right pass + one right-to-left pass, each a standard monotonic stack.',
+        cost: 'O(n).',
+        contrast: 'Single-pass works when you only need ONE side; two-pass when you need spans symmetric in both directions.',
+        anchors: [84, 907, 1856, 2104, 2334] },
+      { id: 'parens-rewrite', name: 'Stack to Rewrite/Minify Sequence',
+        when: '"Remove K adjacent duplicates", "remove outer parens", "build smallest after K removes".',
+        how: 'Stack of output so far; for each char pop or push based on local rule.',
+        cost: 'O(n).',
+        contrast: 'Pattern is "greedy build + local undo via stack" — distinct from monotonic-stack which tracks indices.',
+        anchors: [1047, 1209, 402, 316, 1249] },
+    ],
+  },
+
+  { tab: 'topic', id: 'deque-topic', name: 'Deque (Sliding Extremes)', icon: '🔁', topicTag: 'Deque',
+    intro: 'Double-ended queue used as a TOOL when a sliding window needs O(1) min / max / extremum tracking.',
+    micros: [
+      { id: 'monotonic-deque', name: 'Monotonic Deque (Sliding Max/Min)',
+        when: 'Running max/min over a sliding window of size K.',
+        how: 'Deque of indices; pop back while new value ≥ tail (or ≤ for min); front is the window max.',
+        cost: 'O(n) time, O(K) space.',
+        contrast: 'vs heap (O(n log K)) — deque is cleaner O(n) and supports min in same shape.',
+        anchors: [239, 1438, 862, 918, 1696] },
+      { id: 'deque-window-constraint', name: 'Deque for Window-Constraint DP',
+        when: 'DP where dp[i] depends on max/min of dp over [i−k, i−1].',
+        how: 'Roll a monotonic deque of (dp value, index); evict out-of-window; front is the best previous state.',
+        cost: 'O(n).',
+        contrast: 'Without the deque you\'d pay O(K) per step → O(nK).',
+        anchors: [1696, 918, 1499] },
+    ],
+  },
+
+  { tab: 'topic', id: 'trie-topic', name: 'Trie (as Tool)', icon: '🔤', topicTag: 'Trie',
+    intro: 'Trie used as a TOOL to prune a search or rank suggestions — not a "build a trie" design question.',
+    micros: [
+      { id: 'trie-grid-dfs', name: 'Trie + Grid DFS (Prune Word Search)',
+        when: 'Find all dictionary words present in an m×n character grid.',
+        how: 'Build trie; DFS from each cell descending the trie; prune dead branches; mark visited.',
+        cost: 'O(M·N·4^L).',
+        contrast: 'Without trie you\'d run word-search per word — orders slower for large dictionaries.',
+        anchors: [212, 79] },
+      { id: 'trie-autocomplete', name: 'Trie Nodes Carry Top-K',
+        when: 'Autocomplete / search suggestions; rank by frequency.',
+        how: 'At each node, store sorted top-K matching words below.',
+        cost: 'O(insert: L·K), O(query: L).',
+        contrast: 'vs walking subtree to find K — pre-aggregating top-K is O(L) per query.',
+        anchors: [642, 1268, 648] },
+      { id: 'trie-xor-max', name: 'Bit-Trie for Max-XOR',
+        when: '"Max XOR of two numbers in array" / "max XOR subarray".',
+        how: 'Insert each number into a 32-level binary trie; for query, greedily descend the opposite bit when possible.',
+        cost: 'O(32·n).',
+        contrast: 'Brute O(n²) → bit-trie O(n log V). Same shape solves online query variants.',
+        anchors: [421, 1707, 1803] },
+    ],
+  },
+
+  { tab: 'topic', id: 'union-find', name: 'Union-Find (DSU)', icon: '🔗', topicTag: 'Union-Find',
+    intro: 'Disjoint-Set Union. Use when edges arrive INCREMENTALLY and you need connectivity / component-size / cycle detection in (near-)O(α(n)) per op.',
+    micros: [
+      { id: 'uf-basic', name: 'Find + Union (Path Compression + Rank)',
+        when: 'Connectivity queries; component count; cycle detection in an undirected graph.',
+        how: 'parent[x], rank[x]; find(x) = parent[x]==x ? x : parent[x]=find(parent[x]); union by rank.',
+        cost: 'O(α(n)) per op — effectively constant.',
+        contrast: 'vs DFS/BFS for connected components — UF wins when edges stream (online / dynamic).',
+        anchors: [547, 200, 261, 323, 684, 685] },
+      { id: 'uf-with-size', name: 'Union-Find with Component Size / Aggregate',
+        when: '"Largest component", "K-th union to merge X and Y", "satisfiability of equality equations".',
+        how: 'Maintain size[root] (or sum/max/etc.); on union add child\'s aggregate into the new root.',
+        cost: 'O(α(n)) per op.',
+        contrast: 'Critical for problems that ask about COMPONENT properties, not just connectivity.',
+        anchors: [952, 1101, 990, 1202, 1319, 2092] },
+      { id: 'uf-weighted', name: 'Weighted Union-Find (Relative Offsets)',
+        when: 'Equations / ratios across variables (a/b = k); positions relative to root.',
+        how: 'rank[x] holds the offset/ratio from x to its parent; combine during path-compression.',
+        cost: 'O(α(n)) per op.',
+        contrast: 'Plain UF only tracks "same set"; weighted UF also tracks the RELATIVE quantity.',
+        anchors: [399, 1697, 2076] },
+      { id: 'uf-reverse-time', name: 'Reverse-Time Union-Find (Offline Deletions)',
+        when: 'Problem deletes edges/cells over time; you need connectivity AFTER each deletion.',
+        how: 'Process events in REVERSE — deletions become unions; UF naturally supports add-only.',
+        cost: 'O(α(n)) per event.',
+        contrast: 'UF can\'t do online split/delete; the reverse-time trick converts deletes into adds.',
+        anchors: [803, 305, 1970, 2092] },
+    ],
+  },
 ]
 
 // ── Render ───────────────────────────────────────────────────────────────
 let view = 'tree'         // 'tree' | 'flat'
+let activeTab = 'ds'      // 'ds' | 'topic' — filters which PATTERNS show
 let activePatternId = null
 let activeMicroId = null
 
 const $ = sel => document.querySelector(sel)
+
+// Patterns visible under the current tab.
+function visiblePatterns() {
+  return PATTERNS.filter(p => (p.tab || 'ds') === activeTab)
+}
+
+function setTab(t) {
+  activeTab = t
+  document.querySelectorAll('.tab-toggle button').forEach(b => b.classList.remove('active'))
+  $('#tab-' + t).classList.add('active')
+  // If the currently selected pattern doesn't belong to the new tab, clear
+  // selection and return to the tab's home — keeps the URL honest and
+  // avoids showing an empty nav with a stale main pane.
+  if (activePatternId) {
+    const stillVisible = visiblePatterns().some(p => p.id === activePatternId)
+    if (!stillVisible) { activePatternId = null; activeMicroId = null }
+  }
+  // Rewrite the hash so refresh / back lands on the same tab.
+  writeHash()
+  renderNav()
+  renderMain()
+}
 
 function setView(v) {
   view = v
@@ -889,7 +1130,7 @@ function renderNav() {
 }
 
 function renderTree(root, filter) {
-  PATTERNS.forEach(p => {
+  visiblePatterns().forEach(p => {
     const matchesPattern = !filter
       || p.name.toLowerCase().includes(filter)
       || p.micros.some(m => m.name.toLowerCase().includes(filter))
@@ -926,7 +1167,7 @@ function renderTree(root, filter) {
 
 function renderFlat(root, filter) {
   const items = []
-  PATTERNS.forEach(p => p.micros.forEach(m => items.push({ p, m })))
+  visiblePatterns().forEach(p => p.micros.forEach(m => items.push({ p, m })))
   items.sort((a, b) => a.m.name.localeCompare(b.m.name))
   items.forEach(({ p, m }) => {
     if (filter && !m.name.toLowerCase().includes(filter) && !p.name.toLowerCase().includes(filter)) return
@@ -940,9 +1181,17 @@ function renderFlat(root, filter) {
 }
 
 function selectPattern(pid, mid = null) {
+  // If the target pattern lives under the other tab, jump to that tab
+  // first — keeps cross-tab links (e.g. home cards, anchor refs) honest.
+  const p = PATTERNS.find(x => x.id === pid)
+  if (p && (p.tab || 'ds') !== activeTab) {
+    activeTab = p.tab || 'ds'
+    document.querySelectorAll('.tab-toggle button').forEach(b => b.classList.remove('active'))
+    const tb = $('#tab-' + activeTab); if (tb) tb.classList.add('active')
+  }
   activePatternId = pid
   activeMicroId   = mid ? `${pid}/${mid}` : null
-  location.hash   = mid ? `${pid}/${mid}` : pid
+  writeHash()
   renderNav()
   renderMain()
   if (mid) {
@@ -951,6 +1200,17 @@ function selectPattern(pid, mid = null) {
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 40)
   }
+}
+
+// URL shape: #<tab>[/pattern[/micro]]  e.g. #topic/dfs/dfs-template
+function writeHash() {
+  let h = activeTab
+  if (activePatternId) {
+    h += '/' + activePatternId
+    if (activeMicroId) h += '/' + activeMicroId.split('/')[1]
+  }
+  // Use replace-style: avoid spamming history while clicking around.
+  history.replaceState(null, '', '#' + h)
 }
 
 const DIFF_HINT = {  // Light-weight difficulty hint, just for the card colour. Exact difficulty is in AdsHub.
@@ -963,8 +1223,9 @@ function renderMain() {
   const p = PATTERNS.find(x => x.id === activePatternId)
   if (!p) { renderHome(main); return }
   const browseUrl = `adshub?q=${encodeURIComponent(p.topicTag || p.name)}`
+  const tabLabel = (p.tab || 'ds') === 'ds' ? '📦 Data Structure' : '🧰 Topic'
   main.innerHTML = `
-    <div class="breadcrumb">Pattern</div>
+    <div class="breadcrumb">${tabLabel}</div>
     <h2>${p.icon} ${p.name}</h2>
     <p class="lede">${p.intro}</p>
     <a class="browse-link" href="${browseUrl}" target="_blank" rel="noopener"
@@ -1014,19 +1275,31 @@ function renderMicroCard(p, m) {
 }
 
 function renderHome(main) {
-  const totalMicros = PATTERNS.reduce((s, p) => s + p.micros.length, 0)
+  const here        = visiblePatterns()
+  const totalMicros = here.reduce((s, p) => s + p.micros.length, 0)
+  const grandTotal  = PATTERNS.reduce((s, p) => s + p.micros.length, 0)
+  const isDS        = activeTab === 'ds'
+  const tabTitle    = isDS ? '📦 Data Structure'    : '🧰 Topic'
+  const tabBlurb    = isDS
+    ? `Patterns grouped by the <strong>input data structure</strong> — what shape does the problem GIVE you?
+       Look here when the problem is about THE structure itself (e.g. "design a stack", "validate a BST").`
+    : `Patterns grouped by <strong>solution technique</strong> — Sliding Window, DP, DFS, BFS, monotonic-stack-as-tool, etc.
+       Look here when you know the shape but need the trick that solves it.`
   main.innerHTML = `
-    <h2>📐 Micro-Pattern Reference</h2>
+    <h2>📐 Micro-Pattern Reference · ${tabTitle}</h2>
     <p class="lede">
-      ${PATTERNS.length} high-level patterns · ${totalMicros} micro-patterns · every anchor link drops you straight into the matching problem in AdsHub.
-      Pick a pattern from the left, or tap a card below.
+      ${here.length} categories in this tab · ${totalMicros} micro-patterns
+      <span style="color:var(--text3)">(${PATTERNS.length} categories · ${grandTotal} micros across both tabs)</span>
     </p>
+    <p class="lede" style="margin-top:-8px">${tabBlurb}</p>
     <p class="lede" style="margin-top:-8px">
-      <strong>How to use:</strong> see a new problem → identify the data structure → scan the
-      <em>"When"</em> on each micro-card → the matching one is the trick you need.
+      <strong>How to use:</strong> ${isDS
+        ? 'identify the data structure of the input → scan the <em>"When"</em> on each micro-card → the matching one is the canonical move.'
+        : 'pick the technique the problem cries out for → scan the <em>"When"</em> → the matching micro is the template to type.'}
+      Some categories (Stack, Trie) appear in both tabs with different micros — flip the tab to see the other side.
     </p>
     <div class="home-grid">
-      ${PATTERNS.map(p => `
+      ${here.map(p => `
         <div class="home-card" onclick="selectPattern('${p.id}')">
           <h4>${p.icon} ${p.name}</h4>
           <div class="micro-count">${p.micros.length} micro-patterns</div>
@@ -1043,20 +1316,44 @@ function renderHome(main) {
 }
 
 // ── URL hash routing ────────────────────────────────────────────────────
+// New shape:   #<tab>/<pattern>/<micro>   e.g. #topic/dfs/dfs-template
+// Legacy:      #<pattern>/<micro>         (auto-resolves the tab from the
+//                                          pattern's `tab` field)
 function applyHash() {
   const h = location.hash.replace(/^#/, '')
-  if (!h) { activePatternId = null; activeMicroId = null; renderNav(); renderMain(); return }
-  const [pid, mid] = h.split('/')
-  activePatternId = pid
-  activeMicroId   = mid ? `${pid}/${mid}` : null
-  renderNav()
-  renderMain()
-  if (mid) {
+  if (!h) {
+    // Bare URL → keep current tab default ('ds'), no pattern selected.
+    syncTabButtons()
+    renderNav(); renderMain()
+    return
+  }
+  const parts = h.split('/')
+  // Detect new shape: first segment is 'ds' or 'topic'.
+  if (parts[0] === 'ds' || parts[0] === 'topic') {
+    activeTab       = parts[0]
+    activePatternId = parts[1] || null
+    activeMicroId   = parts[2] ? `${parts[1]}/${parts[2]}` : null
+  } else {
+    // Legacy shape — derive tab from pattern.
+    const pid = parts[0], mid = parts[1]
+    const p   = PATTERNS.find(x => x.id === pid)
+    activeTab       = (p && p.tab) || 'ds'
+    activePatternId = pid
+    activeMicroId   = mid ? `${pid}/${mid}` : null
+  }
+  syncTabButtons()
+  renderNav(); renderMain()
+  if (activeMicroId) {
     setTimeout(() => {
+      const [pid, mid] = activeMicroId.split('/')
       const el = document.getElementById(`m-${pid}-${mid}`)
       if (el) el.scrollIntoView({ block: 'start' })
     }, 40)
   }
+}
+function syncTabButtons() {
+  document.querySelectorAll('.tab-toggle button').forEach(b => b.classList.remove('active'))
+  const tb = $('#tab-' + activeTab); if (tb) tb.classList.add('active')
 }
 window.addEventListener('hashchange', applyHash)
 applyHash()
