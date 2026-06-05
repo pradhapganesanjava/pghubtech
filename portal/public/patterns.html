@@ -2103,7 +2103,7 @@ function renderMain() {
     <div class="breadcrumb">${tabLabel}</div>
     <h2>${p.icon} ${p.name}</h2>
     <p class="lede">${p.intro}</p>
-    <a class="browse-link" href="${browseUrl}" target="_blank" rel="noopener"
+    <a class="browse-link" href="${browseUrl}"
        onclick="onBrowseLinkClick(event, ${JSON.stringify(p.topicTag || p.name)})">
       ↗ Browse all "${p.topicTag || p.name}"-tagged problems in AdsHub
     </a>
@@ -2165,7 +2165,7 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
     const titleAttr = note ? ` title="${escHtml(note)}"` : ''
     const dot = note ? '<span class="anchor-has-note">·</span>' : ''
     return `
-    <a class="anchor${note ? ' has-note' : ''}" href="adshub?id=${id}" target="_blank" rel="noopener"
+    <a class="anchor${note ? ' has-note' : ''}" href="adshub?id=${id}" 
        onclick="onAnchorClick(event, ${id})"${titleAttr}>
       <span class="num">#${id}</span>${dot}
     </a>`
@@ -2181,8 +2181,8 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
   if (noted.length) {
     const lines = ids.map(id => {
       const n = notes[id]
-      if (n) return `<div class="note-line"><a class="note-id" href="adshub?id=${id}" target="_blank" rel="noopener" onclick="onAnchorClick(event, ${id})">#${id}</a> <span class="note-prose">${escHtml(n)}</span></div>`
-      return `<div class="note-line note-line--empty"><a class="note-id" href="adshub?id=${id}" target="_blank" rel="noopener" onclick="onAnchorClick(event, ${id})">#${id}</a> <span class="note-prose">—</span></div>`
+      if (n) return `<div class="note-line"><a class="note-id" href="adshub?id=${id}"  onclick="onAnchorClick(event, ${id})">#${id}</a> <span class="note-prose">${escHtml(n)}</span></div>`
+      return `<div class="note-line note-line--empty"><a class="note-id" href="adshub?id=${id}"  onclick="onAnchorClick(event, ${id})">#${id}</a> <span class="note-prose">—</span></div>`
     }).join('')
     notesBlock = `
       <button class="notes-toggle" onclick="toggleNotes(this)" data-show-count="${noted.length}">▾ show ${noted.length} note${noted.length>1?'s':''}</button>
@@ -2236,7 +2236,7 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
 
   const allProblems = ids.map(id => {
     const note = notes[id]
-    return `<li><a class="detail-anchor" href="adshub?id=${id}" target="_blank" rel="noopener"
+    return `<li><a class="detail-anchor" href="adshub?id=${id}" 
             onclick="onAnchorClick(event, ${id})">#${id}</a>${note ? ` — <span class="detail-note">${escHtml(note)}</span>` : ''}</li>`
   }).join('')
 
