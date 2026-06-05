@@ -197,6 +197,47 @@ const BATCH = {
   // Math/DP
   343: ['pat_ds::array::dp::dp-1d-linear'],                          // Integer Break
   403: ['pat_ds::array::dp::dp-1d-linear'],                          // Frog Jump
+
+  // ── Batch 4 (this turn) ──────────────────────────────────────────────
+  // Splits of existing coarse micros into more specific sub-micros.
+  // Each LC id below gets the NEW more-specific tag added; the old
+  // coarse tag stays for now (problem appears under both micros until a
+  // future cleanup script removes the redundant coarse tag).
+  // ─────────────────────────────────────────────────────────────────────
+  // dp-lis (NEW sub-micro — LIS family, O(n²) inner)
+  300: ['pat_ds::array::dp::dp-lis'],                                // LIS
+  354: ['pat_ds::array::dp::dp-lis'],                                // Russian Doll Envelopes
+  673: ['pat_ds::array::dp::dp-lis'],                                // Number of LIS
+  1048:['pat_ds::array::dp::dp-lis'],                                // Longest String Chain
+  491: ['pat_ds::array::dp::dp-lis'],                                // Increasing Subsequences
+  1671:['pat_ds::array::dp::dp-lis'],                                // Min Removals to Make Mountain
+  376: ['pat_ds::array::dp::dp-lis'],                                // Wiggle Subsequence
+
+  // dp-row-build (NEW sub-micro — Pascal-style row build)
+  118: ['pat_ds::array::dp::dp-row-build'],                          // Pascal's Triangle
+  119: ['pat_ds::array::dp::dp-row-build'],                          // Pascal's Triangle II
+  120: ['pat_ds::array::dp::dp-row-build'],                          // Triangle (bottom-up)
+
+  // tp-k-sum (NEW sub-micro — sorted k-sum convergence)
+  15:  ['pat_ds::array::two-pointers::tp-k-sum'],                    // 3Sum
+  16:  ['pat_ds::array::two-pointers::tp-k-sum'],                    // 3Sum Closest
+  18:  ['pat_ds::array::two-pointers::tp-k-sum'],                    // 4Sum
+  167: ['pat_ds::array::two-pointers::tp-k-sum'],                    // Two Sum II Sorted
+  259: ['pat_ds::array::two-pointers::tp-k-sum'],                    // 3Sum Smaller
+  658: ['pat_ds::array::two-pointers::tp-k-sum'],                    // K Closest Elements (refine over earlier batch-2 tag)
+  923: ['pat_ds::array::two-pointers::tp-k-sum'],                    // 3Sum With Multiplicity
+  1099:['pat_ds::array::two-pointers::tp-k-sum'],                    // Two Sum Less Than K
+
+  // tp-area-greedy (NEW sub-micro — max-area / trap, advance-shorter-side)
+  11:  ['pat_ds::array::two-pointers::tp-area-greedy'],              // Container With Most Water
+  42:  ['pat_ds::array::two-pointers::tp-area-greedy'],              // Trapping Rain Water
+  407: ['pat_ds::matrices::two-pointers::tp-area-greedy'],           // Trapping Rain Water II (3D)
+
+  // greedy-end-sorted (NEW sub-micro — sort by END for max non-overlap)
+  435: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Non-overlapping Intervals
+  452: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Min Arrows Burst Balloons
+  646: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Maximum Length of Pair Chain
+  1235:['pat_ds::array::greedy::greedy-end-sorted'],                 // Maximum Profit in Job Scheduling
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
