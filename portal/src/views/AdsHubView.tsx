@@ -549,13 +549,29 @@ export default function AdsHubView() {
   const shown = filtered.slice(0, LIST_CAP)
   const activeFilterCount = selectedTags.length + selectedCompanies.length + (selectedList ? 1 : 0) + (customOnly ? 1 : 0)
 
-  // Auto-open the lone match when the current filter narrows to exactly one
-  // problem (typically the user typed a full frontend_id like 44 or 555).
-  // Gated on urlApplied so we don't fight the deep-link parse on cold load
-  // and only kicks in for a real, non-empty search/filter — typing nothing
-  // shouldn't auto-select the only-problem-in-an-empty-list edge case.
-  // Also expands the detail pane so the lone match takes the full width
-  // (same behavior as the deep-link parse — these two paths are siblings).
+  // Exact-frontend_id match: when the search box value is a pure integer
+  // that equals an existing frontend_id, open THAT problem — even when
+  // substring search surfaces many other IDs containing the same digits
+  // (typing "6" should open #6, not wait until only #6 remains in the
+  // filtered list). Wins over the lone-match rule below because it's
+  // strictly more specific. Same expanded-view side effect as the
+  // deep-link parse so the two feel identical.
+  useEffect(() => {
+    if (!urlApplied) return
+    const s = search.trim()
+    if (!/^\d+$/.test(s)) return
+    const exact = problems.find(p => p.frontendId === s)
+    if (!exact) return
+    if (selected?.slug !== exact.slug) {
+      setSelected(exact)
+      setViewerExpanded(true)
+    }
+  }, [search, problems, urlApplied]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Lone-match: when the current filter narrows to exactly one problem
+  // (e.g. the user typed a specific title fragment), open it. Skipped
+  // when the search is an exact-id match because the rule above will
+  // have handled it already.
   useEffect(() => {
     if (!urlApplied) return
     if (filtered.length !== 1) return
