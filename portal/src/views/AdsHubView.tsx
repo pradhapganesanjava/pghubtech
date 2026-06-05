@@ -445,7 +445,13 @@ export default function AdsHubView() {
       if (id && problems.length > 0) {
         const num = String(parseInt(id, 10))
         const p = problems.find(p => p.frontendId === id || p.frontendId === num)
-        if (p) setSelected(p)
+        if (p) {
+          setSelected(p)
+          // Deep links land in expanded/maximized view — the visitor came
+          // for THIS problem, give it the full pane (matches the behavior
+          // when a typed search narrows to one match, see auto-open below).
+          setViewerExpanded(true)
+        }
       }
       // Open the gate only once problems are loaded — otherwise the sync
       // effect would wipe a ?id= we still need to honour after fetch.
@@ -542,6 +548,52 @@ export default function AdsHubView() {
 
   const shown = filtered.slice(0, LIST_CAP)
   const activeFilterCount = selectedTags.length + selectedCompanies.length + (selectedList ? 1 : 0) + (customOnly ? 1 : 0)
+
+  // The auto-open rules below should only fire in response to LIVE search
+  // input — not on initial mount when search is rehydrated from
+  // localStorage and the URL has its own ?id= that we should honour.
+  // searchTouchedRef flips true the first time the user types in the
+  // search box; both rules gate on it so a hard load on
+  //   /pghubtech/adshub?id=9
+  // (with a stale persisted search of, say, '8') opens #9 — not #8.
+  const searchTouchedRef = useRef(false)
+  function handleSearchChange(v: string) {
+    searchTouchedRef.current = true
+    setSearch(v)
+  }
+
+  // Exact-frontend_id match: when the search box value is a pure integer
+  // that equals an existing frontend_id, open THAT problem — even when
+  // substring search surfaces many other IDs containing the same digits
+  // (typing "6" should open #6, not wait until only #6 remains in the
+  // filtered list). Wins over the lone-match rule below because it's
+  // strictly more specific. Same expanded-view side effect as the
+  // deep-link parse so the two feel identical.
+  useEffect(() => {
+    if (!urlApplied || !searchTouchedRef.current) return
+    const s = search.trim()
+    if (!/^\d+$/.test(s)) return
+    const exact = problems.find(p => p.frontendId === s)
+    if (!exact) return
+    if (selected?.slug !== exact.slug) {
+      setSelected(exact)
+      setViewerExpanded(true)
+    }
+  }, [search, problems, urlApplied]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Lone-match: when the current filter narrows to exactly one problem
+  // (e.g. the user typed a specific title fragment), open it. Skipped
+  // when the search is an exact-id match because the rule above will
+  // have handled it already. Same searchTouchedRef gate as above.
+  useEffect(() => {
+    if (!urlApplied || !searchTouchedRef.current) return
+    if (filtered.length !== 1) return
+    const onlyMatch = filtered[0]
+    if (selected?.slug !== onlyMatch.slug) {
+      setSelected(onlyMatch)
+      setViewerExpanded(true)
+    }
+  }, [filtered, urlApplied]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggleTag(t: string) {
     setTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
@@ -1178,9 +1230,19 @@ export default function AdsHubView() {
           <input
             className="col-search"
             style={{ width: 220 }}
-            placeholder="Search #id, title, tag, company…"
+            placeholder="Search #id, title, tag, company…  ↵ to open top match"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
+            onKeyDown={e => {
+              // Enter opens the top filtered match (already auto-selected
+              // when there's exactly one, but this gives a clear path when
+              // there are multiple — the user picks the top result without
+              // touching the list).
+              if (e.key === 'Enter' && filtered.length > 0) {
+                e.preventDefault()
+                setSelected(filtered[0])
+              }
+            }}
           />
           <button
             className="rf-btn-cancel"
