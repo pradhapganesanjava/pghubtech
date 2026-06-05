@@ -48,15 +48,22 @@
                        padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
   .tab-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
   /* Icon-only — render style is a small affordance, not a primary axis
-     like the tab toggle above. Fixed-width chips, right-aligned. */
-  .view-toggle { display: flex; gap: 4px; margin-top: 6px; justify-content: flex-end; }
-  .view-toggle button { width: 28px; height: 22px; padding: 0; background: var(--bg3); border: 1px solid var(--border);
+     like the tab toggle above. Sits inline with the search field. */
+  .view-toggle { display: flex; gap: 4px; flex-shrink: 0; }
+  .view-toggle button { width: 28px; height: 28px; padding: 0; background: var(--bg3); border: 1px solid var(--border);
                         color: var(--text2); border-radius: 4px; cursor: pointer; font-size: 13px; line-height: 1;
                         display: inline-flex; align-items: center; justify-content: center; }
   .view-toggle button:hover { color: var(--text); }
   .view-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
-  .nav-search { width: 100%; padding: 6px 8px; margin-top: 8px; background: var(--bg3); border: 1px solid var(--border);
-                color: var(--text); border-radius: 4px; font-size: 12px; }
+  /* Search + view-toggle row. Search flex-grows; toggles right-anchored.
+     min-width:0 on the input lets it shrink below its intrinsic size
+     so the toggles don't get pushed off-screen at very narrow widths.
+     flex-wrap means the toggles drop to a new row only when the input
+     can't get any smaller without becoming unusable (~120px). */
+  .search-row { display: flex; gap: 4px; align-items: stretch; margin-top: 8px; flex-wrap: wrap; }
+  .nav-search { flex: 1 1 120px; min-width: 0; padding: 6px 8px;
+                background: var(--bg3); border: 1px solid var(--border);
+                color: var(--text); border-radius: 4px; font-size: 12px; height: 28px; box-sizing: border-box; }
   .nav-list { padding: 8px 6px 40px; font-size: 13px; }
   .tree-group { margin-bottom: 4px; }
   /* Sidebar rows are clickable but text stays SELECTABLE so the user
@@ -267,16 +274,18 @@
         <button id="tab-ds"    class="active" onclick="setTab('ds')">📦 Data Structure</button>
         <button id="tab-topic"           onclick="setTab('topic')">🧰 Topic</button>
       </div>
-      <!-- View toggle = render-style only (hierarchy vs flat list) so it
-           sits as small icon-only buttons next to the search field, not
-           full-width labelled buttons like the tab toggle above. -->
-      <div class="view-toggle" title="Sidebar render style">
-        <button id="vt-tree" class="active" onclick="setView('tree')"
-                title="Tree view (grouped by pattern)" aria-label="Tree view">🗂️</button>
-        <button id="vt-flat"             onclick="setView('flat')"
-                title="Flat view (all micros A-Z)"    aria-label="Flat view">≡</button>
+      <!-- Search + view-toggle live on the same row to save vertical
+           space. Search flex-grows; toggle stays a fixed cluster on the
+           right. Wraps to two rows on extremely narrow sidebars. -->
+      <div class="search-row">
+        <input class="nav-search" id="navSearch" placeholder="Filter patterns…" oninput="renderNav()">
+        <div class="view-toggle" title="Sidebar render style">
+          <button id="vt-tree" class="active" onclick="setView('tree')"
+                  title="Tree view (grouped by pattern)" aria-label="Tree view">🗂️</button>
+          <button id="vt-flat"             onclick="setView('flat')"
+                  title="Flat view (all micros A-Z)"    aria-label="Flat view">≡</button>
+        </div>
       </div>
-      <input class="nav-search" id="navSearch" placeholder="Filter patterns…" oninput="renderNav()">
     </div>
     <div id="navList" class="nav-list"></div>
   </aside>
