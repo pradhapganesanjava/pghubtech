@@ -238,6 +238,53 @@ const BATCH = {
   452: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Min Arrows Burst Balloons
   646: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Maximum Length of Pair Chain
   1235:['pat_ds::array::greedy::greedy-end-sorted'],                 // Maximum Profit in Job Scheduling
+
+  // ── Batch 5 (this turn) ──────────────────────────────────────────────
+  // 7 new sub-micro splits — each anchor entry below adds the more-
+  // specific tag. The old coarse tag remains until the prune script
+  // runs (dual presence intentional, see batch 4 commit).
+  // ─────────────────────────────────────────────────────────────────────
+
+  // dfs-parallel-trees (NEW) — Same Tree / Symmetric / Subtree / Merge
+  100: ['pat_ds::tree::dfs::dfs-parallel-trees'],                    // Same Tree
+  101: ['pat_ds::tree::dfs::dfs-parallel-trees'],                    // Symmetric Tree
+  572: ['pat_ds::tree::dfs::dfs-parallel-trees'],                    // Subtree of Another Tree
+  617: ['pat_ds::tree::dfs::dfs-parallel-trees'],                    // Merge Two Binary Trees
+  951: ['pat_ds::tree::dfs::dfs-parallel-trees'],                    // Flip Equivalent Binary Trees
+
+  // dfs-tree-mutate (NEW) — Invert / Trim / Detach / Delete-and-Return
+  226: ['pat_ds::tree::dfs::dfs-tree-mutate'],                       // Invert Binary Tree
+  1110:['pat_ds::tree::dfs::dfs-tree-mutate'],                       // Delete Nodes Return Forest
+  814: ['pat_ds::tree::dfs::dfs-tree-mutate'],                       // Binary Tree Pruning
+  669: ['pat_ds::bst::dfs::dfs-tree-mutate'],                        // Trim a BST
+  450: ['pat_ds::bst::dfs::dfs-tree-mutate'],                        // Delete Node in a BST
+
+  // bfs-position-tracked (NEW) — width / completeness / column
+  662: ['pat_ds::tree::bfs::bfs-position-tracked'],                  // Maximum Width of BT
+  958: ['pat_ds::tree::bfs::bfs-position-tracked'],                  // Check Completeness of BT
+  314: ['pat_ds::tree::bfs::bfs-position-tracked'],                  // Vertical Order Traversal
+  987: ['pat_ds::tree::bfs::bfs-position-tracked'],                  // Vertical Order Traversal II
+  919: ['pat_ds::tree::bfs::bfs-position-tracked'],                  // Complete BT Inserter
+
+  // bfs-level-connect (NEW) — populating next right pointers
+  116: ['pat_ds::tree::bfs::bfs-level-connect'],                     // Populating Next Right Pointers
+  117: ['pat_ds::tree::bfs::bfs-level-connect'],                     // Populating Next Right Pointers II
+
+  // hash-chain-build (NEW) — longest consecutive / arithmetic chain
+  128: ['pat_ds::array::hash::hash-chain-build'],                    // Longest Consecutive Sequence
+  298: ['pat_ds::tree::hash::hash-chain-build'],                     // Binary Tree Longest Consecutive Sequence
+  1218:['pat_ds::array::hash::hash-chain-build'],                    // Longest Arithmetic Subseq w/ Diff
+
+  // next-permutation-algo (NEW) — in-place pivot+reverse algorithm
+  31:  ['pat_ds::array::backtrack::next-permutation-algo'],          // Next Permutation
+  556: ['pat_ds::array::backtrack::next-permutation-algo'],          // Next Greater Element III
+  670: ['pat_ds::array::backtrack::next-permutation-algo'],          // Maximum Swap (related shape)
+
+  // combinatorial-product (NEW) — Cartesian product per-slot
+  17:  ['pat_ds::string::backtrack::combinatorial-product'],         // Letter Combinations Phone
+  22:  ['pat_ds::string::backtrack::combinatorial-product'],         // Generate Parentheses (constrained product)
+  1087:['pat_ds::string::backtrack::combinatorial-product'],         // Brace Expansion
+  2266:['pat_ds::string::backtrack::combinatorial-product'],         // Count Number of Texts
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
