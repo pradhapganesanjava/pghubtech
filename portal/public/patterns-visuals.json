@@ -1,0 +1,103 @@
+{
+  "_meta": {
+    "purpose": "ASCII visual diagrams per micro, shown in the deep-dive detail panel above the pseudo-code. Helps recall the pattern shape at a glance.",
+    "format": "{ <microId>: '<multi-line ASCII art with \\n>' }",
+    "status": "Initial seed — covers the most popular ~35 micros. Add more incrementally."
+  },
+
+  "two-sum-hash": "  Walk once, remember complements:\n\n    nums = [2,  7, 11, 15]   target = 9\n             ↑\n             x=2 →  seen = {2:0}\n                ↑\n                x=7 → check seen[9-7]=seen[2]? ✓ at idx 0\n                       → return [0, 1]",
+
+  "complement-lookup": "  Prefix-sum + complement (works with negatives):\n\n    arr = [1, -1,  2, -2,  3]   K = 0\n    pre =  0  1   0  2   0  3\n                  ↑       ↑\n                  pre 0 seen earlier → count += map[0]\n    map = {0:1}  → {0:1,1:1} → {0:2,1:1} → ...",
+
+  "freq-counter": "  Window 'matched chars' for substring-anagram:\n\n    need = {'a':1, 'b':2}  matched=0\n    s    = a b b a c b ...\n           ↑ +a → cnt[a]=1 == need[a] → matched++\n             ↑ +b → cnt[b]=1, not yet matched\n               ↑ +b → cnt[b]=2 == need[b] → matched++\n               matched == |need| ⇒ window valid",
+
+  "seen-set": "  Pure dup-detection (linear scan, set membership):\n\n    arr = [3, 1, 4, 1, 5]\n           ●  ●  ●  ✗ dup!  ●\n    seen = {3}{3,1}{3,1,4}{...} ← saw 1 again",
+
+  "hash-chain-build": "  Longest consecutive chain — START ONLY AT CHAIN HEADS:\n\n    arr = [100, 4, 200, 1, 3, 2]\n    set = {100, 4, 200, 1, 3, 2}\n\n    for x in set:\n      if (x-1) in set: skip (not a head)\n      else: walk x, x+1, x+2, ... ← only fires at TRUE heads\n\n    1 is a head (0 ∉ set) → walk 1,2,3,4 → length 4 ✓\n    100 is a head → walk 100 → length 1\n    200 is a head → walk 200 → length 1",
+
+  "kadane": "  Running max sum, reset on negative drag:\n\n    arr = [-2,  1, -3,  4, -1,  2,  1, -5,  4]\n    cur =  -2   1  -2   4   3   5   6   1   5\n                        ↑       ↑   ↑       ↑\n    best=        1      4   4   5   6   6   6\n\n    cur = max(x, cur + x)  → drop history when worse than starting fresh.",
+
+  "index-as-hash": "  Sign-flip to mark seen indices in place:\n\n    nums = [4, 3, 2, 7, 8, 2, 3, 1]\n\n    for x in nums:\n      j = abs(x) - 1\n      if nums[j] < 0: x is duplicate\n      nums[j] = -nums[j]\n\n    After pass: indices still POSITIVE are missing.\n    Duplicates collected during the pass.",
+
+  "floyd-cycle": "  Tortoise + Hare cycle detect:\n\n    1 → 2 → 3 → 4\n            ↑   ↓\n            6 ← 5\n\n    slow steps 1, fast steps 2 → they meet inside the cycle.\n\n    Then reset slow to head, both step 1:\n      slow: 1 → 2 → 3 ✓\n      fast:     (continues in cycle)\n      meeting point = cycle START.",
+
+  "iterative-reverse": "  3-pointer reverse (prev, cur, next):\n\n      None ← 1 ← 2 ← 3   4 → null\n             ↑      ↑    ↑\n             prev   cur  next\n\n    Each iter: next = cur.next; cur.next = prev; prev = cur; cur = next.\n    After loop, prev is the new head.",
+
+  "tp-converging": "  Both ends inward, advance by predicate:\n\n    s = a b c b a\n        l         r    s[l]==s[r] ✓ → l++, r--\n           l   r       s[l]==s[r] ✓ → l++, r--\n              l/r      crossed → palindrome ✓",
+
+  "tp-k-sum": "  Sort then converge for 3Sum:\n\n    arr = [-4, -1, -1, 0, 1, 2]    sorted\n    fix i=0 (val -4):\n      l=1, r=5: sum -4 + (-1+2) = -3 < 0 → l++\n      l=2, r=5: sum -4 + (-1+2) = -3 < 0 → l++\n      l=3, r=5: sum -4 + (0+2)  = -2 < 0 → l++\n      l=4, r=5: sum -4 + (1+2)  = -1 < 0 → l++\n      crossed.\n    fix i=1 (val -1):\n      l=2, r=5: -1 + (-1+2) = 0 ✓ → record [-1,-1,2], skip dups, advance.",
+
+  "tp-area-greedy": "  Container — advance shorter side:\n\n    h = [1, 8, 6, 2, 5, 4, 8, 3, 7]\n         l                       r\n         min(1,7)*8 = 8  → h[l]<h[r] → l++\n         h = [_, 8, 6, 2, 5, 4, 8, 3, 7]\n               l                       r\n               min(8,7)*7 = 49  → h[r]<h[l] → r--\n         best updates as we advance; max = 49.",
+
+  "sw-shrink-violation": "  Expand right, shrink left while invariant broken:\n\n    arr = [2, 3, 1, 2, 4, 3]  target ≥ 7\n           l r                sum=2, expand\n           l     r            sum=6, expand\n           l        r         sum=8 ≥ 7 ✓ record len 4; shrink\n              l     r         sum=6, expand\n              l        r      sum=9 ≥ 7 ✓ record len 4; shrink\n                 l     r      sum=7 ≥ 7 ✓ record len 3; shrink\n                    l  r      sum=6, expand\n                    l     r   sum=9 ≥ 7 ✓ record len 3; shrink\n                       l  r   sum=7 ≥ 7 ✓ record len 2 ← min!\n                          l/r ...",
+
+  "sw-distinct-count": "  K-distinct window — freq map + counter:\n\n    s = a a b c b b   K = 2\n        l r              {a:1}              distinct=1 ≤ 2 ✓ len 1\n        l   r            {a:2}              distinct=1         len 2\n        l     r          {a:2,b:1}          distinct=2 ≤ 2 ✓  len 3\n        l       r        {a:2,b:1,c:1}      distinct=3 → shrink\n           ...\n          l     r        {b:1,c:1}          distinct=2 ✓\n            ...",
+
+  "bs-textbook": "  Lower-bound binary search:\n\n    arr = [1, 3, 5, 7, 9, 11, 13]   target = 9\n           l    m         r          mid=5 < 9 → l = m+1\n                    l  m     r       mid=11 > 9 → r = m\n                    l/m  r           mid=9 = target ✓",
+
+  "bs-on-answer": "  Search the ANSWER SPACE (Koko bananas):\n\n    Find min speed K s.t. hours(K) ≤ H\n\n    speed:  1   2   3   ...   max(piles)\n            ✗   ✗   ✗   ...      ✓\n            ───────┬───\n                   │\n              binary-search this monotone predicate\n              feasible(mid) = true → hi = mid\n              else            → lo = mid + 1",
+
+  "monotonic-stack": "  Next-greater via decreasing stack of INDICES:\n\n    arr = [2, 1, 5, 3, 4]\n                            stack    answer (next-greater per index)\n    push 2                  [2]      [_, _, _, _, _]\n    push 1                  [2,1]    [_, _, _, _, _]\n    cur=5: pop 1 ans[1]=5   [2]      [_, 5, _, _, _]\n           pop 2 ans[0]=5   []       [5, 5, _, _, _]\n           push 5           [5]\n    push 3                  [5,3]    [5, 5, _, _, _]\n    cur=4: pop 3 ans[3]=4   [5]      [5, 5, _, 4, _]\n           push 4           [5,4]\n    end: 5,4 never popped → ans[2]=ans[4]=-1",
+
+  "monotonic-stack-spans": "  Histogram rectangle — span at pop:\n\n    bars = [2, 1, 5, 6, 2, 3]\n                                   stack of (idx, h)\n    i=0 h=2  push                  [(0,2)]\n    i=1 h=1  pop (0,2): w=1*2=2    [(1,1)]\n    i=2 h=5  push                  [(1,1),(2,5)]\n    i=3 h=6  push                  [(1,1),(2,5),(3,6)]\n    i=4 h=2: pop (3,6) w=1*6=6     [(1,1),(2,5)]\n             pop (2,5) w=2*5=10 ✓   [(1,1)]\n             push                   [(1,1),(4,2)]\n    i=5 h=3  push                   [(1,1),(4,2),(5,3)]\n    end flush: pop with width to end → max stays 10",
+
+  "monotonic-deque": "  Sliding window MAX via decreasing deque of indices:\n\n    nums = [1, 3, -1, -3, 5, 3, 6, 7]   k = 3\n\n    i=0: dq=[0(1)]\n    i=1: pop 0 (1<3), push 1.   dq=[1(3)]\n    i=2: push 2 (−1<3).         dq=[1(3),2(−1)]                ans=[3\n    i=3: evict 0-out (front=1 still in), pop 2 (−3<−1 wait wrong)\n         pop while back<-3? no, push 3.  dq=[1(3),2(−1),3(−3)] ans=[3,3\n    i=4: evict 1 (i-k=1), pop back (−3<5 etc) until empty, push 4.\n                                          dq=[4(5)]            ans=[3,3,5\n         ...front always = window max.",
+
+  "dfs-template": "  Visit-mark-recurse skeleton:\n\n        ●───●───●\n        │       │\n        ●       ●\n          ╲   ╱\n            ●\n\n    visited = set()\n    def dfs(u):\n        if u in visited: return\n        visited.add(u)\n        for v in adj[u]: dfs(v)\n\n    Touches each edge twice in undirected graph → O(V+E).",
+
+  "dfs-tree-orders": "  Pre / In / Post order on:\n\n            1\n           / \\\n          2   3\n         / \\   \\\n        4   5   6\n\n    PRE  (root, L, R): 1 2 4 5 3 6\n    IN   (L, root, R): 4 2 5 1 3 6\n    POST (L, R, root): 4 5 2 6 3 1",
+
+  "dfs-grid-flood": "  Flood-fill marks visited cells in-place:\n\n    grid =                       after dfs(0,0):\n      1 1 0 0 0                    X X 0 0 0\n      1 1 0 0 0          →         X X 0 0 0\n      0 0 0 1 0                    0 0 0 1 0   ← still untouched\n      0 0 0 1 1                    0 0 0 1 1\n\n    Each unvisited '1' seed → 1 component. 2 components above.",
+
+  "bfs-level-order": "  Snapshot per level via queue size:\n\n            1            level 0: process [1]\n           / \\\n          2   3          level 1: process [2, 3]\n         / \\   \\\n        4   5   6        level 2: process [4, 5, 6]\n\n    while q:\n        size = len(q)\n        for _ in range(size): pop, visit, enqueue children",
+
+  "bfs-shortest-unweighted": "  BFS expansion rings = distance from source:\n\n    Source ●            d=0\n          / | ╲\n         ●  ●  ●        d=1\n        / ╲    │\n       ●    ●  ●        d=2\n                 ╲\n                  ●     d=3 ← first time you pop target",
+
+  "bfs-multi-source": "  Seed ALL sources at d=0, BFS outward:\n\n    grid (sources = R):\n      . . R .\n      . . . .          dist (Manhattan-like BFS distance to nearest R):\n      R . . .            2 1 0 1\n      . . . .            1 1 1 1\n                         0 1 2 2\n                         1 2 3 2",
+
+  "bfs-bidirectional": "  Expand from BOTH ends, meet in middle (halves depth):\n\n    start →  ●      ●  ← end\n             |╲    ╱|\n             ● ●  ● ●\n              ╲ ╲╱ ╱\n               ●●●●     ← when frontiers intersect, path found\n\n    Each step expand the SMALLER frontier — O(b^(d/2)) vs O(b^d).",
+
+  "dijkstra": "  Greedy expand via min-heap on (dist, node):\n\n    Graph (src=A):       Heap timeline:\n         B─2─D             [(0,A)]\n        ╱      ╲           [(1,B),(4,C)]    pop A, relax B=1, C=4\n      A 1      3           [(3,D),(4,C)]    pop B, relax D=1+2=3\n        ╲      ╱           [(4,C),(6,E)]    pop D, relax E=3+3=6\n         C─5─E             [(4,C)] then E=4+5=9 worse, skip\n              4            done. dist = {A:0, B:1, D:3, C:4, E:6}",
+
+  "top-k": "  K-th largest via min-heap of size K:\n\n    K=3, stream = [5, 1, 8, 2, 7]\n\n    push 5  →  [5]\n    push 1  →  [1, 5]\n    push 8  →  [1, 5, 8]\n    push 2  →  [1, 2, 5, 8], size>K, pop 1   →  [2, 5, 8]\n    push 7  →  [2, 5, 7, 8], size>K, pop 2   →  [5, 7, 8]\n\n    top of heap = 5 = the 3rd largest ✓",
+
+  "uf-basic": "  Forest with path compression:\n\n    Initially:           After union(1,2), union(3,4), union(2,3):\n      0   1   2   3   4    0      1         (4)\n      ↑   ↑   ↑   ↑   ↑           ↑          ↑\n     self self ...                2  3 ─┐    │\n                                  │  ↑  │    │\n                                       └──── 4\n                              find(4): walks 4→3→? then path-compress.\n\n    Two roots remain: {0}, {1,2,3,4} → 2 connected components.",
+
+  "uf-with-size": "  Track component SIZE on the root:\n\n    parent = [0,1,2,3,4,5]    size = [1,1,1,1,1,1]\n\n    union(1,2): parent[2]=1, size[1]=2\n    union(3,4): parent[4]=3, size[3]=2\n    union(1,3): parent[3]=1, size[1]=4  ← merged component is size 4\n\n    To answer 'largest component': max(size[r] for r in roots).",
+
+  "cc-dfs-uf": "  Two equivalent approaches (count connected components):\n\n    Graph:                        DFS approach:\n      0 ─ 1   3 ─ 4               for each unvisited node:\n      │                             dfs it; ++ cc\n      2       5                   cc = 2 (above) then 5 → cc = 3\n\n    Union-Find approach (best when edges stream in):\n      uf = UF(n)                  Final: find(0)=find(1)=find(2)=R0\n      for u,v in edges: union     find(3)=find(4)=R1\n      cc = |distinct roots|       find(5)=R2 → cc = 3",
+
+  "ps-1d": "  Build prefix once, query range-sum in O(1):\n\n    arr = [ 3,  1,  4,  1,  5,  9,  2,  6]\n    pre = [0, 3,  4,  8,  9, 14, 23, 25, 31]\n             ↑                   ↑\n    sum(l..r) = pre[r+1] - pre[l]\n      l=1, r=4 → pre[5]-pre[1] = 14 - 3 = 11 (= 1+4+1+5) ✓",
+
+  "ps-2d": "  2D prefix sum via inclusion-exclusion:\n\n    pre[r+1][c+1] = mat[r][c]\n                  + pre[r][c+1]    (top)\n                  + pre[r+1][c]    (left)\n                  − pre[r][c]      (double-counted top-left)\n\n    Query (r1..r2, c1..c2):\n      pre[r2+1][c2+1] − pre[r1][c2+1] − pre[r2+1][c1] + pre[r1][c1]\n\n                         ┌─────────────┐\n                         │             │\n                         │   region    │\n                         │             │\n                         └─────────────┘",
+
+  "dp-1d-linear": "  House Robber — pick or skip each:\n\n    nums = [2, 7, 9, 3, 1]\n\n    dp[i] = max(dp[i-1],          ← skip nums[i]\n                dp[i-2] + nums[i]) ← rob nums[i]\n\n    i=0: dp = 2\n    i=1: dp = max(2, 0+7) = 7\n    i=2: dp = max(7, 2+9) = 11\n    i=3: dp = max(11, 7+3) = 11\n    i=4: dp = max(11, 11+1) = 12   ← answer",
+
+  "dp-lis": "  Patience-sort tails — O(n log n) LIS:\n\n    arr = [10, 9, 2, 5, 3, 7, 101, 18]\n\n    tails after each:\n      [10]       → [9]      → [2]\n      [2, 5]     → [2, 3]   → [2, 3, 7]\n      [2, 3, 7, 101]        → [2, 3, 7, 18]\n\n    len(tails) = 4 = LIS length ✓\n    (tails is NOT the actual LIS, only its length.)",
+
+  "dp-2d-grid": "  Min path sum — propagate from top-left:\n\n    grid:       dp:\n     1 3 1      1  4  5\n     1 5 1  →   2  7  6\n     4 2 1      6  8  7   ← answer = 7\n\n    dp[r][c] = grid[r][c] + min(dp[r-1][c], dp[r][c-1])\n    base: dp[0][0] = grid[0][0]; first row/col cumulative.",
+
+  "dp-2-strings": "  LCS — dp[i][j] grid:\n\n         ''  A  G  C  A  T\n     ''   0  0  0  0  0  0\n     G    0  0  1  1  1  1\n     A    0  1  1  1  2  2\n     C    0  1  1  2  2  2     ← answer = 3 (LCS = 'GCA' or 'GAT' etc.)\n     \n    if s1[i]==s2[j]:  dp[i][j] = dp[i-1][j-1] + 1\n    else:             dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
+
+  "bracket-match": "  Stack of openers; on closer top must match:\n\n    s = ( [ { } ] )\n\n        push (        stack = [(\n          push [      stack = [(, [\n            push {    stack = [(, [, {\n              close } → top { matches → pop. stack = [(, [\n            close ] → top [ matches → pop.   stack = [(\n          close ) → top ( matches → pop.    stack = []\n\n    empty stack at end ⇒ valid ✓",
+
+  "subset-combination": "  Backtrack include/exclude tree:\n\n    arr = [1, 2, 3]\n\n                       []\n                  ┌────┴────┐\n                 [1]       []\n               ┌──┴──┐   ┌──┴──┐\n             [1,2] [1]  [2]   []\n              / \\   / \\  / \\   / \\\n          [1,2,3][1,2][1,3][1][2,3][2][3][]\n\n    Each leaf = one subset (2^n total).",
+
+  "permutation": "  Used-set backtracking:\n\n    arr = [1, 2, 3]\n\n               ()\n        ┌──────┼──────┐\n       (1)    (2)    (3)\n      ┌─┴─┐  ┌─┴─┐  ┌─┴─┐\n    (1,2)(1,3)(2,1)(2,3)(3,1)(3,2)\n     │    │    │    │    │    │\n  (1,2,3)(1,3,2)... 6 leaves = 3!\n\n    On entry to depth d: try each unused element; recurse; un-mark.",
+
+  "knapsack-01": "  Reverse-iterate W to avoid reusing items:\n\n    items = [(w=1,v=1),(w=3,v=4),(w=4,v=5)]   capacity W=4\n\n    dp[W..0] (after each item):\n      init      :  0  0  0  0  0\n      after w=1 :  0  1  1  1  1\n      after w=3 :  0  1  1  4  5\n      after w=4 :  0  1  1  4  5  ← (5 from w=4 alone = 5; or w=3+w=1 = 5)\n\n    Answer dp[4] = 5.",
+
+  "knapsack-unbounded": "  Forward-iterate W to allow reusable items:\n\n    coins = [1, 2, 5]   amount = 11\n\n    dp[0..11] each tracks min coins:\n      0  1  2  3  4  5  6  7  8  9 10 11\n      0  1  1  2  2  1  2  2  3  3  2  3   ← answer dp[11] = 3 (5+5+1)\n\n    For each coin c, for w from c..target: dp[w] = min(dp[w], dp[w-c]+1).",
+
+  "interval-dp": "  Burst Balloons — outer loop = LENGTH:\n\n    balloons + sentinels = [1, B0, B1, B2, B3, 1]\n\n    dp[i][j] = max over LAST balloon k popped in (i..j):\n      dp[i][j] = max(dp[i][j], dp[i][k-1] + dp[k+1][j]\n                              + arr[i-1] * arr[k] * arr[j+1])\n\n    Length 1, then 2, then 3 ... → bottom-up to length n.\n    Outer L loop is the key — every sub-interval is solved first.",
+
+  "tree-dp": "  Post-order returning a tuple (House Robber III):\n\n              ●        Each node returns (rob, skip):\n             / \\         rob  = node.val + leftSkip + rightSkip\n            ●   ●        skip = max(leftRob,leftSkip)+max(rightRob,rightSkip)\n           / \\   \\\n          ●   ●   ●\n\n    Answer = max(root.rob, root.skip).",
+
+  "two-heap-median": "  Two halves balanced by size:\n\n    stream: 1, 5, 2, 4, 3\n\n    low (max-heap)   high (min-heap)     median\n    [1]                                    1\n    [1]               [5]                  (1+5)/2 = 3\n    [2,1]             [5]                  2\n    [2,1]             [4,5]                (2+4)/2 = 3\n    [3,1] [2 moved]   [4,5]                3       (rebalance after push)\n\n    Median = top of larger heap, or average of both tops when equal sizes.",
+
+  "k-way-merge": "  Heap of stream heads:\n\n    lists:\n      A: 1 → 4 → 7\n      B: 2 → 5 → 8\n      C: 3 → 6 → 9\n\n    heap = [(1,A), (2,B), (3,C)]\n    pop (1,A) → result=1; push (A.next=4)\n    heap = [(2,B), (3,C), (4,A)]\n    pop (2,B) → result=1,2; push (B.next=5)\n    ... → 1,2,3,4,5,6,7,8,9",
+
+  "tarjan-bridges": "  Bridge iff low[v] > disc[u]:\n\n      A─────B─────C\n             \\   /\n               D\n\n    DFS order: A(0)→B(1)→C(2)→D(3)→back to B\n    disc = [0,1,2,3]\n    low updates: low[D]=min(3, disc[B]=1)=1\n                 low[C]=min(2, low[D]=1)=1\n                 low[B]=min(1, low[C]=1)=1\n    Edge A-B: low[B]=1 > disc[A]=0 ✓ BRIDGE\n    Edge B-C: low[C]=1 = disc[B]=1 not bridge.",
+
+  "euler-tour": "  Hierholzer — DFS, post-order append, reverse:\n\n    Graph: A→B, A→C, B→A, C→D, D→A\n\n    stack=[A]; out=[]\n    visit A: edges left [B, C]. take B. stack=[A,B]\n    visit B: edges [A]. take A. stack=[A,B,A]\n    visit A: edges [C]. take C. stack=[A,B,A,C]\n    visit C: edges [D]. take D. stack=[A,B,A,C,D]\n    visit D: edges [A]. take A. stack=[A,B,A,C,D,A]\n    visit A: no edges. pop → out=[A]\n    ... continue popping until stack empty.\n    Reverse out → Euler path."
+}

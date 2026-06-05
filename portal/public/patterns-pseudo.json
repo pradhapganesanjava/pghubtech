@@ -97,5 +97,87 @@
 
   "string-match-kmp": "# Build LPS of pattern:\nlps = [0] * m; k = 0\nfor i in range(1, m):\n    while k > 0 and p[k] != p[i]: k = lps[k-1]\n    if p[k] == p[i]: k += 1\n    lps[i] = k\n# Scan text with fall-back:\nj = 0\nfor i in range(n):\n    while j > 0 and p[j] != t[i]: j = lps[j-1]\n    if p[j] == t[i]: j += 1\n    if j == m: return i - m + 1",
 
-  "tree-dp": "# House Robber III — post-order returning (rob, skip)\ndef f(node):\n    if not node: return (0, 0)\n    lr, ls = f(node.left)\n    rr, rs = f(node.right)\n    return (node.val + ls + rs, max(lr, ls) + max(rr, rs))\nreturn max(f(root))"
+  "tree-dp": "# House Robber III — post-order returning (rob, skip)\ndef f(node):\n    if not node: return (0, 0)\n    lr, ls = f(node.left)\n    rr, rs = f(node.right)\n    return (node.val + ls + rs, max(lr, ls) + max(rr, rs))\nreturn max(f(root))",
+
+  "cc-dfs-uf": "# Option A — DFS (graph is static):\nvisited = set(); cc = 0\ndef dfs(u):\n    visited.add(u)\n    for v in adj[u]:\n        if v not in visited: dfs(v)\nfor u in range(n):\n    if u not in visited:\n        dfs(u); cc += 1\n\n# Option B — Union-Find (edges arrive incrementally / online):\nuf = UnionFind(n)\nfor u, v in edges: uf.union(u, v)\ncc = len({uf.find(u) for u in range(n)})",
+
+  "cycle-3color": "WHITE, GRAY, BLACK = 0, 1, 2\ncolor = [WHITE] * n\ndef dfs(u):\n    color[u] = GRAY\n    for v in adj[u]:\n        if color[v] == GRAY: return True   # back-edge to in-stack = cycle\n        if color[v] == WHITE and dfs(v): return True\n    color[u] = BLACK\n    return False\nfor u in range(n):\n    if color[u] == WHITE and dfs(u): print('cycle')",
+
+  "bipartite": "color = {}        # node → 0 or 1\ndef bfs(src):\n    color[src] = 0\n    q = deque([src])\n    while q:\n        u = q.popleft()\n        for v in adj[u]:\n            if v not in color:\n                color[v] = 1 - color[u]; q.append(v)\n            elif color[v] == color[u]:\n                return False\n    return True\n# Run bfs from each unvisited (handles disconnected).",
+
+  "mst": "# Kruskal — sort edges, UF-union if disjoint\nedges.sort(key=lambda e: e.w)\nuf = UF(n); cost = 0\nfor u, v, w in edges:\n    if uf.union(u, v):\n        cost += w\nreturn cost\n\n# Prim — heap from any start\nimport heapq\nh = [(0, start)]; in_mst = set(); cost = 0\nwhile h:\n    w, u = heapq.heappop(h)\n    if u in in_mst: continue\n    in_mst.add(u); cost += w\n    for v, ew in adj[u]:\n        if v not in in_mst: heapq.heappush(h, (ew, v))",
+
+  "tp-fast-slow": "slow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast: break\nelse:\n    return None    # no cycle\n# Cycle exists — find start:\nslow = head\nwhile slow != fast:\n    slow, fast = slow.next, fast.next\nreturn slow",
+
+  "tp-merge-walk": "# Merge two sorted lists in place (from end if buffer overlap):\ni = j = k = 0\nwhile i < n and j < m:\n    if A[i] <= B[j]: out[k] = A[i]; i += 1\n    else:            out[k] = B[j]; j += 1\n    k += 1\nwhile i < n: out[k] = A[i]; i += 1; k += 1\nwhile j < m: out[k] = B[j]; j += 1; k += 1",
+
+  "sw-fixed": "# Init first window:\ns = sum(arr[:k])\nbest = s\nfor r in range(k, n):\n    s += arr[r] - arr[r-k]   # add right, drop left\n    best = max(best, s)",
+
+  "sw-at-most-k": "def atMost(K):\n    cnt = {}; distinct = 0; l = 0; res = 0\n    for r in range(n):\n        if cnt[a[r]] == 0: distinct += 1\n        cnt[a[r]] += 1\n        while distinct > K:\n            cnt[a[l]] -= 1\n            if cnt[a[l]] == 0: distinct -= 1\n            l += 1\n        res += r - l + 1   # all subarrays ending at r\n    return res\nreturn atMost(K) - atMost(K - 1)   # exactly K",
+
+  "bs-rotated": "lo, hi = 0, n - 1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if a[mid] == target: return mid\n    if a[lo] <= a[mid]:           # left half sorted\n        if a[lo] <= target < a[mid]: hi = mid - 1\n        else:                         lo = mid + 1\n    else:                          # right half sorted\n        if a[mid] < target <= a[hi]: lo = mid + 1\n        else:                         hi = mid - 1\nreturn -1",
+
+  "bs-partition-2sorted": "# Median of two sorted arrays in O(log min(m,n)):\nif len(A) > len(B): A, B = B, A\nm, n = len(A), len(B); half = (m + n + 1) // 2\nlo, hi = 0, m\nwhile lo <= hi:\n    i = (lo + hi) // 2; j = half - i\n    aL = A[i-1] if i > 0 else -inf\n    aR = A[i]   if i < m else  inf\n    bL = B[j-1] if j > 0 else -inf\n    bR = B[j]   if j < n else  inf\n    if aL <= bR and bL <= aR:\n        # found partition\n        if (m+n) % 2: return max(aL, bL)\n        return (max(aL, bL) + min(aR, bR)) / 2\n    elif aL > bR: hi = i - 1\n    else:          lo = i + 1",
+
+  "sort-and-sweep": "# Merge intervals (sort by START):\nintervals.sort(key=lambda x: x[0])\nout = [intervals[0]]\nfor s, e in intervals[1:]:\n    if s <= out[-1][1]:\n        out[-1][1] = max(out[-1][1], e)   # extend\n    else:\n        out.append([s, e])               # new",
+
+  "exchange-argument": "# Largest Number (e.g. [3, 30, 34, 5, 9] → '9534330'):\nfrom functools import cmp_to_key\nstrs = list(map(str, nums))\nstrs.sort(key=cmp_to_key(lambda a, b: -1 if a+b > b+a else 1))\nreturn ''.join(strs).lstrip('0') or '0'",
+
+  "running-extreme": "# Best Time to Buy / Sell Stock:\nlo = inf; best = 0\nfor x in prices:\n    lo  = min(lo, x)\n    best = max(best, x - lo)",
+
+  "greedy-end-sorted": "# Non-overlapping intervals (max selection):\nintervals.sort(key=lambda x: x[1])     # sort by END\nkept = 1; cur_end = intervals[0][1]\nfor s, e in intervals[1:]:\n    if s >= cur_end:                    # disjoint → take it\n        kept += 1; cur_end = e\nreturn n - kept                          # min removals",
+
+  "xor-cancel": "# Single Number (every other appears twice):\nans = 0\nfor x in nums:\n    ans ^= x\nreturn ans",
+
+  "kernighan-popcount": "cnt = 0\nwhile n:\n    n &= n - 1   # drop lowest set bit\n    cnt += 1\nreturn cnt",
+
+  "sieve": "is_prime = [True] * (N + 1)\nis_prime[0] = is_prime[1] = False\nfor p in range(2, int(N**0.5) + 1):\n    if is_prime[p]:\n        for q in range(p*p, N + 1, p):\n            is_prime[q] = False",
+
+  "fast-power": "def power(a, n, mod=None):\n    res = 1\n    while n:\n        if n & 1: res = res * a if mod is None else (res * a) % mod\n        a = a * a if mod is None else (a * a) % mod\n        n >>= 1\n    return res",
+
+  "gcd-lcm": "def gcd(a, b):\n    while b: a, b = b, a % b\n    return a\ndef lcm(a, b): return a * b // gcd(a, b)",
+
+  "sort-then-twoptr": "nums.sort()\nl, r = 0, n - 1\nwhile l < r:\n    s = nums[l] + nums[r]\n    if s == target: return [l, r]\n    if s < target: l += 1\n    else:          r -= 1",
+
+  "bucket-sort-freq": "# Top-K frequent in O(n) when freq fits in [0..n]:\ncnt = Counter(nums)\nbuckets = [[] for _ in range(n + 1)]\nfor x, f in cnt.items(): buckets[f].append(x)\nres = []\nfor f in range(n, 0, -1):\n    res.extend(buckets[f])\n    if len(res) >= k: return res[:k]",
+
+  "quickselect": "def qs(lo, hi, k):\n    if lo == hi: return\n    p = partition(lo, hi)         # Lomuto/Hoare\n    if   p == k: return\n    elif p > k: qs(lo, p - 1, k)\n    else:       qs(p + 1, hi, k)\nqs(0, n - 1, k - 1)\nreturn nums[k - 1]",
+
+  "merge-sort-counting": "# Count smaller-after-self via merge sort:\ndef sort(arr_with_idx):\n    if len(arr_with_idx) <= 1: return arr_with_idx\n    mid = len(arr_with_idx) // 2\n    L = sort(arr_with_idx[:mid])\n    R = sort(arr_with_idx[mid:])\n    # Merge: when pulling from L, count remaining R already smaller.\n    return merge_counting(L, R)",
+
+  "ps-hashmap": "# 1D, subarray sum = K:\npre = 0\ncnt = {0: 1}      # empty prefix\nans = 0\nfor x in arr:\n    pre += x\n    ans += cnt.get(pre - K, 0)\n    cnt[pre] = cnt.get(pre, 0) + 1\nreturn ans",
+
+  "difference-array": "# Range increments + 1 final sweep:\nd = [0] * (n + 1)\nfor l, r, val in updates:\n    d[l]     += val\n    d[r + 1] -= val\n# Convert to actual via prefix sum:\nfor i in range(1, n):\n    d[i] += d[i-1]",
+
+  "dfs-grid-flood": "def flood(r, c, target, mark):\n    if not (0 <= r < R and 0 <= c < C): return 0\n    if grid[r][c] != target: return 0\n    grid[r][c] = mark    # mark visited in-place\n    return 1 + sum(flood(r + dr, c + dc, target, mark)\n                    for dr, dc in [(1,0),(-1,0),(0,1),(0,-1)])",
+
+  "dfs-backtrack-undo": "def bt(path):\n    if goal(path): emit(path); return\n    for choice in candidates(path):\n        path.append(choice)\n        bt(path)\n        path.pop()                # UNDO",
+
+  "dfs-iterative-stack": "stack = [root]\nwhile stack:\n    u = stack.pop()\n    visit(u)\n    # Push children REVERSE so left pops first (preorder):\n    for c in reversed(u.children): stack.append(c)",
+
+  "dfs-parallel-trees": "def f(a, b):\n    if not a or not b: return a == b      # both null = equal\n    if a.val != b.val: return False\n    return f(a.left, b.left) and f(a.right, b.right)\n\n# Mirror variant: f(a.left, b.right) and f(a.right, b.left)",
+
+  "dfs-tree-mutate": "def trim(node, lo, hi):    # e.g. trim BST to [lo, hi]\n    if not node: return None\n    if node.val < lo: return trim(node.right, lo, hi)\n    if node.val > hi: return trim(node.left,  lo, hi)\n    node.left  = trim(node.left,  lo, hi)\n    node.right = trim(node.right, lo, hi)\n    return node                # parent re-links via the return value",
+
+  "bfs-multi-source": "q = deque(all_sources)\nfor s in all_sources: dist[s] = 0\nwhile q:\n    u = q.popleft()\n    for v in neighbors(u):\n        if dist[v] is None:\n            dist[v] = dist[u] + 1\n            q.append(v)",
+
+  "bfs-bidirectional": "front = {start: 0}; back = {end: 0}\nwhile front and back:\n    # Always expand the SMALLER frontier:\n    if len(front) > len(back): front, back = back, front\n    nxt = {}\n    for u, d in front.items():\n        for v in neighbors(u):\n            if v in back: return d + back[v] + 1\n            if v not in nxt and v not in front: nxt[v] = d + 1\n    front = nxt\nreturn -1",
+
+  "bfs-zero-one": "from collections import deque\ndq = deque([start])\ndist = {start: 0}\nwhile dq:\n    u = dq.popleft()\n    for v, w in adj[u]:\n        nd = dist[u] + w\n        if v not in dist or nd < dist[v]:\n            dist[v] = nd\n            if w == 0: dq.appendleft(v)    # free hop\n            else:      dq.append(v)",
+
+  "bfs-position-tracked": "from collections import deque\nq = deque([(root, 0)])\nwhile q:\n    sz = len(q); first = last = None\n    for _ in range(sz):\n        node, pos = q.popleft()\n        if first is None: first = pos\n        last = pos\n        if node.left:  q.append((node.left,  2*pos))\n        if node.right: q.append((node.right, 2*pos + 1))\n    width = last - first + 1\n    best = max(best, width)",
+
+  "bfs-level-connect": "# O(1) space — use already-built next pointers from prev level:\nleftmost = root\nwhile leftmost:\n    cur = leftmost; prev = None; head_next = None\n    while cur:\n        for child in (cur.left, cur.right):\n            if child:\n                if prev: prev.next = child\n                else:    head_next = child\n                prev = child\n        cur = cur.next\n    leftmost = head_next",
+
+  "bfs-encoded-state": "# Sliding puzzle: board as joined string state\ntarget = '123450'\nstart  = ''.join(str(x) for row in board for x in row)\nq = deque([(start, 0)])\nseen = {start}\nMOVES = {0:[1,3], 1:[0,2,4], 2:[1,5], 3:[0,4], 4:[1,3,5], 5:[2,4]}\nwhile q:\n    s, d = q.popleft()\n    if s == target: return d\n    i = s.index('0')\n    for j in MOVES[i]:\n        ns = list(s); ns[i], ns[j] = ns[j], ns[i]; ns = ''.join(ns)\n        if ns not in seen: seen.add(ns); q.append((ns, d+1))",
+
+  "bfs-state-augmented": "# Shortest path with k erasures allowed:\nq = deque([(0, 0, k)])\nseen = {(0, 0, k)}\nwhile q:\n    r, c, k = q.popleft()\n    if (r, c) == (R-1, C-1): return d\n    for dr, dc in DIRS:\n        nr, nc = r+dr, c+dc\n        if 0 <= nr < R and 0 <= nc < C:\n            nk = k - grid[nr][nc]   # subtract if obstacle\n            if nk >= 0 and (nr, nc, nk) not in seen:\n                seen.add((nr, nc, nk)); q.append((nr, nc, nk))",
+
+  "monotonic-stack-2pass": "# Sum of subarray minimums:\nprev_less = [-1] * n; stack = []\nfor i in range(n):\n    while stack and a[stack[-1]] >= a[i]: stack.pop()\n    prev_less[i] = stack[-1] if stack else -1\n    stack.append(i)\nstack.clear()\nnext_less = [n]  * n\nfor i in range(n - 1, -1, -1):\n    while stack and a[stack[-1]] > a[i]: stack.pop()\n    next_less[i] = stack[-1] if stack else n\n    stack.append(i)\nans = sum(a[i] * (i - prev_less[i]) * (next_less[i] - i) for i in range(n))",
+
+  "parens-rewrite": "# Remove K adjacent duplicates:\nstack = []   # of (char, count)\nfor c in s:\n    if stack and stack[-1][0] == c:\n        stack[-1] = (c, stack[-1][1] + 1)\n        if stack[-1][1] == k: stack.pop()\n    else:\n        stack.append((c, 1))\nreturn ''.join(c * cnt for c, cnt in stack)",
+
+  "expression-eval": "# Basic Calc II (+, -, *, /):\nstack = []; num = 0; sign = '+'\nfor i, c in enumerate(s):\n    if c.isdigit(): num = num * 10 + int(c)\n    if c in '+-*/' or i == len(s)-1:\n        if   sign == '+': stack.append(num)\n        elif sign == '-': stack.append(-num)\n        elif sign == '*': stack.append(stack.pop() * num)\n        elif sign == '/': stack.append(int(stack.pop() / num))\n        sign = c; num = 0\nreturn sum(stack)",
+
+  "trie-grid-dfs": "# Build trie of words, DFS the grid:\ndef dfs(r, c, node):\n    ch = grid[r][c]\n    if ch not in node.children: return\n    nxt = node.children[ch]\n    if nxt.word:\n        found.append(nxt.word); nxt.word = None    # dedupe\n    grid[r][c] = '#'\n    for dr, dc in DIRS:\n        nr, nc = r+dr, c+dc\n        if 0 <= nr < R and 0 <= nc < C and grid[nr][nc] != '#':\n            dfs(nr, nc, nxt)\n    grid[r][c] = ch\n    if not nxt.children: del node.children[ch]    # prune"
 }
