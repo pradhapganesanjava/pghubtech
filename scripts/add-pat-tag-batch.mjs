@@ -42,48 +42,100 @@ const COL_TAGS = 7   // H
 // weren't previously anchored. Each tag uses the 4-segment form so the
 // derived maps in patterns.html pick them up directly.
 const BATCH = {
-  // 17 Letter Combinations of a Phone Number — string × backtracking
-  17:  ['pat_ds::string::backtrack::permutation'],
-  // 22 Generate Parentheses — string × backtracking (build with constraints)
-  22:  ['pat_ds::string::backtrack::partition-on-string'],
-  // 55 Jump Game — array × greedy (running max reach)
-  55:  ['pat_ds::array::greedy::running-extreme'],
-  // 101 Symmetric Tree — tree × DFS (mirror-recurse)
-  101: ['pat_ds::tree::dfs::dfs-template'],
-  // 114 Flatten Binary Tree to Linked List — tree × DFS pre-order
-  114: ['pat_ds::tree::dfs::dfs-tree-orders'],
-  // 128 Longest Consecutive Sequence — array × hash (seen-set, expand chains)
-  128: ['pat_ds::array::hash::seen-set'],
-  // 138 Copy List with Random Pointer — linked-list × hash (node→clone map)
-  138: ['pat_ds::linked-list::hash::seen-set'],
-  // 148 Sort List — linked-list × sorting (merge sort on lists)
-  148: ['pat_ds::linked-list::sorting::merge-sort-counting'],
-  // 238 Product of Array Except Self — array × prefix-sum family (prefix×suffix product)
-  238: ['pat_ds::array::prefix-sum::ps-1d'],
-  // 581 Shortest Unsorted Continuous Subarray — array × monotonic stack (or sort)
-  581: ['pat_ds::array::stack-topic::monotonic-stack'],
-  // 617 Merge Two Binary Trees — tree × DFS (parallel recurse)
-  617: ['pat_ds::tree::dfs::dfs-template'],
-  // 763 Partition Labels — string × greedy (last-occurrence sweep)
-  763: ['pat_ds::string::greedy::sort-and-sweep'],
-  // 994 Rotting Oranges — matrices × BFS (multi-source)
-  994: ['pat_ds::matrices::bfs::bfs-multi-source'],
-  // 215 Kth Largest Element — array × heap top-K (already partially anchored)
-  // skip — already in CSV
-  // 53 Maximum Subarray — already core under array kadane
-  // 56 Merge Intervals — already in greedy::sort-and-sweep
-  // 200 Number of Islands — already DFS template, also add grid-flood
-  200: ['pat_ds::matrices::dfs::dfs-grid-flood'],
-  // 1143 Longest Common Subsequence — string × DP 2D
-  1143:['pat_ds::string::dp::dp-2-strings'],
-  // 309 Best Time Buy Sell with Cooldown — array × DP state-machine (already anchored, dup-safe)
-  309: ['pat_ds::array::dp::state-machine-dp'],
-  // 416 Partition Equal Subset Sum — array × 0/1 knapsack (already anchored)
-  416: ['pat_ds::array::dp::knapsack-01'],
-  // 287 Find the Duplicate Number — array × index-as-hash AND two-ptr fast-slow
-  287: ['pat_ds::array::two-pointers::tp-fast-slow'],
-  // 11 Container With Most Water — array × converging two pointers (already anchored, dup-safe)
-  11:  ['pat_ds::array::two-pointers::tp-converging'],
+  // ── Batch 1 (already applied, kept idempotent) ───────────────────────
+  17:  ['pat_ds::string::backtrack::permutation'],                  // Letter Combinations Phone
+  22:  ['pat_ds::string::backtrack::partition-on-string'],          // Generate Parentheses
+  55:  ['pat_ds::array::greedy::running-extreme'],                   // Jump Game
+  101: ['pat_ds::tree::dfs::dfs-template'],                          // Symmetric Tree
+  114: ['pat_ds::tree::dfs::dfs-tree-orders'],                       // Flatten BT to LL
+  128: ['pat_ds::array::hash::seen-set'],                            // Longest Consecutive
+  138: ['pat_ds::linked-list::hash::seen-set'],                      // Copy List Random Ptr
+  148: ['pat_ds::linked-list::sorting::merge-sort-counting'],        // Sort List
+  238: ['pat_ds::array::prefix-sum::ps-1d'],                         // Product Except Self
+  581: ['pat_ds::array::stack-topic::monotonic-stack'],              // Shortest Unsorted Subarr
+  617: ['pat_ds::tree::dfs::dfs-template'],                          // Merge Two BTs
+  763: ['pat_ds::string::greedy::sort-and-sweep'],                   // Partition Labels
+  994: ['pat_ds::matrices::bfs::bfs-multi-source'],                  // Rotting Oranges
+  200: ['pat_ds::matrices::dfs::dfs-grid-flood'],                    // Number of Islands +grid
+  1143:['pat_ds::string::dp::dp-2-strings'],                          // LCS
+  309: ['pat_ds::array::dp::state-machine-dp'],                      // Stock Cooldown
+  416: ['pat_ds::array::dp::knapsack-01'],                            // Partition Equal Subset
+  287: ['pat_ds::array::two-pointers::tp-fast-slow'],                // Find Duplicate
+  11:  ['pat_ds::array::two-pointers::tp-converging'],               // Container With Water
+
+  // ── Batch 2 (this turn — Top 100 Liked, ~50 new anchors) ─────────────
+  // Linked-list family
+  24:  ['pat_ds::linked-list::core::iterative-reverse'],             // Swap Nodes in Pairs
+  61:  ['pat_ds::linked-list::two-pointers::tp-fast-slow'],          // Rotate List
+  86:  ['pat_ds::linked-list::two-pointers::tp-fast-slow'],          // Partition List
+  143: ['pat_ds::linked-list::core::slow-fast-middle'],              // Reorder List
+  203: ['pat_ds::linked-list::core::dummy-head-merge'],              // Remove LL Elements
+  328: ['pat_ds::linked-list::two-pointers::tp-fast-slow'],          // Odd Even LL
+
+  // Binary tree DFS / BFS
+  100: ['pat_ds::tree::dfs::dfs-template'],                          // Same Tree
+  111: ['pat_ds::tree::bfs::bfs-level-order'],                       // Min Depth of BT
+  116: ['pat_ds::tree::bfs::bfs-level-order'],                       // Populating Next Right Ptr
+  117: ['pat_ds::tree::bfs::bfs-level-order'],                       // Populating Next Right Ptr II
+  144: ['pat_ds::tree::dfs::dfs-tree-orders'],                       // BT Preorder
+  145: ['pat_ds::tree::dfs::dfs-tree-orders'],                       // BT Postorder
+  226: ['pat_ds::tree::dfs::dfs-template'],                          // Invert BT
+  404: ['pat_ds::tree::dfs::dfs-template'],                          // Sum of Left Leaves
+  662: ['pat_ds::tree::bfs::bfs-level-order'],                       // Max Width of BT
+  958: ['pat_ds::tree::bfs::bfs-level-order'],                       // Check Completeness BT
+  988: ['pat_ds::tree::dfs::dfs-tree-orders'],                       // Smallest String From Leaf
+  1110:['pat_ds::tree::dfs::dfs-template'],                          // Delete Nodes Return Forest
+
+  // BST
+  99:  ['pat_ds::bst::core::inorder-bst'],                            // Recover BST
+  669: ['pat_ds::bst::core::bst-insert-delete'],                      // Trim BST
+
+  // Array search / partition
+  4:   ['pat_ds::array::binary-search::bs-on-answer'],                // Median 2 Sorted Arrays
+  45:  ['pat_ds::array::greedy::running-extreme'],                   // Jump Game II
+  134: ['pat_ds::array::greedy::running-extreme'],                   // Gas Station
+  228: ['pat_ds::array::core::in-place-read-write'],                  // Summary Ranges
+  229: ['pat_ds::array::hash::freq-counter'],                         // Majority Element II
+  349: ['pat_ds::array::hash::seen-set'],                             // Intersection 2 Arrays
+  456: ['pat_ds::array::stack-topic::monotonic-stack'],              // 132 Pattern
+  540: ['pat_ds::array::binary-search::bs-textbook'],                 // Single Element Sorted Array
+  658: ['pat_ds::array::two-pointers::tp-converging'],               // K Closest Elements
+  719: ['pat_ds::array::binary-search::bs-on-answer'],                // K-th Smallest Pair Distance
+  852: ['pat_ds::array::binary-search::bs-rotated'],                  // Peak Index Mountain
+  948: ['pat_ds::array::greedy::sort-and-sweep'],                    // Bag of Tokens
+  977: ['pat_ds::array::two-pointers::tp-converging'],               // Squares of Sorted Array
+
+  // Array DP
+  77:  ['pat_ds::array::backtrack::subset-combination'],             // Combinations
+  118: ['pat_ds::array::dp::dp-1d-linear'],                           // Pascal's Triangle
+  119: ['pat_ds::array::dp::dp-1d-linear'],                           // Pascal's Triangle II
+  120: ['pat_ds::array::dp::dp-1d-linear'],                           // Triangle (bottom-up)
+
+  // Matrices
+  36:  ['pat_ds::matrices::hash::seen-set'],                          // Valid Sudoku
+  74:  ['pat_ds::matrices::binary-search::bs-textbook'],              // Search 2D Matrix
+  240: ['pat_ds::matrices::binary-search::bs-textbook'],              // Search 2D Matrix II
+
+  // String — sliding window / two-pointers / parsing
+  301: ['pat_ds::string::backtrack::partition-on-string'],           // Remove Invalid Parens
+  344: ['pat_ds::string::two-pointers::tp-converging'],              // Reverse String
+  345: ['pat_ds::string::two-pointers::tp-converging'],              // Reverse Vowels
+  424: ['pat_ds::string::sliding-window::sw-shrink-violation'],     // Longest Repeating Char Replacement
+  844: ['pat_ds::string::stack-topic::parens-rewrite'],              // Backspace String Compare
+  890: ['pat_ds::string::hash::freq-counter'],                       // Find and Replace Pattern
+  1004:['pat_ds::array::sliding-window::sw-shrink-violation'],     // Max Consecutive Ones III
+
+  // String — sorting / heap
+  767: ['pat_ds::string::heap::top-k'],                               // Reorganize String
+
+  // Graph
+  815: ['pat_ds::graph::bfs::bfs-shortest-unweighted'],              // Bus Routes
+  841: ['pat_ds::graph::dfs::dfs-template'],                          // Keys and Rooms
+  947: ['pat_ds::graph::union-find::uf-with-size'],                   // Most Stones Removed
+  721: ['pat_ds::graph::union-find::uf-with-size'],                   // Accounts Merge (UF on emails)
+
+  // Greedy on arrays / intervals
+  1024:['pat_ds::array::greedy::sort-and-sweep'],                    // Video Stitching
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
