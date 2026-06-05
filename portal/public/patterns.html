@@ -66,6 +66,18 @@
   .tree-l2 { display: block; padding: 3px 8px; color: var(--text2); cursor: pointer; border-radius: 4px; font-size: 12px; }
   .tree-l2:hover { background: var(--bg3); color: var(--text); }
   .tree-l2.active { background: rgba(91,141,239,.18); color: var(--primary); }
+  /* ── DS-tab linked topics: header + nested L3 micros ───────────────── */
+  .tree-topics-hdr { font-size: 9px; color: var(--text3); padding: 8px 8px 2px; text-transform: uppercase; letter-spacing: .6px; }
+  .tree-topic-row { display: flex; align-items: center; gap: 6px; padding: 3px 8px; cursor: pointer; user-select: none; border-radius: 4px; font-size: 12px; color: var(--text2); }
+  .tree-topic-row:hover { background: var(--bg3); color: var(--text); }
+  .tree-topic-row .caret { color: var(--text3); transition: transform .15s; font-size: 9px; }
+  .tree-topic-row.expanded .caret { transform: rotate(90deg); }
+  .tree-topic-row .ico { font-size: 12px; }
+  .tree-topic-row .count { margin-left: auto; font-size: 9px; color: var(--text3); padding: 1px 4px; background: var(--bg3); border-radius: 8px; }
+  .tree-l3-wrap { display: none; padding-left: 18px; border-left: 1px dotted var(--border); margin: 1px 0 2px 10px; }
+  .tree-topic-row.expanded + .tree-l3-wrap { display: block; }
+  .tree-l3 { display: block; padding: 2px 8px; color: var(--text2); cursor: pointer; border-radius: 4px; font-size: 11px; }
+  .tree-l3:hover { background: var(--bg3); color: var(--text); }
   .flat-list { padding: 4px 6px 40px; }
   .flat-list .flat-item { display: block; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text2); font-size: 12px; }
   .flat-list .flat-item:hover { background: var(--bg3); color: var(--text); }
@@ -114,6 +126,15 @@
   .home-card h4 { margin: 0 0 4px; font-size: 14px; }
   .home-card .meta { color: var(--text3); font-size: 11px; margin-top: 4px; }
   .home-card .micro-count { color: var(--primary); font-size: 12px; font-weight: 600; }
+  /* ── DS detail pane: embedded topic blocks ────────────────────────── */
+  .ds-topic-block { margin-top: 36px; padding-top: 12px; border-top: 2px solid var(--border); }
+  .ds-topic-hd { display: flex !important; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+                 margin: 4px 0 6px !important; border-bottom: none !important; padding-bottom: 0 !important; font-size: 15px !important; }
+  .ds-topic-hd .ds-topic-ico { font-size: 16px; margin-right: 4px; }
+  .ds-topic-hd .ds-topic-count { color: var(--text3); font-size: 11px; margin-left: 6px; font-weight: 400; }
+  .ds-topic-hd .topic-jump { font-size: 11px; color: var(--text3); padding: 3px 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; }
+  .ds-topic-hd .topic-jump:hover { color: var(--primary); border-color: var(--primary); text-decoration: none; }
+  .hd-count { color: var(--text3); font-size: 11px; font-weight: 400; margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -1083,6 +1104,31 @@ const PATTERNS = [
   },
 ]
 
+// ── DS ↔ Topic cross-link ────────────────────────────────────────────────
+// Each DS pattern lists the Topic patterns whose techniques commonly show
+// up on that DS. The same topic appears under multiple DSes — that's the
+// point: when browsing "Array" you see every applicable topic with its
+// full micro set, without having to remember to flip to the Topic tab.
+//
+// The Topic tab still owns the source-of-truth view (one topic, all DSes).
+const DS_TOPIC_LINKS = {
+  'array':       ['hash', 'two-pointers', 'sliding-window', 'binary-search', 'sorting', 'prefix-sum', 'dp', 'greedy', 'stack-topic', 'deque-topic', 'math', 'bits'],
+  'string':      ['hash', 'two-pointers', 'sliding-window', 'dp', 'trie-topic', 'stack-topic', 'bfs', 'backtrack'],
+  'linked-list': ['two-pointers', 'hash', 'sorting'],
+  'tree':        ['dfs', 'bfs', 'dp', 'backtrack'],
+  'bst':         ['dfs', 'binary-search'],
+  'graph':       ['dfs', 'bfs', 'union-find', 'heap', 'dp', 'greedy'],
+  'matrices':    ['dfs', 'bfs', 'dp', 'prefix-sum'],
+  'stack':       ['stack-topic'],
+  'queue':       ['bfs', 'deque-topic'],
+  'trie':        ['trie-topic', 'dfs'],
+}
+
+function linkedTopics(dsId) {
+  const ids = DS_TOPIC_LINKS[dsId] || []
+  return ids.map(id => PATTERNS.find(p => p.id === id)).filter(Boolean)
+}
+
 // ── Render ───────────────────────────────────────────────────────────────
 let view = 'tree'         // 'tree' | 'flat'
 let activeTab = 'ds'      // 'ds' | 'topic' — filters which PATTERNS show
@@ -1160,6 +1206,76 @@ function renderTree(root, filter) {
       l2.onclick = e => { e.preventDefault(); selectPattern(p.id, m.id) }
       sub.appendChild(l2)
     })
+
+    // ─── DS-tab only: linked topics for this DS as expandable rows ────
+    // Each topic chip can be expanded inline to show that topic's micros
+    // nested underneath — matches the "every topic might have micro
+    // patterns underneath" mental model the user asked for.
+    if (activeTab === 'ds') {
+      const topics = linkedTopics(p.id)
+      if (topics.length) {
+        const hdr = document.createElement('div')
+        hdr.className = 'tree-topics-hdr'
+        hdr.textContent = `Topics that apply (${topics.length})`
+        sub.appendChild(hdr)
+
+        topics.forEach(t => {
+          // Honour the search filter for embedded topics too.
+          const tMatches = !filter
+            || t.name.toLowerCase().includes(filter)
+            || t.micros.some(m => m.name.toLowerCase().includes(filter))
+          if (!tMatches) return
+
+          // Topic header row — click toggles inline expansion, anchor link
+          // jumps to that section in the DS main pane.
+          const tHdr = document.createElement('div')
+          tHdr.className = 'tree-topic-row'
+          tHdr.innerHTML = `
+            <span class="caret">▶</span>
+            <span class="ico">${t.icon}</span>
+            <span class="lbl">${t.name}</span>
+            <span class="count">${t.micros.length}</span>`
+          tHdr.onclick = () => {
+            tHdr.classList.toggle('expanded')
+            // Also scroll the main-pane to the matching topic section.
+            if (activePatternId === p.id) {
+              const el = document.getElementById(`ds-topic-${p.id}-${t.id}`)
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          }
+          sub.appendChild(tHdr)
+
+          // L3 wrap with the topic's own micros (deeper indent).
+          const tSub = document.createElement('div')
+          tSub.className = 'tree-l3-wrap'
+          t.micros.forEach(m => {
+            if (filter && !m.name.toLowerCase().includes(filter) && !t.name.toLowerCase().includes(filter)) return
+            const l3 = document.createElement('a')
+            l3.className = 'tree-l3'
+            l3.href = `#topic/${t.id}/${m.id}`
+            l3.textContent = m.name
+            l3.onclick = e => {
+              e.preventDefault()
+              // Scroll to that card inside the current DS pane (don't
+              // navigate away — user said "show the topic UNDER the DS").
+              if (activePatternId === p.id) {
+                const el = document.getElementById(`m-${t.id}-${m.id}`)
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              } else {
+                selectPattern(p.id)
+                setTimeout(() => {
+                  const el = document.getElementById(`m-${t.id}-${m.id}`)
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 60)
+              }
+            }
+            tSub.appendChild(l3)
+          })
+          sub.appendChild(tSub)
+        })
+      }
+    }
+
     grp.appendChild(sub)
     root.appendChild(grp)
   })
@@ -1223,7 +1339,32 @@ function renderMain() {
   const p = PATTERNS.find(x => x.id === activePatternId)
   if (!p) { renderHome(main); return }
   const browseUrl = `adshub?q=${encodeURIComponent(p.topicTag || p.name)}`
-  const tabLabel = (p.tab || 'ds') === 'ds' ? '📦 Data Structure' : '🧰 Topic'
+  const isDS    = (p.tab || 'ds') === 'ds'
+  const tabLabel = isDS ? '📦 Data Structure' : '🧰 Topic'
+
+  // For DS patterns: embed the topics that apply to this DS (with their
+  // full micro card grids). For Topic patterns: just the core micros.
+  const topics = isDS ? linkedTopics(p.id) : []
+  const coreLabel = isDS && topics.length
+    ? `Core ${p.name} micros`
+    : `${p.micros.length} micro-patterns`
+
+  const topicSections = topics.map(t => `
+    <div class="ds-topic-block" id="ds-topic-${p.id}-${t.id}">
+      <h3 class="ds-topic-hd">
+        <span><span class="ds-topic-ico">${t.icon}</span> ${t.name}
+          <span class="ds-topic-count">${t.micros.length} micros</span>
+        </span>
+        <a class="topic-jump" href="#topic/${t.id}"
+           onclick="event.preventDefault(); selectPattern('${t.id}')">→ open in Topic tab</a>
+      </h3>
+      <p class="lede" style="margin-top:-2px">${t.intro}</p>
+      <div class="micro-grid">
+        ${t.micros.map(m => renderMicroCard(t, m)).join('')}
+      </div>
+    </div>
+  `).join('')
+
   main.innerHTML = `
     <div class="breadcrumb">${tabLabel}</div>
     <h2>${p.icon} ${p.name}</h2>
@@ -1232,10 +1373,11 @@ function renderMain() {
        onclick="onBrowseLinkClick(event, ${JSON.stringify(p.topicTag || p.name)})">
       ↗ Browse all "${p.topicTag || p.name}"-tagged problems in AdsHub
     </a>
-    <h3>${p.micros.length} micro-patterns</h3>
+    <h3>${coreLabel}${isDS && topics.length ? ` <span class="hd-count">(${p.micros.length})</span>` : ''}</h3>
     <div class="micro-grid">
       ${p.micros.map(m => renderMicroCard(p, m)).join('')}
     </div>
+    ${topicSections}
   `
 }
 
@@ -1299,13 +1441,15 @@ function renderHome(main) {
       Some categories (Stack, Trie) appear in both tabs with different micros — flip the tab to see the other side.
     </p>
     <div class="home-grid">
-      ${here.map(p => `
+      ${here.map(p => {
+        const tCount = isDS ? linkedTopics(p.id).length : 0
+        return `
         <div class="home-card" onclick="selectPattern('${p.id}')">
           <h4>${p.icon} ${p.name}</h4>
-          <div class="micro-count">${p.micros.length} micro-patterns</div>
+          <div class="micro-count">${p.micros.length} micro${tCount ? ` <span style="color:var(--text3);font-weight:400">· ${tCount} topics</span>` : ''}</div>
           <div class="meta">${p.intro.slice(0, 90)}${p.intro.length > 90 ? '…' : ''}</div>
-        </div>
-      `).join('')}
+        </div>`
+      }).join('')}
     </div>
     <h3>Tie back to AdsHub</h3>
     <p class="lede">
