@@ -10,12 +10,14 @@ import { csvFromRows, htmlToCsvText, downloadCsv } from '../lib/csvExport'
 
 // Filter state persisted across logout/login (see lib/persistedFilters.ts).
 const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
+// Difficulty filter switched from single 'All' | Easy | Med | Hard to a
+// multi-select set of {Easy, Medium, Hard}. Empty set ≡ 'All'.
 interface AdsHubFilters {
   tags: string[]; companies: string[]; list: string | null
-  diff: 'All' | 'Easy' | 'Medium' | 'Hard'; customOnly: boolean; search: string
+  diff: ('Easy' | 'Medium' | 'Hard')[]; customOnly: boolean; search: string
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
-  tags: [], companies: [], list: null, diff: 'All', customOnly: false, search: '',
+  tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -114,7 +116,7 @@ function splitNoteBody(body: string): { text: string; hw: string; hwDoc: HwDoc |
 // narrow it down and the toolbar shows the true match count.
 const LIST_CAP = 400
 
-const DIFFS = ['All', 'Easy', 'Medium', 'Hard'] as const
+const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
 
 function diffClass(d: string): string {
@@ -179,9 +181,31 @@ export default function AdsHubView() {
   // Persisted filter state — load once on mount; an effect below saves on
   // every change. Clear All resets state, the effect writes empty back so the
   // next session starts cleared too.
-  const _persisted = useMemo(() => loadFilters(ADSHUB_FILTERS_KEY, ADSHUB_FILTERS_DEFAULTS), [])
+  // Load persisted filters with a one-time migration of the legacy
+  // single-string diff ('All' | 'Easy' | …) to the new array shape.
+  const _persisted = useMemo(() => {
+    const raw = loadFilters(ADSHUB_FILTERS_KEY, ADSHUB_FILTERS_DEFAULTS)
+    const out = { ...raw } as AdsHubFilters
+    if (typeof (raw as unknown as { diff: unknown }).diff === 'string') {
+      const old = (raw as unknown as { diff: string }).diff
+      out.diff = old === 'All' || !old ? [] : [old as Diff]
+    }
+    if (!Array.isArray(out.diff)) out.diff = []
+    return out
+  }, [])
   const [search, setSearch]       = useState<string>(_persisted.search)
-  const [diff, setDiff]           = useState<Diff>(_persisted.diff)
+  const [diff, setDiff]           = useState<Diff[]>(_persisted.diff)
+  // Difficulty + Custom multi-select dropdown.
+  const [diffMenuOpen, setDiffMenuOpen] = useState(false)
+  const diffMenuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!diffMenuOpen) return
+    function onClick(e: MouseEvent) {
+      if (diffMenuRef.current && !diffMenuRef.current.contains(e.target as Node)) setDiffMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [diffMenuOpen])
   // Custom problems live at frontend_id >= 10000 (see scripts/add-custom-problem.mjs).
   // A toggle is friendlier than substring-searching "1000" (which only catches
   // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
@@ -525,7 +549,7 @@ export default function AdsHubView() {
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
     return problems.filter(p => {
-      if (diff !== 'All' && p.difficulty !== diff) return false
+      if (diff.length > 0 && !diff.includes(p.difficulty as Diff)) return false
       // Tags: AND across selections, prefix-matching the :: hierarchy.
       if (selectedTags.length > 0 &&
           !selectedTags.every(st => p.tags.some(t => t === st || t.startsWith(st + '::')))) return false
@@ -1203,6 +1227,17 @@ export default function AdsHubView() {
               className={`adshub-diff-pill${adsMode === 'lineage' ? ' active' : ''}`}
               onClick={() => setAdsMode('lineage')}
             >🌳 Lineage</button>
+            {/* Patterns launcher — opens the standalone DS→micro-pattern
+                reference (portal/public/patterns.html) in a new tab. Lives
+                here next to the mode toggles so it's discoverable but
+                doesn't change the active view. */}
+            <a
+              className="adshub-diff-pill"
+              href={`${import.meta.env.BASE_URL}patterns.html`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open the DS → micro-pattern reference (new tab)"
+            >📐 Patterns ↗</a>
           </div>
           {adsMode === 'browse' && <>
           <button
@@ -1212,20 +1247,53 @@ export default function AdsHubView() {
           >
             ☰ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
-          <div className="adshub-diff-pills">
-            {DIFFS.map(d => (
-              <button
-                key={d}
-                className={`adshub-diff-pill${diff === d ? ' active' : ''}${d !== 'All' ? ' ' + diffClass(d) : ''}`}
-                onClick={() => setDiff(d)}
-              >{d}</button>
-            ))}
-            {/* Custom-only chip — see all problems with frontend_id >= 10000. */}
+          {/* Multi-select dropdown: difficulty + ✨ Custom in one pill so
+              the toolbar stays compact. Empty diff ≡ All. Auto-applies on
+              every checkbox toggle. Click outside (or the trigger again)
+              to close. */}
+          <div className="adshub-diff-menu-wrap" ref={diffMenuRef}>
             <button
-              className={`adshub-diff-pill${customOnly ? ' active' : ''}`}
-              onClick={() => setCustomOnly(v => !v)}
-              title="Show only custom problems (id ≥ 10000)"
-            >✨ Custom</button>
+              className={`adshub-diff-pill${diff.length > 0 || customOnly ? ' active' : ''}`}
+              onClick={() => setDiffMenuOpen(o => !o)}
+              title="Filter by difficulty / custom"
+              aria-haspopup="true"
+              aria-expanded={diffMenuOpen}
+            >
+              {diff.length === 0 && !customOnly ? 'All' : [
+                diff.length === 0 ? null : diff.join(', '),
+                customOnly ? '✨ Custom' : null,
+              ].filter(Boolean).join(' · ')}
+              <span style={{ marginLeft: 6, opacity: .6 }}>▾</span>
+            </button>
+            {diffMenuOpen && (
+              <div className="adshub-diff-menu" role="menu">
+                {DIFFS.map(d => (
+                  <label key={d} className={`adshub-diff-menu-item ${diffClass(d)}`}>
+                    <input
+                      type="checkbox"
+                      checked={diff.includes(d)}
+                      onChange={() => setDiff(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
+                    />
+                    <span>{d}</span>
+                  </label>
+                ))}
+                <div className="adshub-diff-menu-sep" />
+                <label className="adshub-diff-menu-item">
+                  <input
+                    type="checkbox"
+                    checked={customOnly}
+                    onChange={() => setCustomOnly(v => !v)}
+                  />
+                  <span title="Custom problems live at frontend_id ≥ 10000">✨ Custom only</span>
+                </label>
+                {(diff.length > 0 || customOnly) && (
+                  <button
+                    className="adshub-diff-menu-clear"
+                    onClick={() => { setDiff([]); setCustomOnly(false) }}
+                  >Clear</button>
+                )}
+              </div>
+            )}
           </div>
           <input
             className="col-search"

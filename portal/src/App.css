@@ -4168,6 +4168,31 @@ body.resizing-h * {
   border: 1px solid var(--border); cursor: pointer; transition: all .12s;
 }
 .adshub-diff-pill:hover { color: var(--text); }
+/* Difficulty + Custom multi-select dropdown */
+.adshub-diff-menu-wrap { position: relative; display: inline-flex; }
+.adshub-diff-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; min-width: 180px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  padding: 4px; z-index: 20;
+}
+.adshub-diff-menu-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  color: var(--text);
+}
+.adshub-diff-menu-item:hover { background: var(--bg3); }
+.adshub-diff-menu-item input[type=checkbox] { margin: 0; cursor: pointer; }
+.adshub-diff-menu-item.lc-easy span:last-child   { color: #21c46a; font-weight: 600; }
+.adshub-diff-menu-item.lc-medium span:last-child { color: #f0a020; font-weight: 600; }
+.adshub-diff-menu-item.lc-hard span:last-child   { color: #e34545; font-weight: 600; }
+.adshub-diff-menu-sep { height: 1px; background: var(--border); margin: 4px 0; }
+.adshub-diff-menu-clear {
+  display: block; width: 100%; margin-top: 4px; padding: 6px 10px;
+  background: transparent; border: 1px solid var(--border); color: var(--text2);
+  border-radius: 4px; cursor: pointer; font-size: 12px;
+}
+.adshub-diff-menu-clear:hover { background: var(--bg3); color: var(--text); }
 .adshub-diff-pill.active {
   background: rgba(var(--primary-rgb), .15); color: var(--primary);
   border-color: var(--primary);
