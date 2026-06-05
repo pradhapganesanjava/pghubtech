@@ -98,6 +98,13 @@
   .browse-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg3); border: 1px solid var(--border);
                  border-radius: 4px; font-size: 11px; color: var(--text2); margin-top: 6px; }
   .browse-link:hover { background: var(--primary); color: white; text-decoration: none; }
+  /* Main-pane "expand all notes" toggle — flips every per-micro
+     notes-block open at once for fast scanning. */
+  .expand-all-notes { display: inline-flex; align-items: center; padding: 4px 8px;
+                      background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+                      font-size: 11px; color: var(--text2); cursor: pointer; margin: 6px 0 0 6px;
+                      font-family: inherit; }
+  .expand-all-notes:hover { color: var(--primary); border-color: var(--primary); }
   /* Card min lowered from 380 → 280 so the grid still shows multiple
      columns at moderate widths and reflows to one column cleanly when
      the pane is squeezed (e.g. inside AdsHub's Patterns split). */
@@ -120,6 +127,22 @@
      per-problem application note. Subtle on purpose. */
   .anchor.has-note { border-bottom: 1px dotted var(--primary); }
   .anchor-has-note { color: var(--primary); margin-left: 3px; font-size: 9px; }
+  /* Per-micro "show notes" toggle + expandable block. Hidden by default
+     to keep the card compact; click expands an inline list of every
+     anchor's application note. */
+  .notes-toggle { background: none; border: none; color: var(--text3); cursor: pointer;
+                  font-size: 11px; margin-top: 10px; padding: 2px 0; font-family: inherit; }
+  .notes-toggle:hover { color: var(--primary); }
+  .notes-block { display: none; margin-top: 6px; padding: 8px 10px; background: var(--bg3);
+                 border-radius: 4px; font-size: 11.5px; line-height: 1.55; }
+  .micro.notes-open .notes-block { display: block; }
+  .note-line { padding: 3px 0; color: var(--text); display: flex; gap: 7px; align-items: baseline; }
+  .note-line + .note-line { border-top: 1px dashed var(--border); padding-top: 5px; margin-top: 3px; }
+  .note-line .note-id { font-family: monospace; color: var(--primary); font-weight: 600;
+                        text-decoration: none; min-width: 44px; }
+  .note-line .note-id:hover { text-decoration: underline; }
+  .note-line .note-prose { color: var(--text2); }
+  .note-line--empty .note-prose { color: var(--text3); font-style: italic; }
   .mobile-burger { display: none; position: fixed; top: 8px; left: 8px; z-index: 60; background: var(--bg2); border: 1px solid var(--border);
                    color: var(--text); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
   /* Burger shows when sidebar collapses (sync'd with the 700px breakpoint
@@ -1969,6 +1992,7 @@ function renderMain() {
        onclick="onBrowseLinkClick(event, ${JSON.stringify(p.topicTag || p.name)})">
       ↗ Browse all "${p.topicTag || p.name}"-tagged problems in AdsHub
     </a>
+    <button class="expand-all-notes" onclick="toggleAllNotes(this)">▾ expand all notes</button>
     <h3>${coreLabel}${((isDS&&topics.length)||(!isDS&&dses.length)) ? ` <span class="hd-count">(${p.micros.length})</span>` : ''}</h3>
     <div class="micro-grid">
       ${p.micros.map(m => renderMicroCard(p, m)).join('')}
@@ -1995,16 +2019,26 @@ function onBrowseLinkClick(e, q) {
   window.parent.postMessage({ type: 'pghub-search', q }, '*')
 }
 
+// Minimal HTML escape — used wherever user-facing prose (notes) goes
+// into the DOM. We're already producing HTML strings via template
+// literals so this is the right shape.
+function escHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
 function renderMicroCard(p, m, embeddedUnderDsId = null) {
   const ids   = anchorsFor(p, m, embeddedUnderDsId)
   const notes = PATTERN_NOTES[m.id] || {}
   const anchors = ids.map(id => {
-    // Per-(micro, lc) prose note — shown as tooltip on the chip. Notes
-    // explain HOW this micro's strategy applies to THIS problem (and call
-    // out cases where the tag works but isn't optimal — see seen-set on
-    // LC 287/141 where Floyd's is the better answer).
+    // Per-(micro, lc) prose note — shown as tooltip on the chip AND
+    // expanded inline below when the user clicks "show notes". Notes
+    // explain HOW this micro's strategy applies to THIS problem (and
+    // call out cases where the tag works but isn't optimal — see
+    // seen-set on LC 287/141 where Floyd's is the better answer).
     const note = notes[id]
-    const titleAttr = note ? ` title="${note.replace(/"/g, '&quot;')}"` : ''
+    const titleAttr = note ? ` title="${escHtml(note)}"` : ''
     const dot = note ? '<span class="anchor-has-note">·</span>' : ''
     return `
     <a class="anchor${note ? ' has-note' : ''}" href="adshub?id=${id}" target="_blank" rel="noopener"
@@ -2012,6 +2046,25 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
       <span class="num">#${id}</span>${dot}
     </a>`
   }).join('')
+
+  // Build an inline notes-block listing every anchor's prose application.
+  // Hidden by default; the "show notes" button toggles a .notes-open class
+  // on the parent .micro. Each line: bold #LCID + the application note.
+  // Anchors without a note are still listed (just dimmer + "—") so the
+  // user can see gaps to fill.
+  const noted = ids.filter(id => notes[id])
+  let notesBlock = ''
+  if (noted.length) {
+    const lines = ids.map(id => {
+      const n = notes[id]
+      if (n) return `<div class="note-line"><a class="note-id" href="adshub?id=${id}" target="_blank" rel="noopener" onclick="onAnchorClick(event, ${id})">#${id}</a> <span class="note-prose">${escHtml(n)}</span></div>`
+      return `<div class="note-line note-line--empty"><a class="note-id" href="adshub?id=${id}" target="_blank" rel="noopener" onclick="onAnchorClick(event, ${id})">#${id}</a> <span class="note-prose">—</span></div>`
+    }).join('')
+    notesBlock = `
+      <button class="notes-toggle" onclick="toggleNotes(this)" data-show-count="${noted.length}">▾ show ${noted.length} note${noted.length>1?'s':''}</button>
+      <div class="notes-block">${lines}</div>`
+  }
+
   return `
     <div class="micro" id="m-${p.id}-${m.id}">
       <h4><span class="id">${m.id}</span>${m.name}</h4>
@@ -2020,8 +2073,40 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
       <div class="meta"><strong>Cost:</strong> ${m.cost}</div>
       <p class="contrast"><strong>Contrast:</strong> ${m.contrast}</p>
       <div class="anchor-list">${anchors}</div>
+      ${notesBlock}
     </div>
   `
+}
+
+// Toggle the .notes-open class on the micro card; flip the button label.
+function toggleNotes(btn) {
+  const card = btn.closest('.micro')
+  card.classList.toggle('notes-open')
+  const open  = card.classList.contains('notes-open')
+  const count = btn.dataset.showCount
+  btn.textContent = open
+    ? `▴ hide ${count} note${count>1?'s':''}`
+    : `▾ show ${count} note${count>1?'s':''}`
+}
+
+// Expand-all toggle in the main pane header — flip every per-micro
+// notes-block open/closed in one shot.
+function toggleAllNotes(btn) {
+  const main  = btn.closest('.main') || document
+  const cards = main.querySelectorAll('.micro')
+  const anyClosed = [...cards].some(c => c.querySelector('.notes-toggle') && !c.classList.contains('notes-open'))
+  cards.forEach(c => {
+    const t = c.querySelector('.notes-toggle')
+    if (!t) return
+    if (anyClosed) c.classList.add('notes-open')
+    else           c.classList.remove('notes-open')
+    const open = c.classList.contains('notes-open')
+    const cnt  = t.dataset.showCount
+    t.textContent = open
+      ? `▴ hide ${cnt} note${cnt>1?'s':''}`
+      : `▾ show ${cnt} note${cnt>1?'s':''}`
+  })
+  btn.textContent = anyClosed ? '▴ collapse all notes' : '▾ expand all notes'
 }
 
 function renderHome(main) {
