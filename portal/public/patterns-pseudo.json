@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "purpose": "Pseudo-code snippets per micro, shown in the deep-dive detail panel. Plain Python-ish for readability. Empty entries fall back to just the When/How/Cost prose in the panel.",
+    "format": "{ <microId>: '<pseudo-code string with \\n>' }",
+    "status": "Initial seed — covers the most popular ~25 micros. Add more incrementally."
+  },
+
+  "two-sum-hash": "seen = {}\nfor i, x in enumerate(nums):\n    if (target - x) in seen:\n        return [seen[target - x], i]\n    seen[x] = i",
+
+  "complement-lookup": "# Same engine, generalised over prefix space:\nmap = {0: 1}        # prefix → count seen\npre = 0; ans = 0\nfor x in arr:\n    pre += x\n    ans += map.get(pre - K, 0)\n    map[pre] = map.get(pre, 0) + 1",
+
+  "freq-counter": "from collections import Counter\nc = Counter(items)\n# usage 1: per-key counts\n# usage 2: subtract two Counters to find diffs\n# usage 3: sliding-window 'matched chars' trick\nmatched = 0\nfor ch in window:\n    if ++cur[ch] == need[ch]: matched += 1",
+
+  "seen-set": "seen = set()\nfor x in arr:\n    if x in seen: return True\n    seen.add(x)\nreturn False",
+
+  "hash-chain-build": "s = set(arr)\nbest = 0\nfor x in s:\n    if (x - 1) in s: continue   # only start at heads\n    y = x\n    while y in s: y += 1\n    best = max(best, y - x)",
+
+  "kadane": "best = cur = -inf\nfor x in arr:\n    cur = max(x, cur + x)\n    best = max(best, cur)\nreturn best",
+
+  "index-as-hash": "# Sign-flip variant for find-duplicate / disappeared:\nfor x in nums:\n    j = abs(x) - 1\n    if nums[j] < 0: ... # x already seen → duplicate\n    nums[j] = -nums[j]\n# Pass 2: indices still positive are missing.",
+
+  "floyd-cycle": "slow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast: break\nelse: return None       # no cycle\n# To find cycle START:\nslow = head\nwhile slow != fast:\n    slow, fast = slow.next, fast.next\nreturn slow",
+
+  "iterative-reverse": "prev = None; cur = head\nwhile cur:\n    next = cur.next\n    cur.next = prev\n    prev = cur\n    cur = next\nreturn prev",
+
+  "tp-converging": "l, r = 0, n - 1\nwhile l < r:\n    if predicate(s[l], s[r]):\n        ... # process\n        l += 1; r -= 1\n    elif s[l] < s[r]:\n        l += 1\n    else:\n        r -= 1",
+
+  "tp-k-sum": "nums.sort()\nfor i in range(n - k + 1):\n    if i > 0 and nums[i] == nums[i-1]: continue   # skip dup pivot\n    # recursive k-sum on rest with target - nums[i]\n    # base case k=2 is converging two-pointer",
+
+  "tp-area-greedy": "l, r = 0, n - 1\nbest = 0\nwhile l < r:\n    area = min(h[l], h[r]) * (r - l)\n    best = max(best, area)\n    if h[l] < h[r]: l += 1     # advance shorter side\n    else:           r -= 1",
+
+  "sw-shrink-violation": "l = 0; agg = 0; best = 0\nfor r in range(n):\n    agg += arr[r]\n    while invariant_violated(agg):\n        agg -= arr[l]; l += 1\n    best = max(best, r - l + 1)",
+
+  "sw-distinct-count": "cnt = {}; distinct = 0; l = 0; best = 0\nfor r in range(n):\n    if cnt[s[r]] == 0: distinct += 1\n    cnt[s[r]] += 1\n    while distinct > K:\n        cnt[s[l]] -= 1\n        if cnt[s[l]] == 0: distinct -= 1\n        l += 1\n    best = max(best, r - l + 1)",
+
+  "bs-textbook": "# lower_bound: first index where pred(i) holds\nlo, hi = 0, n\nwhile lo < hi:\n    mid = lo + (hi - lo) // 2\n    if pred(mid): hi = mid\n    else:         lo = mid + 1\nreturn lo",
+
+  "bs-on-answer": "# Search the ANSWER space; predicate(X) = 'is X feasible?'\nlo, hi = min_X, max_X\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if feasible(mid): hi = mid\n    else:             lo = mid + 1\nreturn lo",
+
+  "monotonic-stack": "stack = []   # of INDICES, monotonic decreasing\nans = [0] * n\nfor i in range(n):\n    while stack and arr[stack[-1]] < arr[i]:\n        top = stack.pop()\n        ans[top] = arr[i]   # next greater for arr[top]\n    stack.append(i)",
+
+  "monotonic-stack-spans": "stack = []   # increasing of indices\nbest = 0\nfor i in range(n + 1):\n    cur = arr[i] if i < n else 0\n    while stack and arr[stack[-1]] > cur:\n        h = arr[stack.pop()]\n        left = stack[-1] if stack else -1\n        best = max(best, h * (i - left - 1))\n    stack.append(i)",
+
+  "monotonic-deque": "from collections import deque\ndq = deque()   # of indices, monotonic decreasing on values\nfor i in range(n):\n    if dq and dq[0] <= i - k: dq.popleft()    # evict out of window\n    while dq and nums[dq[-1]] < nums[i]: dq.pop()\n    dq.append(i)\n    if i >= k - 1: ans.append(nums[dq[0]])   # window max",
+
+  "dfs-template": "visited = set()\ndef dfs(u):\n    if u in visited: return\n    visited.add(u)\n    for v in neighbors(u): dfs(v)\nfor start in range(n):\n    if start not in visited: dfs(start)",
+
+  "dfs-tree-orders": "# Post-order: process children first, then self.\ndef f(node):\n    if not node: return\n    left  = f(node.left)\n    right = f(node.right)\n    # ... combine + return value upward\n    return 1 + max(left, right)",
+
+  "dfs-grid-flood": "def flood(r, c):\n    if r<0 or r>=R or c<0 or c>=C or grid[r][c] != target: return\n    grid[r][c] = visited_marker\n    for dr, dc in [(1,0),(-1,0),(0,1),(0,-1)]:\n        flood(r + dr, c + dc)",
+
+  "bfs-level-order": "from collections import deque\nq = deque([root])\nwhile q:\n    levelSize = len(q)\n    for _ in range(levelSize):\n        node = q.popleft()\n        # process node at this level\n        for child in node.children: q.append(child)",
+
+  "bfs-shortest-unweighted": "from collections import deque\nq = deque([(start, 0)])\nvisited = {start}\nwhile q:\n    u, d = q.popleft()\n    if u == goal: return d\n    for v in neighbors(u):\n        if v not in visited:\n            visited.add(v); q.append((v, d + 1))",
+
+  "bfs-multi-source": "q = deque(all_sources)         # seed ALL at distance 0\nfor s in all_sources: dist[s] = 0\nwhile q:\n    u = q.popleft()\n    for v in neighbors(u):\n        if dist[v] is None:\n            dist[v] = dist[u] + 1\n            q.append(v)",
+
+  "topo-sort": "from collections import deque\nindeg = {v: 0 for v in V}\nfor u, v in E: indeg[v] += 1\nq = deque(v for v in V if indeg[v] == 0)\norder = []\nwhile q:\n    u = q.popleft(); order.append(u)\n    for v in adj[u]:\n        indeg[v] -= 1\n        if indeg[v] == 0: q.append(v)\nreturn order if len(order) == |V| else 'cycle'",
+
+  "dijkstra": "import heapq\ndist = {v: inf for v in V}; dist[src] = 0\npq = [(0, src)]\nwhile pq:\n    d, u = heapq.heappop(pq)\n    if d > dist[u]: continue\n    for v, w in adj[u]:\n        nd = d + w\n        if nd < dist[v]:\n            dist[v] = nd\n            heapq.heappush(pq, (nd, v))",
+
+  "top-k": "import heapq\nh = []   # min-heap of size K\nfor x in stream:\n    heapq.heappush(h, x)\n    if len(h) > K: heapq.heappop(h)\nreturn h[0]    # K-th largest = heap top",
+
+  "uf-basic": "parent = list(range(n))\nrank   = [0] * n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]   # path compression\n        x = parent[x]\n    return x\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra == rb: return False\n    if rank[ra] < rank[rb]: ra, rb = rb, ra\n    parent[rb] = ra\n    if rank[ra] == rank[rb]: rank[ra] += 1\n    return True",
+
+  "dp-1d-linear": "# House Robber:\nprev2 = prev1 = 0\nfor x in arr:\n    cur = max(prev1, prev2 + x)\n    prev2, prev1 = prev1, cur\nreturn prev1",
+
+  "dp-lis": "tails = []\nfor x in arr:\n    i = bisect_left(tails, x)\n    if i == len(tails): tails.append(x)\n    else:               tails[i] = x\nreturn len(tails)    # patience-sort LIS in O(n log n)",
+
+  "dp-2d-grid": "dp = [[0]*C for _ in range(R)]\ndp[0][0] = grid[0][0]\nfor r in range(R):\n    for c in range(C):\n        if r == 0 and c == 0: continue\n        from_top  = dp[r-1][c] if r > 0 else inf\n        from_left = dp[r][c-1] if c > 0 else inf\n        dp[r][c] = grid[r][c] + min(from_top, from_left)",
+
+  "dp-2-strings": "dp = [[0]*(m+1) for _ in range(n+1)]\nfor i in range(1, n+1):\n    for j in range(1, m+1):\n        if s1[i-1] == s2[j-1]: dp[i][j] = dp[i-1][j-1] + 1\n        else:                   dp[i][j] = max(dp[i-1][j], dp[i][j-1])\nreturn dp[n][m]   # LCS",
+
+  "knapsack-01": "dp = [0] * (W + 1)\nfor w_i, v_i in items:\n    for w in range(W, w_i - 1, -1):     # REVERSE — each item once\n        dp[w] = max(dp[w], dp[w - w_i] + v_i)",
+
+  "knapsack-unbounded": "dp = [inf] * (target + 1); dp[0] = 0\nfor c in coins:\n    for w in range(c, target + 1):       # FORWARD — reusable\n        dp[w] = min(dp[w], dp[w - c] + 1)",
+
+  "bracket-match": "stack = []; pairs = {')':'(', ']':'[', '}':'{'}\nfor ch in s:\n    if ch in '([{': stack.append(ch)\n    else:\n        if not stack or stack[-1] != pairs[ch]: return False\n        stack.pop()\nreturn not stack",
+
+  "permutation": "def bt(path):\n    if len(path) == n: emit(path); return\n    for x in nums:\n        if x not in path:\n            path.append(x); bt(path); path.pop()",
+
+  "subset-combination": "def bt(i, path):\n    emit(path)\n    for j in range(i, n):\n        path.append(arr[j])\n        bt(j + 1, path)        # use j (not j+1) for reusable\n        path.pop()",
+
+  "ps-1d": "pre = [0] * (n + 1)\nfor i in range(n): pre[i+1] = pre[i] + arr[i]\n# sum(l..r) = pre[r+1] - pre[l]",
+
+  "ps-2d": "pre = [[0]*(C+1) for _ in range(R+1)]\nfor r in range(R):\n    for c in range(C):\n        pre[r+1][c+1] = pre[r+1][c] + pre[r][c+1] - pre[r][c] + mat[r][c]\n# sum(r1..r2, c1..c2) = pre[r2+1][c2+1] - pre[r1][c2+1] - pre[r2+1][c1] + pre[r1][c1]",
+
+  "next-permutation-algo": "# 1) find pivot from right\ni = n - 2\nwhile i >= 0 and arr[i] >= arr[i+1]: i -= 1\nif i >= 0:\n    # 2) find swap target from right\n    j = n - 1\n    while arr[j] <= arr[i]: j -= 1\n    arr[i], arr[j] = arr[j], arr[i]\n# 3) reverse suffix\narr[i+1:] = arr[i+1:][::-1]",
+
+  "list-digit-arithmetic": "dummy = ListNode()\ntail = dummy; carry = 0\nwhile a or b or carry:\n    s = carry + (a.val if a else 0) + (b.val if b else 0)\n    carry, d = divmod(s, 10)\n    tail.next = ListNode(d); tail = tail.next\n    if a: a = a.next\n    if b: b = b.next\nreturn dummy.next",
+
+  "dll-cache-design": "# LRU: HashMap key→DLLNode + doubly-linked list with head/tail sentinels.\n# On get: unlink node, move to head, return value.\n# On put: same; on overflow, evict tail.prev.\nclass Node: key, val, prev, next\nclass LRU:\n    def __init__(self, cap):\n        self.cap = cap; self.map = {}\n        self.head = Node(); self.tail = Node()\n        self.head.next = self.tail; self.tail.prev = self.head\n    def _addHead(self, node): ...\n    def _remove(self, node): ...",
+
+  "tarjan-bridges": "disc = [-1]*n; low = [-1]*n; t = [0]; bridges = []\ndef dfs(u, parent):\n    disc[u] = low[u] = t[0]; t[0] += 1\n    for v in adj[u]:\n        if disc[v] == -1:\n            dfs(v, u)\n            low[u] = min(low[u], low[v])\n            if low[v] > disc[u]: bridges.append((u, v))\n        elif v != parent:\n            low[u] = min(low[u], disc[v])",
+
+  "euler-tour": "def hierholzer(start):\n    stack = [start]; path = []\n    while stack:\n        u = stack[-1]\n        if adj[u]:\n            stack.append(adj[u].pop(0 if lex else -1))\n        else:\n            path.append(stack.pop())\n    return path[::-1]",
+
+  "string-match-kmp": "# Build LPS of pattern:\nlps = [0] * m; k = 0\nfor i in range(1, m):\n    while k > 0 and p[k] != p[i]: k = lps[k-1]\n    if p[k] == p[i]: k += 1\n    lps[i] = k\n# Scan text with fall-back:\nj = 0\nfor i in range(n):\n    while j > 0 and p[j] != t[i]: j = lps[j-1]\n    if p[j] == t[i]: j += 1\n    if j == m: return i - m + 1",
+
+  "tree-dp": "# House Robber III — post-order returning (rob, skip)\ndef f(node):\n    if not node: return (0, 0)\n    lr, ls = f(node.left)\n    rr, rs = f(node.right)\n    return (node.val + ls + rs, max(lr, ls) + max(rr, rs))\nreturn max(f(root))"
+}
