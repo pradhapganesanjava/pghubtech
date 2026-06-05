@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Per-(micro, LC-id) application notes — explain HOW the micro's strategy applies to that specific problem. Surfaced in the UI as the anchor chip's tooltip. Audit batch grows over time; see git log.",
     "format": "{ <microId>: { <lcId>: '<one-line note>' } }",
-    "status": "Audit passes 1-5 — covers 26 micros. Latest pass added: dp-2d-grid, prefix-sum-hashmap, lca-dfs, top-k, palindrome-two-ptr, iterative-reverse."
+    "status": "Audit pass 6 (mega-pass) — 100% coverage of all 143 micros. Per-problem application notes for every anchored LC problem. Notes are intentionally terse (1 sentence each) to fit the scale; the OPTIMAL approach is called out where the tagged pattern works but isn't the best fit."
   },
 
   "complement-lookup": {
@@ -262,5 +262,841 @@
     "25":  "Reverse Nodes in K-Group. Check K nodes ahead; if K available reverse them via the template, then recurse/iterate on the rest. Leftover < K typically left alone.",
     "234": "Palindrome LL (uses iterative-reverse). After finding middle (slow/fast), apply the 3-ptr template to second half, then compare with first half.",
     "24":  "Swap Nodes in Pairs. Special case of K-group with K=2 — or write a small dedicated 4-ptr swap (dummy → first → second → swap → advance)."
+  },
+
+  "two-sum-hash": {
+    "1":   "Two Sum unsorted — one-pass hash, store seen→idx, check (target − x) before insert.",
+    "167": "Two Sum sorted. Hash works but converging 2-ptr is optimal (O(1) space). Tag kept for the universal complement-lookup angle.",
+    "653": "Two Sum BST. Inorder collect + complement OR two converging iterators (forward + reverse inorder)."
+  },
+
+  "in-place-read-write": {
+    "26":  "Remove Duplicates Sorted. write=1; for read 1..n: if a[read]!=a[read-1] then a[write++]=a[read].",
+    "27":  "Remove Element. write=0; for read 0..n: if a[read]!=val then a[write++]=a[read].",
+    "80":  "Remove Dup Sorted II (≤2). write tracks position; copy if write<2 OR a[read]!=a[write-2].",
+    "283": "Move Zeroes. write=0; for read: if a[read]!=0 copy; finally pad with zeros (or swap as you go).",
+    "75":  "Sort Colors. Dutch National Flag: 3 pointers (lo, mid, hi); on 0 swap mid↔lo and ++both; on 1 ++mid; on 2 swap mid↔hi and --hi.",
+    "228": "Summary Ranges. Walk; when a[i]!=a[i-1]+1 close current range, start new. Single-pass O(n)."
+  },
+
+  "rotate-reverse": {
+    "189": "Rotate Array by K. Reverse(0,n); reverse(0,K); reverse(K,n). O(n) time, O(1) space.",
+    "48":  "Rotate Image 90°. Transpose (swap a[i][j]↔a[j][i]) then reverse each row.",
+    "151": "Reverse Words. Reverse whole string; then reverse each word in place. (Or trim + split + reverse list.)"
+  },
+
+  "anagram-keying": {
+    "242": "Valid Anagram. Counter == counter; or 26-count array; or sorted-string compare.",
+    "49":  "Group Anagrams. Map<sorted-string-or-count-tuple, list>. Count-tuple beats sort-string when k (length) is large.",
+    "438": "Find All Anagrams. Sliding window of len(p) over s; compare window-counter to p-counter via 'matched chars' trick for O(1) slide.",
+    "273": "Integer to English. Tokenise into thousand-chunks; map digit-position → word. (Note: 'anagram-keying' is a stretch — it's just chunked mapping; could need own micro.)"
+  },
+
+  "expand-around-center": {
+    "5":   "Longest Palindromic Substring. For each center i (and i,i+1), expand l--,r++ while s[l]==s[r]; track longest.",
+    "647": "Palindromic Substrings count. Same expand-around-center, count each successful expansion as one palindrome.",
+    "1312":"Min Insertions to Make Palindrome. dp[l][r] OR LCS(s, reverse(s)) — answer = n − LCS. Expand isn't the optimal here; usually DP."
+  },
+
+  "minimum-window": {
+    "76":  "Min Window Substring. Need-counter + matched-count; expand r; while matched==|need| shrink l updating min window.",
+    "567": "Permutation in String. Fixed window of len(s1); sliding compare via matched-count.",
+    "438": "Find Anagrams. Same fixed-window sliding-anagram trick as 567; collect start indices.",
+    "30":  "Substring with Concat of All Words. Window aligned at each offset 0..wordLen-1; words as units; counter-match per window slide."
+  },
+
+  "word-ladder-bfs": {
+    "127": "Word Ladder. BFS over implicit graph (transform 1 char at a time); shortest hop count.",
+    "433": "Min Genetic Mutation. Same shape; ACGT mutation alphabet; bank as valid-set / visited.",
+    "752": "Open the Lock. 4-digit state space; ±1 each wheel; BFS until target; skip deadends.",
+    "126": "Word Ladder II (all shortest paths). BFS to build layer-by-layer parent-map; then DFS/backtrack from end to start collecting paths."
+  },
+
+  "edit-distance-dp": {
+    "72":  "Edit Distance. dp[i][j] = match ? dp[i-1][j-1] : 1 + min(insert, delete, replace).",
+    "583": "Delete Ops 2 Strings. Equals m+n − 2·LCS.",
+    "1143":"LCS. dp[i][j] = match ? dp[i-1][j-1]+1 : max(dp[i-1][j], dp[i][j-1]).",
+    "10":  "Regex Match. '*' = zero+ of prev char; dp[i][j-2] OR (dp[i-1][j] if prev matches s[i-1]).",
+    "44":  "Wildcard Match. '*' = zero+ of ANY; dp[i][j] = dp[i-1][j] OR dp[i][j-1].",
+    "97":  "Interleaving String. dp[i][j]: can s3[0..i+j] be formed? Transition uses s3[i+j-1] matching s1 or s2."
+  },
+
+  "string-match-kmp": {
+    "28":   "Implement strStr. Build LPS of needle; scan haystack with fall-back on mismatch. O(n+m).",
+    "459":  "Repeated Substring Pattern. LPS[n-1] gives largest proper-prefix-suffix; valid iff n % (n - lps[n-1]) == 0.",
+    "214":  "Shortest Palindrome. Build LPS of (s + '#' + reverse(s)); lps[last] = longest palindrome prefix of s; prepend reverse of the rest.",
+    "686":  "Repeated String Match. Append A until len ≥ len(B); then strStr (KMP) to check.",
+    "1392": "Longest Happy Prefix. LPS[n-1] of the string IS the answer (longest proper prefix that's also a suffix).",
+    "1408": "String Matching in Array. KMP each pair, or just .contains() — KMP overkill for tiny strings."
+  },
+
+  "slow-fast-middle": {
+    "876": "Middle of LL. slow=head, fast=head; while fast && fast.next: slow=slow.next, fast=fast.next.next. On even, returns the SECOND middle.",
+    "234": "Palindrome LL — find middle first, then reverse second half, then compare.",
+    "143": "Reorder List. Find middle; reverse second half; merge first + reversed-second interleaved."
+  },
+
+  "nth-from-end": {
+    "19": "Remove N-th From End. fast advances N first; then both advance until fast hits null; slow points to the node BEFORE target. Use dummy head for clean splice."
+  },
+
+  "aligned-intersect": {
+    "160": "LL Intersection. a, b = headA, headB; loop a = a ? a.next : headB; b = b ? b.next : headA; they meet at intersection (or both at null). Elegant alignment trick."
+  },
+
+  "dummy-head-merge": {
+    "21":  "Merge 2 Sorted Lists. Dummy head; tail=dummy; pick smaller head and append; advance.",
+    "23":  "Merge K Sorted Lists. Same idea + min-heap of stream heads (O(N log K)). OR divide-and-conquer pairwise merge.",
+    "203": "Remove LL Elements. Dummy head simplifies the case where head itself needs removal; walk, skip on match.",
+    "708": "Insert into Sorted Cyclic List. Walk one loop finding the right slot (handles min-max wrap and uniform-value cases)."
+  },
+
+  "list-digit-arithmetic": {
+    "2":   "Add Two Numbers (LSB-first lists). Walk both with carry; create new node per digit; dummy-head merge style.",
+    "445": "Add Two Numbers II (MSB-first). Reverse both (or use 2 stacks) then same carry-walk.",
+    "369": "Plus One Linked List. Reverse, add 1 with carry, reverse back. Or recurse returning carry."
+  },
+
+  "dll-cache-design": {
+    "146": "LRU Cache. HashMap key→DLL-node; on get/put move node to head (most recent); evict from tail on overflow.",
+    "460": "LFU Cache. HashMap key→node; HashMap freq→DLL-of-nodes; minFreq tracker; on access bump node's freq + move to new freq-list.",
+    "432": "All O`one Data Structure. Doubly-linked list of count-buckets; HashMap key→bucket; getMin/Max in O(1) via head/tail.",
+    "1756":"Design Most Recently Used Queue. Linked list of buckets (sqrt decomposition) or order-statistic tree for O(sqrt n) or O(log n) fetch."
+  },
+
+  "min-stack-design": {
+    "155": "Min Stack. Pair every push with running min; pop returns and discards both.",
+    "716": "Max Stack. Pair with running max; popMax requires O(n) re-stack-up of larger items.",
+    "232": "Queue via 2 Stacks. push→in-stack; pop→out-stack (refill from in when empty). Amortised O(1).",
+    "225": "Stack via 2 Queues. Either O(n) push (rotate after) or O(n) pop (move all but last).",
+    "895": "Max Freq Stack. Map<val, count> + Map<freq, stack>; push bumps; pop takes from top of maxFreq stack.",
+    "1381":"Stack With Increment Op. Lazy increment array; flush to popped element."
+  },
+
+  "validate-stack-seq": {
+    "946": "Validate Stack Sequences. Simulate with aux stack: push pushed[i]; while top==popped[j] pop and ++j; at end stack empty ⇒ valid.",
+    "735": "Asteroid Collision. Stack of survivors; on negative, pop while top > 0 && top < |cur| (smaller positives destroyed); annihilate on equal.",
+    "901": "Online Stock Span. Monotonic-decreasing stack of (price, span); on cur, pop+sum spans of all ≤ cur; push (cur, accSpan+1).",
+    "1441":"Build Array With Stack Ops. Walk 1..n; push 'Push'; if target absent also push 'Pop'."
+  },
+
+  "queue-from-stacks": {
+    "232": "Implement Queue via Stacks. in-stack for push; out-stack for pop; refill out from in when empty. Amortised O(1).",
+    "225": "Implement Stack via Queues. Push-O(n): enqueue then rotate (n-1) times so new is at front.",
+    "622": "Design Circular Queue. Fixed-size array + head + count.",
+    "641": "Design Circular Deque. Array + head + tail (or count) with modular indexing."
+  },
+
+  "moving-average-stream": {
+    "346": "Moving Average from Stream. Bounded queue + running sum; on overflow evict front and adjust sum.",
+    "933": "Number of Recent Calls. Queue of timestamps; evict t < cur-3000; return queue size.",
+    "1352":"Product of Last K Numbers. Prefix-product array; on 0 reset; query uses ratio."
+  },
+
+  "path-sum-dfs": {
+    "112": "Path Sum exists. DFS subtract; at leaf check remaining==0.",
+    "113": "Path Sum II — collect all. Backtracking on the path list.",
+    "437": "Path Sum III (any-to-any descendant). Prefix-sum hashmap on DFS path: map[curPrefix-target] gives count.",
+    "129": "Sum Root to Leaf Numbers. DFS carrying accumulated number 10*acc+val; at leaf add to total.",
+    "257": "All Root-to-Leaf Paths. DFS with path-string accumulator; collect on leaf."
+  },
+
+  "construct-from-traversals": {
+    "105": "From Preorder+Inorder. Pre[0]=root; find in inorder → left/right subtree spans; recurse with index map.",
+    "106": "From Postorder+Inorder. Post[-1]=root; same split via inorder.",
+    "889": "From Preorder+Postorder. Pre[1]=left-root → find in post to size left subtree; not unique in general but works for full BTs."
+  },
+
+  "serialize-tree": {
+    "297": "Serialize/Deserialize BT. Pre-order with 'null' markers so structure round-trips.",
+    "449": "Serialize/Deserialize BST. BST property lets you skip null markers (use bounds on deserialize).",
+    "572": "Subtree of Another Tree. Serialize both with unique delimiters; substring check (KMP-able).",
+    "652": "Find Duplicate Subtrees. Post-order serialize each subtree; HashMap<serialization, count>."
+  },
+
+  "inorder-bst": {
+    "98":  "Validate BST. Inorder walk; check prev < cur. (Or bounds-DFS.)",
+    "230": "Kth Smallest BST. Inorder iterative; pop K-1 nodes; K-th is answer.",
+    "173": "BST Iterator. Stack of left-spine; next pops + advances to right subtree's left-spine.",
+    "285": "Inorder Successor BST. Walk: if val > p.val candidate=val, go left; else go right.",
+    "270": "Closest Value BST. Walk root→leaf, track closest seen; choose direction by value comparison.",
+    "783": "Min Diff in BST. Inorder + track prev value; update min |cur-prev|.",
+    "99":  "Recover BST. Inorder traversal finds two swapped nodes; swap their values."
+  },
+
+  "bst-bounds-validate": {
+    "98":  "Validate BST. def f(n, lo, hi): if !n: ok; if !(lo<n.val<hi): fail; recurse left (lo,val), right (val,hi).",
+    "333": "Largest BST Subtree. Post-order returning (isBST, size, min, max); combine at each node."
+  },
+
+  "bst-lca": {
+    "235": "LCA of BST. Walk: both < node go left; both > go right; else node IS LCA. O(h) iterative.",
+    "270": "Closest Value BST — similar walk-by-comparator.",
+    "285": "Inorder Successor BST — comparator walk."
+  },
+
+  "bst-insert-delete": {
+    "701": "Insert BST. Recurse on comparator branch; place at null leaf.",
+    "450": "Delete Node BST. Recurse to find; on hit with 2 children swap with inorder successor then delete; ≤1 child splice.",
+    "700": "Search BST. Trivial recurse on comparator branch.",
+    "938": "Range Sum BST. Recurse but PRUNE: skip left if node.val < low; skip right if > high."
+  },
+
+  "trie-basic": {
+    "208": "Implement Trie. Each node = Map<char, TrieNode> + isWord. insert/search/startsWith all walk the chain.",
+    "211": "Word Dictionary (with '.'). On '.' branch into ALL children; else descend matching child.",
+    "1166":"Design File System. Trie keyed on path segments; value at terminal.",
+    "588": "Design In-Memory FS. Trie of path segments + per-node files (string → content)."
+  },
+
+  "trie-wildcard": {
+    "211": "Word Dictionary. DFS the trie; on '.' try all children; else single descend.",
+    "676": "Magic Dictionary. Pre-build trie of words; on search try changing exactly one char at each position.",
+    "745": "Prefix and Suffix Search. Insert (suffix + '#' + word) for each suffix; query (suffix + '#' + prefix)."
+  },
+
+  "cc-dfs-uf": {
+    "200":  "Number of Islands. For each '1' DFS-mark then ++count. (Also dfs-grid-flood.)",
+    "547":  "Number of Provinces. DFS adjacency matrix.",
+    "323":  "Number of CC Undirected. UF on each edge; final root count.",
+    "695":  "Max Area Island. DFS returning subtree area; track max.",
+    "130":  "Surrounded Regions. DFS from boundary 'O' marking 'safe'; flip remaining 'O' to 'X'.",
+    "1971": "Find if Path Exists. UF union each edge; check source/target same root."
+  },
+
+  "cycle-3color": {
+    "207": "Course Schedule cycle detect. WHITE→GRAY (in-stack)→BLACK (done); back-edge to GRAY = cycle.",
+    "802": "Find Eventual Safe States. Reverse 3-color: nodes whose DFS doesn't hit GRAY are safe."
+  },
+
+  "bipartite": {
+    "785": "Bipartite Check. BFS/DFS coloring alternating; conflict ⇒ not bipartite. Handle disconnected.",
+    "886": "Possible Bipartition. Build graph from dislike pairs; same coloring check."
+  },
+
+  "dag-longest-path": {
+    "329":  "Longest Increasing Path Matrix. Memoized DFS (= DP on implicit DAG of '<' edges).",
+    "1857": "Largest Color Value DAG. Topo + DP over count[v][color].",
+    "2050": "Parallel Courses III. Topo + DP — finish[v] = max(prereqFinish) + duration[v].",
+    "2127": "Max Employees Invited. Each node's outdegree 1 (functional graph); decompose into cycles + chains feeding them."
+  },
+
+  "mst": {
+    "1135": "Min Cost Connect Cities. Kruskal: sort edges, union if disjoint. Or Prim with min-heap from any start.",
+    "1584": "Min Cost Connect Points. Same — Kruskal on n² edges or Prim avoiding edge enumeration.",
+    "1489": "Critical & Pseudo-Critical Edges in MST. Baseline MST weight; for each edge, retest including/excluding to classify."
+  },
+
+  "ancestor-reachability": {
+    "1462": "Course Schedule IV. Build closure: ancestors[v] = ∪ ancestors of preds + preds themselves. Query in O(1).",
+    "2192": "All Ancestors of Each Node in DAG. Topo order; carry ancestor-set forward (union as you process).",
+    "851":  "Loud and Rich. DFS/DP — answer[v] = quietest among {v} ∪ {answer of each richer-than-v predecessor}.",
+    "802":  "Eventual Safe States. Topo from sinks (out-deg-0 in reverse)."
+  },
+
+  "euler-tour": {
+    "332":  "Reconstruct Itinerary. Hierholzer with sorted PQ of neighbours per node (lex-smallest); post-order append; reverse.",
+    "753":  "Cracking the Safe. De Bruijn sequence via Eulerian on (n-1)-tuple → digit graph.",
+    "2097": "Valid Arrangement of Pairs. Eulerian path on directed multigraph of (a→b) edges."
+  },
+
+  "tarjan-bridges": {
+    "1192": "Critical Connections. Tarjan: disc[]/low[]; edge (u,v) is bridge iff low[v] > disc[u].",
+    "1568": "Min Days Disconnect Island. Either 0/1/2 — check connected, then check articulation, then it's 2."
+  },
+
+  "mat-rotate": {
+    "48":  "Rotate Image 90° CW. Transpose (swap a[i][j]↔a[j][i]) then reverse each row. O(n²) time, O(1) space.",
+    "189": "Rotate Array (1D variant) — triple reverse. Listed here for cross-link."
+  },
+
+  "mat-spiral": {
+    "54":  "Spiral Matrix. Maintain (top, bottom, left, right); walk row/col and shrink bounds.",
+    "59":  "Spiral Matrix II — generate. Same loop but write 1..n² instead of read.",
+    "885": "Spiral Matrix III. Walk in spiral covering even out-of-bound cells; collect cells in bounds."
+  },
+
+  "mat-set-zeros": {
+    "73":  "Set Matrix Zeroes. Use first row + col as flags; handle them last. O(1) extra space."
+  },
+
+  "mat-grid-dfs-bfs": {
+    "200":  "Number Islands. DFS/BFS flood-fill.",
+    "695":  "Max Area Island. DFS returning subtree area.",
+    "130":  "Surrounded Regions. Flood from boundary 'O' marking safe.",
+    "463":  "Island Perimeter. Count cell-edges adjacent to water or grid boundary. (No DFS needed; one pass.)",
+    "733":  "Flood Fill. Plain BFS/DFS replacing color.",
+    "1254": "Closed Islands. Like 130 but count; flood from boundary, count remaining components."
+  },
+
+  "two-heap-median": {
+    "295":  "Median Data Stream. Max-heap low + min-heap high; rebalance so |sizes| ≤ 1.",
+    "480":  "Sliding Window Median. Two heaps + lazy deletion map for out-of-window evictions.",
+    "1825": "Finding MK Average. 3 multisets (low, mid, high) for trimming + middle sum."
+  },
+
+  "k-way-merge": {
+    "23":  "Merge K Sorted Lists. Min-heap of stream heads; pop + push successor.",
+    "632": "Smallest Range Covering K Lists. Heap of (val, listIdx, posIdx) + max-tracker; pop smallest, advance, update max-min range.",
+    "378": "Kth Smallest in Sorted Matrix. Heap initial first column; pop K times advancing within rows. Or binary-search on value.",
+    "373": "K Smallest Pairs. Heap of (sum, i, j) starting at (0, 0); pop K, push neighbours (i+1, j) and (i, j+1)."
+  },
+
+  "event-driven-scheduling": {
+    "621":  "Task Scheduler. Frequency bucket — slots = (maxFreq - 1) × (n + 1) + (#tasks at maxFreq). Or heap-based simulation.",
+    "1834": "Single-Threaded CPU. Sort by enqueue time; main loop with min-heap of available by (proc, idx).",
+    "1882": "Process Tasks Using Servers. 2 heaps: free servers (weight, idx) + busy (finishTime, idx).",
+    "1942": "K-th Person in Exam Room. Hmm, scheduling-adjacent. Skip."
+  },
+
+  "dijkstra": {
+    "743":  "Network Delay Time. Single-source Dijkstra; answer = max dist (or -1 if unreachable).",
+    "787":  "Cheapest Flights ≤ K Stops. Dijkstra with stops-bound OR Bellman-Ford K iterations.",
+    "1631": "Path With Minimum Effort. Min-heap of (effort, r, c); effort to (r,c) = max edge difference on path.",
+    "778":  "Swim in Rising Water. Dijkstra on max-edge metric (or BS on water level + BFS).",
+    "2812": "Find Safest Path in Grid. Multi-source BFS for danger distance; then Dijkstra max-min on safety.",
+    "2642": "Design Graph w/ Shortest Path. Adj matrix + run Dijkstra on each query."
+  },
+
+  "hash-chain-build": {
+    "128":  "Longest Consecutive Sequence. Build set; for each x with (x-1) NOT in set, walk x, x+1, x+2,… and track length. Each elem visited at most twice ⇒ O(n).",
+    "298":  "Binary Tree Longest Consecutive Sequence. DFS carrying (parent value, running length).",
+    "1218": "Longest Arithmetic Subseq w/ Diff. Map<value, longest-chain-ending-here>; chain[x] = chain[x - diff] + 1."
+  },
+
+  "dp-lis": {
+    "300":  "LIS. dp[i] = 1 + max(dp[j] for j<i if a[j]<a[i]). O(n²). O(n log n) via tails[] + binary-search.",
+    "354":  "Russian Doll Envelopes. Sort by width asc, height DESC on ties (prevents wider-equal pollution); then LIS on heights.",
+    "673":  "Number of LIS. Two arrays: length[i] + count[i]; on extend update both with tie-handling.",
+    "1048": "Longest String Chain. Sort by length; dp[word] = 1 + max(dp[word minus one char]).",
+    "491":  "Increasing Subsequences. Backtrack (NOT DP — listed for related shape).",
+    "1671": "Min Removals to Make Mountain. LIS forward + LDS backward; max(L[i]+R[i]-1) gives mountain len.",
+    "376":  "Wiggle Subsequence. Two dp tracks: longest ending up vs ending down."
+  },
+
+  "dp-row-build": {
+    "118": "Pascal's Triangle. row[r][c] = row[r-1][c-1] + row[r-1][c]; build all rows.",
+    "119": "Pascal's Triangle II. One row; update in-place from RIGHT (so left values are still old).",
+    "120": "Triangle bottom-up. dp[c] = triangle[r][c] + min(dp[c], dp[c+1]) from r=n-2 to 0."
+  },
+
+  "dp-2d-square": {
+    "221":  "Maximal Square. dp[r][c] = min(dp[r-1][c-1], dp[r-1][c], dp[r][c-1]) + 1 if cell==1.",
+    "1277": "Count Squares with All Ones. Same recurrence; answer = sum(dp[r][c]).",
+    "1139": "Largest 1-Bordered Square. Precompute horiz[r][c] and vert[r][c] runs of 1s; for each (r,c) check max k where all 4 sides ≥ k.",
+    "1727": "Largest Submatrix With Rearrangement. Per-column height (consecutive 1s above); sort each row's heights desc; max width×height."
+  },
+
+  "knapsack-01": {
+    "416":  "Partition Equal Subset Sum. Target = total/2; dp[w] = can reach w with subset.",
+    "494":  "Target Sum. Reduce to subset-sum = (total + target)/2.",
+    "1049": "Last Stone Weight II. Partition into two subsets with min diff; equivalent to subset-sum max ≤ total/2.",
+    "879":  "Profitable Schemes. 3D dp[task][workers][profit].",
+    "474":  "Ones and Zeroes. 3D dp[m_used][n_used] over strs."
+  },
+
+  "knapsack-unbounded": {
+    "322":  "Coin Change. dp[w] = 1 + min(dp[w-c] for c in coins).",
+    "518":  "Coin Change II. dp[w] = sum dp[w-c]; outer loop coins to avoid order-dup.",
+    "377":  "Combination Sum IV (permutations). Outer loop w, inner loop coins ⇒ permutations counted.",
+    "279":  "Perfect Squares. dp[n] = 1 + min(dp[n-k²]) for k² ≤ n.",
+    "983":  "Min Cost Tickets. dp[day] = min over (1, 7, 30)-day tickets.",
+    "1449": "Largest Number Cost. dp[cost] = string-max-of(dp[cost - cost(d)] + d)."
+  },
+
+  "interval-dp": {
+    "312":  "Burst Balloons. dp[i][j] = max over k of dp[i][k-1] + dp[k+1][j] + nums[i-1]*nums[k]*nums[j+1]. Outer = length.",
+    "1130": "Min Cost Tree from Leaf Values. dp[i][j] = min split; cost = max(left) * max(right) merged.",
+    "1547": "Min Cost to Cut Stick. Insert sentinels; dp[i][j] = min over k of cuts[j] - cuts[i] + dp[i][k] + dp[k][j].",
+    "96":   "Unique BSTs. dp[n] = sum dp[i]*dp[n-1-i] (Catalan).",
+    "95":   "Unique BSTs II. Recursive build returning all subtree lists.",
+    "87":   "Scramble String. Split + recurse on (matching pair OR swapped pair); memoize."
+  },
+
+  "state-machine-dp": {
+    "121": "Stock I (1 trade). cash and hold states.",
+    "122": "Stock II (unlim). Same 2 states; sell-then-buy freely.",
+    "123": "Stock III (≤2 trades). 4 states: buy1, sell1, buy2, sell2.",
+    "188": "Stock IV (≤K trades). 2K states; reduces to 122 if K ≥ n/2.",
+    "309": "Stock with Cooldown. 3 states: hold, sold (cooldown), rest.",
+    "714": "Stock with Fee. cash − fee on buy (or sell), same 2-state shape."
+  },
+
+  "bitmask-dp": {
+    "847":  "Shortest Path Visiting All Nodes. BFS over (node, mask); first mask==all-1 popped is answer.",
+    "943":  "Find Shortest Superstring. dp[mask][last] = min length using subset mask, last = ending string.",
+    "698":  "Partition K Equal Subsets. dp[mask] = can reach via subsets summing to target.",
+    "1125": "Smallest Sufficient Team. dp[skillMask] = min team; for each person OR person's skillMask into states.",
+    "1255": "Max Score from Letters. Enumerate word subsets via bitmask DP.",
+    "526":  "Beautiful Arrangement. dp[mask] = #ways to place position popcount(mask) using nums in mask."
+  },
+
+  "tree-dp": {
+    "337":  "House Robber III. Post-order returning (rob, skip); rob=node.val+leftSkip+rightSkip; skip=max-of-each.",
+    "124":  "BT Max Path Sum. Single-side max gain returned; global update with leftGain+rightGain+val.",
+    "968":  "Min Camera Cover. 3 states per node: needCam/hasCam/covered; greedy from leaves.",
+    "543":  "Diameter. Subtree depth; track left+right at each node.",
+    "1372": "Longest Zigzag Path. Per node return (longestGoingLeft, longestGoingRight)."
+  },
+
+  "permutation": {
+    "46":  "Permutations. used[]; backtrack picking unused.",
+    "47":  "Permutations II (dupes). Sort + skip a[j] if a[j]==a[j-1] AND !used[j-1] (depth-skip).",
+    "526": "Beautiful Arrangement. Same template with placement constraint at depth i."
+  },
+
+  "partition-on-string": {
+    "131": "Palindrome Partitioning. backtrack(i): if i==n emit; for j in [i+1..n]: if isPal(s[i..j]) recurse(j). Optional palindrome memo.",
+    "93":  "Restore IP Addresses. Backtrack picking 1/2/3-char segments; check ≤255 + no leading 0.",
+    "282": "Expression Add Operators. Backtrack picking next-number-end; track prev-operand for *-precedence reversal.",
+    "140": "Word Break II. Backtrack on cuts where prefix in dict; memoize on remaining string.",
+    "241": "Different Ways to Add Parens. Split at each operator; recurse on left + right; combine all pairs."
+  },
+
+  "board-fill": {
+    "51":  "N-Queens. Sets for col, diag (r-c), anti-diag (r+c). Place, recurse, undo.",
+    "52":  "N-Queens II. Count only — same template.",
+    "37":  "Sudoku Solver. Backtrack with 9 row + col + box sets; try 1..9 at each empty cell."
+  },
+
+  "word-search-dfs": {
+    "79":   "Word Search. DFS from each cell; mark visited (temp '#' swap); restore on backtrack.",
+    "212":  "Word Search II. Build trie of words; DFS grid descending trie; prune dead branches.",
+    "980":  "Unique Paths III. DFS visit-all-non-obstacle cells; backtrack mark/unmark; count paths reaching target.",
+    "1219": "Path With Max Gold. DFS from each gold cell; backtrack; track max sum."
+  },
+
+  "next-permutation-algo": {
+    "31":  "Next Permutation. Find pivot from right; swap with first larger from right; reverse suffix.",
+    "556": "Next Greater Element III. Convert to digits → next-perm → back to int; check ≤ MAX_INT.",
+    "670": "Maximum Swap. For each digit, find largest LATER digit > it; swap once."
+  },
+
+  "combinatorial-product": {
+    "17":   "Letter Combinations Phone. Cartesian product of digit→letter sets via recursion or iteration.",
+    "22":   "Generate Parens. Backtrack with constraints (open ≤ n, close ≤ open).",
+    "1087": "Brace Expansion. Parse into list of choice-sets per slot; emit Cartesian product sorted.",
+    "2266": "Count Number of Texts. dp[i] = sum over valid lengths (1..run-cap) of dp[i-len]; product of dp's per run."
+  },
+
+  "tp-fast-slow": {
+    "141": "LL Cycle. Floyd: slow 1, fast 2; meet ⇒ cycle.",
+    "142": "LL Cycle II — find start. Reset slow to head after meet; both 1; meet at cycle start.",
+    "287": "Find Duplicate. Treat array as functional graph; Floyd finds cycle entry = duplicate.",
+    "876": "Middle of LL. slow=head, fast=head; both step.",
+    "234": "Palindrome LL. Find middle, reverse second half, compare.",
+    "19":  "N-th From End. Fast advances N first, then both."
+  },
+
+  "tp-merge-walk": {
+    "88":  "Merge Sorted Array (in-place). Walk from END; place larger.",
+    "21":  "Merge 2 Sorted Lists. Tail-pointer merge with dummy head.",
+    "4":   "Median 2 Sorted Arrays — bs-partition is optimal; merge-walk works but O(m+n).",
+    "349": "Intersection 2 Arrays. Sort both; 2-ptr; advance smaller; emit on equal (and skip dups).",
+    "244": "Shortest Word Distance II (design). Pre-store word→[indices]; per query, 2-ptr walk the two lists.",
+    "245": "Shortest Word Distance III. Same but handle word1==word2 case (use prev as 'other')."
+  },
+
+  "tp-k-sum": {
+    "15":   "3Sum. Sort, for each i 2-ptr (l, r) on the rest skipping dupes at all 3 positions.",
+    "16":   "3Sum Closest. Same structure; track |sum-target|, update min.",
+    "18":   "4Sum. 2 outer loops + 2-ptr inner; skip dupes at all 4 positions; prune early.",
+    "167":  "Two Sum II Sorted. Pure converging 2-ptr.",
+    "259":  "3Sum Smaller. For each i, 2-ptr; on sum<target, count = r-l (all positions between qualify).",
+    "658":  "K Closest Elements. Binary-search for window of size k OR converging 2-ptr from both ends.",
+    "923":  "3Sum With Multiplicity. Counter + (i ≤ j ≤ k) iteration with case-by-case multinomial counting.",
+    "1099": "Two Sum Less Than K. Sort + 2-ptr; on sum<K record + l++."
+  },
+
+  "tp-area-greedy": {
+    "11":  "Container Most Water. l=0, r=n-1; area = min(h[l],h[r])*(r-l); always advance the smaller side.",
+    "42":  "Trapping Rain Water. Track leftMax/rightMax; advance smaller side; trapped at i = sideMax - h[i].",
+    "407": "Trap Rain Water II (3D). Min-heap of boundary cells; expand inward, trapped = max(0, heapMin - cellHeight)."
+  },
+
+  "sw-fixed": {
+    "643":  "Max Avg Subarray K. Init window sum; slide adding right, removing left.",
+    "1456": "Max Vowels in Window K. Slide counting vowel +/- on add/evict.",
+    "1423": "Max Points Cards (k from ends). Fixed window of (n-k) consecutive 'inner' cards → minimise inner sum.",
+    "2461": "Max Sum Distinct Subarrays K. Sliding sum + freq counter to detect distinctness.",
+    "567":  "Permutation in String. Fixed window of |s1|; sliding anagram via 'matched chars'.",
+    "438":  "Find Anagrams. Same fixed-window sliding-anagram trick."
+  },
+
+  "sw-shrink-violation": {
+    "209":  "Min Size Subarray Sum (≥ target). Expand r adding; while sum ≥ target, shrink l updating min length.",
+    "76":   "Min Window Substring. Need-counter + matched; shrink while matched==|need|.",
+    "1248": "Count Subarrays K Odds. Convert to 'at most K' twice and subtract."
+  },
+
+  "sw-at-most-k": {
+    "992":  "Subarrays K Distinct. exactly = atMostK(K) - atMostK(K-1).",
+    "930":  "Binary Subarrays Sum S. exactly = atMostS - atMost(S-1).",
+    "1248": "Subarrays K Odds. Same exactly-via-difference trick."
+  },
+
+  "sw-distinct-count": {
+    "3":   "Longest Substring Without Repeats. freq map; while max freq > 1, shrink l; track max len.",
+    "159": "Longest with ≤ 2 Distinct. freq + distinct-counter ≤ 2.",
+    "340": "Longest with ≤ K Distinct. Generalise to K.",
+    "904": "Fruit Into Baskets. ≤ 2 distinct = exactly LC 159.",
+    "1004":"Max Consecutive Ones III. 'at most K zeros' = at-most-K-distinct framing."
+  },
+
+  "bs-rotated": {
+    "33":  "Search in Rotated Array. Mid + boundary compare to decide which half is sorted; constrain to that half if target fits, else other.",
+    "81":  "Search Rotated II (dupes). Same but when a[l]==a[mid]==a[r], step l++ r-- linearly.",
+    "153": "Find Min Rotated. Binary-search comparing a[mid] vs a[r].",
+    "154": "Find Min Rotated II (dupes). Same + linear step on equality.",
+    "162": "Find Peak. Compare a[mid] vs a[mid+1]; go where it grows.",
+    "852": "Peak Mountain Array. Same go-where-it-grows."
+  },
+
+  "bs-partition-2sorted": {
+    "4": "Median 2 Sorted Arrays. Binary-search partition i in smaller array; j = (m+n+1)/2 − i; check maxLeft ≤ minRight."
+  },
+
+  "sort-and-sweep": {
+    "56":   "Merge Intervals. Sort by start; sweep: extend cur.end OR push new.",
+    "57":   "Insert Interval. Walk; pre/overlap/post relative to new; merge during overlap.",
+    "252":  "Meeting Rooms. Sort by start; check no overlap with prev.",
+    "253":  "Meeting Rooms II. Sort by start; min-heap of end times; pop if free; push current end.",
+    "759":  "Employee Free Time. Merge all intervals across employees; gaps are free time.",
+    "1851": "Min Interval Including Each Query. Sort intervals + queries; min-heap of (len, end); evict expired."
+  },
+
+  "exchange-argument": {
+    "179":  "Largest Number. Custom comparator: a+b vs b+a as strings.",
+    "406":  "Queue Reconstruction by Height. Sort by (h desc, k asc); insert at index k.",
+    "881":  "Boats to Save People. Sort; 2-ptr from ends; pair lightest with heaviest if ≤ limit.",
+    "1029": "Two City Scheduling. Sort by (costA − costB); first N go to A, rest to B.",
+    "870":  "Advantage Shuffle. Sort both; greedy assign nums1 elem > corresponding nums2 elem, else dump smallest."
+  },
+
+  "running-extreme": {
+    "121":  "Stock I. Track min-so-far + best (price - min).",
+    "122":  "Stock II. Sum all positive (a[i] - a[i-1]).",
+    "152":  "Max Product Subarray. Track running max AND min (negatives flip).",
+    "53":   "Max Subarray (Kadane) — listed for shape.",
+    "55":   "Jump Game. Track max-reachable; if i > maxReach fail.",
+    "45":   "Jump Game II. Track currentEnd, nextEnd; when i==currentEnd ++jumps and currentEnd=nextEnd.",
+    "134":  "Gas Station. Single pass: if tank<0 reset start to i+1; if total<0 impossible.",
+    "277":  "Find Celebrity. Pass 1 elimination (cand = (cand knows i) ? i : cand); pass 2 verify."
+  },
+
+  "greedy-end-sorted": {
+    "435":  "Non-overlapping Intervals. Sort by END; keep first; greedily take next with start ≥ cur.end; answer = n − kept.",
+    "452":  "Min Arrows Burst Balloons. Sort by end; greedy pick smallest end as arrow; advance past all overlapping.",
+    "646":  "Pair Chain. Sort by 2nd elem; greedy.",
+    "1235": "Job Scheduling Max Profit. Sort by end; dp[i] = max(dp[i-1], profit[i] + dp[j]) where j = bs for last non-overlap."
+  },
+
+  "xor-cancel": {
+    "136": "Single Number. XOR all.",
+    "137": "Single Number II (others×3). Bit-by-bit count mod 3.",
+    "260": "Single Number III (two singles). XOR all → diff bits; partition by one diff bit; XOR each group.",
+    "268": "Missing Number. XOR (0..n) ^ XOR(arr) = missing.",
+    "389": "Find the Difference. XOR(s) ^ XOR(t) = extra char."
+  },
+
+  "kernighan-popcount": {
+    "191": "Number of 1 Bits. while n: n &= n-1; ++count.",
+    "338": "Counting Bits 0..n. dp[i] = dp[i>>1] + (i&1) OR dp[i] = dp[i & i-1] + 1.",
+    "461": "Hamming Distance. popcount(x XOR y)."
+  },
+
+  "power-of-two-trick": {
+    "231": "Power of Two. n>0 AND (n & n-1)==0.",
+    "342": "Power of Four. Above + (n & 0x55555555)!=0 to ensure even-position bit.",
+    "191": "Number of 1 Bits — also Kernighan."
+  },
+
+  "bitmask-enumerate": {
+    "78":   "Subsets via bitmask. for mask in 0..2^n: for bit: if mask & (1<<bit) emit.",
+    "90":   "Subsets II — enumeration + sort+dedup result.",
+    "187":  "Repeated DNA. Encode 10-mers as 2-bit pairs into int; hash counts.",
+    "1239": "Max Length Concat Unique. Bitmask each word's char-set; try OR-combining; valid iff no overlap.",
+    "1255": "Max Score from Letters. Enumerate word-subsets via bitmask; track best."
+  },
+
+  "sieve": {
+    "204":  "Count Primes ≤ N. Sieve of Eratosthenes.",
+    "2761": "Prime Pairs With Target Sum. Sieve up to n; for each prime ≤ n/2 check (n - p) prime."
+  },
+
+  "fast-power": {
+    "50":   "Pow(x, n). Binary exponentiation; handle n<0.",
+    "372":  "Super Pow (a^b mod 1337). Recurse on digit array of b.",
+    "1622": "Fancy Sequence. Lazy multiplicative + additive ops; modular inverse via Fermat (uses fast-power).",
+    "1359": "Count Pickup Delivery Options. n! · prod(2k-1) closed form using fast-power for modular inverse."
+  },
+
+  "gcd-lcm": {
+    "1071": "GCD of Strings. If s1+s2 != s2+s1 return ''; else gcd-of-lengths.",
+    "914":  "X of a Kind. gcd of all counts ≥ 2.",
+    "365":  "Water and Jug. Solvable iff target ≤ x+y AND target % gcd(x,y) == 0."
+  },
+
+  "sum-formulas": {
+    "268":  "Missing Number. n(n+1)/2 − sum(arr).",
+    "1295": "Find Numbers With Even Digit Count. Count via digit-string length or log10.",
+    "728":  "Self Dividing Numbers. Per number digit-walk."
+  },
+
+  "sort-then-twoptr": {
+    "15":  "3Sum (sort + 2-ptr).",
+    "16":  "3Sum Closest.",
+    "18":  "4Sum.",
+    "167": "2Sum II (already sorted).",
+    "88":  "Merge Sorted Array — 2-ptr from back.",
+    "1356":"Sort by Bit Count. Sort with comparator (popcount, value).",
+    "1366":"Rank Teams by Votes. Group rank-counts per team; sort with comparator by rank then alpha."
+  },
+
+  "bucket-sort-freq": {
+    "347": "Top K Frequent. Bucket[freq] = [items]; walk from highest.",
+    "451": "Sort by Frequency. Counter + bucket sort + emit.",
+    "692": "Top K Frequent Words. Bucket OR min-heap; alpha tie-break."
+  },
+
+  "quickselect": {
+    "215":  "Kth Largest. Lomuto/Hoare partition; recurse into side containing K. O(n) avg.",
+    "973":  "K Closest Points. Quickselect on dist²; first K elements.",
+    "1985": "Kth Largest in String Array. Lex compare or numeric compare via length-then-string."
+  },
+
+  "merge-sort-counting": {
+    "315": "Count Smaller After Self. Merge sort indexed array; on merge from right, count elements pulled from right < current left.",
+    "327": "Count Range Sum. Merge sort on prefix sums; count pairs (i,j) with prefix[j]-prefix[i] in [lower,upper].",
+    "493": "Reverse Pairs (i<j, a[i]>2*a[j]). Merge sort with count step before merge.",
+    "148": "Sort List. Standard merge sort on linked list (find middle, recurse, merge)."
+  },
+
+  "ps-1d": {
+    "303":  "Range Sum Query Immutable. Build prefix once; query = pre[j+1] - pre[i].",
+    "724":  "Find Pivot Index. Left sum = total - right sum - cur; find i where left == right.",
+    "1480": "Running Sum. Prefix sum in place.",
+    "238":  "Product Except Self. Prefix product * suffix product."
+  },
+
+  "ps-2d": {
+    "304":  "Range Sum 2D Immutable. Inclusion-exclusion 2D prefix sum.",
+    "1314": "Matrix Block Sum. 2D prefix sum + bounded region query per cell.",
+    "1292": "Max Side Length Square ≤ Threshold. 2D prefix sum + binary-search on side k.",
+    "363":  "Max Sum Rect ≤ K. Per col-pair compress to 1D, then TreeSet of prefixes."
+  },
+
+  "ps-hashmap": {
+    "560":  "Subarray Sum K (already in prefix-sum-hashmap notes).",
+    "974":  "Sum Divisible by K — mod K key.",
+    "525":  "Contiguous Array — 0→-1 transform.",
+    "523":  "Continuous Subarray Sum ≥2 — mod K + first-index.",
+    "1248": "Count Subarrays K Odd Numbers. Treat odd as 1; prefix-sum-K=K."
+  },
+
+  "difference-array": {
+    "370":  "Range Addition. d[l]+=x, d[r+1]-=x; prefix sum d at end.",
+    "1109": "Corporate Flight Bookings. Same range-add via difference array.",
+    "1854": "Max Population Year. d[birth]++, d[death]--; prefix max.",
+    "1893": "Check All Intervals Covered. Difference array on coverage; check prefix-sum positive over query range."
+  },
+
+  "dfs-grid-flood": {
+    "200":  "Number of Islands. Flood fill marking '0' or visited.",
+    "695":  "Max Area Island. Flood returning area.",
+    "130":  "Surrounded Regions. Flood from boundary 'O' to mark safe.",
+    "733":  "Flood Fill. Plain repaint.",
+    "463":  "Island Perimeter. Walk cells; count exposed edges (no DFS needed strictly).",
+    "1254": "Closed Islands. Boundary-flood to mark open; count remaining components."
+  },
+
+  "dfs-backtrack-undo": {
+    "46":  "Permutations. used[] flip on/off around recurse.",
+    "78":  "Subsets. include/exclude pattern.",
+    "39":  "Combination Sum. path.push / pop around recurse.",
+    "51":  "N-Queens. col/diag sets add/remove around recurse.",
+    "79":  "Word Search. mark cell visited; recurse; restore."
+  },
+
+  "dfs-iterative-stack": {
+    "173": "BST Iterator. Stack of left-spine; next pops + descends to right.left-spine.",
+    "341": "Flatten Nested List Iterator. Stack of iterators; on next() drain integers, descend lists.",
+    "94":  "Inorder Iterative. Stack via left-spine.",
+    "144": "Preorder Iterative. Stack; pop, visit, push right then left.",
+    "145": "Postorder Iterative. 2 stacks OR modified preorder reversed."
+  },
+
+  "dfs-parallel-trees": {
+    "100": "Same Tree. f(a,b) parallel recurse left+left, right+right.",
+    "101": "Symmetric Tree. f(left,right) mirror recurse.",
+    "572": "Subtree of Another. For each root, try sameTree(root, sub).",
+    "617": "Merge Two BTs. Parallel recurse creating merged nodes.",
+    "951": "Flip Equivalent BTs. Try BOTH parallel orderings: (left,left)+(right,right) OR (left,right)+(right,left)."
+  },
+
+  "dfs-tree-mutate": {
+    "226":  "Invert BT. Swap children; recurse.",
+    "1110": "Delete Nodes Return Forest. Post-order; on delete return null + add non-null children to forest.",
+    "814":  "BT Pruning. Post-order; return null if subtree all 0s and not target.",
+    "669":  "Trim BST. Recurse on right subtree if val<L; left if val>R; else recurse both.",
+    "450":  "Delete Node BST. On hit with 2 children swap with inorder successor then delete."
+  },
+
+  "dfs-motion-undo": {
+    "489": "Robot Room Cleaner. For each of 4 dirs: move, recurse, move-back, turnRight. Visited keys on (abs x, abs y)."
+  },
+
+  "bfs-level-order": {
+    "102":  "Level Order. Queue snapshot per level.",
+    "103":  "Zigzag Level Order. Same but reverse alternate levels (deque or post-build reverse).",
+    "199":  "Right Side View. Take LAST node per level.",
+    "515":  "Largest Value Per Level. Max across each level.",
+    "1161": "Max Level Sum. Sum per level; track best.",
+    "314":  "Vertical Order. BFS with (node, col); group by col."
+  },
+
+  "bfs-multi-source": {
+    "994":  "Rotting Oranges. Seed all rotten at t=0; BFS; max distance = answer.",
+    "542":  "01 Matrix. Seed all 0s; BFS gives distance to nearest 0.",
+    "286":  "Walls and Gates. Seed all gates; BFS into rooms.",
+    "1162": "As Far From Land. Seed all land; BFS into water; max distance.",
+    "317":  "Shortest Distance From All Buildings. For each building separately, BFS accumulating reach + total dist; result min of cells reachable by all.",
+    "1765": "Map of Highest Peak. Seed all water cells at 0; BFS assigns heights."
+  },
+
+  "bfs-bidirectional": {
+    "127": "Word Ladder. Expand smaller frontier each step.",
+    "126": "Word Ladder II. Bi-BFS to find level structure, then DFS for paths.",
+    "752": "Open the Lock — also works bidirectional."
+  },
+
+  "bfs-zero-one": {
+    "1368": "Min Cost Make Path Valid. 0-1 BFS: same-arrow=0 cost, other=1; deque front/back.",
+    "2290": "Min Obstacle Removal. 0-1 BFS treating obstacles as cost 1.",
+    "934":  "Shortest Bridge. Flood first island (cost 0); 0-1 BFS extending water (cost 1) until hitting second island."
+  },
+
+  "bfs-position-tracked": {
+    "662": "Max Width BT. (node, pos); width per level = lastPos − firstPos + 1.",
+    "958": "Check Completeness. (node, pos); if any pos > nodesSoFar, not complete.",
+    "314": "Vertical Order — (node, col); group.",
+    "987": "Vertical Order II. (node, col, row); group by col then sort by (row, val).",
+    "919": "Complete BT Inserter. BFS finds the next slot; queue of incomplete nodes."
+  },
+
+  "bfs-level-connect": {
+    "116": "Populating Next Right Pointers (perfect). Queue OR O(1)-space prev-level walk.",
+    "117": "Populating Next Right II (general). Prev-level walk handles missing nodes."
+  },
+
+  "bfs-encoded-state": {
+    "752":  "Open the Lock. State = 4-digit string; visited Set<string>.",
+    "773":  "Sliding Puzzle. Board as joined string; visited Set<string>; swap '0' with neighbours.",
+    "1284": "Min Flips Binary Matrix. Encode matrix as int; XOR with neighbour-mask per move."
+  },
+
+  "bfs-state-augmented": {
+    "864":  "Shortest Path to Get All Keys. State = (r, c, keysBitmask).",
+    "1293": "Shortest Path Obstacles Elim. State = (r, c, kUsed).",
+    "1102": "Path Max Min Value — variant; can also use heap (max-min Dijkstra).",
+    "847":  "Shortest Path Visiting All Nodes. State = (node, visitedBitmask)."
+  },
+
+  "monotonic-stack-2pass": {
+    "84":   "Largest Rectangle Histogram. Pre-compute prevSmaller + nextSmaller spans; max bar.h * (next − prev − 1).",
+    "907":  "Sum of Subarray Mins. For each i, (i − prevLess) * (nextLessOrEq − i) * a[i]; sum.",
+    "1856": "Max Subarray Min-Product. Spans give min-bounded subarray; sum * min via prefix sums.",
+    "2104": "Sum of Subarray Ranges. Per i contribution to max-sum minus min-sum via spans.",
+    "2334": "Subarray With Elements Greater Than Threshold. Spans + threshold check."
+  },
+
+  "parens-rewrite": {
+    "1047": "Remove All Adjacent Duplicates. Stack; pop on equal-top.",
+    "1209": "Remove K Adjacent Dups. Stack of (char, count); pop on count==k.",
+    "402":  "Remove K Digits. Monotonic-ish stack; pop while top > cur and budget remaining.",
+    "316":  "Remove Duplicate Letters. Stack + lastIndex + inStack; pop while top > cur AND top appears later.",
+    "1249": "Min Remove to Make Valid Parens. Stack indices of '(' to remove; collect unmatched ')'; second pass."
+  },
+
+  "expression-eval": {
+    "224":  "Basic Calculator. Stack of signs + running num; handle parens by pushing sign and reset.",
+    "227":  "Basic Calc II. Single stack of operands; on +/− push; on ×/÷ pop-and-push.",
+    "772":  "Basic Calc III. Recurse on '(' contents; otherwise like 227.",
+    "150":  "Evaluate RPN. Stack of operands; on operator pop 2.",
+    "394":  "Decode String. Stack of (count, prefix-string); on ']' pop and repeat.",
+    "1006": "Clumsy Factorial. Simulate * / + − precedence with stack."
+  },
+
+  "decode-string": {
+    "394":  "Decode String. Stack of (count, accumulated-prefix); on ']' pop and append count copies.",
+    "726":  "Number of Atoms. Stack of counter-maps; on ')' multiply popped map by count, merge into outer.",
+    "1106": "Parsing Boolean Expr. Stack-based parser; on ')' apply operator to popped operands.",
+    "736":  "Lisp Expression Eval. Parser with environment stack for let-bindings."
+  },
+
+  "monotonic-stack-spans": {
+    "84":   "Largest Rectangle Histogram. Monotonic increasing stack; on pop compute area = h * (cur − newTop − 1).",
+    "85":   "Maximal Rectangle. Per row build histogram of heights; run 84 per row.",
+    "1856": "Subarray Min-Product. Spans give bounded subarray; product = a[i] * sum(subarray).",
+    "907":  "Sum of Subarray Minimums. Per i, count = (i − prevLess) * (nextLessEq − i).",
+    "2334": "Subarray Element Greater Than Varying Threshold. Same spans; check threshold.",
+    "2104": "Sum of Subarray Ranges. (max-sum) − (min-sum) via two passes of mono-stack-spans."
+  },
+
+  "deque-window-constraint": {
+    "1696": "Jump Game VI. dp[i] = nums[i] + max(dp[i-k..i-1]); monotonic decreasing deque of dp's.",
+    "918":  "Max Circular Subarray. Alternative deque-based formulation; standard is kadane×2.",
+    "1499": "Max Value Equation. Sort by x; deque of best (y - x) candidates; for each j find best i within x-diff ≤ k."
+  },
+
+  "trie-grid-dfs": {
+    "212": "Word Search II. Trie of words; DFS grid descending trie; prune dead branches.",
+    "79":  "Word Search (single word). Plain backtrack — trie overkill for one word."
+  },
+
+  "trie-autocomplete": {
+    "642":  "Design Search Autocomplete. Trie + per-node top-K sorted suggestions.",
+    "1268": "Search Suggestions System. Sort + binary-search prefix OR trie+top3.",
+    "648":  "Replace Words. Trie of roots; for each word find shortest root prefix."
+  },
+
+  "trie-xor-max": {
+    "421":  "Max XOR Pair. 32-bit trie; for each num greedily descend the opposite bit when possible.",
+    "1707": "Max XOR With Element ≤ Mi. Sort queries by Mi; offline insert nums ≤ Mi; XOR-greedy trie query.",
+    "1803": "Count Pairs With XOR in Range. Trie of binary repr; count pairs with XOR < hi minus < lo."
+  },
+
+  "uf-basic": {
+    "547":  "Number of Provinces. UF on each connection; count roots.",
+    "200":  "Number of Islands — UF on adjacency for the alt approach.",
+    "261":  "Graph Valid Tree. n-1 edges + no cycle (UF detects).",
+    "323":  "Number of CC Undirected. UF on edges; count roots.",
+    "684":  "Redundant Connection. UF; first edge creating cycle is the redundant one.",
+    "685":  "Redundant Connection II (directed). Check in-deg 2 conflict + cycle detection."
+  },
+
+  "uf-with-size": {
+    "952":  "Largest Component by Common Factor. UF nums sharing a prime factor; track sizes.",
+    "1101": "Earliest Moment Everyone Friends. Sort logs; UF; first time component size==N.",
+    "990":  "Equations Possible. UF on '==' pairs; verify '!=' pairs are in different sets.",
+    "1202": "Smallest String With Swaps. UF on swap-pair connectivity; per component sort chars + re-emit.",
+    "1319": "Min Operations to Connect Network. UF; extra-edges ≥ (components - 1).",
+    "2092": "Find All People With Secret. Time-sorted events; UF batches at same time; un-do on no-secret group.",
+    "737":  "Sentence Similarity II. UF on similar-word pairs; check word-by-word same root.",
+    "947":  "Most Stones Removed. UF by row/col proxy; answer = n − components.",
+    "721":  "Accounts Merge. UF on emails sharing accounts; group by root; output owner+sorted emails."
+  },
+
+  "uf-weighted": {
+    "399":  "Evaluate Division. Weighted UF: rank[x] = ratio x→root; combine during path-compression.",
+    "1697": "Checking Edges in Limited Path. Sort queries by limit; offline UF.",
+    "2076": "Process Restricted Friend Requests. UF; for each request check restricted pairs not merged."
+  },
+
+  "uf-reverse-time": {
+    "803":  "Bricks Falling. Process hits in REVERSE (add bricks back); UF connectivity to roof.",
+    "305":  "Number of Islands II. Online with UF — but if processed offline reverse, similar trick.",
+    "1970": "Last Day Cross Water. Binary-search day OR reverse-time UF unioning land cells in reverse order.",
+    "2092": "Find All People With Secret — time-ordered events; not strictly reverse but offline batching."
   }
 }
