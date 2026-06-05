@@ -251,6 +251,12 @@
                    padding: 10px 12px; margin: 0; font-size: 12px; line-height: 1.5;
                    font-family: 'SF Mono', Menlo, Consolas, monospace; color: var(--code, #f2c2a1);
                    white-space: pre; overflow-x: auto; }
+  /* Visual block — slightly different tint to distinguish from code.
+     Same font-family for alignment of ASCII characters. */
+  .detail-visual { background: rgba(91,141,239,.06); border: 1px dashed var(--primary);
+                   border-radius: 4px; padding: 10px 12px; margin: 0; font-size: 12px; line-height: 1.5;
+                   font-family: 'SF Mono', Menlo, Consolas, monospace; color: var(--text);
+                   white-space: pre; overflow-x: auto; }
   .detail-problem-list { margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.6; }
   .detail-problem-list li { color: var(--text2); padding: 2px 0; }
   .detail-anchor { font-family: monospace; color: var(--primary); font-weight: 600; text-decoration: none; }
@@ -1685,6 +1691,19 @@ async function loadPatternPseudo() {
   } catch { return {} }
 }
 
+// Per-micro ASCII visuals (rendered in <pre>) — shown ABOVE pseudo in
+// the drawer. Helps recall the pattern shape at a glance.
+let PATTERN_VISUALS = {}
+async function loadPatternVisuals() {
+  try {
+    const r = await fetch('patterns-visuals.json?ts=' + Date.now(), { cache: 'no-store' })
+    if (!r.ok) return {}
+    const j = await r.json()
+    delete j._meta
+    return j
+  } catch { return {} }
+}
+
 function parsePatternData(csvText) {
   const lines = csvText.split('\n').filter(l => l.trim())
   if (!lines.length) return null
@@ -2232,6 +2251,7 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
   if (!m) return
   const notes  = PATTERN_NOTES[microId] || {}
   const pseudo = PATTERN_PSEUDO[microId]
+  const visual = PATTERN_VISUALS[microId]
   const ids    = anchorsFor(p, m, embeddedUnderDsId || null)
 
   const allProblems = ids.map(id => {
@@ -2263,6 +2283,12 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
       <h4>Often confused with</h4><p>${m.contrast}</p>
     </div>
 
+    ${visual ? `
+    <div class="detail-section">
+      <h4>Visual</h4>
+      <pre class="detail-visual">${escHtml(visual)}</pre>
+    </div>` : ''}
+
     ${pseudo ? `
     <div class="detail-section">
       <h4>Pseudo-code</h4>
@@ -2270,7 +2296,7 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
     </div>` : `
     <div class="detail-section detail-section--missing">
       <h4>Pseudo-code</h4>
-      <p><em>Not yet added for this micro — see patterns-pseudo.json to contribute.</em></p>
+      <p><em>Not yet added for this micro — see <code>patterns-pseudo.json</code> to contribute.</em></p>
     </div>`}
 
     <div class="detail-section">
@@ -2435,11 +2461,12 @@ window.addEventListener('hashchange', applyHash)
 // pulls live data; if it rejects (e.g. opening the html via file://) we
 // fall through to the inline `m.anchors` arrays still attached to each
 // micro — the UI stays functional offline.
-Promise.all([loadAnchorData(), loadPatternNotes(), loadPatternPseudo()]).then(([data, notes, pseudo]) => {
-  ANCHOR_DATA    = data
-  DERIVED        = computeDerivedMaps(data)
-  PATTERN_NOTES  = notes
-  PATTERN_PSEUDO = pseudo
+Promise.all([loadAnchorData(), loadPatternNotes(), loadPatternPseudo(), loadPatternVisuals()]).then(([data, notes, pseudo, visuals]) => {
+  ANCHOR_DATA     = data
+  DERIVED         = computeDerivedMaps(data)
+  PATTERN_NOTES   = notes
+  PATTERN_PSEUDO  = pseudo
+  PATTERN_VISUALS = visuals
   const noteCount = Object.values(notes).reduce((s, m) => s + Object.keys(m).length, 0)
   console.info(`[patterns] ${noteCount} per-problem application notes loaded`)
   if (data) {
