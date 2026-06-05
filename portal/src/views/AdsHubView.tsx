@@ -1260,10 +1260,15 @@ export default function AdsHubView() {
             >🌳 Lineage</button>
             {/* Patterns mode — renders the standalone reference
                 (public/patterns.html) inline in the same right pane via
-                iframe, matching how 🌳 Lineage embeds its visualizer. */}
+                iframe, matching how 🌳 Lineage embeds its visualizer.
+                Clicking Patterns ALSO dismisses any selected problem so
+                the iframe takes the full width — a previously-opened
+                Browse selection shouldn't squeeze the reference. Anchor
+                clicks INSIDE the iframe still set `selected` again via
+                the postMessage handler. */}
             <button
               className={`adshub-diff-pill${adsMode === 'patterns' ? ' active' : ''}`}
-              onClick={() => setAdsMode('patterns')}
+              onClick={() => { setAdsMode('patterns'); setSelected(null) }}
               title="DS → micro-pattern reference"
             >📐 Patterns</button>
           </div>
