@@ -132,6 +132,77 @@ const LISTS = {
     459, 1062, 1291, 1446, 1668,        //   Sequential String: consecutive chars / repeating substring / sequential digits
     287, 945, 1207, 1647,               //   Unequal Elements: duplicate / min-increment-to-unique / unique-occurrences / freq-unique
   ],
+  // LeetCode Staff Pick — premium-only Algo 100. Many problems on this
+  // list are premium and may not be present in LCProblems (which was
+  // built from the non-premium scrape); the seed script will report
+  // anything missing.
+  'Premium Algo 100': [
+    624, 280, 1056, 1427, 161, 186, 1055,                    // Array / String
+    159, 340, 487, 1100,                                     // Sliding Window
+    760, 266, 734, 1165, 249, 1133, 1426, 1198,              // Hashing
+    422, 531, 311, 723,                                      // Matrix
+    163, 252, 253, 616, 1272,                                // Intervals
+    439, 484, 772,                                           // Stack
+    346, 1429,                                               // Queue
+    1474, 708, 369, 1265,                                    // Linked Lists
+    298, 549, 250, 1120, 545, 366, 314,                      // Binary Tree (general)
+    270, 272, 255, 1214, 333,                                // BST
+    1490, 1506, 1522,                                        // N-ary Tree
+    277, 582, 323, 1059, 1236, 305, 694, 1136,               // Graph (general)
+    490, 505, 499, 1197, 286, 317, 269,                      // Graph BFS
+    588, 642,                                                // Trie
+    1086, 1167, 1057, 358,                                   // Heap
+    1228, 1060, 1533, 1150, 1231, 644,                       // Binary Search
+    348, 353, 604, 271, 281, 716, 1244, 428, 431,            // Design
+    247, 254, 1087,                                          // Backtracking
+    276, 256, 265, 651, 1259,                                // DP
+    1134, 1180, 1538, 1330,                                  // Math
+  ],
+  // LeetCode classic top-100-liked set — all non-premium, should all be
+  // present in LCProblems.
+  'Top 100 Liked': [
+    17, 22, 39, 46, 51, 78, 79, 131,                         // Backtracking
+    4, 33, 34, 35, 74, 124, 153,                             // Binary Search
+    94, 98, 101, 102, 104, 105, 108, 114,                    // Binary Tree
+    199, 226, 230, 236, 437, 543,
+    5, 32, 62, 64, 70, 72, 118, 139,                         // DP
+    152, 198, 279, 300, 322, 416, 1143,
+    200, 207, 994,                                           // Graph
+    45, 55, 121, 763,                                        // Greedy
+    1, 49, 128, 560,                                         // Hashing
+    215, 295, 347,                                           // Heap
+    2, 19, 21, 23, 24, 25, 138, 141,                         // Linked Lists
+    142, 146, 148, 160, 206, 234,
+    48, 54, 73, 240,                                         // Matrix
+    3, 76, 239, 438,                                         // Sliding Window
+    20, 84, 155, 394, 739,                                   // Stack
+    11, 15, 42, 283,                                         // Two Pointers
+    208,                                                     // Trie
+    31, 41, 53, 56, 75, 136, 169, 189, 238, 287,             // Misc
+  ],
+  // HelloInterview's "Code" track — 92 problems across 16 topic chapters,
+  // each chapter framed as a lesson + a small drill set. Some chapter
+  // problems use descriptive names (e.g. "Apple Harvest" for Koko Eating
+  // Bananas); mapped here to the closest standard LC by intent.
+  'HelloInterviewCode': [
+    11, 15, 42, 75, 167, 283, 611,                    // Two Pointers (7)
+    3, 424, 643, 1423, 2461,                          // Sliding Window (5) — 643 ≈ "Max Sum Subarrays of Size K"
+    56, 57, 252, 435, 759,                            // Intervals (5)
+    20, 32, 84, 394, 739,                             // Stack (5)
+    19, 24, 141, 143, 234,                            // Linked List (5)
+    33, 378, 410, 875, 1011,                          // Binary Search (5) — 875 = "Apple Harvest"
+    23, 215, 295, 658, 973,                           // Heap (5)
+    98, 104, 112, 113, 130, 133, 200, 261,            // DFS (13) — 133 = "Copy Graph", 563 = "Calculate Tilt"
+    417, 543, 563, 687, 733,
+    102, 103, 199, 542, 662, 815, 994, 1197,          // BFS (8) — "Level Order Sum" → 102 baseline
+    22, 39, 51, 78, 79, 131,                          // Backtracking (6)
+    207, 210, 743, 787, 1334, 1631,                   // Graphs (6)
+    62, 91, 139, 221, 256, 265, 300, 338, 727, 1235,  // DP (10)
+    45, 55, 121, 134, 763,                            // Greedy (5)
+    208, 1268,                                        // Trie (2) — 1268 ≈ "Prefix Matching"
+    560, 2062,                                        // Prefix Sum (2) — 2062 ≈ "Count Vowels in Substrings"
+    48, 54, 73,                                       // Matrices (3)
+  ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
     125,392,167,11,15,

@@ -10,12 +10,14 @@ import { csvFromRows, htmlToCsvText, downloadCsv } from '../lib/csvExport'
 
 // Filter state persisted across logout/login (see lib/persistedFilters.ts).
 const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
+// Difficulty filter switched from single 'All' | Easy | Med | Hard to a
+// multi-select set of {Easy, Medium, Hard}. Empty set ≡ 'All'.
 interface AdsHubFilters {
   tags: string[]; companies: string[]; list: string | null
-  diff: 'All' | 'Easy' | 'Medium' | 'Hard'; customOnly: boolean; search: string
+  diff: ('Easy' | 'Medium' | 'Hard')[]; customOnly: boolean; search: string
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
-  tags: [], companies: [], list: null, diff: 'All', customOnly: false, search: '',
+  tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -114,7 +116,7 @@ function splitNoteBody(body: string): { text: string; hw: string; hwDoc: HwDoc |
 // narrow it down and the toolbar shows the true match count.
 const LIST_CAP = 400
 
-const DIFFS = ['All', 'Easy', 'Medium', 'Hard'] as const
+const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
 
 function diffClass(d: string): string {
@@ -179,9 +181,31 @@ export default function AdsHubView() {
   // Persisted filter state — load once on mount; an effect below saves on
   // every change. Clear All resets state, the effect writes empty back so the
   // next session starts cleared too.
-  const _persisted = useMemo(() => loadFilters(ADSHUB_FILTERS_KEY, ADSHUB_FILTERS_DEFAULTS), [])
+  // Load persisted filters with a one-time migration of the legacy
+  // single-string diff ('All' | 'Easy' | …) to the new array shape.
+  const _persisted = useMemo(() => {
+    const raw = loadFilters(ADSHUB_FILTERS_KEY, ADSHUB_FILTERS_DEFAULTS)
+    const out = { ...raw } as AdsHubFilters
+    if (typeof (raw as unknown as { diff: unknown }).diff === 'string') {
+      const old = (raw as unknown as { diff: string }).diff
+      out.diff = old === 'All' || !old ? [] : [old as Diff]
+    }
+    if (!Array.isArray(out.diff)) out.diff = []
+    return out
+  }, [])
   const [search, setSearch]       = useState<string>(_persisted.search)
-  const [diff, setDiff]           = useState<Diff>(_persisted.diff)
+  const [diff, setDiff]           = useState<Diff[]>(_persisted.diff)
+  // Difficulty + Custom multi-select dropdown.
+  const [diffMenuOpen, setDiffMenuOpen] = useState(false)
+  const diffMenuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!diffMenuOpen) return
+    function onClick(e: MouseEvent) {
+      if (diffMenuRef.current && !diffMenuRef.current.contains(e.target as Node)) setDiffMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [diffMenuOpen])
   // Custom problems live at frontend_id >= 10000 (see scripts/add-custom-problem.mjs).
   // A toggle is friendlier than substring-searching "1000" (which only catches
   // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
@@ -209,7 +233,38 @@ export default function AdsHubView() {
       diff, customOnly, search,
     })
   }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
-  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage'>('browse')
+  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
+
+  // Patterns iframe (public/patterns.html) → parent message bridge. When
+  // the user clicks an anchor #NNN or a "Browse all <topic>" link inside
+  // the embedded reference, we switch back to browse mode and either
+  // select the problem (expanded) or apply the search filter — same UX
+  // as clicking a row in the AdsHub list. Avoids opening a new tab +
+  // re-login flow.
+  useEffect(() => {
+    function onMsg(e: MessageEvent) {
+      const d = e.data
+      if (!d || typeof d !== 'object') return
+      if (d.type === 'pghub-open-problem' && (typeof d.id === 'number' || typeof d.id === 'string')) {
+        const id = String(d.id)
+        const num = String(parseInt(id, 10))
+        const p = problems.find(x => x.frontendId === id || x.frontendId === num)
+        // STAY in patterns mode (don't setAdsMode('browse')) — selected
+        // problem appears in the detail pane to the right of the iframe;
+        // user can keep browsing patterns and opening more problems
+        // without losing context. Also don't auto-expand the detail —
+        // user keeps both panes visible (they can dblclick the detail
+        // header to widen if they want).
+        if (p) setSelected(p)
+      } else if (d.type === 'pghub-search' && typeof d.q === 'string') {
+        // 'Browse all <topic>' link → flip to Browse mode and apply the
+        // filter (that's the whole point of the link — leave Patterns).
+        setSearch(d.q); setAdsMode('browse')
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [problems])
   const [lineageFocus, setLineageFocus]    = useState<number | null>(null)
   // Add-a-problem modal.
   const EMPTY_ADD = { frontendId: '', title: '', slug: '', difficulty: 'Medium', topics: '', companies: '', tags: '', leetcodeUrl: '', description: '' }
@@ -525,7 +580,7 @@ export default function AdsHubView() {
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
     return problems.filter(p => {
-      if (diff !== 'All' && p.difficulty !== diff) return false
+      if (diff.length > 0 && !diff.includes(p.difficulty as Diff)) return false
       // Tags: AND across selections, prefix-matching the :: hierarchy.
       if (selectedTags.length > 0 &&
           !selectedTags.every(st => p.tags.some(t => t === st || t.startsWith(st + '::')))) return false
@@ -878,7 +933,7 @@ export default function AdsHubView() {
   useEffect(() => { setListMenuOpen(false); setNewListName('') }, [selected?.slug])
   useEffect(() => { if (!selected) setViewerExpanded(false) }, [selected])
 
-  const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage'
+  const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns'
 
   // Difficulty/topics row + editable lineage tags. Sits at the top of the
   // detail's left content in every mode (so it lines up with Starter Code).
@@ -1203,6 +1258,14 @@ export default function AdsHubView() {
               className={`adshub-diff-pill${adsMode === 'lineage' ? ' active' : ''}`}
               onClick={() => setAdsMode('lineage')}
             >🌳 Lineage</button>
+            {/* Patterns mode — renders the standalone reference
+                (public/patterns.html) inline in the same right pane via
+                iframe, matching how 🌳 Lineage embeds its visualizer. */}
+            <button
+              className={`adshub-diff-pill${adsMode === 'patterns' ? ' active' : ''}`}
+              onClick={() => setAdsMode('patterns')}
+              title="DS → micro-pattern reference"
+            >📐 Patterns</button>
           </div>
           {adsMode === 'browse' && <>
           <button
@@ -1212,20 +1275,53 @@ export default function AdsHubView() {
           >
             ☰ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
-          <div className="adshub-diff-pills">
-            {DIFFS.map(d => (
-              <button
-                key={d}
-                className={`adshub-diff-pill${diff === d ? ' active' : ''}${d !== 'All' ? ' ' + diffClass(d) : ''}`}
-                onClick={() => setDiff(d)}
-              >{d}</button>
-            ))}
-            {/* Custom-only chip — see all problems with frontend_id >= 10000. */}
+          {/* Multi-select dropdown: difficulty + ✨ Custom in one pill so
+              the toolbar stays compact. Empty diff ≡ All. Auto-applies on
+              every checkbox toggle. Click outside (or the trigger again)
+              to close. */}
+          <div className="adshub-diff-menu-wrap" ref={diffMenuRef}>
             <button
-              className={`adshub-diff-pill${customOnly ? ' active' : ''}`}
-              onClick={() => setCustomOnly(v => !v)}
-              title="Show only custom problems (id ≥ 10000)"
-            >✨ Custom</button>
+              className={`adshub-diff-pill${diff.length > 0 || customOnly ? ' active' : ''}`}
+              onClick={() => setDiffMenuOpen(o => !o)}
+              title="Filter by difficulty / custom"
+              aria-haspopup="true"
+              aria-expanded={diffMenuOpen}
+            >
+              {diff.length === 0 && !customOnly ? 'All' : [
+                diff.length === 0 ? null : diff.join(', '),
+                customOnly ? '✨ Custom' : null,
+              ].filter(Boolean).join(' · ')}
+              <span style={{ marginLeft: 6, opacity: .6 }}>▾</span>
+            </button>
+            {diffMenuOpen && (
+              <div className="adshub-diff-menu" role="menu">
+                {DIFFS.map(d => (
+                  <label key={d} className={`adshub-diff-menu-item ${diffClass(d)}`}>
+                    <input
+                      type="checkbox"
+                      checked={diff.includes(d)}
+                      onChange={() => setDiff(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
+                    />
+                    <span>{d}</span>
+                  </label>
+                ))}
+                <div className="adshub-diff-menu-sep" />
+                <label className="adshub-diff-menu-item">
+                  <input
+                    type="checkbox"
+                    checked={customOnly}
+                    onChange={() => setCustomOnly(v => !v)}
+                  />
+                  <span title="Custom problems live at frontend_id ≥ 10000">✨ Custom only</span>
+                </label>
+                {(diff.length > 0 || customOnly) && (
+                  <button
+                    className="adshub-diff-menu-clear"
+                    onClick={() => { setDiff([]); setCustomOnly(false) }}
+                  >Clear</button>
+                )}
+              </div>
+            )}
           </div>
           <input
             className="col-search"
@@ -1250,13 +1346,19 @@ export default function AdsHubView() {
             disabled={refreshing || loading}
             title="Reload problems from the sheet"
           >{refreshing ? '…' : '↻'}</button>
-          <button className="rf-btn-save" onClick={openAddProblem} title="Add a new problem">＋ Add</button>
+          <button
+            className="rf-btn-save"
+            onClick={openAddProblem}
+            title="Add a new problem"
+            aria-label="Add a new problem"
+          >＋</button>
           <button
             className="rf-btn-cancel"
             onClick={exportFilteredCsv}
             disabled={loading || filtered.length === 0}
             title={`Export the ${filtered.length.toLocaleString()} currently-filtered problem${filtered.length === 1 ? '' : 's'} as CSV (id, title, difficulty, topics, tags, slug, statement)`}
-          >⬇ Export CSV</button>
+            aria-label="Export CSV"
+          >⬇</button>
           <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
             {filtered.length.toLocaleString()} / {problems.length.toLocaleString()}
           </span>
@@ -1296,11 +1398,48 @@ export default function AdsHubView() {
             }}
           />
         ) : (
+        /* Shared split layout for BOTH Browse and Patterns modes. In
+           Patterns mode the left column hosts the iframe (always mounted
+           — selecting a problem doesn't reload it); the right column
+           shows the same detail pane Browse uses. In Browse the left
+           column is the toolbar+table as before. */
         <div className="browse-cards-split" ref={splitRef}>
-          {/* Problem list — hidden when the detail viewer is expanded */}
+          {/* Left column — Patterns iframe (mode==='patterns') OR problem
+              list (mode==='browse'). Hidden when detail is maximized. */}
           {!viewerExpanded && (
-          <div className="browse-col-cards" style={selected ? { flex: `0 0 ${listRatio}%` } : undefined}>
-            {loading ? (
+          <div
+            className="browse-col-cards"
+            style={{
+              ...(selected ? { flex: `0 0 ${listRatio}%` } : {}),
+              // Patterns mode: make the column a flex container so the
+              // <iframe flex:1> can fill remaining vertical space, and
+              // drop the column's own overflow:auto (iframe scrolls).
+              ...(adsMode === 'patterns'
+                ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 56px)' }
+                : {}),
+            }}
+          >
+            {adsMode === 'patterns' ? (
+              <>
+                {/* Small header strip so the section has a doc-detail-hd-style
+                    affordance: double-click snaps the list↔detail divider
+                    (widen the iframe / restore split). Mirrors the detail
+                    pane's header doubleclick. */}
+                <div
+                  className="col-hd doc-detail-hd"
+                  style={{ padding: '10px 12px', flexShrink: 0 }}
+                  onDoubleClick={() => setListRatio(r => r >= 78 ? 60 : 85)}
+                  title="📐 Patterns Reference — double-click to widen / restore"
+                >
+                  <span>📐 Patterns Reference</span>
+                </div>
+                <iframe
+                  title="Micro-Pattern Reference"
+                  src={`${import.meta.env.BASE_URL}patterns.html`}
+                  style={{ width: '100%', flex: 1, minHeight: 0, border: 0 }}
+                />
+              </>
+            ) : loading ? (
               <div className="browse-stream-init">
                 <div className="browse-stream-spinner" />
                 <span>Loading…</span>
