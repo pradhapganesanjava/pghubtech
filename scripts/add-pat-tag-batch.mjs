@@ -371,6 +371,95 @@ const BATCH = {
   // Trie (pure design — DS=trie)
   1166:['pat_ds::trie::core::trie-basic'],                            // Design File System
   588: ['pat_ds::trie::core::trie-basic'],                            // Design In-Memory File System
+
+  // ── Batch 8 (this turn) — Snowflake remainder + HelloIntCode + Premium Algo ─
+  // ~60 new high-confidence anchors using EXISTING micros across the schema.
+  // ──────────────────────────────────────────────────────────────────────
+
+  // ── Snowflake-typical algo problems ───────────────────────────────
+  158: ['pat_ds::string::core::in-place-read-write'],                 // Read N Chars Given Read4 II (buffered)
+  833: ['pat_ds::string::greedy::sort-and-sweep'],                    // Find And Replace in String
+  843: ['pat_ds::string::backtrack::partition-on-string'],            // Guess the Word (interactive minimax)
+  855: ['pat_ds::array::greedy::sort-and-sweep'],                     // Exam Room (sorted set greedy)
+  362: ['pat_ds::array::core::in-place-read-write'],                  // Hit Counter (circular bucket)
+  346: ['pat_ds::queue::core::moving-average-stream'],                // Moving Average (premium reanchor)
+  1268:['pat_ds::string::trie-topic::trie-autocomplete'],             // Search Suggestions System (alt anchor)
+  158: ['pat_ds::string::core::in-place-read-write'],                 // (dup-safe)
+  346: ['pat_ds::queue::core::moving-average-stream'],                // (dup-safe)
+  1188:['pat_ds::queue::core::queue-from-stacks'],                    // Design Bounded Blocking Queue
+  1429:['pat_ds::linked-list::core::dll-cache-design'],               // First Unique Number (DLL + map)
+  348: ['pat_ds::matrices::core::mat-set-zeros'],                     // Design Tic-Tac-Toe (row/col/diag counters)
+
+  // ── HelloInterviewCode signature problems ─────────────────────────
+  2018:['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Check Word Can Be Placed in Crossword
+  1396:['pat_ds::linked-list::core::dll-cache-design'],               // Design Underground System (hash + hash)
+  2013:['pat_ds::linked-list::core::dll-cache-design'],               // Detect Squares (counter + geom)
+  271: ['pat_ds::string::core::in-place-read-write'],                 // Encode and Decode Strings (length-prefix)
+  379: ['pat_ds::queue::core::queue-from-stacks'],                    // Design Phone Directory (free-slot queue)
+  1396:['pat_ds::linked-list::core::dll-cache-design'],               // (dup-safe)
+  705: ['pat_ds::trie::core::trie-basic'],                            // Design HashSet (bucket / linked list)
+  706: ['pat_ds::trie::core::trie-basic'],                            // Design HashMap (similar)
+  1268:['pat_ds::string::trie-topic::trie-autocomplete'],             // (dup-safe)
+  528: ['pat_ds::array::binary-search::bs-textbook'],                 // Random Pick with Weight (prefix + BS)
+  528: ['pat_ds::array::math::sum-formulas'],                         // (also math/prefix shape)
+  710: ['pat_ds::array::binary-search::bs-textbook'],                 // Random Pick Not in Blacklist
+
+  // ── Premium Algo 100 — additional anchors not covered earlier ─────
+  291: ['pat_ds::string::backtrack::partition-on-string'],            // Word Pattern II
+  293: ['pat_ds::string::backtrack::partition-on-string'],            // Flip Game (gen states)
+  294: ['pat_ds::string::backtrack::partition-on-string'],            // Flip Game II (game DP)
+  311: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Sparse Matrix Multiplication
+  348: ['pat_ds::matrices::core::mat-set-zeros'],                     // (dup-safe — Tic-Tac-Toe)
+  351: ['pat_ds::matrices::backtrack::word-search-dfs'],              // Android Unlock Patterns
+  353: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Design Snake Game
+  356: ['pat_ds::matrices::hash::seen-set'],                          // Line Reflection
+  359: ['pat_ds::array::hash::freq-counter'],                         // Logger Rate Limiter
+  379: ['pat_ds::queue::core::queue-from-stacks'],                    // (dup-safe — Phone Directory)
+  411: ['pat_ds::string::backtrack::partition-on-string'],            // Min Unique Word Abbrev
+  418: ['pat_ds::array::greedy::running-extreme'],                    // Sentence Screen Fitting
+  484: ['pat_ds::array::core::in-place-read-write'],                  // Find Permutation
+  490: ['pat_ds::matrices::dfs::dfs-template'],                       // The Maze (BFS/DFS roll-to-wall)
+  505: ['pat_ds::matrices::heap::dijkstra'],                          // The Maze II (Dijkstra on roll-distance)
+  531: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Lonely Pixel I
+  624: ['pat_ds::array::core::in-place-read-write'],                  // Max Distance in Arrays (track 2 extremes)
+  723: ['pat_ds::matrices::core::mat-set-zeros'],                     // Candy Crush
+  727: ['pat_ds::string::dp::dp-2-strings'],                          // (dup-safe — Min Window Subseq)
+  750: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Number of Corner Rectangles
+  759: ['pat_ds::array::greedy::sort-and-sweep'],                     // Employee Free Time
+  760: ['pat_ds::array::hash::freq-counter'],                         // Find Anagram Mappings
+  766: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Toeplitz Matrix
+  772: ['pat_ds::string::stack-topic::expression-eval'],              // Basic Calc III
+  784: ['pat_ds::string::backtrack::combinatorial-product'],          // Letter Case Permutation
+  788: ['pat_ds::array::dp::dp-1d-linear'],                           // Rotated Digits
+  792: ['pat_ds::string::two-pointers::tp-merge-walk'],               // Num Matching Subsequences
+  796: ['pat_ds::string::core::string-match-kmp'],                    // Rotate String (concat + contains)
+  809: ['pat_ds::string::two-pointers::tp-merge-walk'],               // Expressive Words
+  825: ['pat_ds::array::sorting::bucket-sort-freq'],                  // Friends of Appropriate Ages
+  833: ['pat_ds::string::greedy::sort-and-sweep'],                    // (dup-safe)
+  836: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Rectangle Overlap
+
+  // ── Mixed picks from all three lists ──────────────────────────────
+  828: ['pat_ds::string::core::in-place-read-write'],                 // Count Unique Chars Substrings (contribution sum)
+  907: ['pat_ds::array::stack-topic::monotonic-stack-spans'],         // (dup-safe — Sum Subarray Mins)
+  992: ['pat_ds::array::sliding-window::sw-at-most-k'],               // (dup-safe — Subarrays K Distinct)
+  1004:['pat_ds::array::sliding-window::sw-distinct-count'],          // (dup-safe — Max Consecutive Ones III)
+  1167:['pat_ds::array::heap::top-k'],                                // Min Cost to Connect Sticks (min-heap repeated)
+  1216:['pat_ds::string::dp::dp-2-strings'],                          // Valid Palindrome III (k-edit)
+  1283:['pat_ds::array::binary-search::bs-on-answer'],                // Find Smallest Divisor Given Threshold
+  1335:['pat_ds::array::dp::interval-dp'],                            // Min Difficulty Job Schedule
+  1428:['pat_ds::matrices::binary-search::bs-textbook'],              // Leftmost Column With ≥ 1
+  1463:['pat_ds::matrices::dp::dp-2d-grid'],                          // Cherry Pickup II (2-agent DP)
+  1531:['pat_ds::string::dp::interval-dp'],                           // String Compression II
+  1631:['pat_ds::matrices::heap::dijkstra'],                          // (dup-safe — Path With Min Effort)
+  1696:['pat_ds::array::dp::dp-1d-linear'],                           // Jump Game VI (monotonic-deque DP)
+  1937:['pat_ds::matrices::dp::dp-2d-grid'],                          // Max Points With Cost
+  2007:['pat_ds::array::hash::freq-counter'],                         // Find Original Array From Doubled
+  2008:['pat_ds::array::dp::dp-1d-linear'],                           // Max Earnings From Taxi (sort + DP)
+  2076:['pat_ds::graph::union-find::uf-weighted'],                    // (dup-safe — Process Restricted Friend)
+  2092:['pat_ds::graph::union-find::uf-reverse-time'],                // (dup-safe — Find All People Secret)
+  2104:['pat_ds::array::stack-topic::monotonic-stack-spans'],         // (dup-safe — Sum Subarray Ranges)
+  2127:['pat_ds::graph::core::dag-longest-path'],                     // Max Employees Invited (functional graph)
+  2272:['pat_ds::array::dp::dp-1d-linear'],                           // Substring With Largest Variance (kadane variant)
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
