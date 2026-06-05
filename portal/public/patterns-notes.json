@@ -1,0 +1,67 @@
+{
+  "_meta": {
+    "purpose": "Per-(micro, LC-id) application notes — explain HOW the micro's strategy applies to that specific problem. Surfaced in the UI as the anchor chip's tooltip. Audit batch grows over time; see git log.",
+    "format": "{ <microId>: { <lcId>: '<one-line note>' } }",
+    "status": "Audit pass 1 — covers 5 high-anchor micros: complement-lookup, freq-counter, seen-set, dp-1d-linear (residual), dfs-template (residual)."
+  },
+
+  "complement-lookup": {
+    "1":   "Two-Sum unsorted. One pass, deferred insert: check map for (target-x) FIRST, then store x→i. Guarantees we don't pair x with itself.",
+    "167": "Two-Sum on SORTED array. Hash works but is suboptimal — converging two-pointer (tp-k-sum) is O(1) space. Listed here for the universal pattern.",
+    "653": "Two-Sum in a BST. Two clean approaches: (a) collect inorder→array then complement-lookup; (b) two iterators (inorder + reverse-inorder) converging — O(h) space.",
+    "560": "Subarray sum = K with negatives. Prefix-sum + complement: map[prefix] = count; for each prefix, answer += map[prefix-K]; then ++map[prefix]. Same complement-lookup engine over prefix space.",
+    "974": "Subarray sum divisible by K. Same prefix+complement, but key on (prefix mod K) (normalise negative mods). The complement is just the SAME residue (we want differences ≡ 0 mod K)."
+  },
+
+  "freq-counter": {
+    "387":  "First unique char. Counter pass over s; second pass returns first idx where count[s[i]]==1.",
+    "169":  "Majority element. Counter works O(n) space; Boyer-Moore voting is the optimal O(1) — same conceptual frequency-tracking, just collapsed to two vars.",
+    "49":   "Group anagrams. Counter form: 26-int tuple as group key. Beats sort-key when k (word length) is large.",
+    "242":  "Valid anagram. Compare two 26-counters; or single counter with += and -=, check all zero.",
+    "567":  "Permutation in string. Sliding window of len(s1) over s2; track 'matched chars' so the window-check is O(1) per slide.",
+    "229":  "Majority Element II (> n/3). Boyer-Moore generalised to 2 candidates + final verification pass.",
+    "350":  "Intersection 2 arrays II (with multiplicity). Counter on smaller array; iterate larger, decrement and emit on hit.",
+    "819":  "Most common word (excluding banned). Tokenise, lowercase, strip punct; counter over words ∖ banned; argmax.",
+    "1153": "String transforms into another. Mapping s[i]→t[i] must be a function (single-valued). If s==t trivial; else need an unused 27th char (≤25 distinct in t) for the temporary cycle break.",
+    "1657": "Determine if two strings are close. Op1+Op2 preserve: (a) SET of chars must match exactly, (b) SORTED freq multiset must match.",
+    "266":  "Palindrome permutation. Counter; ≤ 1 char with odd count.",
+    "1481": "Least unique ints after K removals. Counter, sort COUNTS ascending, greedily consume smallest-count keys with budget K.",
+    "734":  "Sentence similarity. Word-pair set (both directions); walk word-by-word, check membership."
+  },
+
+  "seen-set": {
+    "217":  "Contains duplicate. One pass; add to set; on first re-encounter return true.",
+    "219":  "Contains duplicate within K indices. Sliding-window set of size K+1: add cur, evict at i-K, check membership before add.",
+    "287":  "Find duplicate. Seen-set is O(n) space — works but Floyd's tortoise/hare (tp-fast-slow tag) gives O(1) space — that's the optimal.",
+    "141":  "Linked List cycle. Seen-set O(n) space — Floyd's two-pointer (tp-fast-slow tag) is O(1) optimal. Both tagged so the comparison is visible.",
+    "1488": "Avoid flood. Map lake→last-rain-day; sorted set of dry days; on rain to a wet lake, bisect for the next dry day to drain. (Hash + binary-search combo — could warrant a sub-micro.)",
+    "1452": "People whose list contains all of another. For each list build set; outer loop, subset-check via .issubset / all-in."
+  },
+
+  "dp-1d-linear": {
+    "70":  "Climbing stairs. dp[i] = dp[i-1] + dp[i-2]. Two rolling vars; O(1) space.",
+    "198": "House robber. dp[i] = max(dp[i-1], dp[i-2] + a[i]). Two rolling vars.",
+    "213": "House robber II (circular). Two passes: rob houses [0..n-2] OR [1..n-1] (exclude first or last); max of the two.",
+    "91":  "Decode ways. dp[i] = dp[i-1] (if s[i-1] != '0') + dp[i-2] (if s[i-2..i-1] in 10..26).",
+    "139": "Word break. dp[i] = ∃ j<i: dp[j] AND s[j..i] ∈ dict. Substring check trie or set.",
+    "322": "Coin change min. dp[w] = 1 + min(dp[w-c] for c in coins). O(W·n) — unbounded knapsack shape but lives here as the simplest DP intro.",
+    "746": "Min cost climbing stairs. dp[i] = cost[i] + min(dp[i-1], dp[i-2]).",
+    "837": "New 21 Game. dp[i] = (dp[i-1] + … + dp[i-W])/W; maintain rolling sum to drop the inner loop. Probability variant of climbing-stairs.",
+    "403": "Frog jump. dp[stone] = set of arrival speeds; transitions {v-1,v,v+1} to stones[stone]+v. Hash-of-sets shape, but still linear DP over stones.",
+    "343": "Integer break. dp[n] = max over i in 1..n-1 of max(i*(n-i), i*dp[n-i]). O(n²) but technically 1D (knapsack-style)."
+  },
+
+  "dfs-template": {
+    "200":  "Number of Islands. For each unvisited '1', DFS (mark to '0' or visited set), ++count. Same as dfs-grid-flood — listed under both pre-prune.",
+    "695":  "Max area of island. DFS RETURNS subtree-area (1 + sum of 4 neighbour calls); track global max.",
+    "547":  "Number of provinces. For each unvisited city, DFS via adjacency matrix marking; ++count.",
+    "133":  "Clone graph. Map<orig, clone>; on visit, create clone, recurse to each neighbour, attach. Pure visited-via-map idiom.",
+    "417":  "Pacific Atlantic. Two DFSes from boundary cells (reverse: water flows DOWN-to-UP); mark cells reachable to each ocean; intersect the two boolean grids.",
+    "841":  "Keys and Rooms. DFS from room 0; visited[i]=true; recurse into each key in rooms[i]. Check all visited.",
+    "489":  "Robot Room Cleaner. DFS with MOTION backtracking — for each of 4 directions: clean, move, recurse, move-back, turn. Distinct shape worth own sub-micro if it grows.",
+    "1192": "Critical Connections (Tarjan). disc[]/low[] arrays; back-edges update low. Bridge when low[v] > disc[u]. (Tarjan deserves its own micro; tracked for future.)",
+    "582":  "Kill Process. Build child-list adjacency; DFS from killPid collecting all descendants.",
+    "1376": "Time to inform all employees. Build manager→reports adjacency; DFS from head returning max-path-time over subtrees; combine with informTime[u].",
+    "1530": "Number of good leaf pairs. DFS returns LIST of leaf-distances from current root; for each ancestor, count pairs across left+right with sum ≤ distance."
+  }
+}

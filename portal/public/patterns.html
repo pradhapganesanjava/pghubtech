@@ -116,6 +116,10 @@
   .anchor.easy { border-left: 3px solid var(--easy); }
   .anchor.medium { border-left: 3px solid var(--med); }
   .anchor.hard { border-left: 3px solid var(--hard); }
+  /* has-note dot: small visual cue that hovering this chip shows a
+     per-problem application note. Subtle on purpose. */
+  .anchor.has-note { border-bottom: 1px dotted var(--primary); }
+  .anchor-has-note { color: var(--primary); margin-left: 3px; font-size: 9px; }
   .mobile-burger { display: none; position: fixed; top: 8px; left: 8px; z-index: 60; background: var(--bg2); border: 1px solid var(--border);
                    color: var(--text); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
   /* Burger shows when sidebar collapses (sync'd with the 700px breakpoint
@@ -1493,6 +1497,9 @@ function microsForEmbed(topicId, dsId) {
 let ANCHOR_DATA = null    // { coreAnchors[dsId][microId] = [ids],
                           //   topicAnchors[topicId][microId] = [ids],
                           //   dsTopicAnchors[dsId][topicId][microId] = [ids] }
+let PATTERN_NOTES = {}    // { microId: { lcId: "how the micro applies to this problem" } }
+                          // Loaded from patterns-notes.json. Empty object if
+                          // fetch fails — anchor chips just don't get a tooltip.
 let DERIVED = null        // computed from ANCHOR_DATA after CSV load —
                           // { dsTopics[ds] = [topicIds],          (replaces hand-coded DS_TOPIC_LINKS)
                           //   dsTopicMicros[ds][topic] = [micros],(replaces TOPIC_DS_MICROS)
@@ -1512,6 +1519,20 @@ async function loadAnchorData() {
     console.warn('[patterns] CSV fetch failed, using inline anchors:', e)
     return null
   }
+}
+
+// Per-(micro, LC-id) application notes — explains HOW the micro's strategy
+// applies to that specific anchor problem. Surfaced as the anchor chip's
+// title tooltip. Optional — if the fetch fails or a problem has no note,
+// the chip just doesn't get a tooltip.
+async function loadPatternNotes() {
+  try {
+    const r = await fetch('patterns-notes.json?ts=' + Date.now(), { cache: 'no-store' })
+    if (!r.ok) return {}
+    const j = await r.json()
+    delete j._meta   // strip the doc-comment object before lookup
+    return j
+  } catch { return {} }
 }
 
 function parsePatternData(csvText) {
@@ -1951,12 +1972,22 @@ function onBrowseLinkClick(e, q) {
 }
 
 function renderMicroCard(p, m, embeddedUnderDsId = null) {
-  const ids = anchorsFor(p, m, embeddedUnderDsId)
-  const anchors = ids.map(id => `
-    <a class="anchor" href="adshub?id=${id}" target="_blank" rel="noopener"
-       onclick="onAnchorClick(event, ${id})">
-      <span class="num">#${id}</span>
-    </a>`).join('')
+  const ids   = anchorsFor(p, m, embeddedUnderDsId)
+  const notes = PATTERN_NOTES[m.id] || {}
+  const anchors = ids.map(id => {
+    // Per-(micro, lc) prose note — shown as tooltip on the chip. Notes
+    // explain HOW this micro's strategy applies to THIS problem (and call
+    // out cases where the tag works but isn't optimal — see seen-set on
+    // LC 287/141 where Floyd's is the better answer).
+    const note = notes[id]
+    const titleAttr = note ? ` title="${note.replace(/"/g, '&quot;')}"` : ''
+    const dot = note ? '<span class="anchor-has-note">·</span>' : ''
+    return `
+    <a class="anchor${note ? ' has-note' : ''}" href="adshub?id=${id}" target="_blank" rel="noopener"
+       onclick="onAnchorClick(event, ${id})"${titleAttr}>
+      <span class="num">#${id}</span>${dot}
+    </a>`
+  }).join('')
   return `
     <div class="micro" id="m-${p.id}-${m.id}">
       <h4><span class="id">${m.id}</span>${m.name}</h4>
@@ -2060,9 +2091,12 @@ window.addEventListener('hashchange', applyHash)
 // pulls live data; if it rejects (e.g. opening the html via file://) we
 // fall through to the inline `m.anchors` arrays still attached to each
 // micro — the UI stays functional offline.
-loadAnchorData().then(data => {
-  ANCHOR_DATA = data
-  DERIVED     = computeDerivedMaps(data)
+Promise.all([loadAnchorData(), loadPatternNotes()]).then(([data, notes]) => {
+  ANCHOR_DATA   = data
+  DERIVED       = computeDerivedMaps(data)
+  PATTERN_NOTES = notes
+  const noteCount = Object.values(notes).reduce((s, m) => s + Object.keys(m).length, 0)
+  console.info(`[patterns] ${noteCount} per-problem application notes loaded`)
   if (data) {
     const coreCount  = Object.values(data.core   ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
     const topicCount = Object.values(data.topic  ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
