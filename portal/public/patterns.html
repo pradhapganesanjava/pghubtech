@@ -24,8 +24,17 @@
                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
   a { color: var(--primary); text-decoration: none; } a:hover { text-decoration: underline; }
   code { background: var(--bg3); padding: 1px 4px; border-radius: 3px; font-size: 90%; color: var(--code); }
-  .layout { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
-  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .sidebar.open { display: block; position: fixed; inset: 0 30% 0 0; z-index: 50; box-shadow: 4px 0 20px rgba(0,0,0,.5); } }
+  .layout { display: grid; grid-template-columns: 260px 1fr; height: 100vh; }
+  /* Mid widths: shrink the sidebar a bit so the main pane breathes. */
+  @media (max-width: 900px) { .layout { grid-template-columns: 220px 1fr; } }
+  /* Narrow widths (e.g. squeezed inside AdsHub's Patterns split): hide
+     the sidebar, let main go full-width. The .mobile-burger button at
+     top-left toggles the sidebar back on demand. */
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .sidebar.open { display: block; position: fixed; inset: 0 30% 0 0; z-index: 50; box-shadow: 4px 0 20px rgba(0,0,0,.5); }
+  }
   /* ── Sidebar ─────────────────────────────────────────────────────── */
   .sidebar { background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; }
   .side-hd { padding: 14px 14px 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg2); z-index: 1; }
@@ -56,7 +65,8 @@
   .flat-list .flat-item .flat-cat { color: var(--text3); font-size: 10px; }
   .flat-list .flat-item.active { background: rgba(91,141,239,.18); color: var(--primary); }
   /* ── Main ────────────────────────────────────────────────────────── */
-  .main { overflow-y: auto; padding: 24px 32px; }
+  .main { overflow-y: auto; padding: 24px 32px; min-width: 0; }
+  @media (max-width: 700px) { .main { padding: 56px 14px 24px; } }
   .main h2 { margin: 0 0 6px; font-size: 22px; }
   .main h3 { margin: 24px 0 10px; font-size: 15px; color: var(--text); padding-bottom: 6px; border-bottom: 1px solid var(--border); }
   .main h4 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
@@ -65,7 +75,11 @@
   .browse-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg3); border: 1px solid var(--border);
                  border-radius: 4px; font-size: 11px; color: var(--text2); margin-top: 6px; }
   .browse-link:hover { background: var(--primary); color: white; text-decoration: none; }
-  .micro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin: 12px 0 28px; }
+  /* Card min lowered from 380 → 280 so the grid still shows multiple
+     columns at moderate widths and reflows to one column cleanly when
+     the pane is squeezed (e.g. inside AdsHub's Patterns split). */
+  .micro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin: 12px 0 28px; }
+  .home-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; }
   .micro { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
   .micro h4 { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
   .micro h4 .id { font-size: 9px; color: var(--text3); padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-family: monospace; text-transform: uppercase; }
@@ -81,7 +95,10 @@
   .anchor.hard { border-left: 3px solid var(--hard); }
   .mobile-burger { display: none; position: fixed; top: 8px; left: 8px; z-index: 60; background: var(--bg2); border: 1px solid var(--border);
                    color: var(--text); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-  @media (max-width: 800px) { .mobile-burger { display: block; } .main { padding: 56px 14px 24px; } }
+  /* Burger shows when sidebar collapses (sync'd with the 700px breakpoint
+     above). The main-pane top padding adjustment now lives in the same
+     700px @media block earlier in the file. */
+  @media (max-width: 700px) { .mobile-burger { display: block; } }
   .empty { color: var(--text2); padding: 24px; text-align: center; }
   .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 12px 0; }
   .home-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer;
