@@ -4295,12 +4295,14 @@ body.resizing-h * {
 /* AI / Audio strip in problem detail */
 .adshub-audio-float { margin: 12px 0; }
 
-/* AI helper — INLINE section in the description column, flows beneath
-   the end-of-problem footer like any other section (Companies,
-   Tags-lineage, etc.). No fixed positioning. */
-.prob-ai-inline { margin-top: 18px; padding: 12px 14px;
-                  background: var(--bg2); border: 1px solid var(--primary); border-radius: 8px;
-                  display: flex; flex-direction: column; }
+/* AI helper — fills the CodePanel overlay slot (same place Notes
+   takes over the right column). Same layout shape as NoteViewer /
+   RichEditor: width:100%, height:100%, internal scroll. The
+   .code-panel-hd above us already shows '🤖 AI · <title>' (via
+   headerLeft prop) so this block is just the body. */
+.prob-ai-inline { display: flex; flex-direction: column; width: 100%; height: 100%;
+                  background: var(--bg2); padding: 12px 14px; box-sizing: border-box;
+                  overflow-y: auto; }
 
 /* Markdown response styling — rich rendering of code blocks, lists,
    headings, inline code, etc. */

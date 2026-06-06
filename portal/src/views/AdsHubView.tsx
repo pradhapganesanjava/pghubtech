@@ -1078,10 +1078,12 @@ export default function AdsHubView() {
       <>
         <button
           className={`code-btn${noteMode === 'view' ? ' active' : ''}`}
-          // Notes and AI are now in DIFFERENT columns (Notes overlays
-          // the right code-column; AI is inline in the description
-          // column) — no mutual exclusion needed.
-          onClick={() => setNoteMode(m => m === 'view' ? 'hidden' : 'view')}
+          // Notes and AI share the right-column overlay slot — opening
+          // Notes closes AI.
+          onClick={() => {
+            setNoteMode(m => m === 'view' ? 'hidden' : 'view')
+            if (aiOpen) setAiOpen(false)
+          }}
           title={noteMode === 'view' ? 'Hide notes' : 'Show my notes'}
         >{noteMode === 'view' ? '✕ Notes' : '📝 Notes'}</button>
         {noteMode === 'view' && (
@@ -1100,11 +1102,16 @@ export default function AdsHubView() {
         {notesBtn}
         <button
           className={`code-btn${aiOpen ? ' active' : ''}`}
-          // AI is its own INLINE section in the description column
-          // (PR #53) — toggling it shouldn't touch the Code / Notes
-          // column state. Legacy setCodeCollapsed(false) +
-          // setNoteMode('hidden') removed.
-          onClick={() => setAiOpen(v => !v)}
+          // AI overlays the CodePanel slot (right column, like Notes).
+          // Opening it auto-expands the panel and closes Notes for
+          // mutual exclusion in the same slot.
+          onClick={() => {
+            setAiOpen(v => {
+              const next = !v
+              if (next) { setNoteMode('hidden'); setCodeCollapsed(false) }
+              return next
+            })
+          }}
           title={aiOpen ? 'Close AI helper' : 'Ask AI about this problem'}
         >🤖 AI</button>
         <button
@@ -1722,19 +1729,8 @@ export default function AdsHubView() {
                       </details>
                     )}
                     <div className="adshub-end-footer">· end of problem ·</div>
-                    {/* AI helper renders INLINE in the description
-                        column, below the end-of-problem footer. Flows
-                        as a normal section — no fixed positioning, no
-                        overlay. User sees Code/Notes column AND the
-                        AI section at the same time. */}
-                    {aiOpen && (
-                      <ProblemAIChat
-                        problemTitle={selected.title}
-                        problemHtml={selected.descriptionHtml || ''}
-                        notesPlain={notesPlainText || undefined}
-                        onClose={() => setAiOpen(false)}
-                      />
-                    )}
+                    {/* AI now renders in the RIGHT-column CodePanel slot
+                        (same place as Notes) — see overlay prop below. */}
                   </div>
                   {!codeCollapsed && (
                     <div
@@ -1761,10 +1757,14 @@ export default function AdsHubView() {
                         </button>
                         <button
                           className={`adshub-strip-btn${aiOpen ? ' active' : ''}`}
-                          // AI lives INLINE in the description column —
-                          // toggling it here shouldn't expand the
-                          // code panel (legacy carry-over removed).
-                          onClick={() => setAiOpen(v => !v)}
+                          // AI overlays the right-column slot (like Notes).
+                          // Auto-expand the panel + close Notes for
+                          // mutual exclusion.
+                          onClick={() => {
+                            setAiOpen(true)
+                            setNoteMode('hidden')
+                            setCodeCollapsed(false)
+                          }}
                           title="Ask AI about this problem"
                         ><span>🤖</span><span className="adshub-strip-lbl">AI</span></button>
                         <button
@@ -1781,12 +1781,12 @@ export default function AdsHubView() {
                         slug={selected.slug}
                         onHeaderDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
                         // Swap the section header dynamically based on
-                        // body contents so the user sees the title for
-                        // the mode they're actually IN (no 'Starter
-                        // Code · Python3 · Java' bleeding through when
-                        // Notes is open).
+                        // body contents — Code / Notes / AI each get
+                        // their own title rather than bleeding through.
                         headerLeft={
-                          noteMode === 'view' ? (
+                          aiOpen ? (
+                            <span className="code-panel-title">🤖 AI <span style={{ color: 'var(--text3)', fontWeight: 400, fontSize: 11 }}>· {selected.title}</span></span>
+                          ) : noteMode === 'view' ? (
                             <span className="code-panel-title">📝 Notes</span>
                           ) : noteMode === 'edit' ? (
                             <span className="code-panel-title">📝 Notes <span style={{ color: 'var(--text3)', fontWeight: 400, fontSize: 11 }}>· edit</span></span>
@@ -1796,10 +1796,19 @@ export default function AdsHubView() {
                           {renderNotesToggle()}
                           <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
                         </>}
-                        // AI lives in its OWN bottom-sheet section
-                        // (rendered separately further down). Only
-                        // Notes overlays the code panel here.
-                        overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
+                        // Overlay precedence: AI > Notes > (code shows
+                        // beneath). Mutual exclusion enforced at the
+                        // button handlers below.
+                        overlay={
+                          aiOpen ? (
+                            <ProblemAIChat
+                              problemTitle={selected.title}
+                              problemHtml={selected.descriptionHtml || ''}
+                              notesPlain={notesPlainText || undefined}
+                              onClose={() => setAiOpen(false)}
+                            />
+                          ) : noteMode !== 'hidden' ? renderNotes() : undefined
+                        }
                       />
                     )}
                   </div>
