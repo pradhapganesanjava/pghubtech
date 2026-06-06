@@ -4316,13 +4316,25 @@ body.resizing-h * {
 .prob-ai-md p { margin: 6px 0; }
 .prob-ai-md ul, .prob-ai-md ol { margin: 6px 0 6px 22px; padding: 0; }
 .prob-ai-md li { margin: 2px 0; }
-.prob-ai-md code { background: var(--bg3); padding: 1px 5px; border-radius: 3px;
-                   font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 90%;
-                   color: var(--code, #f2c2a1); }
-.prob-ai-md pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
-                  padding: 10px 12px; margin: 8px 0; overflow-x: auto; }
-.prob-ai-md pre code { background: none; padding: 0; font-size: 12.5px;
-                       color: var(--code, #f2c2a1); line-height: 1.5; }
+/* Code blocks in AI responses — high-contrast, easy to read. The
+   default --code colour (light orange #f2c2a1) was too washed out
+   against the panel background; switched to the main text colour
+   with a darker box so the code stands out clearly. */
+.prob-ai-md code { background: rgba(91,141,239,.08); padding: 2px 6px;
+                   border: 1px solid rgba(91,141,239,.2); border-radius: 4px;
+                   font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 92%;
+                   color: var(--text); font-weight: 500; }
+.prob-ai-md pre { background: #1a1d24; border: 1px solid var(--border); border-radius: 6px;
+                  padding: 12px 14px; margin: 10px 0; overflow-x: auto; }
+.prob-ai-md pre code { background: none; border: none; padding: 0; font-size: 12.5px;
+                       color: #e6e9ef; line-height: 1.6; font-weight: 400; }
+/* Light theme tweak — darker code text on a pale background for
+   contrast in light mode. */
+@media (prefers-color-scheme: light) {
+  .prob-ai-md code { background: rgba(91,141,239,.08); border-color: rgba(91,141,239,.25); color: #1f2328; }
+  .prob-ai-md pre  { background: #f6f8fa; border-color: #d8dee4; }
+  .prob-ai-md pre code { color: #1f2328; }
+}
 .prob-ai-md blockquote { margin: 8px 0; padding: 4px 10px; border-left: 3px solid var(--primary);
                          color: var(--text2); }
 .prob-ai-md a { color: var(--primary); }
