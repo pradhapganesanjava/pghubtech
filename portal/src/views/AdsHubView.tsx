@@ -1078,7 +1078,10 @@ export default function AdsHubView() {
       <>
         <button
           className={`code-btn${noteMode === 'view' ? ' active' : ''}`}
-          onClick={() => setNoteMode(m => m === 'view' ? 'hidden' : 'view')}
+          onClick={() => {
+            setNoteMode(m => m === 'view' ? 'hidden' : 'view')
+            if (aiOpen) setAiOpen(false)
+          }}
           title={noteMode === 'view' ? 'Hide notes' : 'Show my notes'}
         >{noteMode === 'view' ? '✕ Notes' : '📝 Notes'}</button>
         {noteMode === 'view' && (
@@ -1089,12 +1092,21 @@ export default function AdsHubView() {
       <button className="code-btn" onClick={startCreate} title="Add notes">➕ Notes</button>
     )
     // NEW: 🤖 AI helper + 🔊/🔇 audio mode beside Notes.
+    // AI opens IN the code-panel overlay slot (same vertical column as
+    // Code / Notes), so it auto-expands the panel and closes Notes for
+    // mutual-exclusion.
     return (
       <>
         {notesBtn}
         <button
           className={`code-btn${aiOpen ? ' active' : ''}`}
-          onClick={() => setAiOpen(v => !v)}
+          onClick={() => {
+            setAiOpen(v => {
+              const next = !v
+              if (next) { setNoteMode('hidden'); setCodeCollapsed(false) }
+              return next
+            })
+          }}
           title={aiOpen ? 'Close AI helper' : 'Ask AI about this problem'}
         >🤖 AI</button>
         <button
@@ -1690,21 +1702,10 @@ export default function AdsHubView() {
                     ) : (
                       <div className="section-empty-val">No description.</div>
                     )}
-                    {/* AudioReader now lives in renderMeta() — floats
-                        right of the difficulty + topic chips. Moved out
-                        of here to avoid eating vertical space below the
-                        description. */}
-                    {/* Inline AI chat — opens via the 🤖 button. Pre-fills
-                        problem text + (when available) the user's notes as
-                        system context; mic-enabled input; response below. */}
-                    {aiOpen && (
-                      <ProblemAIChat
-                        problemTitle={selected.title}
-                        problemHtml={selected.descriptionHtml || ''}
-                        notesPlain={notesPlainText || undefined}
-                        onClose={() => setAiOpen(false)}
-                      />
-                    )}
+                    {/* AudioReader → renderMeta() (header chips row).
+                        AI chat → CodePanel overlay (right vertical
+                        section, alongside Code / Notes). Both moved out
+                        of this column to keep description full-height. */}
                     {selected.companies.length > 0 && (
                       // key per slug → reopens collapsed for each problem ("on load" collapsed)
                       <details className="adshub-companies" key={selected.slug}>
@@ -1749,7 +1750,11 @@ export default function AdsHubView() {
                         </button>
                         <button
                           className={`adshub-strip-btn${aiOpen ? ' active' : ''}`}
-                          onClick={() => setAiOpen(v => !v)}
+                          onClick={() => {
+                            setAiOpen(true)
+                            setNoteMode('hidden')
+                            setCodeCollapsed(false)
+                          }}
                           title="Ask AI about this problem"
                         ><span>🤖</span><span className="adshub-strip-lbl">AI</span></button>
                         <button
@@ -1769,7 +1774,22 @@ export default function AdsHubView() {
                           {renderNotesToggle()}
                           <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
                         </>}
-                        overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
+                        // Right-column overlay precedence:
+                        //   1) AI chat (highest — explicit user toggle)
+                        //   2) Notes view / edit
+                        //   3) Code (the default beneath everything)
+                        // Mutual-exclusion is enforced in the button
+                        // handlers (renderNotesToggle below).
+                        overlay={
+                          aiOpen ? (
+                            <ProblemAIChat
+                              problemTitle={selected.title}
+                              problemHtml={selected.descriptionHtml || ''}
+                              notesPlain={notesPlainText || undefined}
+                              onClose={() => setAiOpen(false)}
+                            />
+                          ) : noteMode !== 'hidden' ? renderNotes() : undefined
+                        }
                       />
                     )}
                   </div>

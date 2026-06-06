@@ -4295,23 +4295,12 @@ body.resizing-h * {
 /* AI / Audio strip in problem detail */
 .adshub-audio-float { margin: 12px 0; }
 
-/* AI helper — floating popup overlay (centered, dimmed backdrop, ESC
-   / × / backdrop-click close). */
-.prob-ai-popup-wrap { position: fixed; inset: 0; z-index: 220;
-                      display: flex; align-items: center; justify-content: center; padding: 24px; }
-.prob-ai-popup-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5);
-                          animation: probAiFade .15s ease-out; }
-.prob-ai-popup { position: relative; width: min(640px, 95vw); max-height: min(720px, 92vh);
-                 display: flex; flex-direction: column;
-                 background: var(--bg2); border: 1px solid var(--primary); border-radius: 10px;
-                 box-shadow: 0 8px 32px rgba(0,0,0,.5); padding: 14px 16px;
-                 animation: probAiPop .15s ease-out; overflow: hidden; }
-@keyframes probAiFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes probAiPop  { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
-
-/* Inline-shaped block — no longer used; kept for back-compat. */
-.prob-ai-chat { margin-top: 16px; padding: 12px 14px; background: var(--bg2);
-                border: 1px solid var(--primary); border-radius: 8px; }
+/* AI helper — fills the CodePanel overlay slot (right vertical
+   column, same place as NoteViewer / RichEditor). The overlay slot is
+   absolute-positioned; we fill it 100%/100%. */
+.prob-ai-panel { display: flex; flex-direction: column; width: 100%; height: 100%;
+                 background: var(--bg2); padding: 12px 14px; box-sizing: border-box;
+                 overflow-y: auto; }
 .prob-ai-chat-hd { display: flex; justify-content: space-between; align-items: center;
                    margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--primary); }
 .prob-ai-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 18px;
