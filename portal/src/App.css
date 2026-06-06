@@ -4231,11 +4231,11 @@ body.resizing-h * {
   display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
   padding: 12px 0 8px;
 }
-/* AudioReader anchored to the far-right of the difficulty + topic chip
-   row. margin-left:auto pushes it past everything else; on wrap (narrow
-   viewports) it tucks under the topics gracefully. */
-.adshub-meta-audio { margin-left: auto; display: inline-flex; align-items: center; }
-.adshub-meta-audio .audio-reader { font-size: 11px; }
+/* AudioReader in the problem header — sits between ⤢ and ✕. Compact
+   so it doesn't overflow the header row. */
+.adshub-hd-audio { display: inline-flex; align-items: center; margin: 0 4px; }
+.adshub-hd-audio .audio-reader { font-size: 11px; gap: 4px; }
+.adshub-hd-audio .audio-reader button { padding: 2px 6px; font-size: 11px; }
 .adshub-meta-row .tag,
 .adshub-company-chips .tag,
 .doc-list-tags .tag {
@@ -4295,8 +4295,21 @@ body.resizing-h * {
 /* AI / Audio strip in problem detail */
 .adshub-audio-float { margin: 12px 0; }
 
-/* Inline AI helper that opens under the problem description.
-   Lightweight — single Q→A; mic-enabled input. */
+/* AI helper — floating popup overlay (centered, dimmed backdrop, ESC
+   / × / backdrop-click close). */
+.prob-ai-popup-wrap { position: fixed; inset: 0; z-index: 220;
+                      display: flex; align-items: center; justify-content: center; padding: 24px; }
+.prob-ai-popup-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5);
+                          animation: probAiFade .15s ease-out; }
+.prob-ai-popup { position: relative; width: min(640px, 95vw); max-height: min(720px, 92vh);
+                 display: flex; flex-direction: column;
+                 background: var(--bg2); border: 1px solid var(--primary); border-radius: 10px;
+                 box-shadow: 0 8px 32px rgba(0,0,0,.5); padding: 14px 16px;
+                 animation: probAiPop .15s ease-out; overflow: hidden; }
+@keyframes probAiFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes probAiPop  { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+
+/* Inline-shaped block — no longer used; kept for back-compat. */
 .prob-ai-chat { margin-top: 16px; padding: 12px 14px; background: var(--bg2);
                 border: 1px solid var(--primary); border-radius: 8px; }
 .prob-ai-chat-hd { display: flex; justify-content: space-between; align-items: center;

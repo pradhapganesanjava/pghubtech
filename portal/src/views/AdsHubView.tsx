@@ -1002,23 +1002,6 @@ export default function AdsHubView() {
             <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
           )}
           {selected.topics.map(t => <span key={t} className="tag">{t}</span>)}
-          {/* AudioReader floats to the FAR RIGHT of the meta row when
-              audio mode is on — keyed on slug + noteMode so it
-              re-mounts (and auto-plays the new content) whenever the
-              user opens a new problem or toggles notes on/off. */}
-          {audioMode && (
-            <span className="adshub-meta-audio">
-              <AudioReader
-                key={`prob-${selected.slug}-${noteMode === 'view' ? 'N' : 'Q'}`}
-                text={htmlToSpokenText(
-                  noteMode === 'view' && notesPlainText
-                    ? notesPlainText
-                    : (selected.descriptionHtml || ''))}
-                autoPlay
-                label={noteMode === 'view' ? 'N' : 'Q'}
-              />
-            </span>
-          )}
         </div>
         <details className="adshub-tags-section" key={selected.slug + '::tags'}>
           <summary className="adshub-tags-summary">
@@ -1673,6 +1656,22 @@ export default function AdsHubView() {
                     onClick={() => setViewerExpanded(v => !v)}
                     title={viewerExpanded ? 'Restore list' : 'Maximize'}
                   >{viewerExpanded ? '⤡' : '⤢'}</button>
+                  {/* Audio reader in the header — sits next to the other
+                      header icons. Re-mounts (and auto-plays) on every
+                      selection OR notes-toggle change. */}
+                  {audioMode && (
+                    <span className="adshub-hd-audio">
+                      <AudioReader
+                        key={`prob-${selected.slug}-${noteMode === 'view' ? 'N' : 'Q'}`}
+                        text={htmlToSpokenText(
+                          noteMode === 'view' && notesPlainText
+                            ? notesPlainText
+                            : (selected.descriptionHtml || ''))}
+                        autoPlay
+                        label={noteMode === 'view' ? 'N' : 'Q'}
+                      />
+                    </span>
+                  )}
                   <button className="detail-close-btn" onClick={() => setSelected(null)}>✕</button>
                 </div>
               </div>
@@ -1750,7 +1749,7 @@ export default function AdsHubView() {
                         </button>
                         <button
                           className={`adshub-strip-btn${aiOpen ? ' active' : ''}`}
-                          onClick={() => { setCodeCollapsed(false); setAiOpen(v => !v) }}
+                          onClick={() => setAiOpen(v => !v)}
                           title="Ask AI about this problem"
                         ><span>🤖</span><span className="adshub-strip-lbl">AI</span></button>
                         <button
