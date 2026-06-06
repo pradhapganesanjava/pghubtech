@@ -54,11 +54,12 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
 
   const ctxText = useMemo(() => htmlToText(problemHtml), [problemHtml])
 
-  // Auto-scroll to the bottom whenever a new turn arrives so the latest
-  // exchange is in view without the user having to scroll manually.
+  // Newest turn renders at the TOP of the thread (input pinned above),
+  // older turns push down. Auto-scroll the thread back to top whenever
+  // a turn arrives so the user always sees the most recent exchange.
   useEffect(() => {
     if (!threadRef.current) return
-    threadRef.current.scrollTop = threadRef.current.scrollHeight
+    threadRef.current.scrollTop = 0
   }, [turns.length, busy])
 
   // Mic — Web SpeechRecognition. Graceful degrade if unsupported.
@@ -129,37 +130,18 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     if (confirm('Clear the conversation thread?')) setTurns([])
   }
 
+  // Render order: input row at TOP, then turns in REVERSE chronological
+  // order beneath it (latest exchange just under the input; older ones
+  // push down). Pairs (user Q + AI A) stay adjacent — for one exchange
+  // the order is [AI, User] so the answer sits closest to the input.
+  const turnsReversed = useMemo(() => turns.slice().reverse(), [turns])
+
   return (
     <div className="prob-ai-inline" role="region" aria-label="Ask AI about this problem">
       {/* Section header lives in CodePanel.headerLeft. */}
 
-      {/* Stacked conversation thread. Shows a hint when empty. */}
-      <div className="prob-ai-thread" ref={threadRef}>
-        {turns.length === 0 && !busy && (
-          <div className="prob-ai-empty">
-            Ask anything about <strong>{problemTitle}</strong>. Each Q→A is appended below; prior turns are sent back to the model as context.
-          </div>
-        )}
-        {turns.map((t, i) => (
-          <div key={i} className={`prob-ai-turn prob-ai-turn--${t.role}`}>
-            <div className="prob-ai-turn-hd">{t.role === 'user' ? 'You' : 'AI'}</div>
-            {t.role === 'assistant' ? (
-              <div className="prob-ai-md" dangerouslySetInnerHTML={{ __html: renderMd(t.content) }} />
-            ) : (
-              <div className="prob-ai-user-body">{t.content}</div>
-            )}
-          </div>
-        ))}
-        {busy && (
-          <div className="prob-ai-turn prob-ai-turn--assistant prob-ai-turn--busy">
-            <div className="prob-ai-turn-hd">AI</div>
-            <div className="prob-ai-busy">Thinking…</div>
-          </div>
-        )}
-      </div>
-
+      {/* Input row pinned at the TOP. */}
       {err && <div className="prob-ai-err">{err}</div>}
-
       <div className="prob-ai-input-row">
         <textarea
           className="prob-ai-input"
@@ -188,6 +170,33 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
             <button className="prob-ai-clear" onClick={clearThread} title="Clear conversation thread">🗑</button>
           )}
         </div>
+      </div>
+
+      {/* Stacked thread BELOW the input. Newest exchange on top. */}
+      <div className="prob-ai-thread" ref={threadRef}>
+        {busy && (
+          <div className="prob-ai-turn prob-ai-turn--assistant prob-ai-turn--busy">
+            <div className="prob-ai-turn-hd">AI</div>
+            <div className="prob-ai-busy">Thinking…</div>
+          </div>
+        )}
+        {turnsReversed.map((t, i) => (
+          // Index is from the reversed array — fine for keys since we
+          // never reorder turns once they're in the thread.
+          <div key={turns.length - 1 - i} className={`prob-ai-turn prob-ai-turn--${t.role}`}>
+            <div className="prob-ai-turn-hd">{t.role === 'user' ? 'You' : 'AI'}</div>
+            {t.role === 'assistant' ? (
+              <div className="prob-ai-md" dangerouslySetInnerHTML={{ __html: renderMd(t.content) }} />
+            ) : (
+              <div className="prob-ai-user-body">{t.content}</div>
+            )}
+          </div>
+        ))}
+        {turns.length === 0 && !busy && (
+          <div className="prob-ai-empty">
+            Ask anything about <strong>{problemTitle}</strong>. Each Q→A appears above the older ones; prior turns are sent back to the model as context.
+          </div>
+        )}
       </div>
     </div>
   )
