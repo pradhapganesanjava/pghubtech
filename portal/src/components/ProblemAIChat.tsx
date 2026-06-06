@@ -38,6 +38,15 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
   const [err, setErr]           = useState('')
   const [listening, setListen]  = useState(false)
   const recRef = useRef<SpeechRecognition | null>(null)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
+  // Scroll the panel into view on mount. The AI section renders below
+  // the end-of-problem footer inside an overflow:auto column — without
+  // this, clicking 🤖 from a long problem appears to 'do nothing'
+  // because the new section is below the fold.
+  useEffect(() => {
+    rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
 
   const ctxText = useMemo(() => htmlToText(problemHtml), [problemHtml])
 
@@ -108,6 +117,7 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
       className="prob-ai-inline"
       role="region"
       aria-label="Ask AI about this problem"
+      ref={rootRef}
     >
       <div className="prob-ai-chat-hd">
         <span>🤖 Ask AI about: <strong>{problemTitle}</strong></span>
