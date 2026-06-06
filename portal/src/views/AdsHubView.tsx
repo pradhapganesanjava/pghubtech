@@ -1770,13 +1770,25 @@ export default function AdsHubView() {
                         key={selected.slug}
                         slug={selected.slug}
                         onHeaderDoubleClick={() => setCodeRatio(r => r >= 70 ? 42 : 75)}
+                        // Swap the section header dynamically based on
+                        // body contents so the user sees the title for
+                        // the mode they're actually IN (no 'Starter
+                        // Code · Python3 · Java' bleeding through when
+                        // Notes is open).
+                        headerLeft={
+                          noteMode === 'view' ? (
+                            <span className="code-panel-title">📝 Notes</span>
+                          ) : noteMode === 'edit' ? (
+                            <span className="code-panel-title">📝 Notes <span style={{ color: 'var(--text3)', fontWeight: 400, fontSize: 11 }}>· edit</span></span>
+                          ) : undefined
+                        }
                         headerRight={<>
                           {renderNotesToggle()}
                           <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
                         </>}
-                        // AI now has its OWN bottom-sheet section (rendered
-                        // separately below). Only Notes overlay the code
-                        // panel here.
+                        // AI lives in its OWN bottom-sheet section
+                        // (rendered separately further down). Only
+                        // Notes overlays the code panel here.
                         overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
                       />
                     )}
