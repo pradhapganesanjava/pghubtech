@@ -93,10 +93,19 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     finally { setBusy(false) }
   }
 
+  // Close on ESC anywhere on the page.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return (
-    <div className="prob-ai-chat">
+    <div className="prob-ai-popup-wrap">
+      <div className="prob-ai-popup-backdrop" onClick={onClose} />
+      <div className="prob-ai-popup" role="dialog" aria-label="Ask AI about this problem">
       <div className="prob-ai-chat-hd">
-        <span>🤖 Ask AI about this problem</span>
+        <span>🤖 Ask AI about: <strong>{problemTitle}</strong></span>
         <button className="prob-ai-close" onClick={onClose} aria-label="Close">×</button>
       </div>
 
@@ -133,6 +142,7 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
           <pre className="prob-ai-response-body">{answer}</pre>
         </div>
       )}
+      </div>
     </div>
   )
 }
