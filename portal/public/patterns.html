@@ -122,7 +122,14 @@
      the pane is squeezed (e.g. inside AdsHub's Patterns split). */
   .micro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin: 12px 0 28px; }
   .home-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; }
-  .micro { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .micro { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+           transition: border-color .12s, transform .08s; }
+  /* Whole-card click opens the deep-dive drawer (handler checks for
+     interactive children + text selection before firing). Subtle hover
+     hint so the affordance is discoverable without being shouty. */
+  .micro.micro--clickable { cursor: pointer; }
+  .micro.micro--clickable:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .micro.micro--clickable:hover .micro-info-btn { color: var(--primary); border-color: var(--primary); }
   .micro h4 { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
   .micro h4 .id { font-size: 9px; color: var(--text3); padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-family: monospace; text-transform: uppercase; }
   .micro h4 .micro-name { flex: 1; }
@@ -2208,13 +2215,21 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
       <div class="notes-block">${lines}</div>`
   }
 
+  // Whole-card click opens the deep-dive drawer — the ⓘ button is now
+  // redundant but kept as an explicit affordance for discoverability.
+  // The click handler bails when the click originates inside an
+  // interactive child (button / anchor / notes-block) or when the user
+  // is dragging to select text. embeddedUnderDsId is passed inline as a
+  // JS expression (string or null), no extra escaping needed.
+  const embed = embeddedUnderDsId ? `'${embeddedUnderDsId}'` : 'null'
   return `
-    <div class="micro" id="m-${p.id}-${m.id}">
+    <div class="micro micro--clickable" id="m-${p.id}-${m.id}"
+         onclick="onMicroCardClick(event, '${m.id}', '${p.id}', ${embed})">
       <h4>
         <span class="id">${m.id}</span>
         <span class="micro-name">${m.name}</span>
         <button class="micro-info-btn" title="Open deep-dive panel"
-                onclick="openMicroDetail('${m.id}', '${p.id}', ${embeddedUnderDsId ? `'${embeddedUnderDsId}'` : 'null'})">
+                onclick="openMicroDetail('${m.id}', '${p.id}', ${embed})">
           ⓘ
         </button>
       </h4>
@@ -2226,6 +2241,19 @@ function renderMicroCard(p, m, embeddedUnderDsId = null) {
       ${notesBlock}
     </div>
   `
+}
+
+// Whole-card click handler — opens the deep-dive drawer unless the
+// click originated on something interactive (buttons / anchor chips /
+// notes-block toggle / note-line LC links) or the user is selecting text.
+function onMicroCardClick(ev, microId, parentId, embeddedUnderDsId) {
+  // Skip if the target (or any ancestor up to .micro) is itself a
+  // button or anchor — those have their own handlers. Also skip if the
+  // click landed inside the notes-block (which has expanded prose +
+  // clickable anchor links we don't want to swallow).
+  if (ev.target.closest('button, a, .notes-block')) return
+  if (isSelectingText()) return
+  openMicroDetail(microId, parentId, embeddedUnderDsId)
 }
 
 // Toggle the .notes-open class on the micro card; flip the button label.
