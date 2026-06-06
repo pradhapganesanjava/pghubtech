@@ -1,11 +1,10 @@
 /**
  * AI helper for AdsHub problem panel.
  *
- * Renders as a BOTTOM-SHEET at the bottom of the viewport — its own
- * dedicated section, independent of the Code / Notes column. User can
- * drag the top edge to resize height; click × to close. Pre-fills with
- * the problem text as system context; mic-enabled input; response
- * rendered as rich markdown (code blocks, lists, headings, etc.).
+ * Renders INLINE in the description column, beneath the end-of-problem
+ * footer — flows as a normal section, no fixed positioning, no overlay.
+ * Pre-fills with the problem text as system context; mic-enabled input;
+ * response rendered as rich markdown (code blocks, lists, headings, etc.).
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
@@ -27,11 +26,6 @@ interface Props {
   onClose:      () => void
 }
 
-const SHEET_KEY      = 'pghub.aiSheetHeight'
-const DEFAULT_HEIGHT = 480
-const MIN_HEIGHT     = 220
-const MAX_HEIGHT_VH  = 90
-
 function htmlToText(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   return (doc.body.textContent || '').replace(/\s+/g, ' ').trim()
@@ -44,34 +38,6 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
   const [err, setErr]           = useState('')
   const [listening, setListen]  = useState(false)
   const recRef = useRef<SpeechRecognition | null>(null)
-
-  // Persisted height — user can drag the top handle to resize. Stored
-  // in localStorage so the preference survives close/reopen / reloads.
-  const [sheetHeight, setSheetHeight] = useState<number>(() => {
-    try {
-      const v = parseInt(localStorage.getItem(SHEET_KEY) || '0', 10)
-      if (v >= MIN_HEIGHT) return v
-    } catch {}
-    return DEFAULT_HEIGHT
-  })
-  const dragRef = useRef<{ startY: number; startH: number } | null>(null)
-
-  function onDragStart(ev: React.PointerEvent) {
-    dragRef.current = { startY: ev.clientY, startH: sheetHeight }
-    ;(ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId)
-  }
-  function onDragMove(ev: React.PointerEvent) {
-    if (!dragRef.current) return
-    const maxH = Math.floor(window.innerHeight * (MAX_HEIGHT_VH / 100))
-    const next = Math.min(maxH, Math.max(MIN_HEIGHT,
-                  dragRef.current.startH + (dragRef.current.startY - ev.clientY)))
-    setSheetHeight(next)
-  }
-  function onDragEnd(ev: React.PointerEvent) {
-    dragRef.current = null
-    try { localStorage.setItem(SHEET_KEY, String(sheetHeight)) } catch {}
-    try { (ev.currentTarget as HTMLElement).releasePointerCapture(ev.pointerId) } catch {}
-  }
 
   const ctxText = useMemo(() => htmlToText(problemHtml), [problemHtml])
 
@@ -139,20 +105,10 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
 
   return (
     <div
-      className="prob-ai-sheet"
+      className="prob-ai-inline"
       role="region"
       aria-label="Ask AI about this problem"
-      style={{ height: sheetHeight }}
     >
-      <div
-        className="prob-ai-sheet-resize"
-        title="Drag to resize · double-click to reset"
-        onPointerDown={onDragStart}
-        onPointerMove={onDragMove}
-        onPointerUp={onDragEnd}
-        onPointerCancel={onDragEnd}
-        onDoubleClick={() => { setSheetHeight(DEFAULT_HEIGHT); try { localStorage.removeItem(SHEET_KEY) } catch {} }}
-      />
       <div className="prob-ai-chat-hd">
         <span>🤖 Ask AI about: <strong>{problemTitle}</strong></span>
         <button className="prob-ai-close" onClick={onClose} aria-label="Close">×</button>
