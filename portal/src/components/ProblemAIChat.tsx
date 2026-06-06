@@ -75,6 +75,12 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
   const [listening, setListen]  = useState(false)
   const recRef    = useRef<SpeechRecognition | null>(null)
   const threadRef = useRef<HTMLDivElement | null>(null)
+  const inputRef  = useRef<HTMLTextAreaElement | null>(null)
+  // Mirror `listening` so the rec callbacks (which close over their
+  // initial values) can check the LATEST state — used to auto-restart
+  // recognition when the browser stops it on silence but the user
+  // hasn't toggled off yet.
+  const wantListenRef = useRef(false)
 
   const ctxText = useMemo(() => htmlToText(problemHtml), [problemHtml])
 
@@ -94,30 +100,75 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
   // is still mounted, swap the thread to the new problem's stored one.
   useEffect(() => { setTurns(loadThread(slug)) }, [slug])
 
-  // Mic — Web SpeechRecognition. Graceful degrade if unsupported.
+  // Mic — Web SpeechRecognition. continuous=true keeps listening
+  // through pauses (was stopping after one utterance). On any
+  // browser-initiated stop (silence timeout, etc.) we auto-restart if
+  // the user hasn't explicitly toggled off. Graceful degrade if SR
+  // not supported.
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return
     const rec = new SR()
     rec.lang             = 'en-US'
     rec.interimResults   = false
-    rec.continuous       = false
+    rec.continuous       = true
     rec.onresult = e => {
-      const text = Array.from(e.results).map(r => r[0].transcript).join(' ').trim()
-      if (text) setInput(prev => (prev ? prev + ' ' : '') + text)
+      // Only consume results we haven't applied yet (resultIndex
+      // forward) — continuous mode emits a growing list.
+      let text = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) text += e.results[i][0].transcript + ' '
+      }
+      text = text.trim()
+      if (text) {
+        setInput(prev => (prev ? prev + ' ' : '') + text)
+        // Park the cursor in the input so the user can immediately
+        // edit / append by typing.
+        inputRef.current?.focus()
+      }
     }
-    rec.onend   = () => setListen(false)
-    rec.onerror = () => setListen(false)
+    rec.onend = () => {
+      // Browsers (Chrome especially) stop recognition after long
+      // silence even when continuous=true. If the user still WANTS to
+      // be listening, restart.
+      if (wantListenRef.current) {
+        try { rec.start() } catch { /* already-started races: ignore */ }
+      } else {
+        setListen(false)
+      }
+    }
+    rec.onerror = e => {
+      // 'no-speech' fires on prolonged silence; not a hard error —
+      // onend will fire next and we'll restart.
+      if ((e as any).error && (e as any).error !== 'no-speech') {
+        wantListenRef.current = false
+        setListen(false)
+      }
+    }
     recRef.current = rec
-    return () => { try { rec.stop() } catch {} }
+    return () => {
+      wantListenRef.current = false
+      try { rec.stop() } catch {}
+    }
   }, [])
 
   function startMic() {
     const r = recRef.current
     if (!r) { setErr('Mic not supported in this browser'); return }
-    try { r.start(); setListen(true) } catch (e) { setErr((e as Error).message) }
+    try {
+      wantListenRef.current = true
+      r.start()
+      setListen(true)
+      // Drop the cursor into the input box so dictated text + manual
+      // typing both land in the same place.
+      inputRef.current?.focus()
+    } catch (e) {
+      setErr((e as Error).message)
+      wantListenRef.current = false
+    }
   }
   function stopMic() {
+    wantListenRef.current = false   // explicit user toggle — don't restart
     const r = recRef.current
     if (r) { try { r.stop() } catch {} }
     setListen(false)
@@ -173,6 +224,7 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
       {err && <div className="prob-ai-err">{err}</div>}
       <div className="prob-ai-input-wrap">
         <textarea
+          ref={inputRef}
           className="prob-ai-input prob-ai-input--padded"
           value={input}
           onChange={e => setInput(e.target.value)}
