@@ -1774,22 +1774,10 @@ export default function AdsHubView() {
                           {renderNotesToggle()}
                           <button className="code-btn" onClick={() => setCodeCollapsed(true)} title="Collapse">⊟</button>
                         </>}
-                        // Right-column overlay precedence:
-                        //   1) AI chat (highest — explicit user toggle)
-                        //   2) Notes view / edit
-                        //   3) Code (the default beneath everything)
-                        // Mutual-exclusion is enforced in the button
-                        // handlers (renderNotesToggle below).
-                        overlay={
-                          aiOpen ? (
-                            <ProblemAIChat
-                              problemTitle={selected.title}
-                              problemHtml={selected.descriptionHtml || ''}
-                              notesPlain={notesPlainText || undefined}
-                              onClose={() => setAiOpen(false)}
-                            />
-                          ) : noteMode !== 'hidden' ? renderNotes() : undefined
-                        }
+                        // AI now has its OWN bottom-sheet section (rendered
+                        // separately below). Only Notes overlay the code
+                        // panel here.
+                        overlay={noteMode !== 'hidden' ? renderNotes() : undefined}
                       />
                     )}
                   </div>
@@ -1800,6 +1788,18 @@ export default function AdsHubView() {
         </div>
         )}
       </div>
+      {/* AI helper — bottom-sheet section. Independent of the
+          description / code columns; sits at the bottom of the viewport
+          when open. User can drag the top edge to resize, click × to
+          close. Doesn't replace Code or Notes — coexists with both. */}
+      {aiOpen && selected && (
+        <ProblemAIChat
+          problemTitle={selected.title}
+          problemHtml={selected.descriptionHtml || ''}
+          notesPlain={notesPlainText || undefined}
+          onClose={() => setAiOpen(false)}
+        />
+      )}
     </div>
   )
 }

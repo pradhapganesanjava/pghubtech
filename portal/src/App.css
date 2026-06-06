@@ -4295,12 +4295,49 @@ body.resizing-h * {
 /* AI / Audio strip in problem detail */
 .adshub-audio-float { margin: 12px 0; }
 
-/* AI helper — fills the CodePanel overlay slot (right vertical
-   column, same place as NoteViewer / RichEditor). The overlay slot is
-   absolute-positioned; we fill it 100%/100%. */
-.prob-ai-panel { display: flex; flex-direction: column; width: 100%; height: 100%;
-                 background: var(--bg2); padding: 12px 14px; box-sizing: border-box;
-                 overflow-y: auto; }
+/* AI helper — dedicated BOTTOM SHEET section. Independent of the
+   Code / Notes column. Slides up from the bottom; drag the top handle
+   to resize height (persisted via localStorage). */
+.prob-ai-sheet { position: fixed; left: 0; right: 0; bottom: 0;
+                 background: var(--bg2); border-top: 2px solid var(--primary);
+                 box-shadow: 0 -4px 24px rgba(0,0,0,.45);
+                 display: flex; flex-direction: column; z-index: 180;
+                 padding: 0 16px 14px; box-sizing: border-box;
+                 animation: probAiSlide .18s ease-out; }
+@keyframes probAiSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.prob-ai-sheet-resize { height: 8px; margin: 0 -16px 4px; cursor: ns-resize;
+                         background: var(--bg3); border-bottom: 1px solid var(--border);
+                         position: relative; }
+.prob-ai-sheet-resize::after { content: ''; position: absolute; left: 50%; top: 50%;
+                                transform: translate(-50%, -50%);
+                                width: 40px; height: 3px; border-radius: 2px;
+                                background: var(--text3); }
+.prob-ai-sheet-resize:hover::after { background: var(--primary); }
+
+/* Markdown response styling — rich rendering of code blocks, lists,
+   headings, inline code, etc. */
+.prob-ai-md { font-size: 13px; line-height: 1.6; color: var(--text); }
+.prob-ai-md h1, .prob-ai-md h2, .prob-ai-md h3,
+.prob-ai-md h4, .prob-ai-md h5, .prob-ai-md h6 { color: var(--text); margin: 12px 0 6px; line-height: 1.3; }
+.prob-ai-md h1 { font-size: 18px; }
+.prob-ai-md h2 { font-size: 16px; }
+.prob-ai-md h3 { font-size: 14px; }
+.prob-ai-md h4 { font-size: 13px; color: var(--text2); }
+.prob-ai-md p { margin: 6px 0; }
+.prob-ai-md ul, .prob-ai-md ol { margin: 6px 0 6px 22px; padding: 0; }
+.prob-ai-md li { margin: 2px 0; }
+.prob-ai-md code { background: var(--bg3); padding: 1px 5px; border-radius: 3px;
+                   font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 90%;
+                   color: var(--code, #f2c2a1); }
+.prob-ai-md pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+                  padding: 10px 12px; margin: 8px 0; overflow-x: auto; }
+.prob-ai-md pre code { background: none; padding: 0; font-size: 12.5px;
+                       color: var(--code, #f2c2a1); line-height: 1.5; }
+.prob-ai-md blockquote { margin: 8px 0; padding: 4px 10px; border-left: 3px solid var(--primary);
+                         color: var(--text2); }
+.prob-ai-md a { color: var(--primary); }
+.prob-ai-md strong { color: var(--text); font-weight: 600; }
+.prob-ai-md em { color: var(--text2); }
 .prob-ai-chat-hd { display: flex; justify-content: space-between; align-items: center;
                    margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--primary); }
 .prob-ai-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 18px;
@@ -4325,9 +4362,11 @@ body.resizing-h * {
 .prob-ai-response { margin-top: 12px; }
 .prob-ai-response-hd { font-size: 10px; color: var(--text3); text-transform: uppercase;
                        letter-spacing: .5px; margin-bottom: 4px; }
+/* Response body — inside the bottom sheet, sized to fill the
+   remaining space so the markdown is scannable. */
+.prob-ai-response { margin-top: 12px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .prob-ai-response-body { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
-                         padding: 10px 12px; margin: 0; font-size: 13px; line-height: 1.6;
-                         color: var(--text); white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+                         padding: 12px 14px; margin: 0; flex: 1; min-height: 0; overflow-y: auto; }
 
 /* Code panel (Python3 / Java starter code editor) */
 .code-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
