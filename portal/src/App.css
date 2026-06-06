@@ -4349,14 +4349,32 @@ body.resizing-h * {
 @keyframes prob-ai-mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(91,141,239,.5); }
                                 50% { box-shadow: 0 0 0 6px rgba(91,141,239,0); } }
 .prob-ai-err { margin-top: 8px; color: var(--danger, #e34545); font-size: 12px; }
-.prob-ai-response { margin-top: 12px; }
-.prob-ai-response-hd { font-size: 10px; color: var(--text3); text-transform: uppercase;
-                       letter-spacing: .5px; margin-bottom: 4px; }
-/* Response body — inline; cap height so very long answers scroll
-   within their own box instead of pushing the whole page. */
-.prob-ai-response { margin-top: 12px; display: flex; flex-direction: column; }
-.prob-ai-response-body { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
-                         padding: 12px 14px; margin: 0; max-height: 600px; overflow-y: auto; }
+
+/* Stacked-conversation thread. The thread flex-grows to fill the
+   panel; input row sticks at the bottom. */
+.prob-ai-inline { gap: 8px; }
+.prob-ai-thread { flex: 1 1 auto; min-height: 0; overflow-y: auto;
+                  display: flex; flex-direction: column; gap: 10px;
+                  padding: 4px 2px; }
+.prob-ai-empty  { color: var(--text3); font-size: 13px; padding: 12px 4px; line-height: 1.5; }
+.prob-ai-empty strong { color: var(--text); }
+.prob-ai-turn   { display: flex; flex-direction: column; gap: 4px;
+                  padding: 8px 10px; border-radius: 6px;
+                  border: 1px solid var(--border); }
+.prob-ai-turn--user      { background: rgba(91,141,239,.08); border-color: rgba(91,141,239,.35); }
+.prob-ai-turn--assistant { background: var(--bg3); }
+.prob-ai-turn-hd { font-size: 9px; color: var(--text3); text-transform: uppercase;
+                   letter-spacing: .6px; font-weight: 700; }
+.prob-ai-user-body { font-size: 13px; line-height: 1.55; color: var(--text);
+                     white-space: pre-wrap; word-break: break-word; }
+.prob-ai-busy { color: var(--text3); font-style: italic; font-size: 13px;
+                animation: probAiBusy 1.4s infinite; }
+@keyframes probAiBusy { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+.prob-ai-clear { width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+                  background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+                  font-size: 13px; line-height: 1; padding: 0;
+                  display: inline-flex; align-items: center; justify-content: center; }
+.prob-ai-clear:hover { color: var(--danger, #e34545); border-color: var(--danger, #e34545); }
 
 /* Code panel (Python3 / Java starter code editor) */
 .code-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
