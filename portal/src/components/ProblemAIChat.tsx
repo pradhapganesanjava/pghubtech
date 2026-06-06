@@ -1,10 +1,12 @@
 /**
  * AI helper for AdsHub problem panel.
  *
- * Renders INLINE in the description column, beneath the end-of-problem
- * footer — flows as a normal section, no fixed positioning, no overlay.
- * Pre-fills with the problem text as system context; mic-enabled input;
- * response rendered as rich markdown (code blocks, lists, headings, etc.).
+ * Fills the CodePanel overlay slot (right column, same place Notes
+ * takes over). Pre-fills with the problem text as system context;
+ * mic-enabled input; response rendered as rich markdown.
+ *
+ * The section header ('🤖 AI · <title>') is rendered ABOVE us by the
+ * parent CodePanel via its `headerLeft` prop — we don't repeat it.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
@@ -38,15 +40,6 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
   const [err, setErr]           = useState('')
   const [listening, setListen]  = useState(false)
   const recRef = useRef<SpeechRecognition | null>(null)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-
-  // Scroll the panel into view on mount. The AI section renders below
-  // the end-of-problem footer inside an overflow:auto column — without
-  // this, clicking 🤖 from a long problem appears to 'do nothing'
-  // because the new section is below the fold.
-  useEffect(() => {
-    rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
 
   const ctxText = useMemo(() => htmlToText(problemHtml), [problemHtml])
 
@@ -117,12 +110,9 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
       className="prob-ai-inline"
       role="region"
       aria-label="Ask AI about this problem"
-      ref={rootRef}
     >
-      <div className="prob-ai-chat-hd">
-        <span>🤖 Ask AI about: <strong>{problemTitle}</strong></span>
-        <button className="prob-ai-close" onClick={onClose} aria-label="Close">×</button>
-      </div>
+      {/* No in-body title — the parent CodePanel header already shows
+          '🤖 AI · <title>' via headerLeft. */}
 
       <div className="prob-ai-input-row">
         <textarea
