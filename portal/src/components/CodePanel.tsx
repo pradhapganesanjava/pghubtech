@@ -13,16 +13,21 @@ const MOD_KEY = { python3: 'py3Modified', java: 'javaModified' } as const
 // Per-problem starter-code editor (Python3 / Java), persisted to the LCCode
 // sheet tab. Save / Copy / Pin / History. (Run needs a code runtime — omitted.)
 //   headerRight — content pinned to the right of the header (e.g. notes toggle)
+//   headerLeft  — REPLACES the default 'Starter Code · Python3 · Java' title +
+//                  lang-tabs when set. Used by callers when an overlay
+//                  (e.g. notes) takes over the body — they shouldn't see
+//                  the code-specific header.
 //   overlay     — when set, fills the editor space instead of the code editor
 //                 (used to show the problem's notes in the code area)
 interface Props {
   slug: string
   headerRight?: React.ReactNode
+  headerLeft?:  React.ReactNode
   overlay?: React.ReactNode
   onHeaderDoubleClick?: () => void
 }
 
-export default function CodePanel({ slug, headerRight, overlay, onHeaderDoubleClick }: Props) {
+export default function CodePanel({ slug, headerRight, headerLeft, overlay, onHeaderDoubleClick }: Props) {
   const { toast } = useToast()
   const [code, setCode]       = useState<ProblemCode>(EMPTY_CODE())
   const [lang, setLang]       = useState<Lang>('python3')
@@ -93,14 +98,23 @@ export default function CodePanel({ slug, headerRight, overlay, onHeaderDoubleCl
   return (
     <div className="code-panel">
       <div className="code-panel-hd" onDoubleClick={onHeaderDoubleClick} title={onHeaderDoubleClick ? 'Double-click to widen / restore the code panel' : undefined}>
-        <span className="code-panel-title">Starter Code</span>
-        <div className="code-lang-tabs">
-          {(['python3', 'java'] as Lang[]).map(l => (
-            <button key={l} className={`code-lang-tab${lang === l ? ' active' : ''}`} onClick={() => setLang(l)}>
-              {l === 'python3' ? 'Python3' : 'Java'}
-            </button>
-          ))}
-        </div>
+        {/* If the caller supplied headerLeft (typically because an
+            overlay has taken over the body), swap in their title in
+            place of the code-specific 'Starter Code · Python3 · Java'.
+            Keeps headers honest — Notes section no longer shows the
+            Code header. */}
+        {headerLeft ? headerLeft : (
+          <>
+            <span className="code-panel-title">Starter Code</span>
+            <div className="code-lang-tabs">
+              {(['python3', 'java'] as Lang[]).map(l => (
+                <button key={l} className={`code-lang-tab${lang === l ? ' active' : ''}`} onClick={() => setLang(l)}>
+                  {l === 'python3' ? 'Python3' : 'Java'}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         {headerRight && <span className="code-hd-right">{headerRight}</span>}
       </div>
 
