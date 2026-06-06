@@ -125,11 +125,6 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     } finally { setBusy(false) }
   }
 
-  function clearThread() {
-    if (!turns.length) return
-    if (confirm('Clear the conversation thread?')) setTurns([])
-  }
-
   // Render order: input row at TOP, then turns in REVERSE chronological
   // order beneath it (latest exchange just under the input; older ones
   // push down). Pairs (user Q + AI A) stay adjacent — for one exchange
@@ -140,11 +135,13 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     <div className="prob-ai-inline" role="region" aria-label="Ask AI about this problem">
       {/* Section header lives in CodePanel.headerLeft. */}
 
-      {/* Input row pinned at the TOP. */}
+      {/* Input row pinned at the TOP. Action icons (🎤 ➤ 🗑) float
+          INSIDE the textarea on the right — the textarea gets right
+          padding to keep typed text from sliding under them. */}
       {err && <div className="prob-ai-err">{err}</div>}
-      <div className="prob-ai-input-row">
+      <div className="prob-ai-input-wrap">
         <textarea
-          className="prob-ai-input"
+          className="prob-ai-input prob-ai-input--padded"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder={listening
@@ -157,7 +154,7 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send() }
           }}
         />
-        <div className="prob-ai-actions">
+        <div className="prob-ai-input-icons">
           <button
             className={`prob-ai-mic${listening ? ' active' : ''}`}
             onClick={listening ? stopMic : startMic}
@@ -166,9 +163,6 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
           <button className="prob-ai-send" onClick={send} disabled={busy} title="Send (⌘↵)">
             {busy ? '…' : '➤'}
           </button>
-          {turns.length > 0 && (
-            <button className="prob-ai-clear" onClick={clearThread} title="Clear conversation thread">🗑</button>
-          )}
         </div>
       </div>
 

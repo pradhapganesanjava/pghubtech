@@ -4333,15 +4333,22 @@ body.resizing-h * {
 .prob-ai-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 18px;
                  line-height: 1; padding: 0 4px; }
 .prob-ai-close:hover { color: var(--danger, #e34545); }
-.prob-ai-input-row { display: flex; gap: 6px; align-items: flex-end; }
-.prob-ai-input { flex: 1; min-width: 0; padding: 6px 8px; background: var(--bg3);
-                 border: 1px solid var(--border); border-radius: 4px; color: var(--text);
-                 font-size: 13px; font-family: inherit; resize: vertical; min-height: 40px; }
+/* Input wrapper — textarea full-width, action icons (🎤 ➤) FLOAT inside
+   it on the right. Right padding on the textarea reserves space so
+   typed text never slides under the icons. */
+.prob-ai-input-wrap { position: relative; }
+.prob-ai-input { width: 100%; box-sizing: border-box;
+                 padding: 8px 10px; background: var(--bg3);
+                 border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+                 font-size: 13px; font-family: inherit; resize: vertical; min-height: 48px;
+                 line-height: 1.5; }
 .prob-ai-input:focus { outline: none; border-color: var(--primary); }
-.prob-ai-actions { display: flex; flex-direction: column; gap: 4px; }
-.prob-ai-mic, .prob-ai-send { width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-                              background: var(--bg3); border: 1px solid var(--border); color: var(--text);
-                              font-size: 14px; line-height: 1; padding: 0;
+.prob-ai-input--padded { padding-right: 76px; }   /* room for 2 round icons */
+.prob-ai-input-icons { position: absolute; right: 8px; bottom: 8px;
+                       display: inline-flex; gap: 6px; }
+.prob-ai-mic, .prob-ai-send { width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+                              background: var(--bg2); border: 1px solid var(--border); color: var(--text2);
+                              font-size: 13px; line-height: 1; padding: 0;
                               display: inline-flex; align-items: center; justify-content: center; }
 .prob-ai-mic:hover, .prob-ai-send:hover { color: var(--primary); border-color: var(--primary); }
 .prob-ai-mic.active { background: var(--primary); color: white; animation: prob-ai-mic-pulse 1s infinite; }
@@ -4370,11 +4377,6 @@ body.resizing-h * {
 .prob-ai-busy { color: var(--text3); font-style: italic; font-size: 13px;
                 animation: probAiBusy 1.4s infinite; }
 @keyframes probAiBusy { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
-.prob-ai-clear { width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-                  background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
-                  font-size: 13px; line-height: 1; padding: 0;
-                  display: inline-flex; align-items: center; justify-content: center; }
-.prob-ai-clear:hover { color: var(--danger, #e34545); border-color: var(--danger, #e34545); }
 
 /* Code panel (Python3 / Java starter code editor) */
 .code-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
