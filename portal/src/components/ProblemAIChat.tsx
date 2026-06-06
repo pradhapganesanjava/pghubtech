@@ -23,6 +23,7 @@ declare global {
 }
 
 interface Props {
+  slug:         string    // used as the localStorage key for this thread
   problemTitle: string
   problemHtml:  string
   notesPlain?:  string
@@ -30,6 +31,27 @@ interface Props {
 }
 
 interface Turn { role: 'user' | 'assistant'; content: string }
+
+// Per-problem thread persistence — keyed by slug so each problem has
+// its own conversation. Survives closing/reopening the AI section AND
+// reloading the page; only cleared when the user opens a brand-new
+// problem (different slug → different key).
+const THREAD_KEY = (slug: string) => `pghub.aiChat.${slug}`
+function loadThread(slug: string): Turn[] {
+  try {
+    const raw = localStorage.getItem(THREAD_KEY(slug))
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    // Defensive — only accept the expected shape.
+    return parsed.filter(t => t && typeof t === 'object'
+                          && (t.role === 'user' || t.role === 'assistant')
+                          && typeof t.content === 'string')
+  } catch { return [] }
+}
+function saveThread(slug: string, turns: Turn[]) {
+  try { localStorage.setItem(THREAD_KEY(slug), JSON.stringify(turns)) } catch {}
+}
 
 function htmlToText(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html')
@@ -43,8 +65,10 @@ function renderMd(text: string): string {
   } catch { return sanitizeHtml(text) }
 }
 
-export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, onClose }: Props) {
-  const [turns, setTurns]       = useState<Turn[]>([])
+export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPlain, onClose }: Props) {
+  // Hydrate from localStorage on mount so reopening the AI section
+  // (or reloading the page) keeps the existing thread.
+  const [turns, setTurns]       = useState<Turn[]>(() => loadThread(slug))
   const [input, setInput]       = useState('')
   const [busy,  setBusy]        = useState(false)
   const [err,   setErr]         = useState('')
@@ -61,6 +85,14 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     if (!threadRef.current) return
     threadRef.current.scrollTop = 0
   }, [turns.length, busy])
+
+  // Persist thread to localStorage on every change so closing the AI
+  // section + reopening it (or reloading the page) restores history.
+  useEffect(() => { saveThread(slug, turns) }, [slug, turns])
+
+  // If the user opens a NEW problem (slug changed) while the component
+  // is still mounted, swap the thread to the new problem's stored one.
+  useEffect(() => { setTurns(loadThread(slug)) }, [slug])
 
   // Mic — Web SpeechRecognition. Graceful degrade if unsupported.
   useEffect(() => {
