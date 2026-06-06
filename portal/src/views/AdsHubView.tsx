@@ -1078,10 +1078,10 @@ export default function AdsHubView() {
       <>
         <button
           className={`code-btn${noteMode === 'view' ? ' active' : ''}`}
-          onClick={() => {
-            setNoteMode(m => m === 'view' ? 'hidden' : 'view')
-            if (aiOpen) setAiOpen(false)
-          }}
+          // Notes and AI are now in DIFFERENT columns (Notes overlays
+          // the right code-column; AI is inline in the description
+          // column) — no mutual exclusion needed.
+          onClick={() => setNoteMode(m => m === 'view' ? 'hidden' : 'view')}
           title={noteMode === 'view' ? 'Hide notes' : 'Show my notes'}
         >{noteMode === 'view' ? '✕ Notes' : '📝 Notes'}</button>
         {noteMode === 'view' && (
@@ -1100,13 +1100,11 @@ export default function AdsHubView() {
         {notesBtn}
         <button
           className={`code-btn${aiOpen ? ' active' : ''}`}
-          onClick={() => {
-            setAiOpen(v => {
-              const next = !v
-              if (next) { setNoteMode('hidden'); setCodeCollapsed(false) }
-              return next
-            })
-          }}
+          // AI is its own INLINE section in the description column
+          // (PR #53) — toggling it shouldn't touch the Code / Notes
+          // column state. Legacy setCodeCollapsed(false) +
+          // setNoteMode('hidden') removed.
+          onClick={() => setAiOpen(v => !v)}
           title={aiOpen ? 'Close AI helper' : 'Ask AI about this problem'}
         >🤖 AI</button>
         <button
@@ -1763,11 +1761,10 @@ export default function AdsHubView() {
                         </button>
                         <button
                           className={`adshub-strip-btn${aiOpen ? ' active' : ''}`}
-                          onClick={() => {
-                            setAiOpen(true)
-                            setNoteMode('hidden')
-                            setCodeCollapsed(false)
-                          }}
+                          // AI lives INLINE in the description column —
+                          // toggling it here shouldn't expand the
+                          // code panel (legacy carry-over removed).
+                          onClick={() => setAiOpen(v => !v)}
                           title="Ask AI about this problem"
                         ><span>🤖</span><span className="adshub-strip-lbl">AI</span></button>
                         <button
