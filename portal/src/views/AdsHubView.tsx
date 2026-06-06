@@ -1802,6 +1802,7 @@ export default function AdsHubView() {
                         overlay={
                           aiOpen ? (
                             <ProblemAIChat
+                              slug={selected.slug}
                               problemTitle={selected.title}
                               problemHtml={selected.descriptionHtml || ''}
                               notesPlain={notesPlainText || undefined}
