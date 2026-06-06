@@ -1724,6 +1724,19 @@ export default function AdsHubView() {
                       </details>
                     )}
                     <div className="adshub-end-footer">· end of problem ·</div>
+                    {/* AI helper renders INLINE in the description
+                        column, below the end-of-problem footer. Flows
+                        as a normal section — no fixed positioning, no
+                        overlay. User sees Code/Notes column AND the
+                        AI section at the same time. */}
+                    {aiOpen && (
+                      <ProblemAIChat
+                        problemTitle={selected.title}
+                        problemHtml={selected.descriptionHtml || ''}
+                        notesPlain={notesPlainText || undefined}
+                        onClose={() => setAiOpen(false)}
+                      />
+                    )}
                   </div>
                   {!codeCollapsed && (
                     <div
@@ -1800,18 +1813,8 @@ export default function AdsHubView() {
         </div>
         )}
       </div>
-      {/* AI helper — bottom-sheet section. Independent of the
-          description / code columns; sits at the bottom of the viewport
-          when open. User can drag the top edge to resize, click × to
-          close. Doesn't replace Code or Notes — coexists with both. */}
-      {aiOpen && selected && (
-        <ProblemAIChat
-          problemTitle={selected.title}
-          problemHtml={selected.descriptionHtml || ''}
-          notesPlain={notesPlainText || undefined}
-          onClose={() => setAiOpen(false)}
-        />
-      )}
+      {/* AI now renders INLINE in the description column (just above
+          this point in the JSX) — no bottom-sheet here anymore. */}
     </div>
   )
 }
