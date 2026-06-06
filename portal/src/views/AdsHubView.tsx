@@ -1002,6 +1002,23 @@ export default function AdsHubView() {
             <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
           )}
           {selected.topics.map(t => <span key={t} className="tag">{t}</span>)}
+          {/* AudioReader floats to the FAR RIGHT of the meta row when
+              audio mode is on — keyed on slug + noteMode so it
+              re-mounts (and auto-plays the new content) whenever the
+              user opens a new problem or toggles notes on/off. */}
+          {audioMode && (
+            <span className="adshub-meta-audio">
+              <AudioReader
+                key={`prob-${selected.slug}-${noteMode === 'view' ? 'N' : 'Q'}`}
+                text={htmlToSpokenText(
+                  noteMode === 'view' && notesPlainText
+                    ? notesPlainText
+                    : (selected.descriptionHtml || ''))}
+                autoPlay
+                label={noteMode === 'view' ? 'N' : 'Q'}
+              />
+            </span>
+          )}
         </div>
         <details className="adshub-tags-section" key={selected.slug + '::tags'}>
           <summary className="adshub-tags-summary">
@@ -1674,23 +1691,10 @@ export default function AdsHubView() {
                     ) : (
                       <div className="section-empty-val">No description.</div>
                     )}
-                    {/* Audio reader — auto-plays the problem text (or notes
-                        when notes are open) whenever audio mode is on AND
-                        the selected problem changes. Persisted via
-                        localStorage; reuses HomeView's reader. */}
-                    {audioMode && (
-                      <div className="adshub-audio-float">
-                        <AudioReader
-                          key={`prob-${selected.slug}-${noteMode === 'view' ? 'N' : 'Q'}`}
-                          text={htmlToSpokenText(
-                            noteMode === 'view' && notesPlainText
-                              ? notesPlainText
-                              : (selected.descriptionHtml || ''))}
-                          autoPlay
-                          label={noteMode === 'view' ? 'N' : 'Q'}
-                        />
-                      </div>
-                    )}
+                    {/* AudioReader now lives in renderMeta() — floats
+                        right of the difficulty + topic chips. Moved out
+                        of here to avoid eating vertical space below the
+                        description. */}
                     {/* Inline AI chat — opens via the 🤖 button. Pre-fills
                         problem text + (when available) the user's notes as
                         system context; mic-enabled input; response below. */}

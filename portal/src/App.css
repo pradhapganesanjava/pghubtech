@@ -4231,6 +4231,11 @@ body.resizing-h * {
   display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
   padding: 12px 0 8px;
 }
+/* AudioReader anchored to the far-right of the difficulty + topic chip
+   row. margin-left:auto pushes it past everything else; on wrap (narrow
+   viewports) it tucks under the topics gracefully. */
+.adshub-meta-audio { margin-left: auto; display: inline-flex; align-items: center; }
+.adshub-meta-audio .audio-reader { font-size: 11px; }
 .adshub-meta-row .tag,
 .adshub-company-chips .tag,
 .doc-list-tags .tag {
