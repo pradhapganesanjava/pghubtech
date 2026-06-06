@@ -1878,7 +1878,16 @@ function renderTree(root, filter) {
       l2.className = 'tree-l2' + (activeMicroId === `${p.id}/${m.id}` ? ' active' : '')
       l2.href = `#${p.id}/${m.id}`
       l2.textContent = m.name
-      l2.onclick = e => { e.preventDefault(); selectPattern(p.id, m.id) }
+      l2.onclick = e => {
+        e.preventDefault()
+        if (isSelectingText()) return
+        // Navigate so the main pane reflects the parent + scrolls the
+        // card into view, THEN open the deep-dive drawer (same as
+        // clicking ⓘ on the card itself). User intent on sidebar click
+        // is 'show me details', not just 'scroll there'.
+        selectPattern(p.id, m.id)
+        openMicroDetail(m.id, p.id, null)
+      }
       sub.appendChild(l2)
     })
 
@@ -1972,18 +1981,17 @@ function renderTree(root, filter) {
             l3.textContent = m.name
             l3.onclick = e => {
               e.preventDefault()
-              // Scroll to that card inside the current DS pane (don't
-              // navigate away — user said "show the topic UNDER the DS").
-              if (activePatternId === p.id) {
+              if (isSelectingText()) return
+              // Same shape as L2: navigate (so the main pane shows the
+              // DS pane with the topic section), then open the deep-dive
+              // drawer. embeddedUnderDsId = p.id because the micro is
+              // shown under DS p (not standalone in the Topic tab).
+              if (activePatternId !== p.id) selectPattern(p.id)
+              setTimeout(() => {
                 const el = document.getElementById(`m-${t.id}-${m.id}`)
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              } else {
-                selectPattern(p.id)
-                setTimeout(() => {
-                  const el = document.getElementById(`m-${t.id}-${m.id}`)
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }, 60)
-              }
+                openMicroDetail(m.id, t.id, p.id)
+              }, activePatternId !== p.id ? 60 : 0)
             }
             tSub.appendChild(l3)
           })
