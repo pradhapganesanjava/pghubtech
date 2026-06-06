@@ -1,13 +1,16 @@
 /**
- * Inline AI helper for AdsHub problem panel.
+ * AI helper for AdsHub problem panel.
  *
- * Triggered from the 🤖 button in the code-strip / code-header. Pre-fills
- * with the problem text as system context, lets the user ASK a question
- * (typed or via mic), shows the answer below. Lightweight — no history,
- * no conversation tracking; one Q→A per session unless the user re-opens.
+ * Renders as a BOTTOM-SHEET at the bottom of the viewport — its own
+ * dedicated section, independent of the Code / Notes column. User can
+ * drag the top edge to resize height; click × to close. Pre-fills with
+ * the problem text as system context; mic-enabled input; response
+ * rendered as rich markdown (code blocks, lists, headings, etc.).
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { marked } from 'marked'
 import { LLM } from '../lib/llm'
+import { sanitizeHtml } from '../lib/sanitize'
 
 // Browser SpeechRecognition (mic input) typing. Webkit prefix on Safari.
 declare global {
@@ -24,6 +27,11 @@ interface Props {
   onClose:      () => void
 }
 
+const SHEET_KEY      = 'pghub.aiSheetHeight'
+const DEFAULT_HEIGHT = 480
+const MIN_HEIGHT     = 220
+const MAX_HEIGHT_VH  = 90
+
 function htmlToText(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   return (doc.body.textContent || '').replace(/\s+/g, ' ').trim()
@@ -36,6 +44,34 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
   const [err, setErr]           = useState('')
   const [listening, setListen]  = useState(false)
   const recRef = useRef<SpeechRecognition | null>(null)
+
+  // Persisted height — user can drag the top handle to resize. Stored
+  // in localStorage so the preference survives close/reopen / reloads.
+  const [sheetHeight, setSheetHeight] = useState<number>(() => {
+    try {
+      const v = parseInt(localStorage.getItem(SHEET_KEY) || '0', 10)
+      if (v >= MIN_HEIGHT) return v
+    } catch {}
+    return DEFAULT_HEIGHT
+  })
+  const dragRef = useRef<{ startY: number; startH: number } | null>(null)
+
+  function onDragStart(ev: React.PointerEvent) {
+    dragRef.current = { startY: ev.clientY, startH: sheetHeight }
+    ;(ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId)
+  }
+  function onDragMove(ev: React.PointerEvent) {
+    if (!dragRef.current) return
+    const maxH = Math.floor(window.innerHeight * (MAX_HEIGHT_VH / 100))
+    const next = Math.min(maxH, Math.max(MIN_HEIGHT,
+                  dragRef.current.startH + (dragRef.current.startY - ev.clientY)))
+    setSheetHeight(next)
+  }
+  function onDragEnd(ev: React.PointerEvent) {
+    dragRef.current = null
+    try { localStorage.setItem(SHEET_KEY, String(sheetHeight)) } catch {}
+    try { (ev.currentTarget as HTMLElement).releasePointerCapture(ev.pointerId) } catch {}
+  }
 
   const ctxText = useMemo(() => htmlToText(problemHtml), [problemHtml])
 
@@ -74,8 +110,6 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     setErr(''); setAnswer(''); setBusy(true)
     try {
       if (!LLM.isConfigured()) throw new Error('Azure OpenAI not configured — open Settings.')
-      // System: problem + optional notes as context. User: their question
-      // (or a default "explain this problem" when empty).
       const sys = [
         `You are helping with this LeetCode-style problem.`,
         ``,
@@ -93,8 +127,32 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
     finally { setBusy(false) }
   }
 
+  // Rich-render the answer with marked → sanitize. Memoized so we don't
+  // re-parse on every keystroke in the input.
+  const answerHtml = useMemo(() => {
+    if (!answer) return ''
+    try {
+      const raw = marked.parse(answer, { async: false }) as string
+      return sanitizeHtml(raw)
+    } catch { return sanitizeHtml(answer) }
+  }, [answer])
+
   return (
-    <div className="prob-ai-panel" role="region" aria-label="Ask AI about this problem">
+    <div
+      className="prob-ai-sheet"
+      role="region"
+      aria-label="Ask AI about this problem"
+      style={{ height: sheetHeight }}
+    >
+      <div
+        className="prob-ai-sheet-resize"
+        title="Drag to resize · double-click to reset"
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
+        onDoubleClick={() => { setSheetHeight(DEFAULT_HEIGHT); try { localStorage.removeItem(SHEET_KEY) } catch {} }}
+      />
       <div className="prob-ai-chat-hd">
         <span>🤖 Ask AI about: <strong>{problemTitle}</strong></span>
         <button className="prob-ai-close" onClick={onClose} aria-label="Close">×</button>
@@ -130,7 +188,12 @@ export default function ProblemAIChat({ problemTitle, problemHtml, notesPlain, o
       {answer && (
         <div className="prob-ai-response">
           <div className="prob-ai-response-hd">Response</div>
-          <pre className="prob-ai-response-body">{answer}</pre>
+          {/* Markdown-rendered: code fences become <pre><code>, lists,
+              headings, inline code, etc. Sanitised before injection. */}
+          <div
+            className="prob-ai-response-body prob-ai-md"
+            dangerouslySetInnerHTML={{ __html: answerHtml }}
+          />
         </div>
       )}
     </div>
