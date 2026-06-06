@@ -31,6 +31,9 @@ import HandwritingPad from '../components/HandwritingPad'
 import type { HwDoc, HandwritingPadHandle } from '../components/HandwritingPad'
 import RichEditor from '../components/RichEditor'
 import { useToast } from '../components/Toast'
+import AudioReader from '../components/AudioReader'
+import { htmlToSpokenText } from '../lib/audioMode'
+import ProblemAIChat from '../components/ProblemAIChat'
 
 type NoteMode = 'hidden' | 'view' | 'edit'
 
@@ -216,6 +219,57 @@ export default function AdsHubView() {
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
   const [editorHtml, setEditorHtml] = useState('')
   const [editorView, setEditorView] = useState<'rich' | 'html' | 'preview' | 'draw'>('rich')
+
+  // ── AI helper (per-problem) ─────────────────────────────────────────────
+  // Toggle that opens a small inline ProblemAIChat under the prob/code area.
+  // No persistence — fresh state per problem selection.
+  const [aiOpen, setAiOpen] = useState(false)
+  useEffect(() => { setAiOpen(false) }, [selected?.slug])
+
+  // ── Audio mode (per-problem) ────────────────────────────────────────────
+  // Persisted in localStorage (matches HomeView's pattern). When on,
+  // auto-reads the problem description (or notes if notes are open) every
+  // time the selection changes — like Home's auto-read on card change.
+  const [audioMode, setAudioMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('pghub.adsHubAudioMode') === '1' } catch { return false }
+  })
+  function toggleAudioMode() {
+    setAudioMode(v => {
+      const next = !v
+      try { localStorage.setItem('pghub.adsHubAudioMode', next ? '1' : '0') } catch {}
+      return next
+    })
+  }
+  // Plain-text version of the user's notes for THIS problem — fetched
+  // lazily when audio mode AND notes are open (or when AI is opened with
+  // notes visible). Cached per driveId so repeated views don't re-fetch.
+  const [notesPlainText, setNotesPlainText] = useState<string>('')
+  const notesPlainCacheRef = useRef<Map<string, string>>(new Map())
+  useEffect(() => {
+    // Only fetch when notes are currently in view AND a driveId exists.
+    // Resets to '' on every selection change so the OLD problem's notes
+    // don't bleed into the new problem's audio / AI context.
+    setNotesPlainText('')
+    if (noteMode !== 'view' || !selected?.notesDriveId) return
+    const driveId = selected.notesDriveId
+    const cached  = notesPlainCacheRef.current.get(driveId)
+    if (cached !== undefined) { setNotesPlainText(cached); return }
+    let dead = false
+    ;(async () => {
+      try {
+        const token = GAuth.getToken()
+        if (!token) return
+        const blob  = await fetchDriveFile(token, driveId)
+        const html  = await blob.text()
+        const text  = new DOMParser().parseFromString(html, 'text/html')
+                        .body.textContent?.replace(/\s+/g, ' ').trim() || ''
+        if (dead) return
+        notesPlainCacheRef.current.set(driveId, text)
+        setNotesPlainText(text)
+      } catch { /* silent — audio just falls back to question text */ }
+    })()
+    return () => { dead = true }
+  }, [selected?.slug, selected?.notesDriveId, noteMode])
   const [hwInitialDoc, setHwInitialDoc] = useState<HwDoc | null>(null)
   const hwPadRef = useRef<HandwritingPadHandle>(null)
   const [editorLoading, setEditorLoading] = useState(false)
@@ -1019,7 +1073,8 @@ export default function AdsHubView() {
   // Notes toggle — rendered at the right end of the code-panel header.
   function renderNotesToggle() {
     if (!selected || noteMode === 'edit') return null
-    return selected.hasNotes && selected.notesDriveId ? (
+    // Notes button — the existing affordance kept as-is.
+    const notesBtn = selected.hasNotes && selected.notesDriveId ? (
       <>
         <button
           className={`code-btn${noteMode === 'view' ? ' active' : ''}`}
@@ -1032,6 +1087,24 @@ export default function AdsHubView() {
       </>
     ) : (
       <button className="code-btn" onClick={startCreate} title="Add notes">➕ Notes</button>
+    )
+    // NEW: 🤖 AI helper + 🔊/🔇 audio mode beside Notes.
+    return (
+      <>
+        {notesBtn}
+        <button
+          className={`code-btn${aiOpen ? ' active' : ''}`}
+          onClick={() => setAiOpen(v => !v)}
+          title={aiOpen ? 'Close AI helper' : 'Ask AI about this problem'}
+        >🤖 AI</button>
+        <button
+          className={`code-btn${audioMode ? ' active' : ''}`}
+          onClick={toggleAudioMode}
+          title={audioMode
+            ? 'Audio ON — auto-reads each opened problem / note. Click to disable.'
+            : 'Audio OFF — click to enable auto-read on prob / notes view.'}
+        >{audioMode ? '🔊 Audio' : '🔇 Mute'}</button>
+      </>
     )
   }
 
@@ -1601,6 +1674,34 @@ export default function AdsHubView() {
                     ) : (
                       <div className="section-empty-val">No description.</div>
                     )}
+                    {/* Audio reader — auto-plays the problem text (or notes
+                        when notes are open) whenever audio mode is on AND
+                        the selected problem changes. Persisted via
+                        localStorage; reuses HomeView's reader. */}
+                    {audioMode && (
+                      <div className="adshub-audio-float">
+                        <AudioReader
+                          key={`prob-${selected.slug}-${noteMode === 'view' ? 'N' : 'Q'}`}
+                          text={htmlToSpokenText(
+                            noteMode === 'view' && notesPlainText
+                              ? notesPlainText
+                              : (selected.descriptionHtml || ''))}
+                          autoPlay
+                          label={noteMode === 'view' ? 'N' : 'Q'}
+                        />
+                      </div>
+                    )}
+                    {/* Inline AI chat — opens via the 🤖 button. Pre-fills
+                        problem text + (when available) the user's notes as
+                        system context; mic-enabled input; response below. */}
+                    {aiOpen && (
+                      <ProblemAIChat
+                        problemTitle={selected.title}
+                        problemHtml={selected.descriptionHtml || ''}
+                        notesPlain={notesPlainText || undefined}
+                        onClose={() => setAiOpen(false)}
+                      />
+                    )}
                     {selected.companies.length > 0 && (
                       // key per slug → reopens collapsed for each problem ("on load" collapsed)
                       <details className="adshub-companies" key={selected.slug}>
@@ -1643,6 +1744,18 @@ export default function AdsHubView() {
                         <button className="adshub-strip-btn" onClick={openNotes} title="Show notes">
                           <span>📝</span><span className="adshub-strip-lbl">Notes</span>
                         </button>
+                        <button
+                          className={`adshub-strip-btn${aiOpen ? ' active' : ''}`}
+                          onClick={() => { setCodeCollapsed(false); setAiOpen(v => !v) }}
+                          title="Ask AI about this problem"
+                        ><span>🤖</span><span className="adshub-strip-lbl">AI</span></button>
+                        <button
+                          className={`adshub-strip-btn${audioMode ? ' active' : ''}`}
+                          onClick={toggleAudioMode}
+                          title={audioMode
+                            ? 'Audio ON — auto-reads each opened problem / note. Click to disable.'
+                            : 'Audio OFF — click to enable auto-read on prob / notes view.'}
+                        ><span>{audioMode ? '🔊' : '🔇'}</span><span className="adshub-strip-lbl">{audioMode ? 'Audio' : 'Mute'}</span></button>
                       </div>
                     ) : (
                       <CodePanel
