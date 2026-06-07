@@ -429,6 +429,18 @@ const PATTERNS = [
         cost: 'O(n + m) time, O(m) space.',
         contrast: 'vs naive O(n·m) scan — KMP reuses partial matches. Rabin-Karp gets the same asymptotic via rolling hash; Z-algorithm is a simpler equivalent.',
         anchors: [28, 459, 214, 686, 1392, 1408] },
+      { id: 'vertical-char-scan', name: 'Vertical Scan Across Strings (Column-wise)',
+        when: 'Compare the SAME position across many strings at once — longest common prefix, column constraints.',
+        how: 'Outer loop over column index i; inner loop over the strings; compare s[0][i] to every s[k][i]. Stop the moment a string ends or a char differs.',
+        cost: 'O(total chars) worst case, O(1) extra.',
+        contrast: 'vs comparing strings pairwise (reduce) — vertical scan short-circuits at the first divergent column, so it stops as early as possible.',
+        anchors: [14] },
+      { id: 'custom-order-compare', name: 'Custom-Order Lexicographic Compare',
+        when: 'Verify/compare strings under a REMAPPED alphabet order (alien dictionary, custom collation).',
+        how: 'Build char→rank map from the given order. To compare two words, walk both; at the first differing char compare ranks; if one is a prefix of the other the shorter must come first.',
+        cost: 'O(total chars).',
+        contrast: 'vs default string compare (uses ASCII order) — here a rank lookup replaces the raw char comparison; the prefix rule is the easy-to-miss edge case.',
+        anchors: [953] },
     ],
   },
 
@@ -526,6 +538,12 @@ const PATTERNS = [
         cost: 'O(1) per insert.',
         contrast: 'When you need MIN/MAX over the window switch to monotonic-deque (Topic tab).',
         anchors: [346, 933, 1352] },
+      { id: 'round-robin-elim', name: 'Round-Robin Elimination (Two Index Queues)',
+        when: 'Agents take cyclic turns and each can knock out the next opponent; resolve who wins the cycle (Dota2 Senate).',
+        how: 'One FIFO of indices per faction. Repeatedly pop the two front indices; the SMALLER index acts first, re-enqueues itself at +n (next round); the larger is eliminated. A faction with an empty queue loses.',
+        cost: 'O(n) amortised — each index re-enqueues a bounded number of times.',
+        contrast: 'vs simulating a circular list with deletions — the +n re-enqueue trick keeps relative turn order without an actual ring buffer.',
+        anchors: [649] },
     ],
   },
 
@@ -682,6 +700,12 @@ const PATTERNS = [
         cost: 'O(V + E) time; O(E log E) when neighbours must be popped in sorted order (e.g. LC 332 lex tie-break).',
         contrast: 'Distinct from Hamiltonian path (each NODE once — NP-hard). Eulerian exists iff every node has even degree (undirected) or balanced in/out (directed).',
         anchors: [332, 753, 2097] },
+      { id: 'floyd-warshall', name: 'Floyd-Warshall (All-Pairs Shortest Path)',
+        when: 'Shortest distance between EVERY pair of nodes, small dense graph (V ≤ ~500), edges may be negative (no negative cycle).',
+        how: 'dist[i][j] init to edge weights (∞ otherwise, 0 on diagonal). Triple loop: for each intermediate k, for all i,j: dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]). k MUST be the OUTER loop.',
+        cost: 'O(V³) time, O(V²) space.',
+        contrast: 'vs Dijkstra (single-source, non-negative, O((V+E)logV)) — run V Dijkstras for all-pairs on sparse graphs; Floyd-Warshall wins on dense/small graphs and handles negative edges. The k-outer order is the DP over "paths using only intermediates ≤ k".',
+        anchors: [1334, 743, 2642] },
     ],
   },
 
@@ -872,6 +896,12 @@ const PATTERNS = [
         cost: 'O(n^(k-1)) time after sort.',
         contrast: 'vs hash Two-Sum (works unsorted, O(n) space) — converging requires sort but uses O(1) extra. Generalises cleanly to k-sum via outer-loop nesting.',
         anchors: [15, 16, 18, 167, 259, 658, 1099, 923] },
+      { id: 'tp-count-pairs', name: 'Sorted Two-Pointer Batch Counting (Inequality)',
+        when: 'COUNT (not locate) pairs/triples in a SORTED array meeting an INEQUALITY threshold — valid triangles (a+b>c), 3Sum-Smaller (sum<target), pairs under a cap. The answer is a count.',
+        how: 'Sort. Fix the boundary element (for a+b>c fix the LARGEST side c, scanning k from the right). Two pointers i=0, j=k-1: when the inequality holds, EVERY i..j-1 also holds with j → add (j-i) at once and j--; otherwise i++.',
+        cost: 'O(n²): O(n) to fix the pivot × O(n) two-pointer sweep; O(1) extra after sort.',
+        contrast: 'vs tp-k-sum (finds EXACT k-sum triples, steps on equality) — here you never need the exact value: one comparison counts a whole BATCH of (j−i) pairs, which is what keeps each pivot linear instead of quadratic.',
+        anchors: [611, 259, 1099] },
       { id: 'tp-area-greedy', name: 'Two-Pointer Area / Trap (Drop the Limiting Side)',
         when: 'Maximise area / accumulate trapped water between two endpoints where the SHORTER side limits the contribution.',
         how: 'l=0, r=n-1. Always advance the side with the smaller height — it can\'t improve unless we move past it. Accumulate area / trap based on running max from each side.',
@@ -1014,6 +1044,12 @@ const PATTERNS = [
         cost: 'O(2^n · n).',
         contrast: 'Pairs naturally with Bitmask DP (state = mask).',
         anchors: [78, 90, 187, 1239, 1255] },
+      { id: 'bit-reverse', name: 'Bit Reversal via Shift Accumulation',
+        when: 'Reverse the BIT ORDER of a fixed-width integer (reverse 32-bit, palindrome of bits).',
+        how: 'Loop 32 times: result = (result << 1) | (n & 1); n >>= 1. Pull the low bit off n and push it onto result — result fills MSB-first as n empties LSB-first.',
+        cost: 'O(width) = O(32); O(1) with byte-wise lookup table for repeated calls.',
+        contrast: 'vs Kernighan popcount (COUNTS set bits) — here ORDER matters, so you shift bits across rather than clear them. Cache 8-bit chunks if reverseBits is called repeatedly.',
+        anchors: [190] },
     ],
   },
 
@@ -1051,6 +1087,24 @@ const PATTERNS = [
         cost: 'O(1) expected calls (geometric); rejection probability sets the constant.',
         contrast: 'vs scaling a single draw (introduces bias — non-uniform) — rejection is what preserves uniformity. Trade extra calls for exactness.',
         anchors: [470, 478] },
+      { id: 'digit-number-construct', name: 'Per-Digit Extract / Build (mod-div, Symbol Tables)',
+        when: 'Take a NUMBER apart or build one up digit-by-digit: reverse/compare digits, sum of digit powers, count trailing zeros, decimal↔Roman, rotated/strobogrammatic digits.',
+        how: 'Peel digits with d = n % base; n //= base. Build with acc = acc*base + d. For symbol systems (Roman) walk a descending (value, symbol) table subtracting the largest that fits. Map per-digit via a small lookup for rotations.',
+        cost: 'O(#digits) = O(log₁₀ n).',
+        contrast: 'vs list-digit-arithmetic (carry across a LINKED LIST) — same idea, different container. vs treating the number as a string — mod/div avoids the conversion and keeps it O(1) space.',
+        anchors: [9, 12, 13, 66, 172, 1056, 1134, 1228] },
+      { id: 'combinatorial-rank', name: 'Kth-Lexicographic via Counting (Rank / Unrank)',
+        when: 'Construct the k-th smallest sequence/permutation directly WITHOUT enumerating predecessors (kth permutation, kth path of moves).',
+        how: 'Decide each position left-to-right: count how many completions start with each candidate (factorials, or C(n,k) for lattice paths). If k > that count, subtract it and move to the next candidate; else fix this candidate and recurse on the suffix.',
+        cost: 'O(L) positions × O(candidates), counts precomputed.',
+        contrast: 'vs generating all and indexing (O(k·L) or worse) — counting jumps straight to the k-th by skipping whole blocks. The "subtract the skipped block" step is the core.',
+        anchors: [60, 1643, 440] },
+      { id: 'contribution-sign-cases', name: 'Maximize via Per-Element Contribution + Sign Cases',
+        when: 'Maximize an expression of absolute differences / |x−y| sums where a swap or reversal changes a few boundary terms (max array value after one reversal, max |arr[i]−arr[j]|+|i−j|).',
+        how: 'Expand each |·| into its ± sign cases; for each fixed sign combination the objective separates into independent per-element maxima you can track in one pass. Take the best over all (constant-many) cases; reversal gains reduce to boundary-term deltas.',
+        cost: 'O(n · #cases), #cases constant (e.g. 4 or 8).',
+        contrast: 'vs trying every reversal/pair O(n²) — sign-case expansion makes each case linear; only the two reversal boundaries actually change, so you maximize a delta.',
+        anchors: [1330, 1131] },
     ],
   },
 
@@ -1419,6 +1473,143 @@ const PATTERNS = [
         cost: 'O(α(n)) per event.',
         contrast: 'UF can\'t do online split/delete; the reverse-time trick converts deletes into adds.',
         anchors: [803, 305, 1970, 2092] },
+    ],
+  },
+
+  // ── Concurrency (Topic) ──────────────────────────────────────────────
+  { tab: 'topic', id: 'concurrency', name: 'Concurrency', icon: '🧵', topicTag: 'Concurrency',
+    intro: 'Coordinate multiple threads so shared state stays correct. The micro is the SIGNALLING primitive — semaphore, lock, latch, barrier — that enforces the required ordering.',
+    micros: [
+      { id: 'thread-ordering', name: 'Fixed Execution Order (Latches / Semaphores)',
+        when: 'Force methods to run in a SET order regardless of OS scheduling (first → second → third).',
+        how: 'One semaphore (init 0) per gate. Each stage runs its work, then release()s the NEXT stage\'s gate; later stages acquire() before running.',
+        cost: 'O(1) primitives, no busy-wait.',
+        contrast: 'vs spinning on a shared flag (wastes CPU, racy) — a semaphore blocks until signalled. Generalises to any DAG of ordering constraints.',
+        anchors: [1114] },
+      { id: 'thread-alternation', name: 'Two-Thread Alternation (Ping-Pong Semaphores)',
+        when: 'Two (or k) threads must take STRICT TURNS — foo/bar, odd/even, cyclic A/B/C printing.',
+        how: 'A pair of semaphores; each thread acquire()s its own, does its work, then release()s the OTHER. Seed exactly one to start the cycle.',
+        cost: 'O(1) per hand-off.',
+        contrast: 'vs a shared turn-counter + condition variable — semaphore ping-pong is the minimal 1-1 form; conditions scale better past k=2.',
+        anchors: [1115, 1116, 1195] },
+      { id: 'thread-barrier', name: 'Barrier / Resource Grouping (Gather Then Release)',
+        when: 'Threads must WAIT until a group is assembled before any proceeds (2 H + 1 O → water; N-thread rendezvous).',
+        how: 'Counting semaphores cap how many of each role may pass; a barrier (or mutex + counter) blocks until the group size is met, then releases the whole batch together.',
+        cost: 'O(1) per thread.',
+        contrast: 'vs alternation (strict 1-1 turns) — a barrier gathers a BATCH before releasing; the COUNT is the constraint, not the order.',
+        anchors: [1117] },
+      { id: 'thread-pool-fanout', name: 'Concurrent Fan-Out with Shared Visited Set',
+        when: 'Parallelise a traversal/crawl: many workers expand a frontier while sharing one dedup set.',
+        how: 'Thread-safe visited set (or concurrent map) + a work queue / executor; submit each newly-discovered item as a task; join all before returning.',
+        cost: 'Speedup bounded by I/O and contention on the visited set.',
+        contrast: 'vs single-threaded BFS/DFS — correctness now hinges on an ATOMIC check-and-insert into visited, else the same node is processed twice.',
+        anchors: [1242] },
+    ],
+  },
+
+  // ── Data-Structure Design (Topic) ────────────────────────────────────
+  { tab: 'topic', id: 'design', name: 'Data-Structure Design', icon: '🧩', topicTag: 'Design',
+    intro: 'Build a class meeting an API + complexity contract. The micro is the COMBINATION of primitives (array+map, heap+set, callbacks) that hits every operation\'s target cost.',
+    micros: [
+      { id: 'array-hash-random', name: 'Array + Hash Swap-Remove (O(1) Random)',
+        when: 'insert, delete, AND getRandom all in O(1) (RandomizedSet / collection).',
+        how: 'Dynamic array holds values; hash map value→index. delete = swap target with the LAST element, pop, fix the moved element\'s index. getRandom = array[rand].',
+        cost: 'O(1) average for all three.',
+        contrast: 'vs a hash set alone (no O(1) uniform random) or a balanced tree (O(log n)) — swap-with-last keeps the array gap-free so random indexing stays O(1).',
+        anchors: [380, 381] },
+      { id: 'multi-stream-iterator', name: 'Round-Robin / Multi-Stream Iterator',
+        when: 'Interleave or merge several iterators/lists behind a single next()/hasNext().',
+        how: 'Queue of active cursors; next() pops a cursor, reads it, then re-enqueues it if it still has elements. Generalises to k streams (zigzag).',
+        cost: 'O(1) amortised per next().',
+        contrast: 'vs precomputing the merged list — a lazy cursor queue uses O(k) space and works on infinite/expensive streams.',
+        anchors: [281, 284] },
+      { id: 'lazy-decode-iterator', name: 'Lazy-Decode Iterator (Run-Length Cursor)',
+        when: 'Iterate an encoded/compressed representation without expanding it (compressed string, RLE).',
+        how: 'Keep a (current symbol, remaining count) cursor; next() decrements count, advancing to the next run when it hits 0; peek() reads without consuming.',
+        cost: 'O(1) per next(), O(1) extra space.',
+        contrast: 'vs decompressing up front (O(total) memory) — decode on demand so memory is independent of the expanded size.',
+        anchors: [604, 900] },
+      { id: 'ordered-aggregate', name: 'Heap/Set + Map Hybrid (Ranked / Reusable State)',
+        when: 'Support pop-extreme + add-back, or top-K with live updates (smallest-infinite-set, leaderboard).',
+        how: 'Min/max-heap for ordering + a hash map/set for membership or per-key totals; a boundary pointer can stand in for an infinite contiguous range. Reconcile lazily (skip stale heap entries).',
+        cost: 'O(log n) per update, O(1)/O(k) per query.',
+        contrast: 'vs re-sorting each query (O(n log n)) — the heap keeps the extreme cheap; the map handles the random-access/aggregate the heap can\'t.',
+        anchors: [2336, 1244, 295] },
+      { id: 'observer-pubsub', name: 'Observer / Pub-Sub Emitter',
+        when: 'Register callbacks per event name, unsubscribe, and dispatch to all current listeners on emit.',
+        how: 'Map event → subscribers (id→callback). subscribe returns a handle that removes itself; emit iterates a SNAPSHOT so handlers may (un)subscribe mid-dispatch.',
+        cost: 'O(#listeners) per emit.',
+        contrast: 'vs hard-wired calls — indirection lets emitters and listeners vary independently; snapshot-on-emit avoids mutation-during-iteration bugs.',
+        anchors: [2694] },
+    ],
+  },
+
+  // ── Simulation (Topic) ───────────────────────────────────────────────
+  { tab: 'topic', id: 'simulation', name: 'Simulation', icon: '🎲', topicTag: 'Simulation',
+    intro: 'No clever trick — just FAITHFULLY execute the stated rules, carefully. The micro is the bookkeeping that keeps the state machine correct and the cost down.',
+    micros: [
+      { id: 'grid-simulate', name: 'In-Place Grid Step (Encoded Next-State)',
+        when: 'Advance every cell one step from its neighbours simultaneously (Game of Life, cellular automata).',
+        how: 'Encode the next state in spare BITS of the current cell (e.g. old | new<<1) so all reads still see the OLD value; a second pass shifts to drop the old bit.',
+        cost: 'O(rows·cols) time, O(1) space.',
+        contrast: 'vs copying the whole grid (O(mn) space) — bit-encoding updates in place because each cell only needs the OLD neighbourhood.',
+        anchors: [289, 73, 999] },
+      { id: 'board-validate', name: 'Board / State Rule Validation (Invariants + Ray Scan)',
+        when: 'Decide whether a configuration is REACHABLE/legal or a move is valid (tic-tac-toe, Reversi flip, valid word square).',
+        how: 'Check counting invariants (turn parity, win exclusivity) and/or scan each of the 8 directions as a ray applying the rule. Reject on the first violated invariant.',
+        cost: 'O(cells) or O(8·line).',
+        contrast: 'vs replaying the move history — invariants/ray-scans verify the CURRENT state directly, no replay needed.',
+        anchors: [794, 1958, 422] },
+      { id: 'line-format', name: 'Greedy Line Packing / Formatting',
+        when: 'Lay items into fixed-width lines distributing leftover space (text justification, word wrap).',
+        how: 'Greedily pack as many words as fit; for a full line spread extra spaces left-to-right (remainder to the leftmost gaps); the last line / a lone word is left-justified.',
+        cost: 'O(total chars).',
+        contrast: 'vs DP word-wrap (minimises raggedness) — greedy packing is what LC justification asks; the fiddly part is the space-distribution arithmetic.',
+        anchors: [68] },
+      { id: 'tiered-scan', name: 'Piecewise / Tiered Accumulation',
+        when: 'Apply per-band rules to a value crossing thresholds (tax brackets, tiered pricing).',
+        how: 'Walk the bands in order; for each take min(remaining, band-width) × band-rate; subtract from remaining until it is exhausted.',
+        cost: 'O(#bands).',
+        contrast: 'vs a single multiply — only the portion inside each band gets that band\'s rate; the running "amount in this band" is the whole trick.',
+        anchors: [2303] },
+    ],
+  },
+
+  // ── Interactive / Hidden-Input (Topic) ───────────────────────────────
+  { tab: 'topic', id: 'interactive', name: 'Interactive Queries', icon: '🎯', topicTag: 'Interactive',
+    intro: 'The input is HIDDEN behind a query API (compare(), guess(), reads()); you must DEDUCE the answer using as few calls as possible. The micro is the query strategy that halves or pins down the unknown.',
+    micros: [
+      { id: 'interactive-bsearch', name: 'Comparison-Query Binary Search',
+        when: 'Find an extreme/target in a hidden array where you may only ASK an oracle to compare two ranges/elements (find the larger half, guess number).',
+        how: 'Each query compares two halves and tells you which side holds the answer; recurse into that half. Frame the oracle result as the monotone predicate that drives a standard binary search.',
+        cost: 'O(log n) queries.',
+        contrast: 'vs textbook binary search (reads values directly) — here a bounded API call replaces the array read; the goal is minimizing QUERIES, not comparisons.',
+        anchors: [1533, 374] },
+      { id: 'interactive-deduce', name: 'Deduce via Pairwise/Reference Queries',
+        when: 'Determine values/majority in a hidden array using a limited budget of relational queries (are these equal? is this the majority?).',
+        how: 'Pick a reference element; query others against it to partition into "same" vs "different" groups by relation; combine group sizes (and a couple of extra reference flips) to infer the global answer within the call budget.',
+        cost: 'O(n) queries within the allowed budget.',
+        contrast: 'vs reading the array (forbidden) — you reconstruct just enough structure from relational answers; careful query accounting is the crux.',
+        anchors: [1538, 1095] },
+    ],
+  },
+
+  // ── Range Structures: BIT / Segment Tree (Topic) ─────────────────────
+  { tab: 'topic', id: 'range-struct', name: 'Range Structures (BIT / Segment Tree)', icon: '🌲', topicTag: 'Range Structure',
+    intro: 'Online range queries WITH updates in O(log n). Reach for these when a prefix-sum array would need O(n) per update. The micro is which structure fits the query/update shape.',
+    micros: [
+      { id: 'fenwick-bit', name: 'Binary Indexed Tree (Fenwick — Prefix Sums + Point Update)',
+        when: 'Mix point updates with prefix-sum / count queries online (count smaller after self, dynamic frequency).',
+        how: 'tree[] indexed by lowbit. update(i,Δ): i += i&-i each step. query(i): sum while i -= i&-i. Coordinate-compress values first when they are sparse.',
+        cost: 'O(log n) per update and per query.',
+        contrast: 'vs a plain prefix-sum array (O(1) query but O(n) update) — BIT trades a log factor on query for cheap updates. vs segment tree — BIT is smaller/faster but only does invertible aggregates (sum/count).',
+        anchors: [307, 315, 493, 2659] },
+      { id: 'segment-tree', name: 'Segment Tree (Range Query + Range/Point Update, Lazy)',
+        when: 'Range aggregate (min/max/sum) with updates, or non-invertible queries, or binary-search-on-tree (first index with capacity, block placement).',
+        how: 'Recursive tree of segments; query/update split into O(log n) covered nodes. Push down LAZY tags for range updates; descend left/right to binary-search a predicate over the tree.',
+        cost: 'O(log n) per op, O(n) build.',
+        contrast: 'vs BIT (sum/count only) — segment tree handles min/max and lazy range updates BIT can\'t, at a larger constant. vs prefix-sum (static) — segment tree is the dynamic, updatable generalization.',
+        anchors: [307, 699, 3161, 715] },
     ],
   },
 ]
@@ -1824,6 +2015,10 @@ let view = 'tree'         // 'tree' | 'flat'
 let activeTab = 'ds'      // 'ds' | 'topic' — filters which PATTERNS show
 let activePatternId = null
 let activeMicroId = null
+// Which L1 groups are expanded in the tree. Kept SEPARATE from
+// activePatternId so a group can be toggled open/closed independently of
+// which pattern is selected/shown in the main pane (re-clicking collapses).
+let expandedIds = new Set()
 
 const $ = sel => document.querySelector(sel)
 
@@ -1897,7 +2092,7 @@ function renderTree(root, filter) {
     // (which may be nested under an embedded topic) is actually visible.
     l1.className = 'tree-l1'
       + (activePatternId === p.id ? ' active' : '')
-      + (activePatternId === p.id || filter ? ' expanded' : '')
+      + (expandedIds.has(p.id) || filter ? ' expanded' : '')
     l1.innerHTML = `
       <span class="caret">▶</span>
       <span class="ico">${p.icon}</span>
@@ -1905,7 +2100,10 @@ function renderTree(root, filter) {
       <span class="count">${p.micros.length}</span>`
     l1.onclick = () => {
       if (isSelectingText()) return   // let copy-on-drag work
-      selectPattern(p.id); l1.classList.toggle('expanded')
+      // Toggle: a second click on an open group collapses it (without
+      // changing the main pane). Opening also selects so content shows.
+      if (expandedIds.has(p.id)) { expandedIds.delete(p.id); renderNav() }
+      else                       { expandedIds.add(p.id); selectPattern(p.id) }
     }
     grp.appendChild(l1)
 
@@ -2070,6 +2268,7 @@ function selectPattern(pid, mid = null) {
   }
   activePatternId = pid
   activeMicroId   = mid ? `${pid}/${mid}` : null
+  expandedIds.add(pid)   // selecting a pattern always opens its tree group
   writeHash()
   renderNav()
   renderMain()
@@ -2515,6 +2714,7 @@ function applyHash() {
     activePatternId = pid
     activeMicroId   = mid ? `${pid}/${mid}` : null
   }
+  if (activePatternId) expandedIds.add(activePatternId)  // open the deep-linked group
   syncTabButtons()
   renderNav(); renderMain()
   if (activeMicroId) {
