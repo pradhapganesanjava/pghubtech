@@ -1,0 +1,32 @@
+{
+  "1114": ["pat_topic::concurrency::thread-ordering"],
+  "1115": ["pat_topic::concurrency::thread-alternation"],
+  "1117": ["pat_topic::concurrency::thread-barrier"],
+  "1242": ["pat_topic::concurrency::thread-pool-fanout"],
+
+  "380":  ["pat_topic::design::array-hash-random"],
+  "281":  ["pat_topic::design::multi-stream-iterator"],
+  "604":  ["pat_topic::design::lazy-decode-iterator"],
+  "1244": ["pat_topic::design::ordered-aggregate"],
+  "2336": ["pat_topic::design::ordered-aggregate"],
+  "2694": ["pat_topic::design::observer-pubsub"],
+
+  "289":   ["pat_topic::simulation::grid-simulate"],
+  "794":   ["pat_topic::simulation::board-validate"],
+  "1958":  ["pat_topic::simulation::board-validate"],
+  "422":   ["pat_topic::simulation::board-validate"],
+  "10008": ["pat_topic::simulation::board-validate"],
+  "68":    ["pat_topic::simulation::line-format"],
+  "2303":  ["pat_topic::simulation::tiered-scan"],
+
+  "1334": ["pat_ds::graph::core::floyd-warshall"],
+
+  "9":    ["pat_topic::math::digit-number-construct"],
+  "12":   ["pat_ds::string::math::digit-number-construct"],
+  "13":   ["pat_ds::string::math::digit-number-construct"],
+  "66":   ["pat_ds::array::math::digit-number-construct"],
+  "172":  ["pat_topic::math::digit-number-construct"],
+  "1056": ["pat_topic::math::digit-number-construct"],
+  "1134": ["pat_topic::math::digit-number-construct"],
+  "1228": ["pat_topic::math::digit-number-construct"]
+}

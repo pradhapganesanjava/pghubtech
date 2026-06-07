@@ -1,0 +1,11 @@
+{
+  "14":   ["pat_ds::string::core::vertical-char-scan"],
+  "953":  ["pat_ds::string::core::custom-order-compare"],
+  "649":  ["pat_ds::queue::core::round-robin-elim"],
+  "190":  ["pat_topic::bits::bit-reverse"],
+  "1643": ["pat_topic::math::combinatorial-rank"],
+  "1330": ["pat_topic::math::contribution-sign-cases"],
+  "1533": ["pat_topic::interactive::interactive-bsearch"],
+  "1538": ["pat_topic::interactive::interactive-deduce"],
+  "3161": ["pat_topic::range-struct::segment-tree"]
+}
