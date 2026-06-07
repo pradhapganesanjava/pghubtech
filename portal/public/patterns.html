@@ -291,7 +291,7 @@
            space. Search flex-grows; toggle stays a fixed cluster on the
            right. Wraps to two rows on extremely narrow sidebars. -->
       <div class="search-row">
-        <input class="nav-search" id="navSearch" placeholder="Filter patterns…" oninput="renderNav()">
+        <input class="nav-search" id="navSearch" placeholder="Filter patterns or prob #…" oninput="renderNav()">
         <div class="view-toggle" title="Sidebar render style">
           <button id="vt-tree" class="active" onclick="setView('tree')"
                   title="Tree view (grouped by pattern)" aria-label="Tree view">🗂️</button>
@@ -713,6 +713,12 @@ const PATTERNS = [
         cost: 'O(n) total — the head-only-start trick makes each element visited at most twice.',
         contrast: 'vs naive "for each x walk forward" (O(n²) worst case) — the chain-head check kills redundant walks. vs sort-and-walk (O(n log n)) — hash wins on asymptotic, loses if values fit a bitmap.',
         anchors: [128, 298, 1218] },
+      { id: 'bijection-map', name: 'Bijection / Two-Way Map Consistency',
+        when: 'Verify a ONE-TO-ONE correspondence between two token streams (word↔pattern, char↔char, char↔word). Both directions must stay consistent.',
+        how: 'Keep TWO maps (a→b and b→a). For each pair: if either map already binds the key to a different partner → reject; else record both directions.',
+        cost: 'O(n) time, O(k) space for the two maps.',
+        contrast: 'vs a single map (seen-set / freq-counter) — one map only catches "same key, new value"; it misses "two keys collide on the same value". The reverse map is what enforces injectivity.',
+        anchors: [205, 290, 890] },
     ],
   },
 
@@ -792,6 +798,12 @@ const PATTERNS = [
         cost: 'O(n).',
         contrast: 'House Robber III, max camera coverage, BST validation all fit.',
         anchors: [337, 124, 968, 543, 1372] },
+      { id: 'minimax-game-dp', name: 'Minimax / Game-Theory DP (Optimal Two-Player Play)',
+        when: 'Two players alternate, each plays OPTIMALLY; compute the first player\'s best outcome (score difference, win/lose, last-stone).',
+        how: 'dp[i][j] = best SCORE DIFFERENCE the mover can force on subrange (i..j) = max(take-left − dp[i+1][j], take-right − dp[i][j-1]). The "− dp(rest)" flips perspective each turn.',
+        cost: 'O(n²) states for interval games; O(n) for line-pick games.',
+        contrast: 'vs plain interval-dp (maximizes a single objective) — here the recurrence SUBTRACTS the opponent\'s optimal future because they fight you. Stone Game / Predict the Winner / Nim-style.',
+        anchors: [877, 486, 1140, 464, 294] },
     ],
   },
 
@@ -1033,6 +1045,12 @@ const PATTERNS = [
         cost: 'O(n) or O(1).',
         contrast: 'Often a simpler alternative to XOR or hash-set for missing-number problems.',
         anchors: [268, 1295, 728] },
+      { id: 'rejection-sampling', name: 'Rejection Sampling (Uniform from a Coarser Source)',
+        when: 'Build a uniform draw over [1..N] using only a uniform source over [1..M] (e.g. Rand10 from Rand7), or debias a biased coin.',
+        how: 'Combine source calls into a uniform value over a range ≥ N (e.g. (rand7-1)*7 + rand7 → 1..49). Keep only samples in the largest multiple of N; REJECT and retry the rest. Map the survivor mod N.',
+        cost: 'O(1) expected calls (geometric); rejection probability sets the constant.',
+        contrast: 'vs scaling a single draw (introduces bias — non-uniform) — rejection is what preserves uniformity. Trade extra calls for exactness.',
+        anchors: [470, 478] },
     ],
   },
 
@@ -1838,6 +1856,21 @@ function setView(v) {
   renderNav()
 }
 
+// A micro matches the nav filter when its name, its parent's name, or one of
+// its anchor problem-ids contains the query. The prob-id match lets you type
+// e.g. "208" to surface the micro(s) that reference LC 208.
+// `anchors` must be the SAME list the card will render in this context
+// (DS-scoped via anchorsFor) — not the micro's raw inline union — so that
+// e.g. searching "84" doesn't surface the Matrices card whose displayed
+// anchors are only [85].
+function microMatches(m, parent, filter, anchors) {
+  if (!filter) return true
+  const ids = anchors || m.anchors || []
+  return m.name.toLowerCase().includes(filter)
+    || (parent && parent.name.toLowerCase().includes(filter))
+    || ids.some(a => String(a) === filter)
+}
+
 function renderNav() {
   const filter = $('#navSearch').value.trim().toLowerCase()
   const list   = $('#navList')
@@ -1851,14 +1884,20 @@ function renderTree(root, filter) {
   visiblePatterns().forEach(p => {
     const matchesPattern = !filter
       || p.name.toLowerCase().includes(filter)
-      || p.micros.some(m => m.name.toLowerCase().includes(filter))
+      || p.micros.some(m => microMatches(m, p, filter, anchorsFor(p, m)))
+      || (activeTab === 'ds' && linkedTopics(p.id).some(t =>
+            microsForEmbed(t.id, p.id).some(m => microMatches(m, t, filter, anchorsFor(t, m, p.id)))))
     if (!matchesPattern) return
 
     const grp = document.createElement('div')
     grp.className = 'tree-group'
 
     const l1 = document.createElement('div')
-    l1.className = 'tree-l1' + (activePatternId === p.id ? ' active expanded' : '')
+    // While a filter is active, drill the tree open so the matching micro
+    // (which may be nested under an embedded topic) is actually visible.
+    l1.className = 'tree-l1'
+      + (activePatternId === p.id ? ' active' : '')
+      + (activePatternId === p.id || filter ? ' expanded' : '')
     l1.innerHTML = `
       <span class="caret">▶</span>
       <span class="ico">${p.icon}</span>
@@ -1873,7 +1912,7 @@ function renderTree(root, filter) {
     const sub = document.createElement('div')
     sub.className = 'tree-l2-wrap'
     p.micros.forEach(m => {
-      if (filter && !m.name.toLowerCase().includes(filter) && !p.name.toLowerCase().includes(filter)) return
+      if (!microMatches(m, p, filter, anchorsFor(p, m))) return
       const l2 = document.createElement('a')
       l2.className = 'tree-l2' + (activeMicroId === `${p.id}/${m.id}` ? ' active' : '')
       l2.href = `#${p.id}/${m.id}`
@@ -1947,13 +1986,13 @@ function renderTree(root, filter) {
           // Honour the search filter for embedded topics too.
           const tMatches = !filter
             || t.name.toLowerCase().includes(filter)
-            || embedded.some(m => m.name.toLowerCase().includes(filter))
+            || embedded.some(m => microMatches(m, t, filter, anchorsFor(t, m, p.id)))
           if (!tMatches) return
 
           // Topic header row — click toggles inline expansion, anchor link
           // jumps to that section in the DS main pane.
           const tHdr = document.createElement('div')
-          tHdr.className = 'tree-topic-row'
+          tHdr.className = 'tree-topic-row' + (filter ? ' expanded' : '')
           tHdr.innerHTML = `
             <span class="caret">▶</span>
             <span class="ico">${t.icon}</span>
@@ -1974,7 +2013,7 @@ function renderTree(root, filter) {
           const tSub = document.createElement('div')
           tSub.className = 'tree-l3-wrap'
           embedded.forEach(m => {
-            if (filter && !m.name.toLowerCase().includes(filter) && !t.name.toLowerCase().includes(filter)) return
+            if (!microMatches(m, t, filter, anchorsFor(t, m, p.id))) return
             const l3 = document.createElement('a')
             l3.className = 'tree-l3'
             l3.href = `#topic/${t.id}/${m.id}`
@@ -2010,7 +2049,7 @@ function renderFlat(root, filter) {
   visiblePatterns().forEach(p => p.micros.forEach(m => items.push({ p, m })))
   items.sort((a, b) => a.m.name.localeCompare(b.m.name))
   items.forEach(({ p, m }) => {
-    if (filter && !m.name.toLowerCase().includes(filter) && !p.name.toLowerCase().includes(filter)) return
+    if (!microMatches(m, p, filter, anchorsFor(p, m))) return
     const it = document.createElement('a')
     it.className = 'flat-item' + (activeMicroId === `${p.id}/${m.id}` ? ' active' : '')
     it.href = `#${p.id}/${m.id}`
