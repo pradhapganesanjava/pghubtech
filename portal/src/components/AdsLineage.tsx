@@ -6,13 +6,16 @@ interface Props {
   problems:      LCProblem[]
   focusNum:      number | null            // LeetCode number to focus, or null
   onOpenProblem: (num: string) => void    // a problem node was clicked in the graph
+  onRefresh?:    () => void               // graph's Rebuild → reload problems from the sheet
 }
 
 // Bridges the bundled knowledge_graph.html (public/lineage/) and AdsHub:
 //   • builds the entity/relation graph from LCProblems and pushes it in
 //   • relays node clicks back out so the portal can open the problem detail
 //   • forwards a focus request (the 🌳 button on a problem)
-export default function AdsLineage({ problems, focusNum, onOpenProblem }: Props) {
+export default function AdsLineage({ problems, focusNum, onOpenProblem, onRefresh }: Props) {
+  const onRefreshRef = useRef(onRefresh)
+  onRefreshRef.current = onRefresh
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const readyRef  = useRef(false)
   const focusRef  = useRef(focusNum)
@@ -50,6 +53,7 @@ export default function AdsLineage({ problems, focusNum, onOpenProblem }: Props)
       const d = ev.data || {}
       if (d.type === 'kg-ready') { readyRef.current = true; pushAll() }
       else if (d.type === 'kg-open-problem' && d.num != null) onOpenProblem(String(d.num))
+      else if (d.type === 'kg-refresh') onRefreshRef.current?.()   // graph Rebuild → reload from sheet
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)

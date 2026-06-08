@@ -460,6 +460,13 @@ const BATCH = {
   2104:['pat_ds::array::stack-topic::monotonic-stack-spans'],         // (dup-safe — Sum Subarray Ranges)
   2127:['pat_ds::graph::core::dag-longest-path'],                     // Max Employees Invited (functional graph)
   2272:['pat_ds::array::dp::dp-1d-linear'],                           // Substring With Largest Variance (kadane variant)
+
+  // ── Intervals topic (sort, then sweep) ────────────────────────────────
+  252: ['pat_ds::array::interval::interval-sort-start-overlap'],      // Can Attend Meetings (overlap detect)
+  56:  ['pat_ds::array::interval::interval-sort-start-merge'],         // Merge Intervals
+  57:  ['pat_ds::array::interval::interval-sort-start-merge'],         // Insert Interval
+  759: ['pat_ds::array::interval::interval-sort-start-merge'],         // Employee Free Time (merge → gaps)
+  435: ['pat_ds::array::interval::interval-sort-end-greedy'],          // Non-Overlapping Intervals (sort by end)
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
