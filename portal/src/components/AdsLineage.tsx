@@ -23,12 +23,25 @@ export default function AdsLineage({ problems, focusNum, onOpenProblem }: Props)
   const graphRef = useRef(graph)
   graphRef.current = graph
 
+  // Current portal theme (data-theme on <html>; absent ⇒ 'dark').
+  const currentTheme = () => document.documentElement.getAttribute('data-theme') || 'dark'
+
   function pushAll() {
     const w = iframeRef.current?.contentWindow
     if (!w) return
-    w.postMessage({ type: 'kg-data', entities: graphRef.current.entities, relations: graphRef.current.relations }, '*')
+    w.postMessage({ type: 'kg-data', entities: graphRef.current.entities, relations: graphRef.current.relations, theme: currentTheme() }, '*')
     if (focusRef.current != null) w.postMessage({ type: 'kg-focus', num: focusRef.current }, '*')
   }
+
+  // Keep the iframe's theme in sync with the portal — push on mount and
+  // whenever the portal's data-theme attribute changes (Settings → Theme).
+  useEffect(() => {
+    const send = () => iframeRef.current?.contentWindow?.postMessage({ type: 'kg-theme', theme: currentTheme() }, '*')
+    send()
+    const obs = new MutationObserver(send)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
 
   // Inbound messages from the graph iframe.
   useEffect(() => {
