@@ -345,7 +345,9 @@ export default function AdsHubView() {
   // Auto-snap the list↔detail divider to its min when a problem is open, and
   // the details↔code divider to its max when the code/notes panel is expanded.
   // (Same effect as double-clicking the dividers; the user can still drag.)
-  useEffect(() => { setListRatio(selected ? 15 : 40) }, [selected?.slug])
+  // When a problem opens: Browse/Patterns narrow the list to 15%; Lineage
+  // keeps the graph dominant (55%) so the detail acts as a side panel.
+  useEffect(() => { setListRatio(selected ? (adsMode === 'lineage' ? 55 : 15) : 40) }, [selected?.slug, adsMode])
 
   // Per-problem study timer (mm:ss). Resets when the selection changes.
   // Visual escalation: orange + bold at 10 min, red at 15 min, blinking at 20+.
@@ -1348,7 +1350,9 @@ export default function AdsHubView() {
             >📋 Browse</button>
             <button
               className={`adshub-diff-pill${adsMode === 'lineage' ? ' active' : ''}`}
-              onClick={() => setAdsMode('lineage')}
+              // Open Lineage fresh: drop any open/expanded problem so the graph
+              // (which lives in the left column, hidden while a detail is maximized) shows.
+              onClick={() => { setViewerExpanded(false); setSelected(null); setLineageFocus(null); setAdsMode('lineage') }}
             >🌳 Lineage</button>
             {/* Patterns mode — renders the standalone reference
                 (public/patterns.html) inline in the same right pane via
@@ -1485,21 +1489,12 @@ export default function AdsHubView() {
           </>}
         </div>
 
-        {adsMode === 'lineage' ? (
-          <AdsLineage
-            problems={problems}
-            focusNum={lineageFocus}
-            onOpenProblem={num => {
-              const p = problems.find(x => x.frontendId === String(num) || x.frontendId === String(Number(num)))
-              if (p) { setSelected(p); setAdsMode('browse') }
-            }}
-          />
-        ) : (
-        /* Shared split layout for BOTH Browse and Patterns modes. In
-           Patterns mode the left column hosts the iframe (always mounted
-           — selecting a problem doesn't reload it); the right column
-           shows the same detail pane Browse uses. In Browse the left
-           column is the toolbar+table as before. */
+        {/* Shared split layout for Browse, Patterns AND Lineage modes. The
+            left column hosts the mode's main content (browse list / patterns
+            iframe / lineage graph); the right column is the shared detail
+            pane — so opening a problem from the graph shows it in a side
+            panel without leaving the Lineage view. */}
+        {(
         <div className="browse-cards-split" ref={splitRef}>
           {/* Left column — Patterns iframe (mode==='patterns') OR problem
               list (mode==='browse'). Hidden when detail is maximized. */}
@@ -1508,15 +1503,25 @@ export default function AdsHubView() {
             className="browse-col-cards"
             style={{
               ...(selected ? { flex: `0 0 ${listRatio}%` } : {}),
-              // Patterns mode: make the column a flex container so the
+              // Patterns/Lineage: make the column a flex container so the
               // <iframe flex:1> can fill remaining vertical space, and
               // drop the column's own overflow:auto (iframe scrolls).
-              ...(adsMode === 'patterns'
+              ...(adsMode === 'patterns' || adsMode === 'lineage'
                 ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 56px)' }
                 : {}),
             }}
           >
-            {adsMode === 'patterns' ? (
+            {adsMode === 'lineage' ? (
+              <AdsLineage
+                problems={problems}
+                focusNum={lineageFocus}
+                onOpenProblem={num => {
+                  // Open in the side detail pane — stay in Lineage (don't flip to Browse).
+                  const p = problems.find(x => x.frontendId === String(num) || x.frontendId === String(Number(num)))
+                  if (p) setSelected(p)
+                }}
+              />
+            ) : adsMode === 'patterns' ? (
               <>
                 {/* Small header strip so the section has a doc-detail-hd-style
                     affordance: double-click snaps the list↔detail divider
@@ -1656,7 +1661,9 @@ export default function AdsHubView() {
                   )}
                   <button
                     className="bci-edit-btn bci-edit-btn-hd"
-                    onClick={() => { setLineageFocus(Number(selected.frontendId)); setAdsMode('lineage') }}
+                    // Keep this problem selected (shows in the side panel) but un-maximize
+                    // so the graph column is visible, then focus it in the graph.
+                    onClick={() => { setViewerExpanded(false); setLineageFocus(Number(selected.frontendId)); setAdsMode('lineage') }}
                     title="Show in lineage graph"
                   >🌳</button>
                   {selected.leetcodeUrl && (

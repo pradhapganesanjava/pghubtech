@@ -12,6 +12,36 @@
   --tx:#e2e8f0; --mt:#94a3b8; --pr:#3b82f6;
   --ok:#10b981; --warn:#f59e0b; --err:#ef4444; --pur:#8b5cf6;
 }
+/* ── Portal theme compliance ──────────────────────────────────────────────
+   The portal sets data-theme on its <html>; AdsLineage forwards it to this
+   iframe (kg-theme message → applyKgTheme sets data-theme here too). These
+   blocks remap the graph's own vars (--bg/--sur/--sur2/--bdr/--tx/--mt/--pr)
+   onto the portal palette so the Lineage window matches the chosen theme.
+   Values mirror portal/src/App.css. (Accent literals like #60a5fa stay.) */
+html[data-theme="dark"] {
+  --bg:#0f0f13; --sur:#1a1a24; --sur2:#252535; --bdr:#2e2e42;
+  --tx:#e2e2f0; --mt:#9090b0; --pr:#6366f1;
+}
+html[data-theme="light"] {
+  --bg:#f5f5ff; --sur:#ffffff; --sur2:#eaeaf8; --bdr:#c8c8e8;
+  --tx:#1a1a2e; --mt:#5252a0; --pr:#6366f1;
+}
+html[data-theme="soft"] {
+  --bg:#1e1b34; --sur:#28244a; --sur2:#342f60; --bdr:#3d3870;
+  --tx:#ddd8ff; --mt:#8880c8; --pr:#a78bfa; --pur:#a78bfa;
+}
+html[data-theme="contrast"] {
+  --bg:#000000; --sur:#0f0f0f; --sur2:#1a1a1a; --bdr:#555555;
+  --tx:#ffffff; --mt:#bbbbbb; --pr:#faff00; --ok:#00ff88; --warn:#ff9900; --err:#ff3344;
+}
+html[data-theme="glow"] {
+  --bg:#050510; --sur:#0a0a28; --sur2:#0f0f3f; --bdr:#1e1e80;
+  --tx:#d0e4ff; --mt:#5070d0; --pr:#00e5ff; --ok:#00ff99; --warn:#ffcc00; --err:#ff2266;
+}
+html[data-theme="cartoon"] {
+  --bg:#fff9e6; --sur:#ffffff; --sur2:#fff3c8; --bdr:#f0c040;
+  --tx:#2d2416; --mt:#786030; --pr:#7c3aed; --ok:#059669; --warn:#d97706; --err:#dc2626;
+}
 body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--tx); display:flex; height:100vh; overflow:hidden; }
 
 /* Sidebar */
@@ -219,6 +249,12 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .la-body        { flex:1; display:flex; flex-direction:column; gap:10px; min-height:0; }
 .la-stage       { flex:1; background:var(--sur); border:1px solid var(--bdr); border-radius:10px; position:relative; overflow:hidden; min-height:0; }
 .la-stage svg   { width:100%; height:100%; display:block; cursor:grab; }
+/* Floating "Center / fit" action — bottom-right of the stage, sits below the
+   per-mode zoom column (which is bumped up to bottom:52px to make room). */
+.la-center-fab  { position:absolute; bottom:12px; right:12px; z-index:6; width:38px; height:38px; border-radius:50%; background:var(--pr); color:#fff; border:none; cursor:pointer; font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,.35); transition:transform .12s, filter .12s; }
+.la-center-fab:hover { transform:scale(1.1); filter:brightness(1.1); }
+/* Make room for the FAB: lift the per-mode zoom columns inside the la-stage. */
+.la-stage .graph-ctrl, .la-stage .sim-graph-ctrl { bottom:60px; }
 .la-leaf-grid   { padding:18px; overflow-y:auto; height:100%; display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; align-content:start; }
 .la-algo-card   { background:var(--sur2); border:2px solid var(--bdr); border-radius:8px; padding:12px 14px; cursor:pointer; transition:all .12s; }
 .la-algo-card:hover { border-color:var(--pr); background:rgba(59,130,246,.05); transform:translateY(-1px); }
@@ -229,6 +265,14 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .la-algo-tag:hover { background:rgba(99,102,241,.3); color:#fff; }
 .la-leaf-hd     { padding:12px 16px; border-bottom:1px solid var(--bdr); background:var(--sur2); display:flex; align-items:center; gap:10px; flex-shrink:0; font-size:13px; }
 .la-leaf-hd b   { color:var(--pr); }
+/* Micro-pattern ⓘ info button + card (leaf mode, for pat_* nodes) */
+.micro-i-btn    { background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.4); color:#60a5fa; border-radius:50%; width:20px; height:20px; line-height:1; font-size:12px; cursor:pointer; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; padding:0; transition:all .12s; }
+.micro-i-btn:hover { background:rgba(59,130,246,.25); transform:scale(1.08); }
+.la-micro-info  { margin:10px 16px 0; padding:12px 14px; background:var(--sur2); border:1px solid rgba(59,130,246,.3); border-left:3px solid var(--pr); border-radius:8px; font-size:12.5px; line-height:1.55; }
+.la-micro-info .mi-hd { font-weight:700; color:#60a5fa; margin-bottom:8px; font-size:13px; }
+.la-micro-info .mi-row { display:flex; gap:10px; margin:5px 0; }
+.la-micro-info .mi-k { flex:0 0 64px; color:var(--mt); text-transform:uppercase; font-size:10px; letter-spacing:.05em; padding-top:2px; }
+.la-micro-info .mi-v { flex:1; color:var(--tx); }
 .la-sim-hd      { flex-direction:column; align-items:stretch; gap:10px; padding:11px 14px; }
 .la-sim-title   { display:flex; align-items:center; gap:10px; font-size:13px; }
 .la-jump-groups { display:flex; flex-direction:column; gap:6px; }
@@ -366,6 +410,30 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .pd-row:hover { background:rgba(59,130,246,.08); }
 .pd-name      { font-weight:600; flex:1; }
 .pd-via       { font-size:10px; color:var(--mt); font-family:monospace; }
+.pd-eye       { flex-shrink:0; font-size:13px; opacity:.45; cursor:pointer; transition:opacity .12s, transform .12s; line-height:1; }
+.pd-eye:hover { opacity:1; transform:scale(1.15); }
+
+/* 👁 Quick-peek popup — small, centered, in-window */
+.peek-modal   { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(560px,92vw); max-height:82vh; background:var(--sur); border:1px solid var(--pr); border-radius:10px; display:flex; flex-direction:column; box-shadow:0 24px 64px rgba(0,0,0,.7); z-index:999; overflow:hidden; }
+.peek-hd      { display:flex; align-items:center; gap:8px; padding:11px 14px; border-bottom:1px solid var(--bdr); background:var(--sur2); }
+.peek-title   { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+.peek-title b { font-size:15px; }
+.peek-body    { padding:14px; overflow-y:auto; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:12px; }
+.peek-micros-hd { font-weight:700; color:#60a5fa; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+.peek-path    { font-family:monospace; font-size:11px; color:#60a5fa; background:var(--bg); border:1px solid var(--bdr); border-radius:6px; padding:6px 9px; word-break:break-all; }
+.peek-micro   { background:var(--sur2); border:1px solid rgba(59,130,246,.3); border-left:3px solid var(--pr); border-radius:8px; padding:11px 13px; font-size:12.5px; line-height:1.55; }
+.peek-micro .pk-mi-hd  { font-weight:700; color:#60a5fa; margin-bottom:7px; font-size:13px; }
+.peek-micro .pk-mi-row { display:flex; gap:10px; margin:5px 0; }
+.peek-micro .pk-mi-row span { flex:0 0 64px; color:var(--mt); text-transform:uppercase; font-size:10px; letter-spacing:.05em; padding-top:2px; }
+.peek-grp     { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.peek-lbl     { font-size:10px; text-transform:uppercase; letter-spacing:.05em; margin-right:2px; }
+.peek-lbl-t   { color:#60a5fa; }
+.peek-lbl-g   { color:#a78bfa; }
+.peek-chip    { font-size:11px; padding:3px 8px; border-radius:12px; cursor:pointer; transition:transform .1s; }
+.peek-chip:hover { transform:translateY(-1px); }
+.peek-chip.pk-t { background:rgba(59,130,246,.12); color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
+.peek-chip.pk-g { background:rgba(139,92,246,.12); color:#a78bfa; border:1px solid rgba(139,92,246,.25); }
+.peek-ft      { display:flex; gap:8px; padding:11px 14px; border-top:1px solid var(--bdr); background:var(--sur2); }
 .pd-empty     { color:var(--mt); font-size:12px; padding:14px; text-align:center; }
 
 /* ── Lineage Landing (atlas) ── */
@@ -515,8 +583,38 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
+<!-- Shared micro-pattern catalog (also used by ../patterns.html). Defines window.PG_PATTERNS. -->
+<script src="../patterns-catalog.js"></script>
 <script>
 'use strict';
+
+// ══════════════════════════════════════════════════════════════
+// 🧩 MICRO-PATTERN CATALOG LOOKUP
+// window.PG_PATTERNS (../patterns-catalog.js) carries the when/how/cost/
+// contrast blurbs for every micro-pattern. A pat_* lineage tag's LAST
+// `::` segment IS the micro id, e.g.
+//   pat_ds::array::core::two-sum-hash  →  micro id "two-sum-hash".
+// We expose microForEntity() so leaf nodes built from pat_* tags can show
+// an ⓘ info card. Falls back gracefully if the catalog failed to load.
+// ══════════════════════════════════════════════════════════════
+const MICRO_BY_ID = (() => {
+  const map = new Map();
+  try {
+    (window.PG_PATTERNS || []).forEach(cat =>
+      (cat.micros || []).forEach(m => { if (m && m.id && !map.has(m.id)) map.set(m.id, m); }));
+  } catch (_) {}
+  return map;
+})();
+
+// The micro-pattern for a lineage entity, or null. Derived from the last
+// segment of its tag_path (only pat_* paths can match a catalog micro).
+function microForEntity(ent) {
+  if (!ent) return null;
+  const path = ent.tag_path || '';
+  if (!path.startsWith('pat_')) return null;
+  const last = path.split('::').pop();
+  return MICRO_BY_ID.get(last) || null;
+}
 
 // ══════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -855,6 +953,7 @@ const GR = {
 
   init(cid) {
     this.running = false; this.selNode = null;
+    this.cid = cid;                 // remember container so layouts (e.g. outline) target the right view
     const ct = document.getElementById(cid);
     const panel = ct.querySelector('.node-panel');
     ct.innerHTML = '';
@@ -919,9 +1018,11 @@ const GR = {
 
   _applyTx() { this.g.setAttribute('transform', `translate(${this.tx.x},${this.tx.y}) scale(${this.tx.s})`); },
 
-  render(nodes, edges) {
+  render(nodes, edges, layoutArg) {
     this.running = false;
-    const layout = (typeof linState !== 'undefined' && linState.layout) || 'force';
+    // Layout is driven by the calling view: Lineage passes linState.layout,
+    // Lineage Algo passes laState.layout. Fall back to linState then 'force'.
+    const layout = layoutArg || (typeof linState !== 'undefined' && linState.layout) || 'force';
 
     // Outline = pure HTML tree (no SVG)
     if (layout === 'outline') {
@@ -943,10 +1044,12 @@ const GR = {
     });
     this.edges = edges;
 
-    // Apply static layouts (radial / tree-td / tree-lr) — no simulation
-    if (layout === 'radial')   { this._layoutRadial();    this._frame(); setTimeout(() => this.fit(), 0); return; }
-    if (layout === 'tree-td')  { this._layoutTree(false); this._frame(); setTimeout(() => this.fit(), 0); return; }
-    if (layout === 'tree-lr')  { this._layoutTree(true);  this._frame(); setTimeout(() => this.fit(), 0); return; }
+    // Apply static layouts (radial / tree-td / tree-lr / hierarchy) — no simulation
+    if (layout === 'radial')        { this._layoutRadial();        this._frame(); setTimeout(() => this.fit(), 0); return; }
+    if (layout === 'tree-td')       { this._layoutTree(false);     this._frame(); setTimeout(() => this.fit(), 0); return; }
+    if (layout === 'tree-lr')       { this._layoutTree(true);      this._frame(); setTimeout(() => this.fit(), 0); return; }
+    if (layout === 'hierarchy')     { this._layoutHierarchy(false); this._frame(); setTimeout(() => this.fit(), 0); return; }
+    if (layout === 'hierarchy-lr')  { this._layoutHierarchy(true);  this._frame(); setTimeout(() => this.fit(), 0); return; }
 
     // Force-directed (default) — run physics, fit when simulation cools
     this.alpha = 1; this.running = true;
@@ -989,9 +1092,76 @@ const GR = {
     });
   },
 
+  // ── Layout: Tidy hierarchy (true parent → child → children tree) ──
+  // Unlike _layoutTree (which spreads each depth band evenly and so
+  // interleaves siblings from different parents), this groups every node
+  // directly under its parent and centers parents over their children —
+  // so the SUBSET_OF flow (e.g. Pat DS → array → core → micro) reads as a
+  // proper tree. horizontal=true puts the root on the left, children to
+  // the right; otherwise root on top, children below.
+  _layoutHierarchy(horizontal) {
+    const idTo = new Map(this.nodes.map(n => [n.id, n]));
+    // Use the SEMANTIC edge direction, NOT BFS depth — with Direction="Both"
+    // an ancestor can be pulled in at a higher BFS depth than the focused
+    // node, which would invert the tree. SUBSET_OF: from_id=child, to_id=parent.
+    // ASSOCIATES: from_id=algo, to_id=topic → the topic is the parent.
+    const childrenOf = new Map();   // parentId → [childId]
+    const parentOf   = new Map();   // childId  → parentId (each child keeps one)
+    const link = (parentId, childId) => {
+      if (!idTo.has(parentId) || !idTo.has(childId) || parentId === childId) return;
+      if (!childrenOf.has(parentId)) childrenOf.set(parentId, []);
+      if (!childrenOf.get(parentId).includes(childId)) childrenOf.get(parentId).push(childId);
+      if (!parentOf.has(childId)) parentOf.set(childId, parentId);
+    };
+    this.edges.forEach(e => {
+      if (e.rel_type === 'SUBSET_OF' || e.rel_type === 'ASSOCIATES') link(e.to_id, e.from_id);
+      else link(e.from_id, e.to_id);
+    });
+
+    // Layout roots: climb the focused node to its topmost ancestor (so its full
+    // lineage shows from the real top), plus any parentless node (orphans / extra trees).
+    const climbTop = id => { let cur = id, guard = new Set(); while (parentOf.has(cur) && !guard.has(cur)) { guard.add(cur); cur = parentOf.get(cur); } return cur; };
+    const rootSet  = new Set();
+    const focused  = this.nodes.find(n => n.isRoot);
+    if (focused) rootSet.add(climbTop(focused.id));
+    this.nodes.forEach(n => { if (!parentOf.has(n.id)) rootSet.add(n.id); });
+
+    const LEVEL = 170;   // main-axis gap between depths
+    const LEAF  = 64;    // cross-axis gap between adjacent leaves
+    const pad   = 60;
+    const pos   = new Map();   // id → { main, cross }
+    const seen  = new Set();
+    let cursor  = 0;
+
+    // Post-order: leaves take the next cursor slot; parents center over their kids.
+    const walk = (id, depth) => {
+      if (seen.has(id)) return pos.get(id)?.cross ?? 0;
+      seen.add(id);
+      const kids = (childrenOf.get(id) || []).filter(k => !seen.has(k));
+      let cross;
+      if (!kids.length) {
+        cross = cursor * LEAF; cursor++;
+      } else {
+        const cs = kids.map(k => walk(k, depth + 1));
+        cross = (cs[0] + cs[cs.length - 1]) / 2;
+      }
+      pos.set(id, { main: depth * LEVEL, cross });
+      return cross;
+    };
+
+    [...rootSet].forEach(r => walk(r, 0));
+    this.nodes.forEach(n => { if (!seen.has(n.id)) walk(n.id, 0); });   // safety net
+
+    this.nodes.forEach(n => {
+      const p = pos.get(n.id) || { main: 0, cross: 0 };
+      if (horizontal) { n.x = pad + p.main;  n.y = pad + p.cross; }
+      else            { n.x = pad + p.cross; n.y = pad + p.main; }
+    });
+  },
+
   // ── Layout: HTML outline tree ──
   _renderOutline(nodes, edges) {
-    const ct = document.getElementById('lin-graph-ct');
+    const ct = document.getElementById(this.cid || 'lin-graph-ct');
     if (!ct) return;
     // Preserve panel + graph-ctrl, replace SVG with HTML tree
     const panel = ct.querySelector('.node-panel');
@@ -1045,7 +1215,7 @@ const GR = {
         ${node.source?`<span style="color:var(--mt);font-size:11px">#${node.source}</span>`:''}
         ${c.total?`<span style="color:#60a5fa;font-size:11px;margin-left:4px">${c.direct===c.total?`(${c.total})`:`(${c.direct}/${c.total})`}</span>`:''}
       `;
-      row.querySelector('.ol-name').onclick = () => goLineage(node.id);
+      row.querySelector('.ol-name').onclick = () => zoomTo(node.id);  // view-aware: routes to laGoTo in Lineage Algo
       tree.appendChild(row);
 
       const kidWrap = document.createElement('div');
@@ -1286,7 +1456,7 @@ const GR = {
 // UI STATE
 // ══════════════════════════════════════════════════════════════
 let curView = 'dashboard';
-const linState = { rootId:'', relTypes:[...REL_TYPES], direction:'both', depth:3, layout:'force' };
+const linState = { rootId:'', relTypes:[...REL_TYPES], direction:'both', depth:3, layout:'hierarchy' };
 const expanded = new Set(); // topic ids open in Topics tree
 
 function navigate(view) {
@@ -1750,7 +1920,8 @@ function updateProblemsDrawer(nodeId, opts = {}) {
 
   body.innerHTML = shown.length ? shown.slice(0, 250).map(({algo, topicId}) => {
     const via = topicId ? Store.getEntity(topicId)?.name : '';
-    return `<div class="pd-row" onclick="showProblemModal('${algo.id}')" ondblclick="zoomTo('${algo.id}', linState.depth)" title="Click for details · Double-click to zoom into this problem">
+    return `<div class="pd-row" onclick="showProblemModal('${algo.id}')" ondblclick="zoomTo('${algo.id}', linState.depth)" title="Click to open in AdsHub · Double-click to zoom into this problem">
+      <span class="pd-eye" onclick="event.stopPropagation();peekProblem('${algo.id}')" title="Quick peek — preview here without leaving">👁</span>
       <span class="pd-name">${algo.name}</span>
       ${algo.difficulty?`<span class="badge b-${algo.difficulty.toLowerCase()}" style="font-size:10px">${algo.difficulty}</span>`:''}
       ${algo.source?`<span style="color:var(--mt);font-size:11px">#${algo.source}</span>`:''}
@@ -1818,6 +1989,8 @@ function renderLineage() {
             <option value="radial"   ${linState.layout==='radial'  ?'selected':''}>◎ Radial (concentric)</option>
             <option value="tree-td"  ${linState.layout==='tree-td' ?'selected':''}>⤓ Tree — top-down</option>
             <option value="tree-lr"  ${linState.layout==='tree-lr' ?'selected':''}>→ Tree — left-right</option>
+            <option value="hierarchy"    ${linState.layout==='hierarchy'    ?'selected':''}>🌳 Hierarchy — parent→child (top-down)</option>
+            <option value="hierarchy-lr" ${linState.layout==='hierarchy-lr' ?'selected':''}>🌲 Hierarchy — parent→child (left-right)</option>
             <option value="outline"  ${linState.layout==='outline' ?'selected':''}>≣ Outline (HTML tree)</option>
           </select>
         </div>
@@ -2004,7 +2177,7 @@ function updateLineage() {
   );
 
   if (!nodes.length) { toast('No connections found', 'warn'); return; }
-  GR.render(nodes, edges);
+  GR.render(nodes, edges, linState.layout);
 
   // Sync breadcrumb + Problems drawer to the new root
   renderBreadcrumb(linState.rootId);
@@ -4026,7 +4199,7 @@ const laState = {
   rootId: '',
   history: [],
   // Topic-mode controls
-  depth: 1, direction: 'both', layout: 'force',
+  depth: 1, direction: 'both', layout: 'hierarchy',
   // ASSOCIATES off by default — keeps the topic graph clean (otherwise leaf topics
   // pull in hundreds of algorithm nodes). User can toggle ON to see those connections.
   relTypes: REL_TYPES.filter(t => t !== 'ASSOCIATES'),
@@ -4138,14 +4311,26 @@ function renderLineageAlgo() {
     </div>
   `;
 
-  // Restore collapsed state
-  if (localStorage.getItem('kg_la_ctrl_collapsed') === '1') {
+  // Controls start collapsed by default (keeps the graph roomy on landing);
+  // stay expanded only if the user explicitly opened them via ⮜ Controls.
+  if (localStorage.getItem('kg_la_ctrl_collapsed') !== '0') {
     document.getElementById('la-ctrl-panel')?.classList.add('collapsed');
   }
 
   laRenderBreadcrumb(ent);
   laRenderTrail();
   laRenderStage(ent, mode);
+  // Floating "Center" control — bottom-right of the stage, above any per-mode
+  // zoom column. laRenderStage replaces #la-stage's content, so add it after.
+  const stageEl = document.getElementById('la-stage');
+  if (stageEl) {
+    const fab = document.createElement('button');
+    fab.className = 'la-center-fab';
+    fab.title = 'Center / fit all nodes back into view';
+    fab.textContent = '🎯';
+    fab.onclick = laCenterView;
+    stageEl.appendChild(fab);
+  }
   // Drawer stays collapsed by default in Lineage Algo — user clicks header to expand
   updateProblemsDrawer(ent.concept_type === 'ALGORITHM' ? ent.id : laState.rootId, { noAutoOpen: true });
 }
@@ -4156,6 +4341,15 @@ function toggleLaCtrl() {
   if (!p) return;
   const isCol = p.classList.toggle('collapsed');
   localStorage.setItem('kg_la_ctrl_collapsed', isCol ? '1' : '0');
+}
+
+// Bring every node back into view — fits the active mode's graph (topic uses
+// the shared GR renderer, similar uses the sim renderer; leaf is a plain grid).
+function laCenterView() {
+  const mode = (typeof laMode === 'function') ? laMode() : 'topic';
+  if (mode === 'similar') { if (typeof simFit === 'function') simFit(); }
+  else if (mode === 'leaf') { const st = document.getElementById('la-stage'); if (st) st.scrollTop = 0; }
+  else { GR.fit(); }
 }
 
 // ── Build the controls panel HTML per mode ──
@@ -4186,6 +4380,8 @@ function laRenderControls(mode) {
         <option value="radial"  ${laState.layout==='radial' ?'selected':''}>◎ Radial</option>
         <option value="tree-td" ${laState.layout==='tree-td'?'selected':''}>⤓ Tree top-down</option>
         <option value="tree-lr" ${laState.layout==='tree-lr'?'selected':''}>→ Tree left-right</option>
+        <option value="hierarchy"    ${laState.layout==='hierarchy'    ?'selected':''}>🌳 Hierarchy parent→child (top-down)</option>
+        <option value="hierarchy-lr" ${laState.layout==='hierarchy-lr' ?'selected':''}>🌲 Hierarchy parent→child (left-right)</option>
         <option value="outline" ${laState.layout==='outline'?'selected':''}>≣ Outline</option>
       </select>
     </div>
@@ -4378,7 +4574,25 @@ function laRenderTopicMode(ent, stage) {
       <button class="g-btn" onclick="GR.reset()">⊙</button>
     </div>`;
   GR.init('la-stage');
-  GR.render(nodes, edges);
+  GR.render(nodes, edges, laState.layout);
+}
+
+// Info card (when/how/cost/contrast) for a micro-pattern leaf, or '' if none.
+function laMicroInfoHtml(micro) {
+  if (!micro) return '';
+  const row = (label, val) => val ? `<div class="mi-row"><span class="mi-k">${label}</span><span class="mi-v">${val}</span></div>` : '';
+  return `
+    <div class="la-micro-info" id="la-micro-info" style="display:none">
+      <div class="mi-hd">🧩 ${micro.name || ''}</div>
+      ${row('When',     micro.when)}
+      ${row('How',      micro.how)}
+      ${row('Cost',     micro.cost)}
+      ${row('Contrast', micro.contrast)}
+    </div>`;
+}
+function toggleMicroInfo() {
+  const el = document.getElementById('la-micro-info');
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
 // ── LEAF mode — grid of algorithms in this topic ──
@@ -4388,10 +4602,13 @@ function laRenderLeafMode(ent, stage) {
   const byDiff = { Easy:0, Medium:0, Hard:0 };
   Counts.directAlgos(ent.id).forEach(a => { if (a.difficulty) byDiff[a.difficulty]++; });
 
+  const micro = microForEntity(ent);   // pat_* micro-pattern blurb, if this leaf is one
+
   stage.innerHTML = `
     <div class="la-leaf-hd">
       <span>Algorithms in</span>
       <b>${ent.name}</b>
+      ${micro ? `<button class="micro-i-btn" onclick="toggleMicroInfo()" title="What is this pattern? (when / how / cost / contrast)">ⓘ</button>` : ''}
       <span style="color:var(--mt);font-size:11px">${algos.length} of ${Counts.directAlgos(ent.id).length} shown</span>
       <span style="margin-left:auto;display:flex;gap:5px;align-items:center">
         ${['Easy','Medium','Hard'].map(d => `
@@ -4399,6 +4616,7 @@ function laRenderLeafMode(ent, stage) {
             onclick="laState.diffFilter['${d}']=!laState.diffFilter['${d}'];renderLineageAlgo()">${d} ${byDiff[d]}</span>`).join('')}
       </span>
     </div>
+    ${laMicroInfoHtml(micro)}
     <div class="la-leaf-grid">
       ${algos.length ? algos.map(a => {
         const topicChips = Store.relations
@@ -4412,6 +4630,7 @@ function laRenderLeafMode(ent, stage) {
             <div class="la-algo-meta">
               ${a.source ? `<span>#${a.source}</span>` : ''}
               ${a.difficulty ? `<span class="badge b-${a.difficulty.toLowerCase()}" style="font-size:10px">${a.difficulty}</span>` : ''}
+              <span class="pd-eye" style="margin-left:auto" onclick="event.stopPropagation();peekProblem('${a.id}')" title="Quick peek — preview here without leaving">👁</span>
             </div>
             ${topicChips ? `<div class="la-algo-tags">${topicChips}</div>` : ''}
           </div>`;
@@ -4675,8 +4894,97 @@ function closeProblemModal() {
 }
 // Close on Escape
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeProblemModal();
+  if (e.key === 'Escape') { closeProblemModal(); closePeek(); }
 });
+
+// ══════════════════════════════════════════════════════════════
+// 👁 QUICK PEEK — preview a problem in-window without leaving the graph.
+// Shows only what the graph already knows (no portal round-trip):
+//   #, title, difficulty, primary tag path, associated topics + pat_* tags,
+//   and the micro-pattern blurb when a pat_* tag matches the catalog.
+// "Open in AdsHub" hands off to the portal (same as a normal row click).
+// ══════════════════════════════════════════════════════════════
+function closePeek() { document.getElementById('peek-wrap')?.remove(); }
+
+// Hand the problem off to the portal (Browse), mirroring showProblemModal's EMBED path.
+function openInBrowse(algoId) {
+  const algo = Store.getEntity(algoId);
+  if (!algo) return;
+  closePeek();
+  if (typeof EMBED !== 'undefined' && EMBED) {
+    parent.postMessage({ type: 'kg-open-problem', num: algo.source, name: algo.name }, '*');
+  } else {
+    showProblemModal(algoId);
+  }
+}
+
+function peekProblem(algoId) {
+  const algo = Store.getEntity(algoId);
+  if (!algo || algo.concept_type !== 'ALGORITHM') return;
+  closePeek();
+
+  // Associated nodes → split LC topics vs pat_* tags
+  const assoc = Store.relations
+    .filter(r => r.from_id === algo.id && r.rel_type === 'ASSOCIATES')
+    .map(r => Store.getEntity(r.to_id)).filter(Boolean);
+  const isPat  = t => (t.tag_path || '').startsWith('pat_') || (t.id || '').startsWith('tp_pat_');
+  const tags   = assoc.filter(isPat);
+  const topics = assoc.filter(t => !isPat(t));
+
+  // ALL micro-pattern notes for this problem (one per matching pat_* tag),
+  // deduped. Pulled from the SAME shared catalog (window.PG_PATTERNS via
+  // microForEntity) that the Patterns tab renders, so edits there show here too.
+  const micros = [];
+  const seenMicro = new Set();
+  for (const t of tags) {
+    const m = microForEntity(t);
+    if (m && !seenMicro.has(m.id)) { seenMicro.add(m.id); micros.push(m); }
+  }
+
+  const goFn = (typeof curView !== 'undefined' && curView === 'lineage-algo') ? 'laGoTo' : 'zoomTo';
+  const chip = (t, cls) =>
+    `<span class="peek-chip ${cls}" onclick="closePeek();${goFn}('${t.id}')" title="${(t.tag_path || t.name)} — go here">${t.name}</span>`;
+
+  const microHtml = micros.length ? `
+    <div class="peek-micros-hd">🧩 Micro-pattern note${micros.length > 1 ? `s · ${micros.length}` : ''}</div>
+    ${micros.map(m => `
+    <div class="peek-micro">
+      <div class="pk-mi-hd">${m.name || m.id}</div>
+      ${m.when     ? `<div class="pk-mi-row"><span>When</span><div>${m.when}</div></div>`     : ''}
+      ${m.how      ? `<div class="pk-mi-row"><span>How</span><div>${m.how}</div></div>`       : ''}
+      ${m.cost     ? `<div class="pk-mi-row"><span>Cost</span><div>${m.cost}</div></div>`     : ''}
+      ${m.contrast ? `<div class="pk-mi-row"><span>Contrast</span><div>${m.contrast}</div></div>` : ''}
+    </div>`).join('')}` : '';
+
+  const html = `
+    <div class="pm-backdrop" onclick="closePeek()"></div>
+    <div class="peek-modal" id="peek-modal-el">
+      <div class="peek-hd">
+        <span class="peek-title">
+          ${algo.source ? `<span style="color:var(--mt);font-size:12px">#${algo.source}</span>` : ''}
+          <b>${algo.name}</b>
+          ${algo.difficulty ? `<span class="badge b-${algo.difficulty.toLowerCase()}">${algo.difficulty}</span>` : ''}
+        </span>
+        <button class="w-btn" title="Close (Esc)" onclick="closePeek()">×</button>
+      </div>
+      <div class="peek-body">
+        ${algo.tag_path ? `<div class="peek-path" title="Primary tag path">${algo.tag_path}</div>` : ''}
+        ${microHtml}
+        ${topics.length ? `<div class="peek-grp"><span class="peek-lbl peek-lbl-t">📚 Topics ${topics.length}</span>${topics.slice(0,20).map(t=>chip(t,'pk-t')).join('')}</div>` : ''}
+        ${tags.length   ? `<div class="peek-grp"><span class="peek-lbl peek-lbl-g">🏷 Tags ${tags.length}</span>${tags.slice(0,20).map(t=>chip(t,'pk-g')).join('')}</div>` : ''}
+        ${!topics.length && !tags.length ? `<div style="color:var(--mt);font-size:12px">No topics or tags associated.</div>` : ''}
+      </div>
+      <div class="peek-ft">
+        <button class="btn btn-pr btn-sm" onclick="openInBrowse('${algo.id}')">Open in AdsHub ↗</button>
+        <button class="btn btn-sec btn-sm" onclick="closePeek();${goFn}('${algo.id}')">Similar problems →</button>
+      </div>
+    </div>`;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'peek-wrap';
+  wrap.innerHTML = html;
+  document.body.appendChild(wrap);
+}
 
 // ══════════════════════════════════════════════════════════════
 // SIDEBAR RESIZER + TOGGLE
@@ -4690,7 +4998,11 @@ document.addEventListener('keydown', e => {
   // Restore saved width
   const saved = localStorage.getItem('kg_sb_w');
   if (saved) sb.style.width = saved;
-  if (localStorage.getItem('kg_sb_collapsed') === '1') sb.classList.add('collapsed');
+  // In the portal (embedded) the iframe's own "Knowledge Graph" nav is
+  // redundant — collapse it by default unless the user explicitly expanded it.
+  const embedded = (() => { try { return window.parent && window.parent !== window; } catch { return true; } })();
+  const sbPref = localStorage.getItem('kg_sb_collapsed');
+  if (sbPref === '1' || (sbPref === null && embedded)) sb.classList.add('collapsed');
 
   let dragging = false;
   rz.addEventListener('mousedown', e => {
@@ -4789,6 +5101,13 @@ const EMBED = (() => { try { return window.parent && window.parent !== window; }
 Store.init();
 navigate('dashboard');   // empty-safe view; switch to 'lineage' once data arrives
 
+// Apply a portal theme id by mirroring it onto this iframe's <html> so the
+// data-theme CSS blocks above take effect. 'dark' is the default palette.
+function applyKgTheme(theme) {
+  const t = (theme || 'dark');
+  document.documentElement.setAttribute('data-theme', t);
+}
+
 if (EMBED) {
   window.addEventListener('message', (ev) => {
     const d = ev.data || {};
@@ -4796,7 +5115,11 @@ if (EMBED) {
       Store.entities  = d.entities;
       Store.relations = Array.isArray(d.relations) ? d.relations : [];
       Store._bust();   // no Store.save(): ~6k rows would blow the localStorage quota; the portal re-pushes on each load
-      navigate(curView === 'dashboard' ? 'lineage' : curView);
+      if (d.theme) applyKgTheme(d.theme);   // theme rides along with the data push
+      // Land on "Lineage + Algorithms" (its empty-root state shows the atlas landing).
+      navigate(curView === 'dashboard' ? 'lineage-algo' : curView);
+    } else if (d.type === 'kg-theme') {
+      applyKgTheme(d.theme);
     } else if (d.type === 'kg-focus' && d.num != null) {
       const id = 'algo_lc_' + String(d.num).replace(/\D/g, '').padStart(4, '0');
       if (Store.getEntity(id)) { navigate('lineage-algo'); laGoTo(id); }
