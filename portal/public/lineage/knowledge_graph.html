@@ -564,7 +564,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="sb-ft">
     <button class="btn btn-sec btn-sm" onclick="exportCSV()" title="Download both CSVs">↓ Export</button>
     <label class="btn-lbl btn-sm" title="Import — overwrites by ID (new wins)">↑ Import<input type="file" accept=".csv" multiple style="display:none" onchange="importCSV(event)"></label>
-    <button class="btn btn-sec btn-sm" onclick="rebuildFromTags()" title="Rebuild from current tags: generate CSV → run import_lc.js → reload (needs serve.py)">🔄 Rebuild</button>
+    <button class="btn btn-sec btn-sm" onclick="rebuildFromTags()" title="Refresh: reload problems from the sheet and rebuild the lineage">🔄 Rebuild</button>
     <button class="btn btn-sec btn-sm" onclick="resetAndReimport()" title="Wipe all data and reload the existing CSVs from disk" style="color:var(--err);border-color:rgba(239,68,68,.3)">⟳ Reset</button>
   </div>
 </nav>
@@ -2503,12 +2503,16 @@ async function resetAndReimport() {
   }
 }
 
-// Rebuild from current lc_store tags: server regenerates the CSVs, then we reload.
-// Server-side (serve.py POST /lineage/refresh → refresh.sh) does:
-//   1. build_export_csv.py → leetcode-export-<today>.csv (tags from lc-data blocks)
-//   2. node import_lc.js    → kg_entities.csv + kg_relations.csv
-// then this reloads them into the graph (step 3). One click = the whole 4-step refresh.
+// Rebuild / refresh the lineage from the current problem tags.
+// • Embedded in the portal: ask the portal to reload LCProblems from the sheet
+//   (loadProblems(true)) and re-push fresh kg-data — picks up tag/note edits.
+// • Standalone (serve.py): regenerate the CSVs server-side and reload them.
 async function rebuildFromTags() {
+  if (typeof EMBED !== 'undefined' && EMBED) {
+    parent.postMessage({ type: 'kg-refresh' }, '*');
+    toast('Refreshing lineage from the sheet…', 'ok');
+    return;
+  }
   if (location.protocol !== 'http:' && location.protocol !== 'https:') {
     alert('Rebuild needs the local server. Open this page via http://localhost:8000/ (run serve.py).');
     return;

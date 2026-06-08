@@ -98,8 +98,10 @@ anchor_id,tag
 55,pat_ds::array::greedy::running-extreme
 56,pat_topic::greedy::sort-and-sweep
 56,pat_ds::array::greedy::sort-and-sweep
+56,pat_ds::array::interval::interval-sort-start-merge
 57,pat_topic::greedy::sort-and-sweep
 57,pat_ds::array::greedy::sort-and-sweep
+57,pat_ds::array::interval::interval-sort-start-merge
 58,pat_ds::string::two-pointers::tp-converging
 59,pat_ds::matrices::core::mat-spiral
 60,pat_topic::backtrack::permutation
@@ -399,6 +401,7 @@ anchor_id,tag
 250,pat_ds::tree::core::post-order-depth
 252,pat_topic::greedy::sort-and-sweep
 252,pat_ds::array::greedy::sort-and-sweep
+252,pat_ds::array::interval::interval-sort-start-overlap
 253,pat_topic::greedy::sort-and-sweep
 253,pat_ds::array::greedy::sort-and-sweep
 254,pat_ds::array::backtrack::subset-combination
@@ -592,6 +595,7 @@ anchor_id,tag
 433,pat_topic::bfs::bfs-shortest-unweighted
 433,pat_ds::string::bfs::bfs-shortest-unweighted
 435,pat_ds::array::greedy::greedy-end-sorted
+435,pat_ds::array::interval::interval-sort-end-greedy
 436,pat_ds::array::binary-search::bs-textbook
 437,pat_ds::tree::core::path-sum-dfs
 438,pat_ds::string::core::anagram-keying
@@ -801,6 +805,7 @@ anchor_id,tag
 758,pat_ds::string::greedy::sort-and-sweep
 759,pat_topic::greedy::sort-and-sweep
 759,pat_ds::array::greedy::sort-and-sweep
+759,pat_ds::array::interval::interval-sort-start-merge
 760,pat_ds::array::hash::freq-counter
 763,pat_ds::string::greedy::sort-and-sweep
 766,pat_ds::matrices::core::mat-grid-dfs-bfs

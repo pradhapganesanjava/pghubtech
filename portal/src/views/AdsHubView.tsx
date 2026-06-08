@@ -1368,6 +1368,14 @@ export default function AdsHubView() {
               title="DS → micro-pattern reference"
             >📐 Patterns</button>
           </div>
+          {/* Refresh is available in every mode — reloads problems from the sheet
+              and rebuilds the lineage (picks up tag/note edits made elsewhere). */}
+          <button
+            className="rf-btn-cancel"
+            onClick={refresh}
+            disabled={refreshing || loading}
+            title="Reload problems & rebuild lineage from the sheet"
+          >{refreshing ? '…' : '↻'}</button>
           {adsMode === 'browse' && <>
           <button
             className={`mobile-filter-btn${activeFilterCount > 0 ? ' has-active' : ''}`}
@@ -1442,12 +1450,6 @@ export default function AdsHubView() {
             }}
           />
           <button
-            className="rf-btn-cancel"
-            onClick={refresh}
-            disabled={refreshing || loading}
-            title="Reload problems from the sheet"
-          >{refreshing ? '…' : '↻'}</button>
-          <button
             className="rf-btn-save"
             onClick={openAddProblem}
             title="Add a new problem"
@@ -1515,6 +1517,7 @@ export default function AdsHubView() {
               <AdsLineage
                 problems={problems}
                 focusNum={lineageFocus}
+                onRefresh={refresh}
                 onOpenProblem={num => {
                   // Open in the side detail pane — stay in Lineage (don't flip to Browse).
                   const p = problems.find(x => x.frontendId === String(num) || x.frontendId === String(Number(num)))
