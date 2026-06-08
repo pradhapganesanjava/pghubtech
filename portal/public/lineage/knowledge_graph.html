@@ -77,9 +77,14 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 
 /* Main */
 .main { flex:1; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
-.topbar { display:flex; align-items:center; justify-content:space-between; padding:10px 22px; border-bottom:1px solid var(--bdr); background:var(--sur); flex-shrink:0; }
-.topbar-title { font-size:16px; font-weight:600; }
-.topbar-actions { display:flex; gap:8px; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 16px; border-bottom:1px solid var(--bdr); background:var(--sur); flex-shrink:0; }
+/* page-title is a flex row so the Lineage Algo controls sit right after ☰;
+   margin-right:auto keeps title/controls left and pushes actions (search) right. */
+.topbar-title { font-size:16px; font-weight:600; display:flex; align-items:center; gap:8px; min-width:0; margin-right:auto; flex-wrap:wrap; }
+.la-topbar-title { font-size:14px; font-weight:600; color:var(--tx); white-space:nowrap; }
+.topbar-actions { display:flex; gap:8px; align-items:center; }
+.la-topbar-search { width:min(360px, 42vw); }
+.la-topbar-search .root-input { padding:5px 10px; font-size:12px; }
 .content { flex:1; overflow-y:auto; padding:20px 22px; }
 
 /* Buttons */
@@ -504,8 +509,16 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .graph-ctrl { position:absolute; bottom:12px; right:12px; display:flex; flex-direction:column; gap:4px; }
 .g-btn { width:29px; height:29px; background:var(--sur2); border:1px solid var(--bdr); border-radius:6px; cursor:pointer; color:var(--tx); font-size:14px; display:flex; align-items:center; justify-content:center; }
 .g-btn:hover { background:var(--bdr); }
-.node-panel { position:absolute; top:12px; left:12px; background:var(--sur2); border:1px solid var(--bdr); border-radius:8px; padding:11px; font-size:12px; display:none; max-width:210px; }
+.node-panel { position:absolute; top:12px; left:12px; background:var(--sur2); border:1px solid var(--bdr); border-radius:8px; padding:11px; font-size:12px; display:none; max-width:210px; max-height:calc(100% - 24px); overflow-y:auto; z-index:7; }
 .node-panel.vis { display:block; }
+/* Wider + scrollable when showing a micro-pattern deep-dive note */
+.node-panel.has-note { max-width:340px; width:340px; }
+.np-note      { margin-top:8px; }
+.np-note-hd   { font-weight:700; color:var(--pr); font-size:12px; margin-bottom:6px; }
+.np-row       { margin:5px 0; font-size:11.5px; line-height:1.5; }
+.np-row span  { display:block; color:var(--mt); text-transform:uppercase; font-size:9px; letter-spacing:.05em; }
+.np-sub       { color:var(--mt); text-transform:uppercase; font-size:9px; letter-spacing:.05em; margin:8px 0 3px; }
+.np-pre       { background:var(--bg); border:1px solid var(--bdr); border-radius:5px; padding:8px 9px; font-size:11px; line-height:1.45; overflow-x:auto; white-space:pre; color:var(--tx); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .lin-empty  { display:flex; align-items:center; justify-content:center; height:100%; color:var(--mt); font-size:14px; flex-direction:column; gap:8px; }
 .chk-grp   { display:flex; flex-direction:column; gap:6px; }
 .chk-lbl   { display:flex; align-items:center; gap:7px; font-size:12px; cursor:pointer; }
@@ -614,6 +627,37 @@ function microForEntity(ent) {
   if (!path.startsWith('pat_')) return null;
   const last = path.split('::').pop();
   return MICRO_BY_ID.get(last) || null;
+}
+
+// Per-micro pseudo-code + ASCII visuals — same files the Patterns tab's
+// deep-dive uses, so edits there flow here too. Loaded once, lazily.
+let PG_PSEUDO = {}, PG_VISUALS = {};
+(async () => {
+  try { const r = await fetch('../patterns-pseudo.json');  if (r.ok) { const j = await r.json(); delete j._meta; PG_PSEUDO  = j; } } catch (_) {}
+  try { const r = await fetch('../patterns-visuals.json'); if (r.ok) { const j = await r.json(); delete j._meta; PG_VISUALS = j; } } catch (_) {}
+})();
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+// Full deep-dive note for a micro-pattern node, or '' if the node isn't one.
+// When / How / Cost / Contrast (catalog) + ASCII visual + pseudo-code.
+function microNoteHtml(ent) {
+  const m = microForEntity(ent);
+  if (!m) return '';
+  const visual = PG_VISUALS[m.id];
+  const pseudo = PG_PSEUDO[m.id];
+  const row = (k, v) => v ? `<div class="np-row"><span>${k}</span><div>${esc(v)}</div></div>` : '';
+  return `
+    <div class="sep"></div>
+    <div class="np-note">
+      <div class="np-note-hd">🧩 ${esc(m.name || m.id)}</div>
+      ${row('When', m.when)}
+      ${row('How', m.how)}
+      ${row('Cost', m.cost)}
+      ${row('Contrast', m.contrast)}
+      ${visual ? `<div class="np-sub">Visual</div><pre class="np-pre">${esc(visual)}</pre>` : ''}
+      ${pseudo ? `<div class="np-sub">Pseudo-code</div><pre class="np-pre">${esc(pseudo)}</pre>` : ''}
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1127,7 +1171,7 @@ const GR = {
     this.nodes.forEach(n => { if (!parentOf.has(n.id)) rootSet.add(n.id); });
 
     const LEVEL = 170;   // main-axis gap between depths
-    const LEAF  = 64;    // cross-axis gap between adjacent leaves
+    const LEAF  = 92;    // cross-axis gap between adjacent leaves (room for bigger nodes/labels)
     const pad   = 60;
     const pos   = new Map();   // id → { main, cross }
     const seen  = new Set();
@@ -1332,28 +1376,59 @@ const GR = {
       const dimmed = this.selNode && !isSel && !this.edges.some(e =>
         (e.from_id === this.selNode && e.to_id === node.id) || (e.to_id === this.selNode && e.from_id === node.id));
       const nc = CON_COLORS[node.concept_type] || '#6b7280';
-      const r  = isRoot ? 34 : NR;
       const counts = Counts.forNode(node.id);
+
+      // Wrap long labels into ≤2 lines (break on space / - / _) so they stay
+      // readable instead of being truncated to "abc…"; grow the circle to fit.
+      const labelLines = (() => {
+        const nm = node.name || '';
+        const MAXC = 11;
+        if (nm.length <= MAXC) return [nm];
+        const words = nm.split(/[\s\-_]+/).filter(Boolean);
+        if (words.length > 1) {
+          let l1 = words[0], i = 1;
+          while (i < words.length && (l1 + ' ' + words[i]).length <= MAXC) { l1 += ' ' + words[i]; i++; }
+          let l2 = words.slice(i).join(' ');
+          if (l2.length > MAXC) l2 = l2.slice(0, MAXC - 1) + '…';
+          return l2 ? [l1, l2] : [l1];
+        }
+        if (nm.length <= MAXC * 2) { const h = Math.ceil(nm.length / 2); return [nm.slice(0, h), nm.slice(h)]; }
+        return [nm.slice(0, MAXC), nm.slice(MAXC, MAXC * 2 - 1) + '…'];
+      })();
+      const fs      = labelLines.length > 1 ? 9 : (node.name.length > 9 ? 9 : 11);
+      const longest = Math.max(1, ...labelLines.map(l => l.length));
+      const baseR   = isRoot ? 34 : NR;
+      const r       = Math.max(baseR, Math.min(46, longest * fs * 0.30 + 7));
 
       // Defensive: if simulation produced NaN/Infinity, reset to center to avoid SVG errors
       if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) { node.x = this.W/2; node.y = this.H/2; node.vx = node.vy = 0; }
 
       const circle = document.createElementNS(NS, 'circle');
-      circle.setAttribute('cx', f(node.x)); circle.setAttribute('cy', f(node.y)); circle.setAttribute('r', r);
-      circle.setAttribute('fill', isRoot ? '#1e3a6e' : '#1e293b');
-      circle.setAttribute('stroke', isSel ? '#fff' : nc); circle.setAttribute('stroke-width', isSel ? '3' : '2');
+      circle.setAttribute('cx', f(node.x)); circle.setAttribute('cy', f(node.y)); circle.setAttribute('r', f(r));
+      // Theme-aware: node body uses the portal surface, label uses the text color,
+      // so labels stay readable in light/contrast/glow themes too.
+      circle.style.fill = isRoot ? 'var(--sur2)' : 'var(--sur)';
+      circle.style.stroke = isSel ? 'var(--pr)' : nc; circle.setAttribute('stroke-width', isSel ? '3' : (isRoot ? '3' : '2'));
       circle.setAttribute('opacity', dimmed ? '0.15' : '1');
       grp.appendChild(circle);
+      // Full (unwrapped) name on hover
+      const ttl = document.createElementNS(NS, 'title'); ttl.textContent = node.name; grp.appendChild(ttl);
 
-      // Name — shift up if count label visible
-      const nameY = counts.total > 0 ? node.y - 7 : node.y;
+      // Name — multi-line, theme-aware; shift up if count label visible
+      const lineH    = fs + 2;
+      const blockTop = node.y - ((labelLines.length - 1) * lineH) / 2 - (counts.total > 0 ? 6 : 0);
       const txt = document.createElementNS(NS, 'text');
-      txt.setAttribute('x', f(node.x)); txt.setAttribute('y', f(nameY));
+      txt.setAttribute('x', f(node.x)); txt.setAttribute('y', f(blockTop));
       txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
-      txt.setAttribute('fill', '#e2e8f0'); txt.setAttribute('font-size', node.name.length > 10 ? '9' : '11');
+      txt.style.fill = 'var(--tx)'; txt.setAttribute('font-size', fs);
       txt.setAttribute('font-weight', '600'); txt.setAttribute('opacity', dimmed ? '0.15' : '1');
       txt.setAttribute('pointer-events', 'none');
-      txt.textContent = node.name.length > 13 ? node.name.slice(0,11)+'…' : node.name;
+      labelLines.forEach((ln, i) => {
+        const ts = document.createElementNS(NS, 'tspan');
+        ts.setAttribute('x', f(node.x)); ts.setAttribute('dy', i === 0 ? 0 : lineH);
+        ts.textContent = ln;
+        txt.appendChild(ts);
+      });
       grp.appendChild(txt);
 
       // Algorithm count badge inside node  — (direct/total) or (total) when equal
@@ -1371,13 +1446,13 @@ const GR = {
       if (node.depth > 0) {
         const bc = document.createElementNS(NS, 'circle');
         bc.setAttribute('cx', f(node.x + r - 3)); bc.setAttribute('cy', f(node.y - r + 3));
-        bc.setAttribute('r', '9'); bc.setAttribute('fill', '#334155');
-        bc.setAttribute('stroke', '#475569'); bc.setAttribute('stroke-width', '1');
+        bc.setAttribute('r', '9'); bc.style.fill = 'var(--sur2)';
+        bc.style.stroke = 'var(--bdr)'; bc.setAttribute('stroke-width', '1');
         grp.appendChild(bc);
         const bt = document.createElementNS(NS, 'text');
         bt.setAttribute('x', f(node.x + r - 3)); bt.setAttribute('y', f(node.y - r + 3));
         bt.setAttribute('text-anchor', 'middle'); bt.setAttribute('dominant-baseline', 'middle');
-        bt.setAttribute('fill', '#94a3b8'); bt.setAttribute('font-size', '8'); bt.setAttribute('font-weight', '700');
+        bt.style.fill = 'var(--mt)'; bt.setAttribute('font-size', '8'); bt.setAttribute('font-weight', '700');
         bt.setAttribute('pointer-events', 'none'); bt.textContent = node.depth;
         grp.appendChild(bt);
       }
@@ -1421,7 +1496,9 @@ const GR = {
         ${algos.length ? `<div style="margin-top:4px">${algos.slice(0,3).map(a=>`<div style="font-size:10px;color:var(--mt)">λ ${a.name}</div>`).join('')}${algos.length>3?`<div style="font-size:10px;color:var(--bdr)">+${algos.length-3} more</div>`:''}</div>` : ''}
       ` : ''}
       <button class="btn btn-pr btn-sm" style="margin-top:8px;width:100%" onclick="zoomTo('${nodeId}', linState.depth)">→ Zoom into ${ent.name}</button>
-      <div style="font-size:10px;color:var(--mt);margin-top:4px;text-align:center">or double-click any node</div>`;
+      <div style="font-size:10px;color:var(--mt);margin-top:4px;text-align:center">or double-click any node</div>
+      ${microNoteHtml(ent)}`;
+    panel.classList.toggle('has-note', !!microForEntity(ent));   // widen + scroll when a pattern note is shown
     panel.classList.add('vis');
   },
 
@@ -3718,13 +3795,13 @@ function simDrawGraph(selected, ranked) {
   const cTxt = document.createElementNS(NS, 'text');
   cTxt.setAttribute('x', cx); cTxt.setAttribute('y', cy - 2);
   cTxt.setAttribute('text-anchor', 'middle'); cTxt.setAttribute('dominant-baseline', 'middle');
-  cTxt.setAttribute('fill', '#fff'); cTxt.setAttribute('font-size', '11'); cTxt.setAttribute('font-weight', '700');
+  cTxt.style.fill = 'var(--tx)'; cTxt.setAttribute('font-size', '11'); cTxt.setAttribute('font-weight', '700');
   cTxt.textContent = selected.name.length > 14 ? selected.name.slice(0,12) + '…' : selected.name;
   centerG.appendChild(cTxt);
   if (selected.source) {
     const cSrc = document.createElementNS(NS, 'text');
     cSrc.setAttribute('x', cx); cSrc.setAttribute('y', cy + 11);
-    cSrc.setAttribute('text-anchor', 'middle'); cSrc.setAttribute('fill', '#fff');
+    cSrc.setAttribute('text-anchor', 'middle'); cSrc.style.fill = 'var(--tx)';
     cSrc.setAttribute('font-size', '9'); cSrc.setAttribute('opacity', '0.7');
     cSrc.textContent = `#${selected.source}`;
     centerG.appendChild(cSrc);
@@ -3983,7 +4060,7 @@ function simDrawNode(parent, NS, cand, x, y, cx, cy) {
   // Main circle — dark fill with colored border (matches Lineage style)
   const c = document.createElementNS(NS, 'circle');
   c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', nodeR);
-  c.setAttribute('fill', '#1e293b');
+  c.style.fill = 'var(--sur2)';   // theme-aware node body
   c.setAttribute('stroke', color); c.setAttribute('stroke-width', isSame ? '3' : '2');
   g.appendChild(c);
 
@@ -3991,7 +4068,7 @@ function simDrawNode(parent, NS, cand, x, y, cx, cy) {
   const src = document.createElementNS(NS, 'text');
   src.setAttribute('x', x); src.setAttribute('y', y);
   src.setAttribute('text-anchor', 'middle'); src.setAttribute('dominant-baseline', 'middle');
-  src.setAttribute('fill', '#e2e8f0'); src.setAttribute('font-size', '11'); src.setAttribute('font-weight', '700');
+  src.style.fill = 'var(--tx)'; src.setAttribute('font-size', '11'); src.setAttribute('font-weight', '700');
   src.setAttribute('pointer-events', 'none');
   src.textContent = cand.algo.source ? `#${cand.algo.source}` : '?';
   g.appendChild(src);
@@ -4014,12 +4091,12 @@ function simDrawNode(parent, NS, cand, x, y, cx, cy) {
   const iX = x - nodeR + 2, iY = y - nodeR + 2;
   const iBg = document.createElementNS(NS, 'circle');
   iBg.setAttribute('cx', iX); iBg.setAttribute('cy', iY); iBg.setAttribute('r', '7');
-  iBg.setAttribute('fill', '#475569'); iBg.setAttribute('stroke', '#0f172a'); iBg.setAttribute('stroke-width', '1');
+  iBg.style.fill = 'var(--sur2)'; iBg.style.stroke = 'var(--bdr)'; iBg.setAttribute('stroke-width', '1');
   g.appendChild(iBg);
   const iTxt = document.createElementNS(NS, 'text');
   iTxt.setAttribute('x', iX); iTxt.setAttribute('y', iY + 0.5);
   iTxt.setAttribute('text-anchor', 'middle'); iTxt.setAttribute('dominant-baseline', 'middle');
-  iTxt.setAttribute('fill', '#e2e8f0'); iTxt.setAttribute('font-size', '10'); iTxt.setAttribute('font-style', 'italic');
+  iTxt.style.fill = 'var(--mt)'; iTxt.setAttribute('font-size', '10'); iTxt.setAttribute('font-style', 'italic');
   iTxt.setAttribute('font-family', 'serif'); iTxt.setAttribute('pointer-events', 'none');
   iTxt.textContent = 'i';
   g.appendChild(iTxt);
@@ -4027,7 +4104,7 @@ function simDrawNode(parent, NS, cand, x, y, cx, cy) {
   // Name below circle
   const t = document.createElementNS(NS, 'text');
   t.setAttribute('x', x); t.setAttribute('y', y + nodeR + 14);
-  t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#e2e8f0');
+  t.setAttribute('text-anchor', 'middle'); t.style.fill = 'var(--tx)';
   t.setAttribute('font-size', '11'); t.setAttribute('font-weight', '600');
   t.setAttribute('pointer-events', 'none');
   t.textContent = cand.algo.name.length > 22 ? cand.algo.name.slice(0,20) + '…' : cand.algo.name;
@@ -4241,6 +4318,9 @@ function laBack() {
 function renderLineageAlgo() {
   // Landing — reuse the Lineage atlas but rewire tile clicks to laGoTo
   if (!laState.rootId) {
+    // Reset the topbar (⌂/Back reach here without going through navigate()).
+    const pt = document.getElementById('page-title'); if (pt) pt.textContent = 'Lineage + Algorithms';
+    const ta = document.getElementById('topbar-actions'); if (ta) ta.innerHTML = '';
     document.getElementById('content').innerHTML = renderLineageLanding();
     setTimeout(() => {
       document.querySelectorAll('.land-tile').forEach(tile => {
@@ -4259,20 +4339,30 @@ function renderLineageAlgo() {
   if (!ent) { laState.rootId = ''; renderLineageAlgo(); return; }
   const mode = laMode();
 
-  // Shell: header (mode badge + back + breadcrumb) → controls + body (search + stage + drawer)
+  // Topbar (next to ☰): Back / home / mode / Controls on the left, the search
+  // box on the right. Frees the two old in-content rows (modebar + search) so
+  // the graph gets more height. The 🧭 Path trail (below) replaces the breadcrumb.
+  const lastName = laState.history.length ? (Store.getEntity(laState.history[laState.history.length - 1])?.name || 'previous') : null;
+  const modeLbl  = mode === 'topic' ? '⊶ Topic Graph' : mode === 'leaf' ? '⊞ Algorithms in Leaf' : '✦ Similar Problems';
+  const ptEl = document.getElementById('page-title');
+  if (ptEl) ptEl.innerHTML = `
+    <button class="la-back" onclick="laBack()" title="${lastName ? 'Back to ' + lastName : 'Back to atlas'}">← Back</button>
+    <button class="la-back" onclick="laState.history=[];laState.rootId='';renderLineageAlgo()" title="Atlas">⌂</button>
+    <span class="la-mode">${modeLbl}</span>
+    <button class="la-ctrl-toggle" onclick="toggleLaCtrl()" title="Show/hide controls">⮜ Controls</button>
+    <span class="la-topbar-title">Lineage + Algorithms</span>`;
+  const taEl = document.getElementById('topbar-actions');
+  if (taEl) taEl.innerHTML = `
+    <div class="gh-search la-topbar-search">
+      <input class="root-input" id="graph-search" autocomplete="off" spellcheck="false"
+        placeholder="🔍 Search — topic, name, #131, tag:array, hard:…"
+        oninput="rootSearch(this.value)" onfocus="rootSearch(this.value)">
+      <div class="root-results" id="root-results"></div>
+    </div>`;
+
+  // Shell: visit trail → controls + body (stage + drawer)
   document.getElementById('content').innerHTML = `
     <div class="la-wrap">
-      <!-- Mode bar + back + breadcrumb -->
-      <div class="la-modebar">
-        <button class="la-back" onclick="laBack()" title="${laState.history.length?'Back to '+(Store.getEntity(laState.history[laState.history.length-1])?.name||'previous'):'Back to atlas'}">← Back</button>
-        <button class="la-back" onclick="laState.history=[];laState.rootId='';renderLineageAlgo()" title="Atlas">⌂</button>
-        <span class="la-mode">${mode === 'topic' ? '⊶ Topic Graph'
-                              : mode === 'leaf'  ? '⊞ Algorithms in Leaf'
-                              :                    '✦ Similar Problems'}</span>
-        <button class="la-ctrl-toggle" onclick="toggleLaCtrl()" title="Show/hide controls">⮜ Controls</button>
-        <div class="la-crumb" id="la-crumb"></div>
-      </div>
-
       <!-- Visit trail — the actual path of problems/topics navigated (history → current) -->
       <div class="la-trail" id="la-trail"></div>
 
@@ -4281,14 +4371,6 @@ function renderLineageAlgo() {
         <div class="la-ctrl" id="la-ctrl-panel">${laRenderControls(mode)}</div>
 
         <div class="la-content">
-          <!-- Search bar (shared across all modes) -->
-          <div class="gh-search" style="background:var(--sur);border:1px solid var(--bdr);border-radius:10px;padding:8px 12px">
-            <input class="root-input" id="graph-search" autocomplete="off" spellcheck="false"
-              placeholder="🔍 Search anything — topic, algorithm name, #131, tag:array, hard:…"
-              oninput="rootSearch(this.value)" onfocus="rootSearch(this.value)">
-            <div class="root-results" id="root-results"></div>
-          </div>
-
           <!-- Stage — changes per mode -->
           <div class="la-stage" id="la-stage"></div>
 
@@ -4317,7 +4399,7 @@ function renderLineageAlgo() {
     document.getElementById('la-ctrl-panel')?.classList.add('collapsed');
   }
 
-  laRenderBreadcrumb(ent);
+  // Breadcrumb removed — the 🧭 Path trail (laRenderTrail) covers the same ground.
   laRenderTrail();
   laRenderStage(ent, mode);
   // Floating "Center" control — bottom-right of the stage, above any per-mode
