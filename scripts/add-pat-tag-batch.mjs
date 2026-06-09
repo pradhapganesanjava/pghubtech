@@ -55,7 +55,8 @@ const BATCH = {
   581: ['pat_ds::array::stack-topic::monotonic-stack'],              // Shortest Unsorted Subarr
   617: ['pat_ds::tree::dfs::dfs-template'],                          // Merge Two BTs
   763: ['pat_ds::string::greedy::sort-and-sweep'],                   // Partition Labels
-  994: ['pat_ds::matrices::bfs::bfs-multi-source'],                  // Rotting Oranges
+  994: ['pat_ds::matrices::bfs::bfs-multi-source',
+        'pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'], // Rotting Oranges (BFS shortest path)
   200: ['pat_ds::matrices::dfs::dfs-grid-flood'],                    // Number of Islands +grid
   1143:['pat_ds::string::dp::dp-2-strings'],                          // LCS
   309: ['pat_ds::array::dp::state-machine-dp'],                      // Stock Cooldown
@@ -129,7 +130,8 @@ const BATCH = {
   767: ['pat_ds::string::heap::top-k'],                               // Reorganize String
 
   // Graph
-  815: ['pat_ds::graph::bfs::bfs-shortest-unweighted'],              // Bus Routes
+  815: ['pat_ds::graph::bfs::bfs-shortest-unweighted',
+        'pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'], // Bus Routes (BFS shortest path)
   841: ['pat_ds::graph::dfs::dfs-template'],                          // Keys and Rooms
   947: ['pat_ds::graph::union-find::uf-with-size'],                   // Most Stones Removed
   721: ['pat_ds::graph::union-find::uf-with-size'],                   // Accounts Merge (UF on emails)
@@ -234,7 +236,8 @@ const BATCH = {
   407: ['pat_ds::matrices::two-pointers::tp-area-greedy'],           // Trapping Rain Water II (3D)
 
   // greedy-end-sorted (NEW sub-micro — sort by END for max non-overlap)
-  435: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Non-overlapping Intervals
+  435: ['pat_ds::array::greedy::greedy-end-sorted',
+        'pat_ds::array::interval::interval-sort-end-greedy', 'pat_topic::interval::interval-sort-end-greedy'], // Non-overlapping Intervals (greedy + interval)
   452: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Min Arrows Burst Balloons
   646: ['pat_ds::array::greedy::greedy-end-sorted'],                 // Maximum Length of Pair Chain
   1235:['pat_ds::array::greedy::greedy-end-sorted'],                 // Maximum Profit in Job Scheduling
@@ -419,13 +422,15 @@ const BATCH = {
   418: ['pat_ds::array::greedy::running-extreme'],                    // Sentence Screen Fitting
   484: ['pat_ds::array::core::in-place-read-write'],                  // Find Permutation
   490: ['pat_ds::matrices::dfs::dfs-template'],                       // The Maze (BFS/DFS roll-to-wall)
-  505: ['pat_ds::matrices::heap::dijkstra'],                          // The Maze II (Dijkstra on roll-distance)
+  505: ['pat_ds::matrices::heap::dijkstra',
+        'pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'], // The Maze II (Dijkstra on roll-distance)
   531: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Lonely Pixel I
   624: ['pat_ds::array::core::in-place-read-write'],                  // Max Distance in Arrays (track 2 extremes)
   723: ['pat_ds::matrices::core::mat-set-zeros'],                     // Candy Crush
   727: ['pat_ds::string::dp::dp-2-strings'],                          // (dup-safe — Min Window Subseq)
   750: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Number of Corner Rectangles
-  759: ['pat_ds::array::greedy::sort-and-sweep'],                     // Employee Free Time
+  759: ['pat_ds::array::greedy::sort-and-sweep',
+        'pat_ds::array::interval::interval-sort-start-merge', 'pat_topic::interval::interval-sort-start-merge'], // Employee Free Time (greedy + interval)
   760: ['pat_ds::array::hash::freq-counter'],                         // Find Anagram Mappings
   766: ['pat_ds::matrices::core::mat-grid-dfs-bfs'],                  // Toeplitz Matrix
   772: ['pat_ds::string::stack-topic::expression-eval'],              // Basic Calc III
@@ -450,7 +455,8 @@ const BATCH = {
   1428:['pat_ds::matrices::binary-search::bs-textbook'],              // Leftmost Column With ≥ 1
   1463:['pat_ds::matrices::dp::dp-2d-grid'],                          // Cherry Pickup II (2-agent DP)
   1531:['pat_ds::string::dp::interval-dp'],                           // String Compression II
-  1631:['pat_ds::matrices::heap::dijkstra'],                          // (dup-safe — Path With Min Effort)
+  1631:['pat_ds::matrices::heap::dijkstra',
+        'pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'], // Path With Minimum Effort (Dijkstra)
   1696:['pat_ds::array::dp::dp-1d-linear'],                           // Jump Game VI (monotonic-deque DP)
   1937:['pat_ds::matrices::dp::dp-2d-grid'],                          // Max Points With Cost
   2007:['pat_ds::array::hash::freq-counter'],                         // Find Original Array From Doubled
@@ -461,12 +467,44 @@ const BATCH = {
   2127:['pat_ds::graph::core::dag-longest-path'],                     // Max Employees Invited (functional graph)
   2272:['pat_ds::array::dp::dp-1d-linear'],                           // Substring With Largest Variance (kadane variant)
 
-  // ── Intervals topic (sort, then sweep) ────────────────────────────────
-  252: ['pat_ds::array::interval::interval-sort-start-overlap'],      // Can Attend Meetings (overlap detect)
-  56:  ['pat_ds::array::interval::interval-sort-start-merge'],         // Merge Intervals
-  57:  ['pat_ds::array::interval::interval-sort-start-merge'],         // Insert Interval
-  759: ['pat_ds::array::interval::interval-sort-start-merge'],         // Employee Free Time (merge → gaps)
-  435: ['pat_ds::array::interval::interval-sort-end-greedy'],          // Non-Overlapping Intervals (sort by end)
+  // ── Intervals topic (sort, then sweep) — both Topic + DS-nested forms.
+  //    (759 + 435 carry the interval tags on their greedy entries above.) ──
+  252: ['pat_ds::array::interval::interval-sort-start-overlap',
+        'pat_topic::interval::interval-sort-start-overlap'],          // Can Attend Meetings (overlap detect)
+  56:  ['pat_ds::array::interval::interval-sort-start-merge',
+        'pat_topic::interval::interval-sort-start-merge'],            // Merge Intervals
+  57:  ['pat_ds::array::interval::interval-sort-start-merge',
+        'pat_topic::interval::interval-sort-start-merge'],            // Insert Interval
+
+  // ── Shortest Path topic (algorithm by edge weights) — Topic + Graph-DS forms.
+  //    (994/815 → bfs, 505/1631 → dijkstra carry these on their entries above.) ──
+  // Dijkstra (non-negative weights)
+  743: ['pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'],   // Network Delay Time
+  778: ['pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'],   // Swim in Rising Water
+  2812:['pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'],   // Find the Safest Path in a Grid
+  2642:['pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'],   // Design Graph With Shortest Path Calc
+  499: ['pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra'],   // The Maze II / III (roll distance)
+  // Bellman-Ford (negative weights / bounded hops). 787 is dual: Dijkstra-with-state.
+  787: ['pat_topic::shortest-path::dijkstra', 'pat_ds::graph::shortest-path::dijkstra',
+        'pat_topic::shortest-path::bellman-ford', 'pat_ds::graph::shortest-path::bellman-ford'], // Cheapest Flights Within K Stops
+  // Floyd-Warshall (all pairs)
+  1334:['pat_topic::shortest-path::floyd-warshall', 'pat_ds::graph::shortest-path::floyd-warshall'], // Find the City With Fewest Reachable
+  // BFS (unweighted / unit edges + multi-source)
+  127: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Word Ladder
+  752: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Open the Lock
+  1091:['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Shortest Path in Binary Matrix
+  433: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Minimum Genetic Mutation
+  1730:['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Shortest Path to Get Food
+  909: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Snakes and Ladders
+  542: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // 01 Matrix (multi-source)
+  286: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Walls and Gates
+  317: ['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Shortest Distance from All Buildings
+  1162:['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // As Far from Land as Possible
+  1765:['pat_topic::shortest-path::bfs', 'pat_ds::graph::shortest-path::bfs'],             // Map of Highest Peak
+  // 0-1 BFS (0/1 weights)
+  1368:['pat_topic::shortest-path::zero-one-bfs', 'pat_ds::graph::shortest-path::zero-one-bfs'], // Min Cost to Make at Least One Valid Path
+  2290:['pat_topic::shortest-path::zero-one-bfs', 'pat_ds::graph::shortest-path::zero-one-bfs'], // Min Obstacle Removal to Reach Corner
+  934: ['pat_topic::shortest-path::zero-one-bfs', 'pat_ds::graph::shortest-path::zero-one-bfs'], // Shortest Bridge
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
