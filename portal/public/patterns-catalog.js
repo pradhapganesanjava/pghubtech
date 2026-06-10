@@ -827,7 +827,7 @@ window.PG_PATTERNS = [
         how: 'pre[i+1] = pre[i] + arr[i]; sum[l..r] = pre[r+1] − pre[l].',
         cost: 'O(n) build, O(1) query.',
         contrast: 'For mutable arrays, switch to Fenwick / Segment Tree.',
-        anchors: [303, 724, 1480] },
+        anchors: [303, 724, 1480, 2559] },
       { id: 'ps-2d', name: '2D Prefix Sum (Matrix Region Sum)',
         when: 'Many sub-matrix sum queries on a static matrix.',
         how: 'pre[r][c] = inclusion-exclusion of 4 prior corners + cell.',

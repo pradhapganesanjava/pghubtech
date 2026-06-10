@@ -505,6 +505,9 @@ const BATCH = {
   1368:['pat_topic::shortest-path::zero-one-bfs', 'pat_ds::graph::shortest-path::zero-one-bfs'], // Min Cost to Make at Least One Valid Path
   2290:['pat_topic::shortest-path::zero-one-bfs', 'pat_ds::graph::shortest-path::zero-one-bfs'], // Min Obstacle Removal to Reach Corner
   934: ['pat_topic::shortest-path::zero-one-bfs', 'pat_ds::graph::shortest-path::zero-one-bfs'], // Shortest Bridge
+
+  // ── Prefix Sum ────────────────────────────────────────────────────────
+  2559:['pat_topic::prefix-sum::ps-1d', 'pat_ds::array::prefix-sum::ps-1d'],   // Count Vowel Strings in Ranges
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────

@@ -1301,6 +1301,8 @@ anchor_id,tag
 2517,pat_topic::binary-search::bs-on-answer
 2517,pat_ds::array::binary-search::bs-on-answer
 2542,pat_ds::array::heap::top-k
+2559,pat_topic::prefix-sum::ps-1d
+2559,pat_ds::array::prefix-sum::ps-1d
 2611,pat_ds::array::greedy::exchange-argument
 2616,pat_topic::binary-search::bs-on-answer
 2616,pat_ds::array::binary-search::bs-on-answer
