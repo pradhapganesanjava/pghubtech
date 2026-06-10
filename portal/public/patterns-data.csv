@@ -1350,3 +1350,5 @@ anchor_id,tag
 10043,pat_ds::array::sliding-window::sw-fixed
 10044,pat_ds::array::heap::top-k
 10045,pat_ds::graph::core::dag-longest-path
+10046,pat_topic::binary-search::bs-on-answer-compound
+10046,pat_ds::array::binary-search::bs-on-answer-compound

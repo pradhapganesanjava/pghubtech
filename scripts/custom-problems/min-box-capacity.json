@@ -1,0 +1,18 @@
+{
+  "slug": "custom-min-box-capacity",
+  "frontend_id": "10046",
+  "title": "Minimum Box Capacity to Ship Products",
+  "difficulty": "Medium",
+  "topics": [
+    "Binary Search",
+    "Array",
+    "Greedy"
+  ],
+  "companies": [],
+  "tags": [
+    "pat_topic::binary-search::bs-on-answer-compound",
+    "pat_ds::array::binary-search::bs-on-answer-compound"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are a logistics manager shipping products from a warehouse. Each product type has a <strong>quantity</strong> and a <strong>weight per item</strong>. Shipping boxes have two constraints:</p>\n  <ul>\n    <li><strong>Capacity limit</strong> — maximum number of items per box.</li>\n    <li><strong>Weight limit</strong> — maximum weight (kg) per box (<code>maxWeightPerBox</code>).</li>\n  </ul>\n  <p>Rules:</p>\n  <ul>\n    <li>Each product type must be packed separately.</li>\n    <li>All boxes share the same capacity and weight limits.</li>\n    <li>A box holds at most <code>capacity</code> items OR <code>maxWeightPerBox</code> kg, whichever comes first.</li>\n    <li>Items are whole numbers (no fractional items).</li>\n  </ul>\n  <p>Given <code>quantities</code>, <code>weights</code> (kg per item), <code>maxBoxes</code> and <code>maxWeightPerBox</code>, return the <strong>minimum box capacity</strong> needed to ship all products within <code>maxBoxes</code> boxes.</p>\n  <h3>Example 1</h3>\n  <pre>quantities = [8, 12, 5], weights = [2, 3, 1], maxBoxes = 6, maxWeightPerBox = 20\nOutput: 5\n\nWith capacity 5:\n  P0 (8 @ 2kg): min(5, 20//2=10, 8) = 5/box -> 2 boxes\n  P1 (12 @ 3kg): min(5, 20//3=6, 12) = 5/box -> 3 boxes\n  P2 (5 @ 1kg): min(5, 20, 5) = 5/box -> 1 box\n  Total = 6 boxes <= 6</pre>\n  <h3>Example 2</h3>\n  <pre>quantities = [10, 15, 8], weights = [5, 2, 3], maxBoxes = 10, maxWeightPerBox = 15\nOutput: 4\n\nWith capacity 4:\n  P0 (10 @ 5kg): min(4, 15//5=3) = 3/box -> 4 boxes\n  P1 (15 @ 2kg): min(4, 15//2=7) = 4/box -> 4 boxes\n  P2 (8 @ 3kg): min(4, 15//3=5) = 4/box -> 2 boxes\n  Total = 10 boxes <= 10</pre>\n  <h3>Approach</h3>\n  <p><strong>Binary search on the answer (capacity) with a simulated feasibility check.</strong> The predicate \"capacity X works\" is monotone — bigger capacity never needs more boxes. The check is NOT a closed-form division: each box is bounded by multiple interacting caps, so the effective items per box = <code>min(capacity, floor(maxWeightPerBox / weight))</code> and boxes for a product = <code>ceil(quantity / perBox)</code>; sum over products and compare to <code>maxBoxes</code>. Search capacity in <code>[1, max(quantities)]</code>.</p>\n  <pre>def min_capacity(quantities, weights, maxBoxes, maxWeightPerBox):\n    def boxes(cap):\n        t = 0\n        for q, w in zip(quantities, weights):\n            per = min(cap, maxWeightPerBox // w)\n            if per == 0: return float(\"inf\")\n            t += -(-q // per)\n        return t\n    lo, hi = 1, max(quantities)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if boxes(mid) <= maxBoxes: hi = mid\n        else: lo = mid + 1\n    return lo</pre>\n  <p>Pattern: <strong>bs-on-answer-compound</strong> (binary search on answer, simulated/compound-constraint feasibility). Related: LC 875, 1011, 410, 1283.</p>\n</div>"
+}
