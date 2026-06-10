@@ -17,11 +17,10 @@ import { useToast } from './Toast'
 
 // Google Sheets caps any single cell at 50,000 characters. Embedding a
 // pasted image as a base64 data: URL blows past that very quickly, so we
-// (a) upload pasted images to Drive at paste time, (b) sweep the field on
-// save in case a blob:/data: URL slipped in via HTML paste, and (c)
-// pre-flight the cell-size limit and surface a clear error if anything is
-// still too long — without losing the user's typed content.
-const SHEETS_CELL_LIMIT = 50_000
+// (a) upload pasted images to Drive at paste time and (b) sweep the field on
+// save in case a blob:/data: URL slipped in via HTML paste. Any remaining
+// oversized text is offloaded to Drive by appendAnkiNote (see lib/driveFields),
+// so the save is never rejected for length.
 
 type EditMode = 'rich' | 'html' | 'preview'
 
@@ -266,19 +265,9 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
         }
       }
 
-      // Pre-flight #2: Sheets caps each cell at 50,000 characters. Refuse
-      // the save (without losing typed content) and tell the user which
-      // field is too long and by how much.
-      for (const f of selectedTemplate.fields) {
-        const v = processedFields[f.key] ?? ''
-        if (v.length > SHEETS_CELL_LIMIT) {
-          throw new Error(
-            `Field "${f.label}" is ${v.length.toLocaleString()} characters — ` +
-            `Google Sheets caps each cell at ${SHEETS_CELL_LIMIT.toLocaleString()}. ` +
-            `Trim or split the content, then save again.`
-          )
-        }
-      }
+      // Oversized fields (> Sheets' 50k-per-cell cap) are no longer rejected
+      // here — appendAnkiNote offloads them to Drive and stores a pointer, so
+      // any field length is accepted and resolved transparently on load.
 
       const note: AnkiNote = {
         noteId:     `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,

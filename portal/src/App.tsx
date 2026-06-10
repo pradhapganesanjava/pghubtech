@@ -94,6 +94,19 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
+  // A read/write whose token expired and could not be silently re-auth'd fires
+  // gauth:expired (see GAuth.withAuthRetry). Drop to the login screen but keep
+  // `view` untouched — after the user signs back in they land on the same tab,
+  // which re-mounts and reloads its data automatically.
+  useEffect(() => {
+    function onExpired() {
+      setLoginError('Your session expired — please sign in again to continue.')
+      setAuthState('unauthenticated')
+    }
+    window.addEventListener('gauth:expired', onExpired)
+    return () => window.removeEventListener('gauth:expired', onExpired)
+  }, [])
+
   function handleTheme(t: string) {
     setTheme(t)
     Config.theme = t

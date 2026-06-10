@@ -65,16 +65,16 @@ async function ensureTab(): Promise<void> {
   if (_tabEnsured) return
   if (_tabPending) return _tabPending
   _tabPending = (async () => {
-    const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+    const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
     if (!res.ok) return
     const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
     const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
     if (!tabs.includes(TAB)) {
-      await fetch(`${BASE}/${sid()}:batchUpdate`, {
+      await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
         method: 'POST', headers: auth(),
         body: JSON.stringify({ requests: [{ addSheet: { properties: { title: TAB } } }] }),
       })
-      await fetch(
+      await GAuth.fetch(
         `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A1')}?valueInputOption=RAW`,
         { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [HEADERS as unknown as string[]] }) }
       )
@@ -146,7 +146,7 @@ ${body}
 
 // Locate a problem's sheet row by slug → 1-based row number (or -1).
 async function findRowNum(slug: string): Promise<number> {
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A2:A')}`,
     { headers: auth() },
   )
@@ -160,7 +160,7 @@ async function findRowNum(slug: string): Promise<number> {
 async function updateProblemNoteRef(slug: string, driveId: string): Promise<void> {
   const rowNum = await findRowNum(slug)
   if (rowNum < 0) throw new Error('Problem row not found in LCProblems')
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!K${rowNum}:L${rowNum}`)}?valueInputOption=RAW`,
     { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [[driveId, '1']] }) },
   )
@@ -173,7 +173,7 @@ export async function clearProblemNote(slug: string): Promise<void> {
   await ensureTab()
   const rowNum = await findRowNum(slug)
   if (rowNum < 0) return
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!K${rowNum}:L${rowNum}`)}?valueInputOption=RAW`,
     { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [['', '']] }) },
   )
@@ -190,7 +190,7 @@ export async function updateProblemTags(slug: string, tags: string[]): Promise<s
   const clean = [...new Set(tags.map(t => t.trim()).filter(Boolean))]
   const rowNum = await findRowNum(slug)
   if (rowNum < 0) throw new Error('Problem row not found in LCProblems')
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!H${rowNum}`)}?valueInputOption=RAW`,
     { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [[clean.join('; ')]] }) },
   )
@@ -227,7 +227,7 @@ export async function saveProblemNote(problem: LCProblem, bodyHtml: string): Pro
 export async function loadProblems(force = false): Promise<LCProblem[]> {
   if (_cache && !force) return _cache
   await ensureTab()
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!' + COL_RANGE)}`,
     { headers: auth() },
   )
@@ -248,7 +248,7 @@ const problemToRow = (p: LCProblem): string[] => ([
 // must ensure slug/frontendId are unique (see AdsHubView's validation).
 export async function appendProblem(p: LCProblem): Promise<void> {
   await ensureTab()
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A:L')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     { method: 'POST', headers: auth(), body: JSON.stringify({ values: [problemToRow(p)] }) },
   )
@@ -267,16 +267,16 @@ export interface LCList { name: string; slugs: string[] }
 let _listsTabEnsured = false
 async function ensureListsTab(): Promise<void> {
   if (_listsTabEnsured) return
-  const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+  const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
   if (!res.ok) return
   const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
   const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
   if (!tabs.includes(LISTS_TAB)) {
-    await fetch(`${BASE}/${sid()}:batchUpdate`, {
+    await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
       method: 'POST', headers: auth(),
       body: JSON.stringify({ requests: [{ addSheet: { properties: { title: LISTS_TAB } } }] }),
     })
-    await fetch(
+    await GAuth.fetch(
       `${BASE}/${sid()}/values/${encodeURIComponent(LISTS_TAB + '!A1')}?valueInputOption=RAW`,
       { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [LISTS_HEADERS as unknown as string[]] }) },
     )
@@ -290,7 +290,7 @@ export function getCachedLists(): LCList[] | null { return _listsCache }
 export async function loadLists(force = false): Promise<LCList[]> {
   if (_listsCache && !force) return _listsCache
   await ensureListsTab()
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(LISTS_TAB + '!A2:B')}`, { headers: auth() },
   )
   if (!res.ok) throw new Error(`Failed to load lists: ${res.status}`)
@@ -316,7 +316,7 @@ export async function addToList(listName: string, slug: string): Promise<void> {
   // No-op if the membership already exists.
   const existing = _listsCache?.find(l => l.name === name)
   if (existing?.slugs.includes(slug)) return
-  await fetch(
+  await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(LISTS_TAB + '!A:C')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     { method: 'POST', headers: auth(), body: JSON.stringify({ values: [[name, slug, new Date().toISOString()]] }) },
   ).then(r => { if (!r.ok) throw new Error(`Add to list failed: ${r.status}`) })
@@ -332,7 +332,7 @@ export async function renameList(oldName: string, newName: string): Promise<void
   const next = newName.trim()
   if (!next || next === oldName) return
   await ensureListsTab()
-  const rows = await fetch(
+  const rows = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(LISTS_TAB + '!A2:A')}`, { headers: auth() },
   ).then(r => r.json()) as { values?: string[][] }
   const data = (rows.values ?? [])
@@ -340,7 +340,7 @@ export async function renameList(oldName: string, newName: string): Promise<void
     .filter(x => x.name === oldName)
     .map(x => ({ range: `${LISTS_TAB}!A${x.row}`, values: [[next]] }))
   if (!data.length) return
-  await fetch(`${BASE}/${sid()}/values:batchUpdate`, {
+  await GAuth.fetch(`${BASE}/${sid()}/values:batchUpdate`, {
     method: 'POST', headers: auth(),
     body: JSON.stringify({ valueInputOption: 'RAW', data }),
   }).then(r => { if (!r.ok) throw new Error(`Rename list failed: ${r.status}`) })
@@ -369,22 +369,22 @@ export const EMPTY_CODE = (): ProblemCode =>
 let _codeTabEnsured = false
 async function ensureCodeTab(): Promise<void> {
   if (_codeTabEnsured) return
-  const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+  const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
   if (!res.ok) return
   const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
   if (!(data.sheets ?? []).some(s => s.properties?.title === CODE_TAB)) {
-    await fetch(`${BASE}/${sid()}:batchUpdate`, {
+    await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
       method: 'POST', headers: auth(),
       body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CODE_TAB } } }] }),
     })
-    await fetch(`${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A1')}?valueInputOption=RAW`,
+    await GAuth.fetch(`${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A1')}?valueInputOption=RAW`,
       { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [CODE_HEADERS as unknown as string[]] }) })
   }
   _codeTabEnsured = true
 }
 
 async function findCodeRow(slug: string): Promise<number> {
-  const res = await fetch(`${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A2:A')}`, { headers: auth() })
+  const res = await GAuth.fetch(`${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A2:A')}`, { headers: auth() })
   if (!res.ok) return -1
   const data = await res.json() as { values?: string[][] }
   const idx = (data.values ?? []).findIndex(r => r[0] === slug)
@@ -395,7 +395,7 @@ export async function loadCode(slug: string): Promise<ProblemCode> {
   await ensureCodeTab()
   const rowNum = await findCodeRow(slug)
   if (rowNum < 0) return EMPTY_CODE()
-  const res = await fetch(`${BASE}/${sid()}/values/${encodeURIComponent(`${CODE_TAB}!A${rowNum}:F${rowNum}`)}`, { headers: auth() })
+  const res = await GAuth.fetch(`${BASE}/${sid()}/values/${encodeURIComponent(`${CODE_TAB}!A${rowNum}:F${rowNum}`)}`, { headers: auth() })
   if (!res.ok) return EMPTY_CODE()
   const r = ((await res.json() as { values?: string[][] }).values ?? [[]])[0] ?? []
   let pins = { python3: [] as CodePin[], java: [] as CodePin[] }
@@ -407,30 +407,29 @@ export async function saveCode(slug: string, code: ProblemCode): Promise<void> {
   await ensureCodeTab()
   const row = [slug, code.python3, code.java, code.py3Modified, code.javaModified, JSON.stringify(code.pins)]
   const rowNum = await findCodeRow(slug)
-  // Wrapped in withAuthRetry so a 401 (expired/revoked token) triggers a
-  // silent re-auth + one retry instead of dead-ending the save. The thunk
-  // pattern means auth() is recomputed against the fresh token on retry.
+  // GAuth.fetch re-auths + retries once on a 401 (expired/revoked token)
+  // instead of dead-ending the save, then drops to login if that fails.
   const url  = rowNum < 0
     ? `${BASE}/${sid()}/values/${encodeURIComponent(CODE_TAB + '!A:F')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
     : `${BASE}/${sid()}/values/${encodeURIComponent(`${CODE_TAB}!A${rowNum}:F${rowNum}`)}?valueInputOption=RAW`
   const method: 'POST' | 'PUT' = rowNum < 0 ? 'POST' : 'PUT'
-  const r = await GAuth.withAuthRetry(() => fetch(url, { method, headers: auth(), body: JSON.stringify({ values: [row] }) }))
+  const r = await GAuth.fetch(url, { method, headers: auth(), body: JSON.stringify({ values: [row] }) })
   if (!r.ok) throw new Error(`Save code failed: ${r.status}${r.status === 401 ? ' (session expired and re-auth failed — try signing in again)' : ''}`)
 }
 
 export async function removeFromList(listName: string, slug: string): Promise<void> {
   await ensureListsTab()
   // Find the matching row (list_name + slug) and delete it.
-  const meta = await fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() })
+  const meta = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() })
     .then(r => r.json()) as { sheets?: { properties?: { sheetId: number; title: string } }[] }
   const sheetId = (meta.sheets ?? []).find(s => s.properties?.title === LISTS_TAB)?.properties?.sheetId
   if (sheetId == null) return
-  const rows = await fetch(
+  const rows = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(LISTS_TAB + '!A2:B')}`, { headers: auth() },
   ).then(r => r.json()) as { values?: string[][] }
   const idx = (rows.values ?? []).findIndex(r => (r[0] ?? '').trim() === listName && (r[1] ?? '').trim() === slug)
   if (idx < 0) return
-  await fetch(`${BASE}/${sid()}:batchUpdate`, {
+  await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
     method: 'POST', headers: auth(),
     body: JSON.stringify({ requests: [{ deleteDimension: {
       range: { sheetId, dimension: 'ROWS', startIndex: idx + 1, endIndex: idx + 2 },

@@ -97,17 +97,17 @@ const _tabsEnsured = new Set<string>()
 async function ensureTab(name: string, headers: readonly string[]): Promise<void> {
   const key = `${sid()}|${name}`
   if (_tabsEnsured.has(key)) return
-  const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+  const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
   if (!res.ok) return
   const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
   const have = (data.sheets ?? []).map(s => s.properties?.title ?? '')
   if (!have.includes(name)) {
-    await fetch(`${BASE}/${sid()}:batchUpdate`, {
+    await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
       method:  'POST', headers: auth(true),
       body:    JSON.stringify({ requests: [{ addSheet: { properties: { title: name } } }] }),
     }).then(r => expectOk(r, `Add ${name} tab`))
     const lastCol = String.fromCharCode(65 + headers.length - 1)
-    await fetch(
+    await GAuth.fetch(
       `${BASE}/${sid()}/values/${encodeURIComponent(`${name}!A1:${lastCol}1`)}?valueInputOption=RAW`,
       { method: 'PUT', headers: auth(true), body: JSON.stringify({ values: [headers as unknown as string[]] }) },
     ).then(r => expectOk(r, `Init ${name} headers`))
@@ -116,7 +116,7 @@ async function ensureTab(name: string, headers: readonly string[]): Promise<void
 }
 
 async function readRows(name: string, range: string): Promise<string[][]> {
-  const r = await fetch(
+  const r = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${name}!${range}`)}`,
     { headers: auth() },
   )
@@ -126,14 +126,14 @@ async function readRows(name: string, range: string): Promise<string[][]> {
 }
 
 async function writeRow(name: string, range: string, values: string[]): Promise<void> {
-  await fetch(
+  await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${name}!${range}`)}?valueInputOption=RAW`,
     { method: 'PUT', headers: auth(true), body: JSON.stringify({ values: [values] }) },
   ).then(r => expectOk(r, `Write ${name}!${range}`))
 }
 
 async function appendRow(name: string, lastCol: string, values: string[]): Promise<void> {
-  await fetch(
+  await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${name}!A:${lastCol}`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     { method: 'POST', headers: auth(true), body: JSON.stringify({ values: [values] }) },
   ).then(r => expectOk(r, `Append ${name}`))
@@ -148,7 +148,7 @@ async function findRowByCol0(name: string, id: string): Promise<number> {
 }
 
 async function getTabSheetId(name: string): Promise<number> {
-  const r = await fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() })
+  const r = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() })
   const d = await r.json() as { sheets: { properties: { sheetId: number; title: string } }[] }
   const p = d.sheets.find(s => s.properties.title === name)?.properties
   if (!p) throw new Error(`${name} tab not found`)
@@ -163,7 +163,7 @@ async function deleteRowsByIds(name: string, ids: string[]): Promise<void> {
   rows.forEach((r, i) => { if (i > 0 && ids.includes(r[0])) idx.push(i) })
   if (idx.length === 0) return
   idx.sort((a, b) => b - a)
-  await fetch(`${BASE}/${sid()}:batchUpdate`, {
+  await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
     method:  'POST', headers: auth(true),
     body:    JSON.stringify({
       requests: idx.map(i => ({
@@ -263,7 +263,7 @@ export async function appendToDoTreeBatch(
     }
   }
   walk(drafts, rootParentId)
-  await fetch(
+  await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TODO_TAB}!A:H`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     { method: 'POST', headers: auth(true), body: JSON.stringify({ values: rows }) },
   ).then(r => expectOk(r, 'Append ToDos batch'))

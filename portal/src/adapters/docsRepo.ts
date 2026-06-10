@@ -49,16 +49,16 @@ async function ensureTab(): Promise<void> {
   if (_tabEnsured) return
   if (_tabPending) return _tabPending
   _tabPending = (async () => {
-    const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+    const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
     if (!res.ok) return
     const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
     const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
     if (!tabs.includes(TAB)) {
-      await fetch(`${BASE}/${sid()}:batchUpdate`, {
+      await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
         method: 'POST', headers: auth(),
         body: JSON.stringify({ requests: [{ addSheet: { properties: { title: TAB } } }] }),
       })
-      await fetch(
+      await GAuth.fetch(
         `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A1')}?valueInputOption=RAW`,
         { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [HEADERS as unknown as string[]] }) }
       )
@@ -95,7 +95,7 @@ function recordToRow(d: DocRecord): string[] {
 
 export async function loadDocs(): Promise<DocRecord[]> {
   await ensureTab()
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!' + COL_RANGE)}`,
     { headers: auth() },
   )
@@ -105,7 +105,7 @@ export async function loadDocs(): Promise<DocRecord[]> {
 }
 
 async function findRowNum(id: string): Promise<number> {
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A:A')}`,
     { headers: auth() },
   )
@@ -117,7 +117,7 @@ async function findRowNum(id: string): Promise<number> {
 
 export async function appendDoc(doc: DocRecord): Promise<void> {
   await ensureTab()
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A:G')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
       method:  'POST',
@@ -136,7 +136,7 @@ export async function updateDoc(doc: DocRecord): Promise<void> {
   const rowNum = await findRowNum(doc.id)
   if (rowNum < 0) throw new Error('Doc row not found')
   const range = `${TAB}!A${rowNum}:G${rowNum}`
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
     {
       method:  'PUT',
@@ -151,7 +151,7 @@ export async function deleteDocRow(id: string): Promise<void> {
   await ensureTab()
   // Resolve the sheet's numeric ID (for batchUpdate) and the row number.
   const [meta, rowNum] = await Promise.all([
-    fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() }).then(r => r.json()),
+    GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() }).then(r => r.json()),
     findRowNum(id),
   ]) as [{ sheets?: { properties?: { sheetId: number; title: string } }[] }, number]
 
@@ -159,7 +159,7 @@ export async function deleteDocRow(id: string): Promise<void> {
   const sheet = (meta.sheets ?? []).find(s => s.properties?.title === TAB)?.properties
   if (!sheet) throw new Error('Docs tab not found')
 
-  const res = await fetch(`${BASE}/${sid()}:batchUpdate`, {
+  const res = await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
     method:  'POST',
     headers: auth(),
     body:    JSON.stringify({
