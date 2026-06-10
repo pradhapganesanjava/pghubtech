@@ -314,7 +314,8 @@
   </div>
 </div>
 
-<script src="patterns-catalog.js"></script>
+<!-- Shared catalog, loaded with the parent's ?v= build id (fallback ts) so it busts per deploy. -->
+<script>(function(){var m=location.search.match(/[?&]v=([^&]+)/);document.write('<scr'+'ipt src="patterns-catalog.js?v='+(m?m[1]:Date.now())+'"><\/scr'+'ipt>');})();</script>
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────
 // HIGH-LEVEL pattern → micro-patterns. Each micro carries:

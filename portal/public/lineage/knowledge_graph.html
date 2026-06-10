@@ -596,8 +596,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<!-- Shared micro-pattern catalog (also used by ../patterns.html). Defines window.PG_PATTERNS. -->
-<script src="../patterns-catalog.js"></script>
+<!-- Shared micro-pattern catalog (also used by ../patterns.html). Defines window.PG_PATTERNS.
+     Loaded with the parent's ?v= build id (fallback ts) so it busts per deploy. -->
+<script>(function(){var m=location.search.match(/[?&]v=([^&]+)/);document.write('<scr'+'ipt src="../patterns-catalog.js?v='+(m?m[1]:Date.now())+'"><\/scr'+'ipt>');})();</script>
 <script>
 'use strict';
 
