@@ -51,7 +51,7 @@ function errMsg(e: unknown): string {
 
 async function getRange(range: string): Promise<string[][]> {
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(range)}`
-  const res = await fetch(url, { headers: authHeaders() })
+  const res = await GAuth.fetch(url, { headers: authHeaders() })
   if (!res.ok) {
     const err = await res.json().catch(() => ({})) as unknown
     throw new Error(errMsg(err) || `HTTP ${res.status}`)
@@ -62,7 +62,7 @@ async function getRange(range: string): Promise<string[][]> {
 
 async function setRange(range: string, values: string[][]): Promise<void> {
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(range)}?valueInputOption=RAW`
-  const res = await fetch(url, {
+  const res = await GAuth.fetch(url, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ values }),
@@ -75,7 +75,7 @@ async function setRange(range: string, values: string[][]): Promise<void> {
 
 async function appendRows(sheet: string, values: string[][]): Promise<void> {
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(sheet + '!A1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
-  const res = await fetch(url, {
+  const res = await GAuth.fetch(url, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ values }),
@@ -93,7 +93,7 @@ export class UnauthorizedError extends Error {
 
 export async function checkAccess(): Promise<void> {
   const url = `${BASE}/${sid()}?fields=spreadsheetId`
-  const res = await fetch(url, { headers: authHeaders() })
+  const res = await GAuth.fetch(url, { headers: authHeaders() })
   if (res.status === 401) throw new UnauthorizedError()
   if (res.status === 404) throw new Error('Sheet not found — check your Sheet ID.')
   if (res.status === 403) throw new Error('No access — make sure the sheet is shared with your Google account.')
@@ -108,7 +108,7 @@ async function getExistingTabs(): Promise<string[]> {
   if (_tabsCache) return _tabsCache
   if (_tabsPending) return _tabsPending
   _tabsPending = (async () => {
-    const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: authHeaders() })
+    const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: authHeaders() })
     if (!res.ok) return []
     const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
     const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
@@ -119,7 +119,7 @@ async function getExistingTabs(): Promise<string[]> {
 }
 
 async function createTab(title: string): Promise<void> {
-  await fetch(`${BASE}/${sid()}:batchUpdate`, {
+  await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ requests: [{ addSheet: { properties: { title } } }] }),

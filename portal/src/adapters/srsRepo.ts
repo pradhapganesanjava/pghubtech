@@ -86,16 +86,16 @@ async function ensureTab(): Promise<void> {
   if (_tabEnsured) return
   if (_tabPending) return _tabPending
   _tabPending = (async () => {
-    const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+    const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
     if (!res.ok) return
     const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
     const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
     if (!tabs.includes(TAB)) {
-      await fetch(`${BASE}/${sid()}:batchUpdate`, {
+      await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
         method: 'POST', headers: auth(),
         body: JSON.stringify({ requests: [{ addSheet: { properties: { title: TAB } } }] }),
       })
-      await fetch(
+      await GAuth.fetch(
         `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A1')}?valueInputOption=RAW`,
         { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [HEADERS] }) }
       )
@@ -111,7 +111,7 @@ async function fetchSRSMap(): Promise<Map<string, SRSRecord>> {
   const localMap = loadCacheMap()
 
   await ensureTab()
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A2:J')}`,
     { headers: auth() }
   )
@@ -228,7 +228,7 @@ export async function saveSRSRecord(record: SRSRecord): Promise<void> {
     record.lastReviewed, record.nextDue,
   ]
 
-  const colARes = await fetch(
+  const colARes = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A:A')}`,
     { headers: auth() }
   )
@@ -236,13 +236,13 @@ export async function saveSRSRecord(record: SRSRecord): Promise<void> {
   const idx = (colAData.values ?? []).findIndex(r => r[0] === record.noteId)
 
   if (idx < 1) {
-    await fetch(
+    await GAuth.fetch(
       `${BASE}/${sid()}/values/${encodeURIComponent(TAB + '!A1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
       { method: 'POST', headers: auth(), body: JSON.stringify({ values: [row] }) }
     )
   } else {
     const n = idx + 1
-    await fetch(
+    await GAuth.fetch(
       `${BASE}/${sid()}/values/${encodeURIComponent(TAB + `!A${n}:J${n}`)}?valueInputOption=RAW`,
       { method: 'PUT', headers: auth(), body: JSON.stringify({ values: [row] }) }
     )

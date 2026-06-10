@@ -1,5 +1,10 @@
 // Generic Drive helpers: folder lookup/create, multipart upload, auth-fetch,
 // delete. Used by both the image-paste path and the Docs uploader.
+//
+// All requests go through GAuth.fetch, which injects a fresh token and
+// re-auths + retries once on a 401, so the `token` params below are kept only
+// for call-site compatibility — the header GAuth.fetch sets wins.
+import { GAuth } from './gauth'
 
 export const DRIVE_API_PREFIX = 'https://www.googleapis.com/drive/v3/files/'
 export const DRIVE_API_RE     = /https:\/\/www\.googleapis\.com\/drive\/v3\/files\/[A-Za-z0-9_-]+\?alt=media/g
@@ -12,7 +17,7 @@ export async function getOrCreateFolder(token: string, name: string): Promise<st
 
   const q   = `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
   const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)&pageSize=1`
-  const r1  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+  const r1  = await GAuth.fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   if (!r1.ok) throw new Error(`Drive folder lookup failed: ${r1.status}`)
   const data = await r1.json() as { files?: { id: string }[] }
   if (data.files?.length) {
@@ -20,7 +25,7 @@ export async function getOrCreateFolder(token: string, name: string): Promise<st
     return data.files[0].id
   }
 
-  const r2 = await fetch('https://www.googleapis.com/drive/v3/files', {
+  const r2 = await GAuth.fetch('https://www.googleapis.com/drive/v3/files', {
     method:  'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body:    JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder' }),
@@ -56,7 +61,7 @@ export async function uploadFileToDrive(
   ]
   const body = new Blob(parts)
 
-  const res = await fetch(
+  const res = await GAuth.fetch(
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
     {
       method:  'POST',
@@ -83,7 +88,7 @@ export async function updateDriveFileContent(
   fileId: string,
   blob:   Blob,
 ): Promise<void> {
-  const res = await fetch(
+  const res = await GAuth.fetch(
     `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
     {
       method:  'PATCH',
@@ -103,7 +108,7 @@ export async function updateDriveFileContent(
 // Auth-fetch a Drive file's bytes. Returns the raw Blob so the caller can
 // either createObjectURL (iframe src) or read as text/json.
 export async function fetchDriveFile(token: string, fileId: string): Promise<Blob> {
-  const res = await fetch(`${DRIVE_API_PREFIX}${fileId}?alt=media`, {
+  const res = await GAuth.fetch(`${DRIVE_API_PREFIX}${fileId}?alt=media`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`)
@@ -111,7 +116,7 @@ export async function fetchDriveFile(token: string, fileId: string): Promise<Blo
 }
 
 export async function deleteDriveFile(token: string, fileId: string): Promise<void> {
-  const res = await fetch(`${DRIVE_API_PREFIX}${fileId}`, {
+  const res = await GAuth.fetch(`${DRIVE_API_PREFIX}${fileId}`, {
     method:  'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -138,7 +143,7 @@ export async function resolveDriveImagesInHtml(
   let out = html
   for (const [url] of matches) {
     try {
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      const res = await GAuth.fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       if (!res.ok) continue
       const blobUrl = URL.createObjectURL(await res.blob())
       blobUrls.push(blobUrl)

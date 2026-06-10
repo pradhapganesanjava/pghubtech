@@ -51,16 +51,16 @@ let _ensured = false
 
 async function ensureTab(): Promise<void> {
   if (_ensured) return
-  const res = await fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
+  const res = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties.title`, { headers: auth() })
   if (!res.ok) return
   const data = await res.json() as { sheets?: { properties?: { title?: string } }[] }
   const have = (data.sheets ?? []).map(s => s.properties?.title ?? '')
   if (!have.includes(TAB)) {
-    await fetch(`${BASE}/${sid()}:batchUpdate`, {
+    await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
       method:  'POST', headers: auth(true),
       body:    JSON.stringify({ requests: [{ addSheet: { properties: { title: TAB } } }] }),
     }).then(r => expectOk(r, 'Add AISkills tab'))
-    await fetch(
+    await GAuth.fetch(
       `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A1:H1`)}?valueInputOption=RAW`,
       { method: 'PUT', headers: auth(true), body: JSON.stringify({ values: [HEADERS as unknown as string[]] }) },
     ).then(r => expectOk(r, 'Init AISkills headers'))
@@ -95,7 +95,7 @@ function uuid(): string {
 
 export async function listSkills(): Promise<AISkill[]> {
   await ensureTab()
-  const r = await fetch(
+  const r = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A2:H`)}`,
     { headers: auth() },
   )
@@ -118,7 +118,7 @@ export async function createSkill(input: {
     updatedAt:   now,
     slug:        input.slug ?? '',
   }
-  await fetch(
+  await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A:H`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
       method:  'POST', headers: auth(true),
@@ -130,7 +130,7 @@ export async function createSkill(input: {
 
 export async function updateSkill(skill: AISkill): Promise<void> {
   await ensureTab()
-  const r = await fetch(
+  const r = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A:A`)}`,
     { headers: auth() },
   )
@@ -139,7 +139,7 @@ export async function updateSkill(skill: AISkill): Promise<void> {
   const idx = rows.findIndex(row => row[0] === skill.id)
   if (idx < 0) throw new Error('Skill row not found')
   const updated = { ...skill, updatedAt: new Date().toISOString() }
-  await fetch(
+  await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A${idx + 1}:H${idx + 1}`)}?valueInputOption=RAW`,
     {
       method:  'PUT', headers: auth(true),
@@ -175,11 +175,11 @@ export async function getSkillBySlug(slug: string): Promise<AISkill | null> {
 
 export async function deleteSkill(id: string): Promise<void> {
   await ensureTab()
-  const meta = await fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() })
+  const meta = await GAuth.fetch(`${BASE}/${sid()}?fields=sheets.properties(sheetId,title)`, { headers: auth() })
   const data = await meta.json() as { sheets: { properties: { sheetId: number; title: string } }[] }
   const sheetId = data.sheets.find(s => s.properties.title === TAB)?.properties?.sheetId
   if (sheetId == null) return
-  const r = await fetch(
+  const r = await GAuth.fetch(
     `${BASE}/${sid()}/values/${encodeURIComponent(`${TAB}!A:A`)}`,
     { headers: auth() },
   )
@@ -187,7 +187,7 @@ export async function deleteSkill(id: string): Promise<void> {
   const rows = d.values ?? []
   const idx = rows.findIndex(row => row[0] === id)
   if (idx < 0) return
-  await fetch(`${BASE}/${sid()}:batchUpdate`, {
+  await GAuth.fetch(`${BASE}/${sid()}:batchUpdate`, {
     method:  'POST', headers: auth(true),
     body:    JSON.stringify({
       requests: [{

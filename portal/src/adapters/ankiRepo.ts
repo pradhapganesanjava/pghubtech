@@ -1,5 +1,6 @@
 import { GAuth } from '../lib/gauth'
 import { Config } from '../services/config'
+import { isFieldRef, resolveField, reconcileField, deleteFieldRef } from '../lib/driveFields'
 
 const BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 
@@ -42,7 +43,7 @@ function sid(): string {
 
 async function getRange(range: string): Promise<string[][]> {
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(range)}`
-  const res = await fetch(url, { headers: authHeaders() })
+  const res = await GAuth.fetch(url, { headers: authHeaders() })
   if (!res.ok) {
     const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
     throw new Error(err.error?.message ?? `HTTP ${res.status}`)
@@ -53,7 +54,7 @@ async function getRange(range: string): Promise<string[][]> {
 
 async function setRange(range: string, values: string[][]): Promise<void> {
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(range)}?valueInputOption=RAW`
-  const res = await fetch(url, {
+  const res = await GAuth.fetch(url, {
     method: 'PUT',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ values }),
@@ -72,6 +73,18 @@ function colToLetter(n: number): string {
     n = Math.floor(n / 26)
   }
   return s
+}
+
+// Map field values to cell-safe values before writing a row: any value that
+// exceeds Sheets' 50k-per-cell cap is offloaded to Drive and replaced with a
+// pointer (see lib/driveFields). `prev` (same field order) lets an edit reuse
+// or clean up the previously-offloaded Drive file instead of orphaning it.
+// Without a token we can't offload — pass values through and let Sheets reject
+// an oversized cell with its own error.
+async function toCellValues(values: string[], prev: string[] = []): Promise<string[]> {
+  const token = GAuth.getToken()
+  if (!token) return values
+  return Promise.all(values.map((v, i) => reconcileField(v, prev[i] ?? '', token)))
 }
 
 // ── In-memory caches (survive React Strict Mode double-invoke) ────────────────
@@ -139,7 +152,7 @@ export async function loadAnkiNotes(
   const lastCol = colToLetter(3 + fields.length + 1) // +1 for tags col
   const rows = await getRange(`${templateId}!A2:${lastCol}`)
 
-  return rows
+  const notes = rows
     .filter(r => r[0])
     .map(r => {
       const fieldMap: Record<string, string> = {}
@@ -154,6 +167,24 @@ export async function loadAnkiNotes(
         tags:       tagsRaw.split(',').map(t => t.trim()).filter(Boolean),
       }
     })
+
+  // Resolve any fields that were offloaded to Drive (oversized for a cell).
+  // Only fields holding a pointer trigger a fetch; everything else is untouched.
+  const token = GAuth.getToken()
+  if (token) {
+    await Promise.all(
+      notes.flatMap(note =>
+        Object.keys(note.fields)
+          .filter(k => isFieldRef(note.fields[k]))
+          .map(async k => {
+            try { note.fields[k] = await resolveField(note.fields[k], token) }
+            catch { /* leave the pointer; a later load can resolve it */ }
+          })
+      )
+    )
+  }
+
+  return notes
 }
 
 export async function loadAllNotes(
@@ -209,16 +240,18 @@ export async function saveAnkiTemplate(template: AnkiTemplate): Promise<void> {
 
 export async function saveAnkiNote(note: AnkiNote, template: AnkiTemplate): Promise<void> {
   _notesCache = null  // invalidate so next load picks up the change
-  const colA = await getRange(`${template.id}!A:A`)
-  const rowIdx = colA.findIndex(r => r[0] === note.noteId)
-  if (rowIdx < 0) throw new Error('Note not found in sheet')
-  const rowNum = rowIdx + 1
   const sortedFields = [...template.fields].sort((a, b) => a.order - b.order)
-  const fieldValues = sortedFields.map(f => note.fields[f.key] ?? '')
-  const tags = note.tags.join(', ')
-  const row = [note.noteId, note.deck, note.ankiMod, ...fieldValues, tags]
-  const lastCol = colToLetter(row.length)
-  await setRange(`${template.id}!A${rowNum}:${lastCol}${rowNum}`, [row])
+  const lastCol = colToLetter(3 + sortedFields.length + 1)
+  // Read the full existing row (not just column A) so toCellValues can reuse or
+  // clean up any Drive-offloaded field files for this note.
+  const rows = await getRange(`${template.id}!A2:${lastCol}`)
+  const rowIdx = rows.findIndex(r => r[0] === note.noteId)
+  if (rowIdx < 0) throw new Error('Note not found in sheet')
+  const rowNum = rowIdx + 2  // +1 for header row, +1 for 1-based row numbers
+  const prevFieldValues = sortedFields.map((_, i) => rows[rowIdx][3 + i] ?? '')
+  const fieldValues = await toCellValues(sortedFields.map(f => note.fields[f.key] ?? ''), prevFieldValues)
+  const row = [note.noteId, note.deck, note.ankiMod, ...fieldValues, note.tags.join(', ')]
+  await setRange(`${template.id}!A${rowNum}:${colToLetter(row.length)}${rowNum}`, [row])
 }
 
 // Append a brand-new note to the template tab. Used by the AI chat panels'
@@ -226,11 +259,11 @@ export async function saveAnkiNote(note: AnkiNote, template: AnkiTemplate): Prom
 export async function appendAnkiNote(note: AnkiNote, template: AnkiTemplate): Promise<void> {
   _notesCache = null
   const sortedFields = [...template.fields].sort((a, b) => a.order - b.order)
-  const fieldValues  = sortedFields.map(f => note.fields[f.key] ?? '')
+  const fieldValues  = await toCellValues(sortedFields.map(f => note.fields[f.key] ?? ''))
   const row          = [note.noteId, note.deck, note.ankiMod, ...fieldValues, note.tags.join(', ')]
   const lastCol      = colToLetter(row.length)
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(`${template.id}!A:${lastCol}`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
-  const res = await fetch(url, {
+  const res = await GAuth.fetch(url, {
     method:  'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body:    JSON.stringify({ values: [row] }),
@@ -258,7 +291,7 @@ export async function deleteAnkiNotes(notes: AnkiNote[]): Promise<void> {
   }
 
   // Fetch spreadsheet metadata to get numeric sheetId per tab title
-  const metaRes = await fetch(
+  const metaRes = await GAuth.fetch(
     `${BASE}/${id}?fields=sheets.properties(sheetId,title)`,
     { headers: authHeaders() },
   )
@@ -275,16 +308,25 @@ export async function deleteAnkiNotes(notes: AnkiNote[]): Promise<void> {
 
   // Build all deleteDimension requests (descending within each tab)
   const requests: object[] = []
+  const token = GAuth.getToken()
+  const refCleanup: Promise<void>[] = []
   for (const [templateId, targetIds] of byTemplate) {
     const sheetId = sheetIdByTitle.get(templateId)
     if (sheetId === undefined) continue
 
-    // Read column A to find 0-based row indices for each target noteId
-    const colA = await getRange(`${templateId}!A:A`)
+    // Read the whole tab (all columns) so we can both locate target rows and
+    // clean up any Drive-offloaded field files those rows reference.
+    const sheetRows = await getRange(templateId)
     const indices: number[] = []
-    colA.forEach((row, i) => {
+    sheetRows.forEach((row, i) => {
       if (i === 0) return          // header row
-      if (targetIds.has(row[0])) indices.push(i)
+      if (!targetIds.has(row[0])) return
+      indices.push(i)
+      if (token) {
+        for (const cell of row) {
+          if (isFieldRef(cell)) refCleanup.push(deleteFieldRef(cell, token))
+        }
+      }
     })
 
     // Process bottom-up so earlier indices aren't shifted by prior deletions
@@ -298,9 +340,12 @@ export async function deleteAnkiNotes(notes: AnkiNote[]): Promise<void> {
     }
   }
 
+  // Drive cleanup is best-effort and independent of the row deletion.
+  await Promise.all(refCleanup)
+
   if (requests.length === 0) return
 
-  const batchRes = await fetch(`${BASE}/${id}:batchUpdate`, {
+  const batchRes = await GAuth.fetch(`${BASE}/${id}:batchUpdate`, {
     method:  'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body:    JSON.stringify({ requests }),
@@ -324,17 +369,17 @@ export async function appendAnkiNotesBulk(
   if (notes.length === 0) return
   _notesCache = null
   const sortedFields = [...template.fields].sort((a, b) => a.order - b.order)
-  const allRows = notes.map(note => {
-    const fieldValues = sortedFields.map(f => note.fields[f.key] ?? '')
+  const allRows = await Promise.all(notes.map(async note => {
+    const fieldValues = await toCellValues(sortedFields.map(f => note.fields[f.key] ?? ''))
     return [note.noteId, note.deck, note.ankiMod, ...fieldValues, note.tags.join(', ')]
-  })
+  }))
   const lastCol = colToLetter(allRows[0].length)
   const url = `${BASE}/${sid()}/values/${encodeURIComponent(`${template.id}!A:${lastCol}`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`
 
   let sent = 0
   for (let i = 0; i < allRows.length; i += BULK_CHUNK_SIZE) {
     const chunk = allRows.slice(i, i + BULK_CHUNK_SIZE)
-    const res = await fetch(url, {
+    const res = await GAuth.fetch(url, {
       method:  'POST',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body:    JSON.stringify({ values: chunk }),

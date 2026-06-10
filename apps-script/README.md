@@ -280,6 +280,16 @@ these portal sources:
 > If you change the sheet schema or the portal's row format, update the matching
 > function here too.
 
+> ⚠️ **Large-field offload not mirrored.** The portal offloads any field over
+> Sheets' 50,000-char cell cap to a Drive file and stores a
+> `PGHUB_FIELD_REF::<driveFileId>` pointer in the cell (see root `README.md` →
+> *Storage & resilience invariants*, `portal/src/lib/driveFields.ts`). `Code.gs`
+> does **not** do this: it writes field text directly, so an AI-generated field
+> over 50k chars will fail the `appendRow` with a Sheets cell-size error. In
+> practice generated cards are far smaller, but if this becomes an issue, port
+> the offload logic (upload to Drive via `DriveApp`, write the pointer) here. It
+> also does not *resolve* pointers if it ever reads existing card content.
+
 Sheet schema this relies on (see root `README.md` → *Sheet schema*):
 - `Templates` tab: `template_id, template_name, field_key, field_label, field_type, is_front, is_back, field_order, options` (one row per field; a `tags` row is ignored as a field and handled as the trailing column).
 - `<template_id>` tab: `anki_note_id, deck, anki_mod, <field…>, tags`.

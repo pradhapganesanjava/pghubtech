@@ -63,9 +63,35 @@ export const GAuth = {
       this._reauthInFlight.finally(() => { this._reauthInFlight = null })
     }
     try { await this._reauthInFlight } catch { /* keep original 401 below */ }
-    // If re-auth didn't actually land a new token, don't bother retrying.
-    if (!this._token) return res
-    return makeRequest()
+    // Retry once against whatever token we now hold. If re-auth landed a fresh
+    // token this succeeds; if it failed (popup dismissed, no Google session,
+    // token still rejected) we get another 401 and fall through to expiry.
+    res = await makeRequest()
+    if (res.status !== 401) return res
+    // Session is unrecoverable — tell the app to drop to the login screen so the
+    // user can re-authenticate instead of dead-ending on an error toast.
+    this._signalExpired()
+    return res
+  },
+
+  // Authenticated fetch: injects a FRESH Authorization header on every attempt
+  // (inside the retry thunk, so a re-auth'd token is used on retry) and routes
+  // through withAuthRetry. All Google Sheets/Drive calls should use this so a
+  // stale token after a session reset transparently re-auths instead of failing.
+  async fetch(input: string, init: RequestInit = {}): Promise<Response> {
+    return this.withAuthRetry(() => {
+      const headers = new Headers(init.headers)
+      if (this._token) headers.set('Authorization', `Bearer ${this._token}`)
+      return window.fetch(input, { ...init, headers })
+    })
+  },
+
+  // Fired when a session can no longer be recovered. App.tsx listens for this
+  // and transitions to the login screen (keeping the current view so the user
+  // continues where they were once they sign back in).
+  _signalExpired() {
+    this.signOut()
+    window.dispatchEvent(new Event('gauth:expired'))
   },
 
   signIn(clientId: string): Promise<GoogleUser> {

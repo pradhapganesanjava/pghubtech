@@ -85,7 +85,7 @@ export async function listNotes(): Promise<Note[]> {
   const folder = await getOrCreateFolder(token, NOTES_FOLDER)
   const q   = `'${folder}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`
   const url = `${DRIVE_BASE}?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&orderBy=name&pageSize=200`
-  const res  = await fetch(url, { headers: authHeaders() })
+  const res  = await GAuth.fetch(url, { headers: authHeaders() })
   const data = await expectOk(res, 'List notes') as { files?: Note[] }
   return data.files ?? []
 }
@@ -95,7 +95,7 @@ export async function createNote(name: string): Promise<Note> {
   if (!token) throw new Error('Not authenticated')
   const folder = await getOrCreateFolder(token, NOTES_FOLDER)
 
-  const cr = await fetch(SHEETS_BASE, {
+  const cr = await GAuth.fetch(SHEETS_BASE, {
     method:  'POST',
     headers: authHeaders(true),
     body:    JSON.stringify({
@@ -107,7 +107,7 @@ export async function createNote(name: string): Promise<Note> {
   const spreadsheetId = created.spreadsheetId
 
   // Move into the PGHubTechNotes folder.
-  await fetch(`${DRIVE_BASE}/${spreadsheetId}?addParents=${folder}&removeParents=root&fields=id`, {
+  await GAuth.fetch(`${DRIVE_BASE}/${spreadsheetId}?addParents=${folder}&removeParents=root&fields=id`, {
     method:  'PATCH',
     headers: authHeaders(true),
   }).then(r => expectOk(r, 'Move note to folder'))
@@ -129,7 +129,7 @@ export async function createNote(name: string): Promise<Note> {
 }
 
 export async function renameNote(noteId: string, newName: string): Promise<void> {
-  await fetch(`${DRIVE_BASE}/${noteId}?fields=id,name`, {
+  await GAuth.fetch(`${DRIVE_BASE}/${noteId}?fields=id,name`, {
     method:  'PATCH',
     headers: authHeaders(true),
     body:    JSON.stringify({ name: newName.trim() }),
@@ -151,7 +151,7 @@ const _nodesTabEnsured = new Set<string>()
 // Works. Idempotent + cached per noteId so we don't re-check on every call.
 async function ensureNodesTab(noteId: string): Promise<void> {
   if (_nodesTabEnsured.has(noteId)) return
-  const r = await fetch(`${SHEETS_BASE}/${noteId}?fields=sheets.properties.title`, {
+  const r = await GAuth.fetch(`${SHEETS_BASE}/${noteId}?fields=sheets.properties.title`, {
     headers: authHeaders(),
   })
   if (!r.ok) {
@@ -162,7 +162,7 @@ async function ensureNodesTab(noteId: string): Promise<void> {
   const data = await r.json() as { sheets?: { properties?: { title?: string } }[] }
   const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
   if (!tabs.includes(NODES_TAB)) {
-    await fetch(`${SHEETS_BASE}/${noteId}:batchUpdate`, {
+    await GAuth.fetch(`${SHEETS_BASE}/${noteId}:batchUpdate`, {
       method:  'POST',
       headers: authHeaders(true),
       body:    JSON.stringify({
@@ -176,7 +176,7 @@ async function ensureNodesTab(noteId: string): Promise<void> {
 
 export async function loadNodes(noteId: string): Promise<NoteNode[]> {
   await ensureNodesTab(noteId)
-  const r = await fetch(
+  const r = await GAuth.fetch(
     `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A2:I`)}`,
     { headers: authHeaders() },
   )
@@ -210,7 +210,7 @@ export async function addNode(
     updatedAt: now,
     kind,
   }
-  await fetch(
+  await GAuth.fetch(
     `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:I`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
       method:  'POST',
@@ -265,7 +265,7 @@ export async function deleteNode(noteId: string, id: string): Promise<void> {
   // Find row indices for every target. loadNodes preserves sheet order, but
   // deletions need 0-based indices into the actual sheet — do a single read
   // of column A and map id → row.
-  const a = await fetch(
+  const a = await GAuth.fetch(
     `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:A`)}`,
     { headers: authHeaders() },
   )
@@ -282,7 +282,7 @@ export async function deleteNode(noteId: string, id: string): Promise<void> {
       range: { sheetId, dimension: 'ROWS', startIndex: idx, endIndex: idx + 1 },
     },
   }))
-  await fetch(`${SHEETS_BASE}/${noteId}:batchUpdate`, {
+  await GAuth.fetch(`${SHEETS_BASE}/${noteId}:batchUpdate`, {
     method:  'POST',
     headers: authHeaders(true),
     body:    JSON.stringify({ requests }),
@@ -341,7 +341,7 @@ function collectDescendants(all: NoteNode[], rootId: string): Set<string> {
 }
 
 async function findNodeRow(noteId: string, id: string): Promise<number> {
-  const r = await fetch(
+  const r = await GAuth.fetch(
     `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:A`)}`,
     { headers: authHeaders() },
   )
@@ -354,7 +354,7 @@ async function findNodeRow(noteId: string, id: string): Promise<number> {
 }
 
 async function findNodesSheetId(noteId: string): Promise<number> {
-  const meta = await fetch(`${SHEETS_BASE}/${noteId}?fields=sheets.properties(sheetId,title)`, {
+  const meta = await GAuth.fetch(`${SHEETS_BASE}/${noteId}?fields=sheets.properties(sheetId,title)`, {
     headers: authHeaders(),
   })
   const data = await meta.json() as { sheets: { properties: { sheetId: number; title: string } }[] }
@@ -364,7 +364,7 @@ async function findNodesSheetId(noteId: string): Promise<number> {
 }
 
 async function writeRange(noteId: string, range: string, values: string[][]): Promise<void> {
-  await fetch(
+  await GAuth.fetch(
     `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
     {
       method:  'PUT',

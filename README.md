@@ -53,7 +53,9 @@ A personal **Anki-style flashcard study app** that uses **Google Sheets as its d
 | Layer        | Files | Responsibility |
 |--------------|-------|----------------|
 | **Entry**    | `main.tsx`, `App.tsx` | Auth state machine: `loading → unauthenticated → needs-sheet → authenticated`; theme; routing between 3 views |
-| **Auth lib** | `lib/gauth.ts` | Wraps Google Identity Services token flow; `signIn`, `signOut`, `restoreSession`, `listSheets`, `createSheet`. Tokens in `sessionStorage` |
+| **Auth lib** | `lib/gauth.ts` | Wraps Google Identity Services token flow; `signIn`, `signOut`, `restoreSession`, `listSheets`, `createSheet`. Tokens in `sessionStorage`. **`GAuth.fetch()`** is the single authenticated-fetch entry point (see [Storage & resilience invariants](#storage--resilience-invariants)) |
+| **Storage libs** | `lib/drive.ts`, `lib/driveImages.ts` | Generic Drive helpers (folder lookup/create, multipart upload, fetch/delete) + image-paste offload to Drive |
+|              | `lib/driveFields.ts` | Offloads **oversized Anki field values** (> Sheets' 50k-per-cell cap) to a Drive file, storing a `PGHUB_FIELD_REF::<fileId>` pointer in the cell; resolves it back on load (see invariants below) |
 | **Config**   | `services/config.ts` | localStorage-backed: `googleClientId`, `sheetId`, `theme`, `allowedEmails` |
 | **Adapters** (data layer) | `adapters/sheetsRepo.ts` | Generic Items + Settings tabs; `ensureHeaders`, CRUD, `checkAccess` |
 |              | `adapters/ankiRepo.ts`   | `Templates` tab + per-template tabs; loads/saves templates and notes |
@@ -70,6 +72,7 @@ A personal **Anki-style flashcard study app** that uses **Google Sheets as its d
 
 1. `App.tsx` mounts → `GAuth.restoreSession()` checks `sessionStorage` for a non-expired token.
 2. If no session → **Login screen** → `GAuth.signIn()` opens the GIS popup, requests scopes (`spreadsheets`, `drive.file`, `drive.readonly`, `userinfo.*`).
+   - **Stale-token recovery:** every authenticated request goes through `GAuth.fetch()`, which on a `401` silently re-auths and retries once. If that fails it fires a `gauth:expired` event; `App.tsx` catches it and returns to the login screen **without changing `view`**, so after re-signing-in the user lands back on the same tab. See [invariants](#storage--resilience-invariants).
 3. Optional email whitelist (`VITE_ALLOWED_EMAILS`) is enforced.
 4. If no Sheet ID configured → **`SheetSetupModal`**: list existing sheets via Drive, paste a Sheet ID, or create a new one.
 5. `ensureHeaders()` ensures `Items` and `Settings` tabs exist with the right header rows.
@@ -188,6 +191,42 @@ The app creates these tabs lazily as needed:
 | `<template_id>` (one per template) | `note_id, deck, anki_mod, <field1>, <field2>, …, tags` |
 | `SRS_Progress` | `note_id, template_id, deck, state, interval_days, ease, reps, lapses, last_reviewed, next_due` |
 
+> ⚠️ A `<field>` cell may hold a **`PGHUB_FIELD_REF::<driveFileId>` pointer** instead of the literal content when that field exceeded Sheets' 50k-char cell cap. The real content lives in a Drive file. See invariants below.
+
+---
+
+## Storage & resilience invariants
+
+> **Read this before touching the adapters, auth, or anything that reads/writes the Sheet.** These two mechanisms were added after the original build and are easy to break by writing "obvious" code that bypasses them.
+
+### 1. All authenticated Google API calls go through `GAuth.fetch()`
+
+`lib/gauth.ts` exposes `GAuth.fetch(url, init)` — it injects a **fresh** `Authorization` header *inside* a retry thunk and routes through `GAuth.withAuthRetry`, which on a `401`:
+1. silently re-authenticates (coalescing concurrent attempts so 10 parallel saves trigger one popup, not ten), then
+2. retries the request once with the new token, and
+3. if it still fails, calls `signOut()` and dispatches a **`gauth:expired`** window event.
+
+`App.tsx` listens for `gauth:expired` and drops to the login screen while preserving `view`, so the user resumes where they were after signing back in.
+
+**Rules for future changes:**
+- **Never call the global `fetch()` directly for a Sheets/Drive request.** Use `GAuth.fetch()` (it overrides `Authorization` with the live token, so callers may still pass their own `Content-Type`/multipart headers). A raw `fetch` re-introduces the original bug: a stale tab after a session reset dead-ends with `"Request had invalid authentication credentials"` instead of re-authing.
+- All adapters (`adapters/*.ts`) and `lib/drive.ts` already use `GAuth.fetch`. The startup `checkAccess()` path still throws `UnauthorizedError` to gate the initial login; that is intentional and separate.
+
+### 2. Oversized Anki fields are offloaded to Drive (`lib/driveFields.ts`)
+
+Google Sheets caps **every cell at 50,000 characters**, and each Anki field is one cell. Fields larger than `FIELD_OFFLOAD_THRESHOLD` (45k, with headroom) are uploaded to a Drive HTML file in the `PGHubTechFields` folder; the cell stores a tiny `PGHUB_FIELD_REF::<driveFileId>` pointer.
+
+This is wired **centrally in `adapters/ankiRepo.ts`** so every path is covered:
+- **Write** (`appendAnkiNote`, `saveAnkiNote`, `appendAnkiNotesBulk`) → `toCellValues()` → `reconcileField()`: offloads when oversized, **reuses** the existing Drive file on edit (update-in-place, same id), and **deletes** it if the field shrinks back under the cap (no orphans).
+- **Load** (`loadAnkiNotes`) → `resolveField()`: any cell holding a pointer is fetched back to full content. Only pointer cells trigger a Drive fetch.
+- **Delete** (`deleteAnkiNotes`) → best-effort `deleteFieldRef()` for the removed rows' offloaded files.
+
+Because the rest of the app works off **already-resolved** notes, downstream consumers (editors, review flow, CSV export) need no changes. There is no longer a hard "too long" pre-flight in `AddNoteModal` — any field length is accepted.
+
+**Rules for future changes:**
+- Any **new code that writes a note row** must go through `ankiRepo`'s write functions (or call `toCellValues`), or it can exceed the cell cap and fail.
+- Any **new code that reads field content directly from the Sheet** (instead of via `loadAnkiNotes`) must treat a `PGHUB_FIELD_REF::` value as a pointer and resolve it via `resolveField` / `fetchDriveFile`. **This includes out-of-app readers** — the `apps-script/` web app and the Node `scripts/` read these tabs and currently do **not** resolve pointers (they only append). If a card's field was offloaded, those tools will see the raw pointer string.
+
 ---
 
 ## High-level functionality
@@ -198,7 +237,9 @@ The app creates these tabs lazily as needed:
 - **Browse (BrowseView)** — table of all notes, schedule status, edit in side panel
 - **Settings (SettingsView)** — change client ID/sheet, theme picker (6 themes), edit Anki templates (fields, types, front/back flags)
 - **Offline-leaning SRS** — writes hit localStorage first, Sheets in background, merge-on-load with last-write-wins
+- **Resilient auth** — all API calls go through `GAuth.fetch`, which silently re-auths + retries on token expiry and falls back to the login screen (see [invariants](#storage--resilience-invariants))
 - **Drive image hosting** — scripts mirror Anki media to a Drive folder so card HTML can render images
+- **Large-field offload** — Anki fields over Sheets' 50k-char cell cap are transparently stored in Drive and resolved on load (see [invariants](#storage--resilience-invariants))
 - **CI/CD** — push to `main` → GitHub Action builds portal with secrets and deploys to Pages
 
 ---
