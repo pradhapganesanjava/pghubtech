@@ -76,7 +76,7 @@ export default function AdsLineage({ problems, focusNum, onOpenProblem, onRefres
       ref={iframeRef}
       title="Lineage graph"
       className="adshub-lineage-frame"
-      src={`${base}lineage/knowledge_graph.html`}
+      src={`${base}lineage/knowledge_graph.html?v=${__BUILD_ID__}`}
       onLoad={pushAll}
     />
   )

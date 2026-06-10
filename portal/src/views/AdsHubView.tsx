@@ -1540,7 +1540,7 @@ export default function AdsHubView() {
                 </div>
                 <iframe
                   title="Micro-Pattern Reference"
-                  src={`${import.meta.env.BASE_URL}patterns.html`}
+                  src={`${import.meta.env.BASE_URL}patterns.html?v=${__BUILD_ID__}`}
                   style={{ width: '100%', flex: 1, minHeight: 0, border: 0 }}
                 />
               </>
