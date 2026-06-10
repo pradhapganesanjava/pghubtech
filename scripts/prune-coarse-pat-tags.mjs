@@ -58,6 +58,8 @@ const SUPERSEDES = {
   'stack-topic::monotonic-stack':  new Set(['monotonic-stack-spans']),
   'dp::dp-2d-grid':                new Set(['dp-2d-square']),
   'sliding-window::sw-shrink-violation': new Set(['sw-distinct-count']),
+  // bs-on-answer → compound (simulated-feasibility) split
+  'binary-search::bs-on-answer':   new Set(['bs-on-answer-compound']),
 }
 
 // Parse a tag → { kind, ds, topic, micro } or null if not pat_*.

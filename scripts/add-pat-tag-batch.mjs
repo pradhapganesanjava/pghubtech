@@ -101,7 +101,8 @@ const BATCH = {
   456: ['pat_ds::array::stack-topic::monotonic-stack'],              // 132 Pattern
   540: ['pat_ds::array::binary-search::bs-textbook'],                 // Single Element Sorted Array
   658: ['pat_ds::array::two-pointers::tp-converging'],               // K Closest Elements
-  719: ['pat_ds::array::binary-search::bs-on-answer'],                // K-th Smallest Pair Distance
+  719: ['pat_ds::array::binary-search::bs-on-answer',
+        'pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // K-th Smallest Pair Distance (count via two-pointer sim)
   852: ['pat_ds::array::binary-search::bs-rotated'],                  // Peak Index Mountain
   948: ['pat_ds::array::greedy::sort-and-sweep'],                    // Bag of Tokens
   977: ['pat_ds::array::two-pointers::tp-converging'],               // Squares of Sorted Array
@@ -508,6 +509,16 @@ const BATCH = {
 
   // ── Prefix Sum ────────────────────────────────────────────────────────
   2559:['pat_topic::prefix-sum::ps-1d', 'pat_ds::array::prefix-sum::ps-1d'],   // Count Vowel Strings in Ranges
+
+  // ── BS-on-answer COMPOUND sub-pattern (simulated feasibility, not Σceil).
+  //    719 carries it on its bs-on-answer entry above. ──
+  410: ['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Split Array Largest Sum (greedy split sim)
+  1011:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Capacity To Ship Packages Within D Days
+  1231:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Divide Chocolate (greedy split sim)
+  1482:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Min Days to Make m Bouquets (adjacency sim)
+  1898:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Max Removable Characters (subsequence sim)
+  2517:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Max Tastiness of Candy Basket (greedy gap sim)
+  2616:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Minimize Max Diff of K Pairs (greedy pair sim)
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
