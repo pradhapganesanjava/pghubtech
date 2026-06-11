@@ -1121,8 +1121,8 @@ function renderFlat(root, filter) {
 
 // ── Group By nav ───────────────────────────────────────────────────────────
 // L1 = logical group (expandable). Under it, two labelled sections list the
-// DS and Topics its problems touch; clicking a row jumps to that DS / Topic
-// page (flipping to the relevant tab). Mirrors renderTree's interaction model.
+// DS and Topics its problems touch; clicking a row opens that combo's section
+// IN the detail pane (expand + scroll), staying on the Group By tab.
 function renderGroupNav(root, filter) {
   const groups = visibleGroups()
   if (!groups.length) {
@@ -1163,7 +1163,7 @@ function renderGroupNav(root, filter) {
 
     const sub = document.createElement('div')
     sub.className = 'tree-l2-wrap'
-    const addDim = (label, entries) => {
+    const addDim = (label, entries, kind) => {
       if (!entries.length) return
       const hdr = document.createElement('div')
       hdr.className = 'tree-topics-hdr'
@@ -1177,15 +1177,32 @@ function renderGroupNav(root, filter) {
           <span class="ico">${p.icon}</span>
           <span class="lbl">${p.name}</span>
           <span class="count">${count}</span>`
-        a.onclick = () => { if (!isSelectingText()) selectPattern(p.id) }
+        // Open this DS/Topic's combo section IN the detail pane (select the
+        // group if needed, then expand + scroll to its card) — no tab jump.
+        a.onclick = () => {
+          if (isSelectingText()) return
+          const fresh = activeGroupId !== gid
+          if (fresh) selectGroup(gid)
+          setTimeout(() => openComboCard(gid, kind, p.id), fresh ? 60 : 0)
+        }
         sub.appendChild(a)
       })
     }
-    addDim('Data structures', inv.ds)
-    addDim('Topics', inv.topic)
+    addDim('Data structures', inv.ds, 'ds')
+    addDim('Topics', inv.topic, 'topic')
     grp.appendChild(sub)
     root.appendChild(grp)
   })
+}
+
+// Expand a specific combo card in the Group By detail pane and scroll to it.
+// Collapses sibling cards so the opened one is the clear focus.
+function openComboCard(g, kind, dimId) {
+  const el = document.getElementById(`combo-${g}-${kind}-${dimId}`)
+  if (!el) return
+  document.querySelectorAll('.group-combo.open').forEach(c => { if (c !== el) c.classList.remove('open') })
+  el.classList.add('open')
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function selectGroup(gid) {
@@ -1701,7 +1718,7 @@ function renderComboCards(g, kind, entries) {
     const blocks = renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup')
                  + renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')
     return `
-    <div class="group-combo">
+    <div class="group-combo" id="combo-${g}-${kind}-${p.id}">
       <button class="group-combo-hd" onclick="toggleGroupCombo(this)">
         <span class="ico">${p.icon}</span>
         <span class="nm">${p.name}</span>
