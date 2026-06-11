@@ -336,6 +336,22 @@
                border-radius: 6px; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 11.5px;
                line-height: 1.45; color: var(--text2); white-space: pre; overflow-x: auto; }
   .combo-probs .anchor-list { margin-top: 2px; }
+  /* Deep-dive extras: insight paragraphs, sub-labels, tricks, pseudo-code. */
+  .combo-insight { font-size: 12.5px; line-height: 1.6; color: var(--text); margin: 0 0 8px; }
+  .combo-sublbl { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+               color: var(--text2); margin: 10px 0 4px; }
+  .combo-tricks li { margin: 4px 0; }
+  .combo-pseudo { margin: 2px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+               border-left: 3px solid var(--primary); border-radius: 6px;
+               font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 11.5px; line-height: 1.5;
+               color: var(--text); white-space: pre; overflow-x: auto; }
+  /* Per-problem "how it's solved" rows. */
+  .combo-prob-list { display: flex; flex-direction: column; gap: 8px; }
+  .combo-prob { display: flex; gap: 10px; align-items: flex-start; }
+  .combo-prob-id { flex-shrink: 0; margin-top: 1px; }
+  .combo-prob-main { min-width: 0; }
+  .combo-prob-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .combo-prob-note { font-size: 12px; line-height: 1.55; color: var(--text2); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -1704,33 +1720,63 @@ function mdLite(s) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
 }
-// A note entry may be a plain string (legacy) or { tldr, points[], visual }.
-// Renders a labelled block: lead line → bullet list → monospace visual.
+// A note entry may be a plain string (legacy) or a rich object:
+//   { tldr, insight(string|string[]), points[], tricks[], pseudo, visual }
+// Rendered as: lead → insight paragraphs → bullets → tricks & tactics →
+// pseudo-code → ASCII visual.
 function renderNoteBlock(label, data, cls) {
   if (!data) return ''
   if (typeof data === 'string') data = { tldr: data }
-  const tldr   = data.tldr   ? `<p class="combo-tldr">${mdLite(data.tldr)}</p>` : ''
-  const points = (data.points && data.points.length)
+  const tldr    = data.tldr ? `<p class="combo-tldr">${mdLite(data.tldr)}</p>` : ''
+  const insight = data.insight
+    ? (Array.isArray(data.insight) ? data.insight : [data.insight]).map(t => `<p class="combo-insight">${mdLite(t)}</p>`).join('') : ''
+  const points  = (data.points && data.points.length)
     ? `<ul class="combo-points">${data.points.map(p => `<li>${mdLite(p)}</li>`).join('')}</ul>` : ''
-  const visual = data.visual ? `<pre class="combo-visual">${escHtml(data.visual)}</pre>` : ''
-  if (!tldr && !points && !visual) return ''
+  const tricks  = (data.tricks && data.tricks.length)
+    ? `<div class="combo-sublbl">🧠 Tricks &amp; tactics</div><ul class="combo-points combo-tricks">${data.tricks.map(t => `<li>${mdLite(t)}</li>`).join('')}</ul>` : ''
+  const pseudo  = data.pseudo
+    ? `<div class="combo-sublbl">⌨️ Pseudo-code</div><pre class="combo-pseudo">${escHtml(data.pseudo)}</pre>` : ''
+  const visual  = data.visual ? `<pre class="combo-visual">${escHtml(data.visual)}</pre>` : ''
+  if (!tldr && !insight && !points && !tricks && !pseudo && !visual) return ''
   return `<div class="combo-block ${cls || ''}">
-    <div class="combo-lbl">${label}</div>${tldr}${points}${visual}</div>`
+    <div class="combo-lbl">${label}</div>${tldr}${insight}${points}${tricks}${pseudo}${visual}</div>`
+}
+// Per-problem breakdown: how each problem in this (group × dim) is solved.
+// Uses inG.problems[{id,title,note}] when authored; otherwise falls back to
+// plain #id chips so every combo still lists its problems.
+function renderProblemSolutions(g, kind, dimId, inG) {
+  const ids = groupComboProblems(g, kind, dimId)
+  const authored = inG && Array.isArray(inG.problems) ? inG.problems : null
+  if (authored && authored.length) {
+    const byId = {}; authored.forEach(x => { byId[String(x.id)] = x })
+    const rows = ids.map(id => {
+      const pn    = byId[String(id)] || {}
+      const title = pn.title ? `<div class="combo-prob-title">${escHtml(pn.title)}</div>` : ''
+      const note  = pn.note  ? `<div class="combo-prob-note">${mdLite(pn.note)}</div>` : ''
+      return `<div class="combo-prob">
+        <a class="anchor combo-prob-id" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>
+        <div class="combo-prob-main">${title}${note}</div>
+      </div>`
+    }).join('')
+    return `<div class="combo-block combo-probs">
+      <div class="combo-lbl">📌 How these problems are solved (${ids.length})</div>
+      <div class="combo-prob-list">${rows}</div></div>`
+  }
+  const chips = ids.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
+  return `<div class="combo-block combo-probs">
+    <div class="combo-lbl">📌 Problems (${ids.length})</div>
+    <div class="anchor-list">${chips}</div></div>`
 }
 // Expandable combo cards: each DS/Topic the group touches expands IN PLACE to
-// show how it's used in this group + in general + the matching problems — no
-// navigation away (the goal of the Group By detail view).
+// show how it's used in this group + per-problem solutions + general theory —
+// no navigation away (the goal of the Group By detail view).
 function renderComboCards(g, kind, entries) {
   if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
   const gMeta = groupMeta(g)
   return `<div class="group-combo-list">${entries.map(({ p, count }) => {
     const inG  = (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g][kind] && GROUP_NOTES.groups[g][kind][p.id]) || ''
     const gen  = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][p.id]) || ''
-    const ids  = groupComboProblems(g, kind, p.id)
-    const chips = ids.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
     const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
-    const blocks = renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup')
-                 + renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')
     return `
     <div class="group-combo" id="combo-${g}-${kind}-${p.id}">
       <button class="group-combo-hd" onclick="toggleGroupCombo(this)">
@@ -1740,13 +1786,11 @@ function renderComboCards(g, kind, entries) {
         <span class="caret">▾</span>
       </button>
       <div class="group-combo-body">
-        ${blocks || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
-        <div class="combo-block combo-probs">
-          <div class="combo-lbl">📌 Problems (${ids.length})</div>
-          <div class="anchor-list">${chips}</div>
-          <a class="topic-ds-open" href="#${openTab}/${p.id}"
-             onclick="event.preventDefault(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
-        </div>
+        ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
+        ${renderProblemSolutions(g, kind, p.id, inG)}
+        ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
+        <a class="topic-ds-open" href="#${openTab}/${p.id}"
+           onclick="event.preventDefault(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
       </div>
     </div>`
   }).join('')}</div>`
