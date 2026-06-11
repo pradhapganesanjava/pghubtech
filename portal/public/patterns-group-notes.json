@@ -1468,35 +1468,80 @@
           ]
         },
         "matrices": {
-          "tldr": "Place each word's characters onto a 2D grid cell-by-cell, using DFS backtracking (or scan-and-fit) where the matrix's adjacency rules and per-cell constraints replace a flat string's linear order.",
-          "insight": [
-            "Word/Dict problems become **Matrix** problems the moment a word's letters must be laid down along the grid's geometry rather than read left-to-right: the candidate path is no longer a substring but a **sequence of adjacent cells**. The matrix supplies two things a bare string cannot — a *spatial adjacency relation* (4-directional neighbors, or a fixed run of cells in a row/column) and *positional constraints* (cells already occupied by letters or blocked by walls). Solving therefore means matching `word[k]` against `grid[r][c]` while walking that adjacency, and the core engine is **DFS + backtracking**: commit a cell to a letter, recurse to the next index, then undo.",
-            "The structural condition an interviewer probes is the **visited/used-cell invariant** — each grid cell may be consumed at most once per word path, so you must mark-and-unmark in place. The realization that unifies the set is that the grid is just an *alternate index space* for the word: #79 walks a free path, #2018 walks a fixed straight segment in both orientations, and #212 amortizes the walk across a whole dictionary by pushing the words into a **Trie** so one DFS pass over the matrix matches many words at once. Matrix is chosen over a hash-set lookup precisely because placement is *geometric and reversible*, not a membership test on a precomputed string."
-          ],
+          "tldr": "Lay a word's letters onto grid cells along the matrix's **adjacency**, matched by **DFS + backtracking** (or scan-and-fit) — the grid is just an alternate index space for the word.",
+          "headline": "Three problems, one engine (three geometries)",
+          "compare": {
+            "cols": [
+              "Approach",
+              "Cost shape"
+            ],
+            "rows": [
+              [
+                "Naive: #79 DFS per dictionary word",
+                "`O(words × R·C × 4^L)`"
+              ],
+              [
+                "Trie: one board DFS for all words",
+                "dead prefix kills a whole branch"
+              ]
+            ]
+          },
           "tricks": [
-            "**Mark cells in place, restore on return**: set `grid[r][c] = '#'` (or a visited bit) before recursing and reset it after — this is the one-cell-per-path invariant and avoids a separate `visited` matrix.",
-            "**Prune at the cell, not at the leaf**: check `grid[r][c] != word[k]` and bounds *before* recursing; never build the full path then test it. In the Trie variant, prune when no child edge matches the current letter.",
-            "**For straight-line fits (#2018), match both directions**: a horizontal/vertical slot can hold the word forward or reversed, so test `word` against the segment and `reverse(word)` (or scan from both ends). A cell fits only if it is `' '` (empty) OR already equals the needed letter; a blocking `'#'` ends the run.",
-            "**Slot length must equal word length exactly** — bound the run by walls on both sides so you don't place a 4-letter word into a 5-cell open slot; verify the cell just past the slot is a wall or boundary.",
-            "**#212 pitfall — deduplicate and prune the Trie**: store the full word (or a `found` flag) at the terminal node and clear it after collecting to avoid duplicate hits; delete exhausted leaf nodes to shrink the search as words are found.",
-            "**Symmetry/early-exit by letter frequency**: in #212, if a word's letter-count exceeds the board's, skip it; choosing the rarer end of the word as the start letter can cut the number of DFS launch cells."
+            {
+              "k": "Mark in place",
+              "v": "set `grid[r][c]='#'` on enter, restore on exit — the visited invariant"
+            },
+            {
+              "k": "Prune early",
+              "v": "letter mismatch / no Trie child → `return` before recursing"
+            },
+            {
+              "k": "#2018 both ways",
+              "v": "test `word` **and** `reverse(word)` on each slot"
+            },
+            {
+              "k": "#2018 exact len",
+              "v": "walls on **both** sides ⇒ slot length must equal `len(word)`"
+            },
+            {
+              "k": "#212 dedupe",
+              "v": "on a terminal node, collect `node.word` then **null** it"
+            }
           ],
-          "pseudo": "dfs(grid, r, c, node, path):           # Trie-driven for many words; for one word use word[k]\n    ch = grid[r][c]\n    if ch == USED or ch not in node.children: return\n    nxt = node.children[ch]\n    path += ch\n    if nxt.word:                        # terminal -> a dictionary word ends here\n        record(nxt.word); nxt.word = null   # dedup\n    grid[r][c] = USED                   # mark (one-cell-per-path invariant)\n    for (dr,dc) in [(0,1),(0,-1),(1,0),(-1,0)]:\n        nr, nc = r+dr, c+dc\n        if in_bounds(nr,nc): dfs(grid, nr, nc, nxt, path)\n    grid[r][c] = ch                     # restore (backtrack)\n\n# launch: build Trie(words); for every cell (r,c): dfs(grid, r, c, root, \"\")",
+          "pseudo": "dfs(grid, r, c, node):                 # Trie × grid (covers #79 & #212)\n    ch = grid[r][c]\n    if ch == USED or ch not in node.children: return\n    nxt = node.children[ch]\n    if nxt.word: record(nxt.word); nxt.word = null   # collect + dedupe\n    grid[r][c] = USED\n    for (dr,dc) in [(0,1),(0,-1),(1,0),(-1,0)]:\n        nr,nc = r+dr, c+dc\n        if in_bounds(nr,nc): dfs(grid, nr, nc, nxt)\n    grid[r][c] = ch                              # backtrack\n# launch: build Trie(words); dfs from every cell",
           "problems": [
             {
               "id": 79,
               "title": "Word Search",
-              "note": "Single-word DFS backtracking: from each cell whose letter equals `word[0]`, walk 4-directional neighbors matching `word[k]`, marking cells used and restoring on backtrack; return true if index reaches `len(word)`."
+              "tag": "free path",
+              "points": [
+                "Launch DFS from every cell where `grid[r][c] == word[0]`.",
+                "Prune at the cell: `grid[r][c] != word[k]` → stop before recursing.",
+                "Success when `k` reaches `len(word)`; mark `'#'` on enter, restore on exit."
+              ],
+              "visual": "find \"SEE\":\n  A B C E\n  S F C S    k0: S @(1,0)\n  A D E E    k1: E @(0,3) ↗ bend\n             k2: E @(2,3) ✓ found"
             },
             {
               "id": 212,
               "title": "Word Search II",
-              "note": "Insert all dictionary words into a **Trie**, then run one DFS per starting cell over the grid, advancing the Trie node by `grid[r][c]`; when a node's terminal flag holds a word, collect it and clear the flag (prune leaves) so the whole dictionary is matched in a single board traversal."
+              "tag": "Trie × grid",
+              "note": "Push the whole dictionary into a **Trie**, then one DFS over the board walks the Trie in lockstep — a dead prefix prunes every word sharing it. See the Compare + Pseudo-code above.",
+              "points": [
+                "Pitfall: clear `node.word` after collecting to **dedupe** repeats.",
+                "Optional: prune exhausted leaf nodes to shrink the Trie as you go."
+              ],
+              "visual": "Trie (many words)        Grid DFS in lockstep\n  root                    read 'o' → child o\n   o                      read 'a' → child a\n   a                      read 'x' → NO child → PRUNE\n   |- t*  (oat)           hit t* → collect \"oat\", null it\n   \\- r*  (oar)"
             },
             {
               "id": 2018,
               "title": "Check if Word Can Be Placed In Crossword",
-              "note": "Scan every maximal horizontal and vertical open run bounded by `'#'`; a run whose length equals `len(word)` is a candidate, and the word fits if each cell is `' '` or already the matching letter — tested against both the word and its reverse for the two placement orientations."
+              "tag": "scan-and-fit, no DFS",
+              "points": [
+                "Scan every maximal horizontal/vertical run bounded by `#`.",
+                "Slot length must equal `len(word)` exactly (walls on both sides).",
+                "Test forward **and** reversed; a cell fits if blank `' '` or already that letter."
+              ],
+              "visual": "# a b #     run len 3 → candidate for a 3-letter word\n#   c #     fit cell if ' '  OR  already that letter\n# # # #\n# a b c #   run len 4 → too long for \"abc\" ✗"
             }
           ]
         },

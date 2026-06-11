@@ -345,13 +345,29 @@
                border-left: 3px solid var(--primary); border-radius: 6px;
                font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 11.5px; line-height: 1.5;
                color: var(--text); white-space: pre; overflow-x: auto; }
-  /* Per-problem "how it's solved" rows. */
-  .combo-prob-list { display: flex; flex-direction: column; gap: 8px; }
-  .combo-prob { display: flex; gap: 10px; align-items: flex-start; }
-  .combo-prob-id { flex-shrink: 0; margin-top: 1px; }
-  .combo-prob-main { min-width: 0; }
+  /* Headline (the "N problems, one engine" line). */
+  .combo-headline { font-size: 13px; font-weight: 700; color: var(--text); margin: 2px 0 8px; }
+  /* Compact key→detail / comparison tables. */
+  .combo-table { width: 100%; border-collapse: collapse; margin: 4px 0 6px; font-size: 12px; }
+  .combo-table th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
+               color: var(--text2); padding: 4px 8px; border-bottom: 1px solid var(--border); }
+  .combo-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--text2);
+               vertical-align: top; line-height: 1.5; }
+  .combo-table td.k { color: var(--text); font-weight: 600; white-space: nowrap; }
+  .combo-table tr:last-child td { border-bottom: 0; }
+  .combo-table code { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; color: var(--code); }
+  /* Per-problem mini-cards: header (#id + title + tag) then visual/bullets/note. */
+  .combo-prob-list { display: flex; flex-direction: column; gap: 10px; }
+  .combo-prob { padding: 8px 0 0; border-top: 1px dashed var(--border); }
+  .combo-prob:first-child { border-top: 0; padding-top: 0; }
+  .combo-prob-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .combo-prob-id { flex-shrink: 0; }
   .combo-prob-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
-  .combo-prob-note { font-size: 12px; line-height: 1.55; color: var(--text2); margin-top: 2px; }
+  .combo-prob-tag { font-size: 10px; color: var(--primary); background: rgba(var(--primary-rgb), .12);
+               border: 1px solid var(--border); border-radius: 10px; padding: 1px 8px; }
+  .combo-prob-note { font-size: 12px; line-height: 1.55; color: var(--text2); margin: 2px 0; }
+  .combo-prob .combo-points { margin-top: 2px; }
+  .combo-prob .combo-visual { margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -1720,30 +1736,46 @@ function mdLite(s) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
 }
+// 2-column key→detail table (used for "tricks at a glance").
+function kvTable(rows) {
+  return `<table class="combo-table"><tbody>${rows.map(r =>
+    `<tr><td class="k">${mdLite(r.k)}</td><td>${mdLite(r.v)}</td></tr>`).join('')}</tbody></table>`
+}
+// Comparison table: { cols:[...], rows:[[...], ...] }.
+function compareTable(cmp) {
+  if (!cmp || !Array.isArray(cmp.cols) || !Array.isArray(cmp.rows)) return ''
+  return `<table class="combo-table"><thead><tr>${cmp.cols.map(c => `<th>${mdLite(c)}</th>`).join('')}</tr></thead>`
+    + `<tbody>${cmp.rows.map(row => `<tr>${row.map(c => `<td>${mdLite(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+}
 // A note entry may be a plain string (legacy) or a rich object:
-//   { tldr, insight(string|string[]), points[], tricks[], pseudo, visual }
-// Rendered as: lead → insight paragraphs → bullets → tricks & tactics →
-// pseudo-code → ASCII visual.
+//   { tldr, headline, insight(string|string[]), points[], tricks([str]|[{k,v}]),
+//     compare{cols,rows}, pseudo, visual }
+// Scannable order: lead → headline → (short) insight → bullets →
+// 🧠 tricks (table or bullets) → ⚖️ compare → ⌨️ pseudo → ASCII visual.
 function renderNoteBlock(label, data, cls) {
   if (!data) return ''
   if (typeof data === 'string') data = { tldr: data }
-  const tldr    = data.tldr ? `<p class="combo-tldr">${mdLite(data.tldr)}</p>` : ''
-  const insight = data.insight
-    ? (Array.isArray(data.insight) ? data.insight : [data.insight]).map(t => `<p class="combo-insight">${mdLite(t)}</p>`).join('') : ''
-  const points  = (data.points && data.points.length)
-    ? `<ul class="combo-points">${data.points.map(p => `<li>${mdLite(p)}</li>`).join('')}</ul>` : ''
-  const tricks  = (data.tricks && data.tricks.length)
-    ? `<div class="combo-sublbl">🧠 Tricks &amp; tactics</div><ul class="combo-points combo-tricks">${data.tricks.map(t => `<li>${mdLite(t)}</li>`).join('')}</ul>` : ''
-  const pseudo  = data.pseudo
-    ? `<div class="combo-sublbl">⌨️ Pseudo-code</div><pre class="combo-pseudo">${escHtml(data.pseudo)}</pre>` : ''
-  const visual  = data.visual ? `<pre class="combo-visual">${escHtml(data.visual)}</pre>` : ''
-  if (!tldr && !insight && !points && !tricks && !pseudo && !visual) return ''
-  return `<div class="combo-block ${cls || ''}">
-    <div class="combo-lbl">${label}</div>${tldr}${insight}${points}${tricks}${pseudo}${visual}</div>`
+  const out = []
+  if (data.tldr)     out.push(`<p class="combo-tldr">${mdLite(data.tldr)}</p>`)
+  if (data.headline) out.push(`<p class="combo-headline">${mdLite(data.headline)}</p>`)
+  if (data.insight)  (Array.isArray(data.insight) ? data.insight : [data.insight]).forEach(t => out.push(`<p class="combo-insight">${mdLite(t)}</p>`))
+  if (data.points && data.points.length) out.push(`<ul class="combo-points">${data.points.map(p => `<li>${mdLite(p)}</li>`).join('')}</ul>`)
+  if (data.tricks && data.tricks.length) {
+    out.push(`<div class="combo-sublbl">🧠 Tricks at a glance</div>`)
+    out.push(typeof data.tricks[0] === 'object'
+      ? kvTable(data.tricks)
+      : `<ul class="combo-points combo-tricks">${data.tricks.map(t => `<li>${mdLite(t)}</li>`).join('')}</ul>`)
+  }
+  if (data.compare)  out.push(`<div class="combo-sublbl">⚖️ Compare</div>` + compareTable(data.compare))
+  if (data.pseudo)   out.push(`<div class="combo-sublbl">⌨️ Pseudo-code</div><pre class="combo-pseudo">${escHtml(data.pseudo)}</pre>`)
+  if (data.visual)   out.push(`<pre class="combo-visual">${escHtml(data.visual)}</pre>`)
+  if (!out.length) return ''
+  return `<div class="combo-block ${cls || ''}"><div class="combo-lbl">${label}</div>${out.join('')}</div>`
 }
-// Per-problem breakdown: how each problem in this (group × dim) is solved.
-// Uses inG.problems[{id,title,note}] when authored; otherwise falls back to
-// plain #id chips so every combo still lists its problems.
+// Per-problem breakdown. Each problem may carry { id, title, tag, note,
+// visual, points[] } and renders as a mini-card: #id + title + tag, then an
+// ASCII visual / bullets / note. Falls back to plain #id chips when no
+// per-problem content is authored.
 function renderProblemSolutions(g, kind, dimId, inG) {
   const ids = groupComboProblems(g, kind, dimId)
   const authored = inG && Array.isArray(inG.problems) ? inG.problems : null
@@ -1751,11 +1783,16 @@ function renderProblemSolutions(g, kind, dimId, inG) {
     const byId = {}; authored.forEach(x => { byId[String(x.id)] = x })
     const rows = ids.map(id => {
       const pn    = byId[String(id)] || {}
-      const title = pn.title ? `<div class="combo-prob-title">${escHtml(pn.title)}</div>` : ''
+      const title = pn.title ? `<span class="combo-prob-title">${escHtml(pn.title)}</span>` : ''
+      const tag   = pn.tag   ? `<span class="combo-prob-tag">${escHtml(pn.tag)}</span>` : ''
       const note  = pn.note  ? `<div class="combo-prob-note">${mdLite(pn.note)}</div>` : ''
+      const pts   = (pn.points && pn.points.length) ? `<ul class="combo-points">${pn.points.map(p => `<li>${mdLite(p)}</li>`).join('')}</ul>` : ''
+      const vis   = pn.visual ? `<pre class="combo-visual">${escHtml(pn.visual)}</pre>` : ''
       return `<div class="combo-prob">
-        <a class="anchor combo-prob-id" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>
-        <div class="combo-prob-main">${title}${note}</div>
+        <div class="combo-prob-hd">
+          <a class="anchor combo-prob-id" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>
+          ${title}${tag}
+        </div>${note}${vis}${pts}
       </div>`
     }).join('')
     return `<div class="combo-block combo-probs">
