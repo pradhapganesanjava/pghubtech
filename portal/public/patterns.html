@@ -1008,15 +1008,13 @@ function renderTree(root, filter) {
             <span class="ico">${d.icon}</span>
             <span class="lbl">${d.name}</span>`
           a.onclick = () => {
-            // If we're already on the topic page, scroll to the matching
-            // card inside the Applies-To grid; otherwise jump to the DS.
-            if (activePatternId === p.id) {
-              const el = document.querySelector(`.topic-ds-card[onclick*="${d.id}"]`)
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              else selectPattern(d.id)
-            } else {
-              selectPattern(d.id)
-            }
+            if (isSelectingText()) return
+            // Stay on the Topic page: select the topic if needed, then expand
+            // + scroll the matching DS card in place (it carries an explicit
+            // "↗ open DS page" link for those who want to flip tabs).
+            const fresh = activePatternId !== p.id
+            if (fresh) selectPattern(p.id)
+            setTimeout(() => openTopicDsCard(d.id), fresh ? 60 : 0)
           }
           sub.appendChild(a)
         })
@@ -1061,11 +1059,15 @@ function renderTree(root, filter) {
           tHdr.onclick = () => {
             if (isSelectingText()) return
             tHdr.classList.toggle('expanded')
-            // Also scroll the main-pane to the matching topic section.
-            if (activePatternId === p.id) {
+            // Stay on the DS page: select this DS if needed, then scroll to
+            // its embedded topic section (which carries a "→ open in Topic
+            // tab" link for an explicit flip).
+            const fresh = activePatternId !== p.id
+            if (fresh) selectPattern(p.id)
+            setTimeout(() => {
               const el = document.getElementById(`ds-topic-${p.id}-${t.id}`)
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }
+            }, fresh ? 60 : 0)
           }
           sub.appendChild(tHdr)
 
@@ -1578,6 +1580,18 @@ document.addEventListener('keydown', e => {
 // micros UNDER THIS DS lazily on first open (subsequent toggles just
 // flip the class). This lets the user deep-dive without navigating
 // away from the Topic page.
+// Expand (if collapsed) the "Applies to" DS card for a given DS and scroll to
+// it — used by the Topic-tab sidebar so a DS click reveals its details in
+// place instead of flipping to the DS tab.
+function openTopicDsCard(dsId) {
+  const card = document.querySelector(`.topic-ds-card[data-ds-id="${dsId}"]`)
+  if (!card) return
+  if (!card.classList.contains('expanded')) {
+    const hd = card.querySelector('.topic-ds-card-hd')
+    if (hd) toggleTopicDsCard(hd)   // expands + lazy-renders micros + flips caret
+  }
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 function toggleTopicDsCard(btn) {
   const card    = btn.closest('.topic-ds-card')
   const open    = card.classList.toggle('expanded')
