@@ -1,14 +1,14 @@
 /**
  * AI helper for AdsHub problem panel.
  *
- * Fills the CodePanel overlay slot (right column, same place Notes
- * takes over). Pre-fills the problem text as system context. Each Q→A
- * is APPENDED to a running thread — prior messages stay visible and
- * are passed back to the LLM as conversation history so the model can
- * refer to earlier turns.
+ * Renders as a FLOATING window (like the page-header "Ask AI" panel) so
+ * it overlays the detail pane without hiding the Code / Notes sections.
+ * Pre-fills the problem text as system context. Each Q→A is APPENDED to
+ * a running thread — prior messages stay visible and are passed back to
+ * the LLM as conversation history so the model can refer to earlier turns.
  *
- * The section header ('🤖 AI · <title>') is rendered ABOVE us by the
- * parent CodePanel via its `headerLeft` prop.
+ * The window can be resized (drag the bottom-left handle) and maximized,
+ * mirroring AskAIPanel. Closing it leaves Code / Notes untouched.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
@@ -65,6 +65,14 @@ function renderMd(text: string): string {
   } catch { return sanitizeHtml(text) }
 }
 
+// Floating-window size bounds (mirror AskAIPanel).
+const DEFAULT_W = 440
+const DEFAULT_H = 580
+const MIN_W     = 320
+const MIN_H     = 320
+const MAX_W     = 1100
+const MAX_H     = 1000
+
 export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPlain, onClose }: Props) {
   // Hydrate from localStorage on mount so reopening the AI section
   // (or reloading the page) keeps the existing thread.
@@ -73,6 +81,11 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
   const [busy,  setBusy]        = useState(false)
   const [err,   setErr]         = useState('')
   const [listening, setListen]  = useState(false)
+  // Floating-window geometry (mirrors AskAIPanel).
+  const [maximized, setMaximized] = useState(false)
+  const [size, setSize]           = useState({ w: DEFAULT_W, h: DEFAULT_H })
+  const resizingRef = useRef(false)
+  const resizeStart = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const recRef    = useRef<SpeechRecognition | null>(null)
   const threadRef = useRef<HTMLDivElement | null>(null)
   const inputRef  = useRef<HTMLTextAreaElement | null>(null)
@@ -174,6 +187,31 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
     setListen(false)
   }
 
+  // ── Resize handle (bottom-LEFT corner: panel is anchored top-right) ──────
+  function onResizeDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (maximized) return
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    resizingRef.current = true
+    resizeStart.current = { x: e.clientX, y: e.clientY, w: size.w, h: size.h }
+    document.body.classList.add('resizing-h')
+  }
+  function onResizeMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!resizingRef.current || !resizeStart.current) return
+    const start = resizeStart.current
+    // Anchored top-right ⇒ growing leftwards = wider, downwards = taller.
+    const dx = start.x - e.clientX
+    const dy = e.clientY - start.y
+    const w = Math.min(MAX_W, Math.max(MIN_W, start.w + dx))
+    const h = Math.min(MAX_H, Math.max(MIN_H, start.h + dy))
+    setSize({ w, h })
+  }
+  function onResizeUp(e: React.PointerEvent<HTMLDivElement>) {
+    resizingRef.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+    document.body.classList.remove('resizing-h')
+  }
+
   async function send() {
     if (busy) return
     const prompt = input.trim() || 'Explain the problem and give the optimal approach with brief reasoning.'
@@ -214,10 +252,25 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
   // the order is [AI, User] so the answer sits closest to the input.
   const turnsReversed = useMemo(() => turns.slice().reverse(), [turns])
 
-  return (
-    <div className="prob-ai-inline" role="region" aria-label="Ask AI about this problem">
-      {/* Section header lives in CodePanel.headerLeft. */}
+  const wrapStyle: React.CSSProperties = maximized ? {} : { width: size.w, height: size.h }
 
+  return (
+   <div
+     className={`ai-panel prob-ai-panel${maximized ? ' maximized' : ''}`}
+     style={wrapStyle}
+     role="dialog"
+     aria-label="Ask AI about this problem"
+   >
+    {/* Floating-window header — mirrors AskAIPanel's title + window controls. */}
+    <div className="ai-panel-hd">
+      <span className="ai-panel-title">🤖 AI <span style={{ color: 'var(--text3)', fontWeight: 400, fontSize: 11 }}>· {problemTitle}</span></span>
+      <div className="ai-panel-hd-actions">
+        <button className="ai-icon-btn" onClick={() => setMaximized(m => !m)} title={maximized ? 'Restore' : 'Maximize'}>{maximized ? '🗗' : '🗖'}</button>
+        <button className="ai-icon-btn" onClick={onClose} title="Close">✕</button>
+      </div>
+    </div>
+
+    <div className="prob-ai-inline" role="region" aria-label="Ask AI about this problem">
       {/* Input row pinned at the TOP. Action icons (🎤 ➤ 🗑) float
           INSIDE the textarea on the right — the textarea gets right
           padding to keep typed text from sliding under them. */}
@@ -277,5 +330,18 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
         )}
       </div>
     </div>
+
+    {/* Resize handle (bottom-left) — hidden while maximized. */}
+    {!maximized && (
+      <div
+        className="ai-panel-resize"
+        onPointerDown={onResizeDown}
+        onPointerMove={onResizeMove}
+        onPointerUp={onResizeUp}
+        onPointerCancel={onResizeUp}
+        title="Drag to resize"
+      />
+    )}
+   </div>
   )
 }
