@@ -365,6 +365,15 @@
   .combo-prob-note { font-size: 12px; line-height: 1.55; color: var(--text2); margin: 2px 0; }
   .combo-prob .combo-points { margin-top: 2px; }
   .combo-prob .combo-visual { margin-top: 6px; }
+  /* Editable "My notes" block (saved/edited via the parent AdsHub app). */
+  .mynote-block { background: rgba(var(--primary-rgb), .05); border: 1px dashed var(--border); border-radius: 8px; }
+  .mynote-hd { display: flex; align-items: center; gap: 8px; }
+  .mynote-edit { margin-left: auto; font: inherit; font-size: 11px; cursor: pointer; color: var(--primary);
+                 background: var(--bg2); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; }
+  .mynote-edit:hover { border-color: var(--primary); }
+  .mynote-body { font-size: 12.5px; line-height: 1.6; color: var(--text); }
+  .mynote-body img { max-width: 100%; height: auto; }
+  .mynote-body pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
 </style>
 </head>
 <body>
@@ -1389,6 +1398,29 @@ function onBrowseLinkClick(e, q) {
   window.parent.postMessage({ type: 'pghub-search', q }, '*')
 }
 
+// ── Editable "My notes" (delegated to the AdsHub parent for storage/auth) ────
+// The iframe can't persist (no Google auth); it just shows the saved note and
+// asks the parent to open its editor. Only meaningful when EMBEDDED.
+let currentNoteKey = null
+function escAttr(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;') }
+// A "My notes" block appended to a combo / micro detail. `key` namespaces the
+// note (e.g. group/palindrome/ds/string, micro/two-sum-hash).
+function noteSectionHtml(key, title) {
+  if (!EMBEDDED) return ''   // editing needs the parent app's Google auth
+  return `<div class="combo-block mynote-block">
+    <div class="combo-lbl mynote-hd">📝 My notes
+      <button class="mynote-edit" onclick="editPatternNote('${escAttr(key)}','${escAttr(title)}')">✏️ Edit / Add</button>
+    </div>
+    <div id="mynote-body" class="mynote-body"><span style="color:var(--text3)">Loading…</span></div>
+  </div>`
+}
+function editPatternNote(key, title) { try { window.parent.postMessage({ type: 'pgnote-open', key, title }, '*') } catch {} }
+function requestPatternNote(key) {
+  currentNoteKey = key
+  if (!EMBEDDED) return
+  try { window.parent.postMessage({ type: 'pgnote-get', key }, '*') } catch {}
+}
+
 // Portal theme: AdsHubView forwards data-theme on mount and whenever the
 // portal theme changes. Mirror it onto this iframe's <html> so the
 // html[data-theme="…"] CSS blocks take effect. 'dark' is the default palette.
@@ -1399,6 +1431,10 @@ if (EMBEDDED) {
   window.addEventListener('message', e => {
     const d = e.data
     if (d && d.type === 'pghub-theme') applyPortalTheme(d.theme)
+    else if (d && d.type === 'pgnote-data' && d.key === currentNoteKey) {
+      const slot = document.getElementById('mynote-body')
+      if (slot) slot.innerHTML = d.hasNote ? d.html : '<span style="color:var(--text3)">No note yet — click ✏️ Edit / Add.</span>'
+    }
   })
   // Cover the race where the host posts the theme before this listener
   // attaches: ask it to (re)send.
@@ -1576,9 +1612,11 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
       <h4>${ids.length} problem${ids.length !== 1 ? 's' : ''} solvable with this pattern</h4>
       <ul class="detail-problem-list">${allProblems || '<li><em>No anchors yet.</em></li>'}</ul>
     </div>
+    ${noteSectionHtml('micro/' + m.id, m.name)}
   `
 
   document.getElementById('detail-content').innerHTML = html
+  requestPatternNote('micro/' + m.id)
   const panel = document.getElementById('micro-detail-panel')
   panel.hidden = false
   document.body.classList.add('detail-open')
@@ -1823,6 +1861,7 @@ function comboDetailHtml(g, kind, dimId) {
     ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
     <a class="topic-ds-open" href="#${openTab}/${p.id}"
        onclick="event.preventDefault(); closeMicroDetail(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
+    ${noteSectionHtml('group/' + g + '/' + kind + '/' + dimId, gMeta.name + ' × ' + p.name)}
   `
 }
 // Open a subcategory's detail in the shared side drawer.
@@ -1830,6 +1869,7 @@ let activeCombo = null
 function openComboDetail(g, kind, dimId) {
   activeCombo = g + '|' + kind + '|' + dimId
   document.getElementById('detail-content').innerHTML = comboDetailHtml(g, kind, dimId)
+  requestPatternNote('group/' + g + '/' + kind + '/' + dimId)
   const panel = document.getElementById('micro-detail-panel')
   panel.hidden = false
   document.body.classList.add('detail-open')
