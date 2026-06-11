@@ -295,10 +295,27 @@ export default function AdsHubView() {
   // select the problem (expanded) or apply the search filter — same UX
   // as clicking a row in the AdsHub list. Avoids opening a new tab +
   // re-login flow.
+  const patternsFrameRef = useRef<HTMLIFrameElement>(null)
+  // Current portal theme (data-theme on <html>; absent ⇒ 'dark').
+  const currentTheme = () => document.documentElement.getAttribute('data-theme') || 'dark'
+  const sendPatternsTheme = () =>
+    patternsFrameRef.current?.contentWindow?.postMessage({ type: 'pghub-theme', theme: currentTheme() }, '*')
+
+  // Keep the Patterns iframe's theme in sync with the portal — push on mount
+  // and whenever the portal's data-theme attribute changes (Settings → Theme).
+  // Mirrors AdsLineage's theme bridge.
+  useEffect(() => {
+    sendPatternsTheme()
+    const obs = new MutationObserver(sendPatternsTheme)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [adsMode])
+
   useEffect(() => {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (!d || typeof d !== 'object') return
+      if (d.type === 'pghub-ready') { sendPatternsTheme(); return }  // iframe attached its listener → (re)send theme
       if (d.type === 'pghub-open-problem' && (typeof d.id === 'number' || typeof d.id === 'string')) {
         const id = String(d.id)
         const num = String(parseInt(id, 10))
@@ -1539,9 +1556,11 @@ export default function AdsHubView() {
                   <span>📐 Patterns Reference</span>
                 </div>
                 <iframe
+                  ref={patternsFrameRef}
                   title="Micro-Pattern Reference"
                   src={`${import.meta.env.BASE_URL}patterns.html?v=${__BUILD_ID__}`}
                   style={{ width: '100%', flex: 1, minHeight: 0, border: 0 }}
+                  onLoad={sendPatternsTheme}
                 />
               </>
             ) : loading ? (

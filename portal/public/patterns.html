@@ -12,12 +12,43 @@
     --easy: #21c46a; --med: #f0a020; --hard: #e34545;
     --code: #f2c2a1;
   }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #fafbfc; --bg2: #ffffff; --bg3: #f0f2f5;
-      --text: #1f2328; --text2: #57606a; --text3: #8c959f;
-      --border: #d8dee4;
-    }
+  /* ── Portal theme compliance ──────────────────────────────────────────
+     The portal sets data-theme on its <html>; AdsHubView forwards it here
+     (pghub-theme message → data-theme on this iframe's <html>). These blocks
+     remap the reference's vars onto the portal palette so Patterns matches
+     the chosen theme. Values mirror portal/src/App.css. Replaces the old
+     prefers-color-scheme media query, which ignored the portal setting. */
+  html[data-theme="dark"] {
+    --bg: #0f0f13; --bg2: #1a1a24; --bg3: #252535;
+    --text: #e2e2f0; --text2: #9090b0; --text3: #5e6776;
+    --border: #2e2e42; --primary: #6366f1;
+  }
+  html[data-theme="light"] {
+    --bg: #f5f5ff; --bg2: #ffffff; --bg3: #eaeaf8;
+    --text: #1a1a2e; --text2: #5252a0; --text3: #8c8cc0;
+    --border: #c8c8e8; --primary: #6366f1; --code: #b05a2c;
+  }
+  html[data-theme="soft"] {
+    --bg: #1e1b34; --bg2: #28244a; --bg3: #342f60;
+    --text: #ddd8ff; --text2: #8880c8; --text3: #6a6498;
+    --border: #3d3870; --primary: #a78bfa;
+  }
+  html[data-theme="contrast"] {
+    --bg: #000000; --bg2: #0f0f0f; --bg3: #1a1a1a;
+    --text: #ffffff; --text2: #bbbbbb; --text3: #888888;
+    --border: #555555; --primary: #faff00;
+    --easy: #00ff88; --med: #ff9900; --hard: #ff3344;
+  }
+  html[data-theme="glow"] {
+    --bg: #050510; --bg2: #0a0a28; --bg3: #0f0f3f;
+    --text: #d0e4ff; --text2: #5070d0; --text3: #3a4a90;
+    --border: #1e1e80; --primary: #00e5ff;
+    --easy: #00ff99; --med: #ffcc00; --hard: #ff2266;
+  }
+  html[data-theme="cartoon"] {
+    --bg: #fff9e6; --bg2: #ffffff; --bg3: #fff3c8;
+    --text: #2d2416; --text2: #786030; --text3: #a08850;
+    --border: #f0c040; --primary: #7c3aed; --code: #b05a2c;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
@@ -1121,6 +1152,22 @@ function onBrowseLinkClick(e, q) {
   if (!EMBEDDED) return
   e.preventDefault()
   window.parent.postMessage({ type: 'pghub-search', q }, '*')
+}
+
+// Portal theme: AdsHubView forwards data-theme on mount and whenever the
+// portal theme changes. Mirror it onto this iframe's <html> so the
+// html[data-theme="…"] CSS blocks take effect. 'dark' is the default palette.
+function applyPortalTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme || 'dark')
+}
+if (EMBEDDED) {
+  window.addEventListener('message', e => {
+    const d = e.data
+    if (d && d.type === 'pghub-theme') applyPortalTheme(d.theme)
+  })
+  // Cover the race where the host posts the theme before this listener
+  // attaches: ask it to (re)send.
+  try { window.parent.postMessage({ type: 'pghub-ready' }, '*') } catch {}
 }
 
 // True when the user just released the mouse after dragging across
