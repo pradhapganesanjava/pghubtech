@@ -316,13 +316,26 @@
   .group-combo-hd .caret { margin-left: auto; color: var(--text3); transition: transform .15s; }
   .group-combo.open .group-combo-hd .caret { transform: rotate(180deg); }
   .group-combo.open .group-combo-hd { border-bottom: 1px solid var(--border); }
-  .group-combo-body { display: none; padding: 10px 12px 12px; }
+  /* Expanded body scrolls internally so a rich card never pushes the page
+     too far — "expand more + scrollable content". */
+  .group-combo-body { display: none; padding: 10px 12px 12px; max-height: 60vh; overflow-y: auto; }
   .group-combo.open .group-combo-body { display: block; }
-  .combo-txt { font-size: 12.5px; line-height: 1.55; color: var(--text); margin: 0 0 8px; }
-  .combo-txt.combo-gen { color: var(--text2); }
-  .combo-lbl { display: inline-block; font-weight: 700; color: var(--primary); font-size: 11px;
-               text-transform: uppercase; letter-spacing: .4px; margin-right: 6px; }
-  .group-combo-body .anchor-list { margin-top: 4px; }
+  .combo-block { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; }
+  .combo-block.combo-ingroup { background: rgba(var(--primary-rgb), .07); border: 1px solid var(--border); }
+  .combo-block.combo-general { background: var(--bg3); }
+  .combo-block.combo-probs   { background: transparent; padding: 6px 0 0; }
+  .combo-lbl { display: block; font-weight: 700; color: var(--primary); font-size: 10.5px;
+               text-transform: uppercase; letter-spacing: .5px; margin: 0 0 6px; }
+  .combo-tldr { font-size: 13px; line-height: 1.55; color: var(--text); margin: 0 0 6px; }
+  .combo-points { margin: 4px 0 0; padding-left: 18px; }
+  .combo-points li { font-size: 12.5px; line-height: 1.6; color: var(--text); margin: 3px 0; }
+  .combo-tldr code, .combo-points code { background: var(--bg); border: 1px solid var(--border);
+               border-radius: 3px; padding: 0 4px; font-size: 11.5px; color: var(--code); }
+  .combo-tldr strong, .combo-points strong { color: var(--text); }
+  .combo-visual { margin: 8px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+               border-radius: 6px; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 11.5px;
+               line-height: 1.45; color: var(--text2); white-space: pre; overflow-x: auto; }
+  .combo-probs .anchor-list { margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -1652,6 +1665,27 @@ function groupComboProblems(g, kind, dimId) {
     return kind === 'ds' ? b.ds.has(dimId) : b.topic.has(dimId)
   })
 }
+// Tiny inline markdown: **bold** and `code` only. HTML-escape FIRST (entries
+// contain literal < > inside code spans like `sum<t` / `1 << k`), THEN convert
+// the markers — escHtml leaves * and ` untouched so the markup still matches.
+function mdLite(s) {
+  return escHtml(String(s))
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+}
+// A note entry may be a plain string (legacy) or { tldr, points[], visual }.
+// Renders a labelled block: lead line → bullet list → monospace visual.
+function renderNoteBlock(label, data, cls) {
+  if (!data) return ''
+  if (typeof data === 'string') data = { tldr: data }
+  const tldr   = data.tldr   ? `<p class="combo-tldr">${mdLite(data.tldr)}</p>` : ''
+  const points = (data.points && data.points.length)
+    ? `<ul class="combo-points">${data.points.map(p => `<li>${mdLite(p)}</li>`).join('')}</ul>` : ''
+  const visual = data.visual ? `<pre class="combo-visual">${escHtml(data.visual)}</pre>` : ''
+  if (!tldr && !points && !visual) return ''
+  return `<div class="combo-block ${cls || ''}">
+    <div class="combo-lbl">${label}</div>${tldr}${points}${visual}</div>`
+}
 // Expandable combo cards: each DS/Topic the group touches expands IN PLACE to
 // show how it's used in this group + in general + the matching problems — no
 // navigation away (the goal of the Group By detail view).
@@ -1664,6 +1698,8 @@ function renderComboCards(g, kind, entries) {
     const ids  = groupComboProblems(g, kind, p.id)
     const chips = ids.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
     const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
+    const blocks = renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup')
+                 + renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')
     return `
     <div class="group-combo">
       <button class="group-combo-hd" onclick="toggleGroupCombo(this)">
@@ -1673,12 +1709,13 @@ function renderComboCards(g, kind, entries) {
         <span class="caret">▾</span>
       </button>
       <div class="group-combo-body">
-        ${inG ? `<p class="combo-txt"><span class="combo-lbl">${gMeta.icon} ${gMeta.name} × ${p.name}</span> ${inG}</p>` : ''}
-        ${gen ? `<p class="combo-txt combo-gen"><span class="combo-lbl">${p.name}, in general</span> ${gen}</p>` : ''}
-        ${(!inG && !gen) ? '<p class="combo-txt" style="color:var(--text3)">No summary yet.</p>' : ''}
-        <div class="anchor-list">${chips}</div>
-        <a class="topic-ds-open" href="#${openTab}/${p.id}"
-           onclick="event.preventDefault(); selectPattern('${p.id}')">↗ open ${p.icon} ${p.name} page</a>
+        ${blocks || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
+        <div class="combo-block combo-probs">
+          <div class="combo-lbl">📌 Problems (${ids.length})</div>
+          <div class="anchor-list">${chips}</div>
+          <a class="topic-ds-open" href="#${openTab}/${p.id}"
+             onclick="event.preventDefault(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
+        </div>
       </div>
     </div>`
   }).join('')}</div>`
