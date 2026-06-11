@@ -304,6 +304,25 @@
   body.detail-open { overflow: hidden; }
   /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
   .tree-applies-row { padding-left: 22px; }
+  /* ── Group By: inline expandable DS/Topic combo cards ─────────────────── */
+  .group-combo-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 4px; }
+  .group-combo { border: 1px solid var(--border); border-radius: 8px; background: var(--bg2); overflow: hidden; }
+  .group-combo-hd { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+                    background: var(--bg2); border: 0; cursor: pointer; padding: 9px 12px; color: var(--text); font: inherit; }
+  .group-combo-hd:hover { background: var(--bg3); }
+  .group-combo-hd .ico { font-size: 15px; }
+  .group-combo-hd .nm  { font-weight: 600; font-size: 13px; }
+  .group-combo-hd .cnt { color: var(--text2); font-size: 11px; }
+  .group-combo-hd .caret { margin-left: auto; color: var(--text3); transition: transform .15s; }
+  .group-combo.open .group-combo-hd .caret { transform: rotate(180deg); }
+  .group-combo.open .group-combo-hd { border-bottom: 1px solid var(--border); }
+  .group-combo-body { display: none; padding: 10px 12px 12px; }
+  .group-combo.open .group-combo-body { display: block; }
+  .combo-txt { font-size: 12.5px; line-height: 1.55; color: var(--text); margin: 0 0 8px; }
+  .combo-txt.combo-gen { color: var(--text2); }
+  .combo-lbl { display: inline-block; font-weight: 700; color: var(--primary); font-size: 11px;
+               text-transform: uppercase; letter-spacing: .4px; margin-right: 6px; }
+  .group-combo-body .anchor-list { margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -693,6 +712,19 @@ async function loadPatternNotes() {
     if (!r.ok) return {}
     const j = await r.json()
     delete j._meta   // strip the doc-comment object before lookup
+    return j
+  } catch { return {} }
+}
+
+// Group By summaries — per (group × DS) and (group × Topic). Optional; if the
+// fetch fails the combo cards still render with the problem chips, just no prose.
+let GROUP_NOTES = {}
+async function loadGroupNotes() {
+  try {
+    const r = await fetch('patterns-group-notes.json?ts=' + Date.now(), { cache: 'no-store' })
+    if (!r.ok) return {}
+    const j = await r.json()
+    delete j._meta
     return j
   } catch { return {} }
 }
@@ -1612,14 +1644,47 @@ function groupAnchorChips(ids) {
     `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`
   ).join('')}</div>`
 }
-function groupDimGrid(entries) {
-  if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
-  return `<div class="home-grid">${entries.map(({ p, count }) => `
-    <div class="home-card" onclick="selectPattern('${p.id}')">
-      <h4>${p.icon} ${p.name}</h4>
-      <div class="micro-count">${count} problem${count > 1 ? 's' : ''}</div>
-    </div>`).join('')}</div>`
+// Problems in a group that touch a given DS / Topic dimension.
+function groupComboProblems(g, kind, dimId) {
+  return groupProblemIds(g).filter(id => {
+    const b = ANCHOR_DATA && ANCHOR_DATA.byId && ANCHOR_DATA.byId[id]
+    if (!b) return false
+    return kind === 'ds' ? b.ds.has(dimId) : b.topic.has(dimId)
+  })
 }
+// Expandable combo cards: each DS/Topic the group touches expands IN PLACE to
+// show how it's used in this group + in general + the matching problems — no
+// navigation away (the goal of the Group By detail view).
+function renderComboCards(g, kind, entries) {
+  if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
+  const gMeta = groupMeta(g)
+  return `<div class="group-combo-list">${entries.map(({ p, count }) => {
+    const inG  = (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g][kind] && GROUP_NOTES.groups[g][kind][p.id]) || ''
+    const gen  = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][p.id]) || ''
+    const ids  = groupComboProblems(g, kind, p.id)
+    const chips = ids.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
+    const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
+    return `
+    <div class="group-combo">
+      <button class="group-combo-hd" onclick="toggleGroupCombo(this)">
+        <span class="ico">${p.icon}</span>
+        <span class="nm">${p.name}</span>
+        <span class="cnt">${count} problem${count > 1 ? 's' : ''}</span>
+        <span class="caret">▾</span>
+      </button>
+      <div class="group-combo-body">
+        ${inG ? `<p class="combo-txt"><span class="combo-lbl">${gMeta.icon} ${gMeta.name} × ${p.name}</span> ${inG}</p>` : ''}
+        ${gen ? `<p class="combo-txt combo-gen"><span class="combo-lbl">${p.name}, in general</span> ${gen}</p>` : ''}
+        ${(!inG && !gen) ? '<p class="combo-txt" style="color:var(--text3)">No summary yet.</p>' : ''}
+        <div class="anchor-list">${chips}</div>
+        <a class="topic-ds-open" href="#${openTab}/${p.id}"
+           onclick="event.preventDefault(); selectPattern('${p.id}')">↗ open ${p.icon} ${p.name} page</a>
+      </div>
+    </div>`
+  }).join('')}</div>`
+}
+function toggleGroupCombo(btn) { btn.parentElement.classList.toggle('open') }
+
 function renderGroupMain(main) {
   if (!ANCHOR_DATA) { main.innerHTML = `<h2>🗂 Group By</h2><p class="lede">Loading…</p>`; return }
   if (!activeGroupId) { renderGroupHome(main); return }
@@ -1635,11 +1700,14 @@ function renderGroupMain(main) {
        onclick="onBrowseLinkClick(event, ${JSON.stringify(meta.name)})">
       ↗ Browse "${meta.name}" problems in AdsHub
     </a>
+    <p class="lede" style="margin-top:-2px;color:var(--text3)">
+      Expand any data structure or topic to see how it's used in <strong>${meta.name}</strong> problems (and in general), with the matching problems.
+    </p>
     <h3>Data structures involved <span class="hd-count">(${inv.ds.length})</span></h3>
-    ${groupDimGrid(inv.ds)}
+    ${renderComboCards(activeGroupId, 'ds', inv.ds)}
     <h3>Topics involved <span class="hd-count">(${inv.topic.length})</span></h3>
-    ${groupDimGrid(inv.topic)}
-    <h3>Problems <span class="hd-count">(${ids.length})</span></h3>
+    ${renderComboCards(activeGroupId, 'topic', inv.topic)}
+    <h3>All problems <span class="hd-count">(${ids.length})</span></h3>
     ${groupAnchorChips(ids)}
   `
 }
@@ -1731,12 +1799,13 @@ window.addEventListener('hashchange', applyHash)
 // pulls live data; if it rejects (e.g. opening the html via file://) we
 // fall through to the inline `m.anchors` arrays still attached to each
 // micro — the UI stays functional offline.
-Promise.all([loadAnchorData(), loadPatternNotes(), loadPatternPseudo(), loadPatternVisuals()]).then(([data, notes, pseudo, visuals]) => {
+Promise.all([loadAnchorData(), loadPatternNotes(), loadPatternPseudo(), loadPatternVisuals(), loadGroupNotes()]).then(([data, notes, pseudo, visuals, groupNotes]) => {
   ANCHOR_DATA     = data
   DERIVED         = computeDerivedMaps(data)
   PATTERN_NOTES   = notes
   PATTERN_PSEUDO  = pseudo
   PATTERN_VISUALS = visuals
+  GROUP_NOTES     = groupNotes || {}
   const noteCount = Object.values(notes).reduce((s, m) => s + Object.keys(m).length, 0)
   console.info(`[patterns] ${noteCount} per-problem application notes loaded`)
   if (data) {
