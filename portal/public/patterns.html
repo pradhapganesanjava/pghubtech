@@ -305,21 +305,18 @@
   /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
   .tree-applies-row { padding-left: 22px; }
   /* ── Group By: inline expandable DS/Topic combo cards ─────────────────── */
-  .group-combo-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 4px; }
-  .group-combo { border: 1px solid var(--border); border-radius: 8px; background: var(--bg2); overflow: hidden; }
-  .group-combo-hd { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
-                    background: var(--bg2); border: 0; cursor: pointer; padding: 9px 12px; color: var(--text); font: inherit; }
-  .group-combo-hd:hover { background: var(--bg3); }
-  .group-combo-hd .ico { font-size: 15px; }
-  .group-combo-hd .nm  { font-weight: 600; font-size: 13px; }
-  .group-combo-hd .cnt { color: var(--text2); font-size: 11px; }
-  .group-combo-hd .caret { margin-left: auto; color: var(--text3); transition: transform .15s; }
-  .group-combo.open .group-combo-hd .caret { transform: rotate(180deg); }
-  .group-combo.open .group-combo-hd { border-bottom: 1px solid var(--border); }
-  /* Expanded body scrolls internally so a rich card never pushes the page
-     too far — "expand more + scrollable content". */
-  .group-combo-body { display: none; padding: 10px 12px 12px; max-height: 60vh; overflow-y: auto; }
-  .group-combo.open .group-combo-body { display: block; }
+  /* Master list: clickable subcategory cards (detail opens in the side drawer). */
+  .group-combo-list { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 4px; }
+  .group-combo-card { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+                    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+                    cursor: pointer; padding: 9px 12px; color: var(--text); font: inherit; transition: border-color .12s, background .12s; }
+  .group-combo-card:hover { background: var(--bg3); border-color: var(--primary); }
+  .group-combo-card.active { border-color: var(--primary); background: rgba(var(--primary-rgb), .08); }
+  .group-combo-card .ico { font-size: 15px; }
+  .group-combo-card .nm  { font-weight: 600; font-size: 13px; }
+  .group-combo-card .cnt { color: var(--text2); font-size: 11px; }
+  .group-combo-card .caret { margin-left: auto; color: var(--text3); font-size: 16px; }
+  .group-combo-card:hover .caret { color: var(--primary); }
   .combo-block { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; }
   .combo-block.combo-ingroup { background: rgba(var(--primary-rgb), .07); border: 1px solid var(--border); }
   .combo-block.combo-general { background: var(--bg3); }
@@ -1211,13 +1208,12 @@ function renderGroupNav(root, filter) {
           <span class="ico">${p.icon}</span>
           <span class="lbl">${p.name}</span>
           <span class="count">${count}</span>`
-        // Open this DS/Topic's combo section IN the detail pane (select the
-        // group if needed, then expand + scroll to its card) — no tab jump.
+        // Open this DS/Topic's breakdown in the side drawer (select the group
+        // first if needed so the main list is in sync) — no tab jump.
         a.onclick = () => {
           if (isSelectingText()) return
-          const fresh = activeGroupId !== gid
-          if (fresh) selectGroup(gid)
-          setTimeout(() => openComboCard(gid, kind, p.id), fresh ? 60 : 0)
+          if (activeGroupId !== gid) selectGroup(gid)
+          openComboDetail(gid, kind, p.id)
         }
         sub.appendChild(a)
       })
@@ -1227,16 +1223,6 @@ function renderGroupNav(root, filter) {
     grp.appendChild(sub)
     root.appendChild(grp)
   })
-}
-
-// Expand a specific combo card in the Group By detail pane and scroll to it.
-// Collapses sibling cards so the opened one is the clear focus.
-function openComboCard(g, kind, dimId) {
-  const el = document.getElementById(`combo-${g}-${kind}-${dimId}`)
-  if (!el) return
-  document.querySelectorAll('.group-combo.open').forEach(c => { if (c !== el) c.classList.remove('open') })
-  el.classList.add('open')
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function selectGroup(gid) {
@@ -1804,35 +1790,54 @@ function renderProblemSolutions(g, kind, dimId, inG) {
     <div class="combo-lbl">📌 Problems (${ids.length})</div>
     <div class="anchor-list">${chips}</div></div>`
 }
-// Expandable combo cards: each DS/Topic the group touches expands IN PLACE to
-// show how it's used in this group + per-problem solutions + general theory —
-// no navigation away (the goal of the Group By detail view).
-function renderComboCards(g, kind, entries) {
-  if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
-  const gMeta = groupMeta(g)
-  return `<div class="group-combo-list">${entries.map(({ p, count }) => {
-    const inG  = (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g][kind] && GROUP_NOTES.groups[g][kind][p.id]) || ''
-    const gen  = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][p.id]) || ''
-    const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
-    return `
-    <div class="group-combo" id="combo-${g}-${kind}-${p.id}">
-      <button class="group-combo-hd" onclick="toggleGroupCombo(this)">
-        <span class="ico">${p.icon}</span>
-        <span class="nm">${p.name}</span>
-        <span class="cnt">${count} problem${count > 1 ? 's' : ''}</span>
-        <span class="caret">▾</span>
-      </button>
-      <div class="group-combo-body">
-        ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
-        ${renderProblemSolutions(g, kind, p.id, inG)}
-        ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
-        <a class="topic-ds-open" href="#${openTab}/${p.id}"
-           onclick="event.preventDefault(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
-      </div>
-    </div>`
-  }).join('')}</div>`
+// Resolve a DS/Topic dimension id to a {id,name,icon,tab} meta (PATTERNS
+// entry, or a light fallback for CSV-only dims like 'simulation').
+function comboMeta(dimId) {
+  return PATTERNS.find(x => x.id === dimId) || { id: dimId, name: dimId.replace(/-/g, ' '), icon: '•' }
 }
-function toggleGroupCombo(btn) { btn.parentElement.classList.toggle('open') }
+// Master list: each DS/Topic the group touches is a CLICKABLE CARD that opens
+// its full breakdown in the side drawer (no inline expand).
+function renderComboList(g, kind, entries) {
+  if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
+  return `<div class="group-combo-list">${entries.map(({ p, count }) => `
+    <button class="group-combo-card${activeCombo === (g + '|' + kind + '|' + p.id) ? ' active' : ''}"
+            onclick="openComboDetail('${g}','${kind}','${p.id}')">
+      <span class="ico">${p.icon}</span>
+      <span class="nm">${p.name}</span>
+      <span class="cnt">${count} problem${count > 1 ? 's' : ''}</span>
+      <span class="caret">›</span>
+    </button>`).join('')}</div>`
+}
+// Full breakdown for one (group × dim), rendered into the side drawer.
+function comboDetailHtml(g, kind, dimId) {
+  const gMeta = groupMeta(g)
+  const p     = comboMeta(dimId)
+  const inG   = (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g][kind] && GROUP_NOTES.groups[g][kind][dimId]) || ''
+  const gen   = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][dimId]) || ''
+  const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
+  return `
+    <div class="detail-eyebrow">🗂 ${gMeta.name} · ${kind === 'ds' ? 'Data structure' : 'Topic'}</div>
+    <h2 id="detail-title">${gMeta.icon} ${gMeta.name} <span style="color:var(--text3)">×</span> ${p.icon} ${p.name}</h2>
+    ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
+    ${renderProblemSolutions(g, kind, dimId, inG)}
+    ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
+    <a class="topic-ds-open" href="#${openTab}/${p.id}"
+       onclick="event.preventDefault(); closeMicroDetail(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
+  `
+}
+// Open a subcategory's detail in the shared side drawer.
+let activeCombo = null
+function openComboDetail(g, kind, dimId) {
+  activeCombo = g + '|' + kind + '|' + dimId
+  document.getElementById('detail-content').innerHTML = comboDetailHtml(g, kind, dimId)
+  const panel = document.getElementById('micro-detail-panel')
+  panel.hidden = false
+  document.body.classList.add('detail-open')
+  // Reflect the active card highlight in the main list (if shown).
+  document.querySelectorAll('.group-combo-card.active').forEach(c => c.classList.remove('active'))
+  const card = document.querySelector(`.group-combo-card[onclick*="'${g}','${kind}','${dimId}'"]`)
+  if (card) card.classList.add('active')
+}
 
 function renderGroupMain(main) {
   if (!ANCHOR_DATA) { main.innerHTML = `<h2>🗂 Group By</h2><p class="lede">Loading…</p>`; return }
@@ -1850,12 +1855,12 @@ function renderGroupMain(main) {
       ↗ Browse "${meta.name}" problems in AdsHub
     </a>
     <p class="lede" style="margin-top:-2px;color:var(--text3)">
-      Expand any data structure or topic to see how it's used in <strong>${meta.name}</strong> problems (and in general), with the matching problems.
+      Click any data structure or topic to open — in the side panel — how it's used in <strong>${meta.name}</strong> problems (and in general), with the matching problems.
     </p>
     <h3>Data structures involved <span class="hd-count">(${inv.ds.length})</span></h3>
-    ${renderComboCards(activeGroupId, 'ds', inv.ds)}
+    ${renderComboList(activeGroupId, 'ds', inv.ds)}
     <h3>Topics involved <span class="hd-count">(${inv.topic.length})</span></h3>
-    ${renderComboCards(activeGroupId, 'topic', inv.topic)}
+    ${renderComboList(activeGroupId, 'topic', inv.topic)}
     <h3>All problems <span class="hd-count">(${ids.length})</span></h3>
     ${groupAnchorChips(ids)}
   `
