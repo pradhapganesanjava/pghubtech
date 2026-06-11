@@ -519,6 +519,13 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .np-row span  { display:block; color:var(--mt); text-transform:uppercase; font-size:9px; letter-spacing:.05em; }
 .np-sub       { color:var(--mt); text-transform:uppercase; font-size:9px; letter-spacing:.05em; margin:8px 0 3px; }
 .np-pre       { background:var(--bg); border:1px solid var(--bdr); border-radius:5px; padding:8px 9px; font-size:11px; line-height:1.45; overflow-x:auto; white-space:pre; color:var(--tx); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.kg-mynote    { background:rgba(59,130,246,.06); border:1px dashed var(--bdr); border-radius:6px; padding:8px 10px; }
+.kg-mynote-hd { display:flex; align-items:center; gap:8px; }
+.kg-mynote-edit { margin-left:auto; font:inherit; font-size:10px; cursor:pointer; color:var(--pr); background:var(--sur); border:1px solid var(--bdr); border-radius:5px; padding:2px 7px; }
+.kg-mynote-edit:hover { border-color:var(--pr); }
+.kg-mynote-body { font-size:11.5px; line-height:1.55; color:var(--tx); }
+.kg-mynote-body img { max-width:100%; height:auto; }
+.kg-mynote-body pre { white-space:pre-wrap; background:var(--bg); border:1px solid var(--bdr); border-radius:5px; padding:7px 9px; }
 .lin-empty  { display:flex; align-items:center; justify-content:center; height:100%; color:var(--mt); font-size:14px; flex-direction:column; gap:8px; }
 .chk-grp   { display:flex; flex-direction:column; gap:6px; }
 .chk-lbl   { display:flex; align-items:center; gap:7px; font-size:12px; cursor:pointer; }
@@ -643,8 +650,29 @@ let PG_PSEUDO = {}, PG_VISUALS = {};
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+// ── Editable "My notes" (delegated to the AdsHub parent for storage/auth) ──
+// Same note store + key as the Patterns tab (micro/<microId>), so a note edited
+// there shows here and vice-versa. The graph can't persist (no Google auth) —
+// it just shows the note and asks the parent to open its editor.
+let _kgNoteKey = null;
+const _kgEmbedded = () => { try { return window.parent && window.parent !== window; } catch (_) { return false; } };
+function _escAttr(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+function kgNoteSection(key, title) {
+  if (!_kgEmbedded()) return '';
+  return `
+    <div class="sep"></div>
+    <div class="np-note kg-mynote">
+      <div class="np-note-hd kg-mynote-hd">📝 My notes
+        <button class="kg-mynote-edit" onclick="kgEditNote('${_escAttr(key)}','${_escAttr(title)}')">✏️ Edit / Add</button>
+      </div>
+      <div id="kg-mynote-body" class="kg-mynote-body"><span style="color:var(--mt)">Loading…</span></div>
+    </div>`;
+}
+function kgEditNote(key, title) { try { window.parent.postMessage({ type: 'pgnote-open', key, title }, '*'); } catch (_) {} }
+function requestPatternNote(key) { _kgNoteKey = key; if (_kgEmbedded()) { try { window.parent.postMessage({ type: 'pgnote-get', key }, '*'); } catch (_) {} } }
+
 // Full deep-dive note for a micro-pattern node, or '' if the node isn't one.
-// When / How / Cost / Contrast (catalog) + ASCII visual + pseudo-code.
+// When / How / Cost / Contrast (catalog) + ASCII visual + pseudo-code + My notes.
 function microNoteHtml(ent) {
   const m = microForEntity(ent);
   if (!m) return '';
@@ -661,7 +689,8 @@ function microNoteHtml(ent) {
       ${row('Contrast', m.contrast)}
       ${visual ? `<div class="np-sub">Visual</div><pre class="np-pre">${esc(visual)}</pre>` : ''}
       ${pseudo ? `<div class="np-sub">Pseudo-code</div><pre class="np-pre">${esc(pseudo)}</pre>` : ''}
-    </div>`;
+    </div>
+    ${kgNoteSection('micro/' + m.id, m.name || m.id)}`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1502,8 +1531,10 @@ const GR = {
       <button class="btn btn-pr btn-sm" style="margin-top:8px;width:100%" onclick="zoomTo('${nodeId}', linState.depth)">→ Zoom into ${ent.name}</button>
       <div style="font-size:10px;color:var(--mt);margin-top:4px;text-align:center">or double-click any node</div>
       ${microNoteHtml(ent)}`;
-    panel.classList.toggle('has-note', !!microForEntity(ent));   // widen + scroll when a pattern note is shown
+    const _micro = microForEntity(ent);
+    panel.classList.toggle('has-note', !!_micro);   // widen + scroll when a pattern note is shown
     panel.classList.add('vis');
+    if (_micro) requestPatternNote('micro/' + _micro.id);   // pull the user's My-note for this micro
   },
 
   zoom(f) { const cx=this.W/2,cy=this.H/2; this.tx.x=cx-(cx-this.tx.x)*f; this.tx.y=cy-(cy-this.tx.y)*f; this.tx.s=Math.min(4,Math.max(0.15,this.tx.s*f)); this._applyTx(); },
@@ -5216,6 +5247,9 @@ if (EMBED) {
     } else if (d.type === 'kg-focus' && d.num != null) {
       const id = 'algo_lc_' + String(d.num).replace(/\D/g, '').padStart(4, '0');
       if (Store.getEntity(id)) { navigate('lineage-algo'); laGoTo(id); }
+    } else if (d.type === 'pgnote-data' && d.key === _kgNoteKey) {
+      const slot = document.getElementById('kg-mynote-body');
+      if (slot) slot.innerHTML = d.hasNote ? d.html : '<span style="color:var(--mt)">No note yet — click ✏️ Edit / Add.</span>';
     }
   });
   // Tell the portal we're ready to receive data (covers the race where the
