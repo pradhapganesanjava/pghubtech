@@ -317,6 +317,7 @@
       <div class="tab-toggle">
         <button id="tab-ds"    class="active" onclick="setTab('ds')">📦 Data Structure</button>
         <button id="tab-topic"           onclick="setTab('topic')">🧰 Topic</button>
+        <button id="tab-group"           onclick="setTab('group')">🗂 Group By</button>
       </div>
       <!-- Search + view-toggle live on the same row to save vertical
            space. Search flex-grows; toggle stays a fixed cluster on the
@@ -386,6 +387,60 @@ const DS_TOPIC_LINKS = {
   'stack':       [],
   'queue':       [],
   'trie':        [],
+}
+
+// ── Group By: logical problem families ───────────────────────────────────
+// A THIRD grouping axis, orthogonal to DS (input shape) and Topic (technique):
+// the problem's SUBJECT MATTER. Tagged in the sheet as `pat_group::<id>` and
+// surfaced from patterns-data.csv. This list only supplies display metadata
+// (name / icon / blurb) + ordering; the actual membership (and which DS /
+// Topics each group touches) is derived entirely from the CSV, so adding a
+// new pat_group:: tag in the sheet makes the group appear automatically — a
+// group missing here just renders with a default icon.
+const GROUPS = [
+  { id: 'palindrome',   icon: '🔁', name: 'Palindrome',   intro: 'Symmetry around a center / mirrored reads — check, build, partition, or count palindromic spans.' },
+  { id: 'parenthesis',  icon: '🪢', name: 'Parenthesis',  intro: 'Balanced-bracket validity, generation, repair, and scoring — usually a stack or a running open-count.' },
+  { id: 'sum',          icon: '➕', name: 'Sum / Target',  intro: 'Find or count elements / subarrays / paths / subsets that reach a target sum — k-sum, subarray-sum, combination-sum, path-sum.' },
+  { id: 'expression',   icon: '🧮', name: 'Expression',    intro: 'Parse and evaluate arithmetic / nested / encoded expressions — calculators, RPN, operator insertion, string decoding.' },
+  { id: 'buy-sell',     icon: '📈', name: 'Buy / Sell',    intro: 'Best-time-to-trade stock DP — single/multi transaction, cooldown, fees; state-machine over hold/sold/rest.' },
+  { id: 'word-process', icon: '📖', name: 'Word / Dict',   intro: 'Operate over words / a dictionary — break, ladder, search, abbreviation, pattern bijection, frequency.' },
+  // ── proposed (discovered) families ──
+  { id: 'anagram',      icon: '🔀', name: 'Anagram',       intro: 'Group / match / locate anagrams via sorted-key or frequency-signature hashing.' },
+  { id: 'subsequence',  icon: '〰️', name: 'Subsequence',   intro: 'Order-preserving (non-contiguous) selection — LIS, LCS, is-subsequence, matching/counting variants.' },
+  { id: 'scheduling',   icon: '🗓️', name: 'Scheduling',    intro: 'Order/select tasks under constraints — course prerequisites (topo), meeting rooms, task scheduler, job scheduling.' },
+]
+function groupMeta(id) {
+  return GROUPS.find(g => g.id === id) || { id, icon: '🗂', name: id.replace(/-/g, ' '), intro: '' }
+}
+// Group ids that actually have problems in the CSV, in GROUPS order, with any
+// CSV-only groups (not listed above) appended alphabetically.
+function visibleGroups() {
+  const present = ANCHOR_DATA && ANCHOR_DATA.group ? Object.keys(ANCHOR_DATA.group) : []
+  const ordered = GROUPS.map(g => g.id).filter(id => present.includes(id))
+  const extras  = present.filter(id => !GROUPS.some(g => g.id === id)).sort()
+  return [...ordered, ...extras]
+}
+function groupProblemIds(g) {
+  const ids = (ANCHOR_DATA && ANCHOR_DATA.group && ANCHOR_DATA.group[g]) || []
+  // De-dup + numeric sort so the chip list is stable and readable.
+  return [...new Set(ids)].sort((a, b) => Number(a) - Number(b))
+}
+// DS / Topic patterns involved in a group = the union of the pat_ds / pat_topic
+// tags carried by the group's problems (collected into ANCHOR_DATA.byId at
+// parse time). Each returned entry is { p, count } where count = how many of
+// the group's problems touch that DS / Topic, sorted by count desc.
+function groupInvolved(g) {
+  const dsCount = {}, topicCount = {}
+  for (const id of groupProblemIds(g)) {
+    const b = ANCHOR_DATA && ANCHOR_DATA.byId && ANCHOR_DATA.byId[id]
+    if (!b) continue
+    b.ds.forEach(d => { dsCount[d] = (dsCount[d] || 0) + 1 })
+    b.topic.forEach(t => { topicCount[t] = (topicCount[t] || 0) + 1 })
+  }
+  const build = (counts) => Object.entries(counts)
+    .map(([id, count]) => ({ p: PATTERNS.find(x => x.id === id) || { id, name: id.replace(/-/g, ' '), icon: '•' }, count }))
+    .sort((a, b) => b.count - a.count || a.p.name.localeCompare(b.p.name))
+  return { ds: build(dsCount), topic: build(topicCount) }
 }
 
 // Prefer the CSV-derived list; fall back to the hand-coded DS_TOPIC_LINKS
@@ -672,7 +727,11 @@ function parsePatternData(csvText) {
   const lines = csvText.split('\n').filter(l => l.trim())
   if (!lines.length) return null
   // Header assumed: anchor_id,tag (we don't enforce — just skip line 1).
-  const out = { core: {}, topic: {}, dsTopic: {} }
+  //   group: groupId → [ids]                         (pat_group:: rows)
+  //   byId:  id → { ds:Set<dsId>, topic:Set<topicId> } reverse map, lets the
+  //          Group By tab report which DS / Topics each group's problems touch.
+  const out = { core: {}, topic: {}, dsTopic: {}, group: {}, byId: {} }
+  const byId = (id) => (out.byId[id] = out.byId[id] || { ds: new Set(), topic: new Set() })
   for (let i = 1; i < lines.length; i++) {
     const m = lines[i].match(/^(\d+)\s*,\s*(?:"([^"]*)"|([^\n]*))$/)
     if (!m) continue
@@ -683,10 +742,12 @@ function parsePatternData(csvText) {
       // pat_ds::<ds>::core::<micro>
       const ds = parts[1], micro = parts[3]
       ;(((out.core[ds] = out.core[ds] || {})[micro] = out.core[ds][micro] || [])).push(id)
+      byId(id).ds.add(ds)
     } else if (parts[0] === 'pat_topic' && parts.length === 3) {
       // pat_topic::<topic>::<micro>
       const topic = parts[1], micro = parts[2]
       ;(((out.topic[topic] = out.topic[topic] || {})[micro] = out.topic[topic][micro] || [])).push(id)
+      byId(id).topic.add(topic)
     } else if (parts[0] === 'pat_ds' && parts.length === 4 && parts[2] !== 'core') {
       // pat_ds::<ds>::<topic>::<micro>  — Topic micro embedded under DS.
       // Counts under both the Topic-tab view (out.topic) and the DS-tab
@@ -696,6 +757,11 @@ function parsePatternData(csvText) {
       const a = (out.dsTopic[ds] = out.dsTopic[ds] || {})
       const b = (a[topic] = a[topic] || {})
       ;((b[micro] = b[micro] || [])).push(id)
+      byId(id).ds.add(ds); byId(id).topic.add(topic)
+    } else if (parts[0] === 'pat_group' && parts.length === 2) {
+      // pat_group::<group>  — logical problem family (subject matter).
+      const group = parts[1]
+      ;((out.group[group] = out.group[group] || [])).push(id)
     }
   }
   return out
@@ -760,9 +826,10 @@ function anchorsFor(parentPattern, micro, embeddedUnderDsId = null) {
 
 // ── Render ───────────────────────────────────────────────────────────────
 let view = 'tree'         // 'tree' | 'flat'
-let activeTab = 'ds'      // 'ds' | 'topic' — filters which PATTERNS show
+let activeTab = 'ds'      // 'ds' | 'topic' | 'group' — filters which PATTERNS / groups show
 let activePatternId = null
 let activeMicroId = null
+let activeGroupId = null  // selected pat_group:: id when activeTab === 'group'
 // Which L1 groups are expanded in the tree. Kept SEPARATE from
 // activePatternId so a group can be toggled open/closed independently of
 // which pattern is selected/shown in the main pane (re-clicking collapses).
@@ -817,6 +884,8 @@ function microMatches(m, parent, filter, anchors) {
 function renderNav() {
   const filter = $('#navSearch').value.trim().toLowerCase()
   const list   = $('#navList')
+  // Group By has its own (tree-only) nav — no flat view.
+  if (activeTab === 'group') { list.className = 'nav-list'; list.innerHTML = ''; renderGroupNav(list, filter); return }
   list.className = view === 'tree' ? 'nav-list' : 'flat-list'
   list.innerHTML = ''
   if (view === 'tree') renderTree(list, filter)
@@ -1005,6 +1074,87 @@ function renderFlat(root, filter) {
   })
 }
 
+// ── Group By nav ───────────────────────────────────────────────────────────
+// L1 = logical group (expandable). Under it, two labelled sections list the
+// DS and Topics its problems touch; clicking a row jumps to that DS / Topic
+// page (flipping to the relevant tab). Mirrors renderTree's interaction model.
+function renderGroupNav(root, filter) {
+  const groups = visibleGroups()
+  if (!groups.length) {
+    const empty = document.createElement('div')
+    empty.className = 'tree-topics-hdr'
+    empty.textContent = ANCHOR_DATA ? 'No pat_group:: tags yet' : 'Loading…'
+    root.appendChild(empty)
+    return
+  }
+  groups.forEach(gid => {
+    const meta = groupMeta(gid)
+    const ids  = groupProblemIds(gid)
+    const inv  = groupInvolved(gid)
+    if (filter) {
+      const hit = meta.name.toLowerCase().includes(filter)
+        || ids.some(id => String(id) === filter)
+        || inv.ds.concat(inv.topic).some(x => x.p.name.toLowerCase().includes(filter))
+      if (!hit) return
+    }
+    const expanded = expandedIds.has('group:' + gid) || !!filter
+    const grp = document.createElement('div')
+    grp.className = 'tree-group'
+
+    const l1 = document.createElement('div')
+    l1.className = 'tree-l1' + (activeGroupId === gid ? ' active' : '') + (expanded ? ' expanded' : '')
+    l1.innerHTML = `
+      <span class="caret">▶</span>
+      <span class="ico">${meta.icon}</span>
+      <span class="lbl">${meta.name}</span>
+      <span class="count">${ids.length}</span>`
+    l1.onclick = () => {
+      if (isSelectingText()) return
+      const key = 'group:' + gid
+      if (expandedIds.has(key)) { expandedIds.delete(key); renderNav() }
+      else                      { expandedIds.add(key); selectGroup(gid) }
+    }
+    grp.appendChild(l1)
+
+    const sub = document.createElement('div')
+    sub.className = 'tree-l2-wrap'
+    const addDim = (label, entries) => {
+      if (!entries.length) return
+      const hdr = document.createElement('div')
+      hdr.className = 'tree-topics-hdr'
+      hdr.textContent = `${label} (${entries.length})`
+      sub.appendChild(hdr)
+      entries.forEach(({ p, count }) => {
+        if (filter && !p.name.toLowerCase().includes(filter) && !meta.name.toLowerCase().includes(filter)) return
+        const a = document.createElement('a')
+        a.className = 'tree-topic-row tree-applies-row'
+        a.innerHTML = `
+          <span class="ico">${p.icon}</span>
+          <span class="lbl">${p.name}</span>
+          <span class="count">${count}</span>`
+        a.onclick = () => { if (!isSelectingText()) selectPattern(p.id) }
+        sub.appendChild(a)
+      })
+    }
+    addDim('Data structures', inv.ds)
+    addDim('Topics', inv.topic)
+    grp.appendChild(sub)
+    root.appendChild(grp)
+  })
+}
+
+function selectGroup(gid) {
+  activeTab       = 'group'
+  activeGroupId   = gid
+  activePatternId = null
+  activeMicroId   = null
+  expandedIds.add('group:' + gid)
+  syncTabButtons()
+  writeHash()
+  renderNav()
+  renderMain()
+}
+
 function selectPattern(pid, mid = null) {
   // If the target pattern lives under the other tab, jump to that tab
   // first — keeps cross-tab links (e.g. home cards, anchor refs) honest.
@@ -1031,7 +1181,9 @@ function selectPattern(pid, mid = null) {
 // URL shape: #<tab>[/pattern[/micro]]  e.g. #topic/dfs/dfs-template
 function writeHash() {
   let h = activeTab
-  if (activePatternId) {
+  if (activeTab === 'group') {
+    if (activeGroupId) h += '/' + activeGroupId
+  } else if (activePatternId) {
     h += '/' + activePatternId
     if (activeMicroId) h += '/' + activeMicroId.split('/')[1]
   }
@@ -1045,6 +1197,7 @@ const DIFF_HINT = {  // Light-weight difficulty hint, just for the card colour. 
 
 function renderMain() {
   const main = $('#main')
+  if (activeTab === 'group') { renderGroupMain(main); return }
   if (!activePatternId) { renderHome(main); return }
   const p = PATTERNS.find(x => x.id === activePatternId)
   if (!p) { renderHome(main); return }
@@ -1452,6 +1605,73 @@ function renderHome(main) {
   `
 }
 
+// ── Group By main pane ──────────────────────────────────────────────────────
+function groupAnchorChips(ids) {
+  if (!ids.length) return '<p class="lede" style="color:var(--text3)">No anchors.</p>'
+  return `<div class="anchor-list">${ids.map(id =>
+    `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`
+  ).join('')}</div>`
+}
+function groupDimGrid(entries) {
+  if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
+  return `<div class="home-grid">${entries.map(({ p, count }) => `
+    <div class="home-card" onclick="selectPattern('${p.id}')">
+      <h4>${p.icon} ${p.name}</h4>
+      <div class="micro-count">${count} problem${count > 1 ? 's' : ''}</div>
+    </div>`).join('')}</div>`
+}
+function renderGroupMain(main) {
+  if (!ANCHOR_DATA) { main.innerHTML = `<h2>🗂 Group By</h2><p class="lede">Loading…</p>`; return }
+  if (!activeGroupId) { renderGroupHome(main); return }
+  const meta = groupMeta(activeGroupId)
+  const ids  = groupProblemIds(activeGroupId)
+  const inv  = groupInvolved(activeGroupId)
+  const browseUrl = `adshub?q=${encodeURIComponent(meta.name)}`
+  main.innerHTML = `
+    <div class="breadcrumb">🗂 Group By</div>
+    <h2>${meta.icon} ${meta.name} <span class="hd-count">(${ids.length})</span></h2>
+    <p class="lede">${meta.intro}</p>
+    <a class="browse-link" href="${browseUrl}"
+       onclick="onBrowseLinkClick(event, ${JSON.stringify(meta.name)})">
+      ↗ Browse "${meta.name}" problems in AdsHub
+    </a>
+    <h3>Data structures involved <span class="hd-count">(${inv.ds.length})</span></h3>
+    ${groupDimGrid(inv.ds)}
+    <h3>Topics involved <span class="hd-count">(${inv.topic.length})</span></h3>
+    ${groupDimGrid(inv.topic)}
+    <h3>Problems <span class="hd-count">(${ids.length})</span></h3>
+    ${groupAnchorChips(ids)}
+  `
+}
+function renderGroupHome(main) {
+  const groups = visibleGroups()
+  const totalProblems = new Set(groups.flatMap(g => groupProblemIds(g))).size
+  main.innerHTML = `
+    <h2>📐 Micro-Pattern Reference · 🗂 Group By</h2>
+    <p class="lede">
+      ${groups.length} logical group${groups.length === 1 ? '' : 's'} · ${totalProblems} problems tagged
+    </p>
+    <p class="lede" style="margin-top:-8px">
+      Problems grouped by <strong>subject matter</strong> — palindromes, parentheses, sum/target,
+      expressions, buy-sell, words/dictionary… A third axis orthogonal to Data Structure (input shape)
+      and Topic (technique). Pick a group to see which DS and Topics its problems span.
+    </p>
+    ${groups.length ? `<div class="home-grid">
+      ${groups.map(gid => {
+        const meta = groupMeta(gid)
+        const ids  = groupProblemIds(gid)
+        const inv  = groupInvolved(gid)
+        return `
+        <div class="home-card" onclick="selectGroup('${gid}')">
+          <h4>${meta.icon} ${meta.name}</h4>
+          <div class="micro-count">${ids.length} problems <span style="color:var(--text3);font-weight:400">· ${inv.ds.length} DS · ${inv.topic.length} topics</span></div>
+          <div class="meta">${meta.intro.slice(0, 90)}${meta.intro.length > 90 ? '…' : ''}</div>
+        </div>`
+      }).join('')}
+    </div>` : `<p class="lede" style="color:var(--text3)">No <code>pat_group::</code> tags found in patterns-data.csv yet.</p>`}
+  `
+}
+
 // ── URL hash routing ────────────────────────────────────────────────────
 // New shape:   #<tab>/<pattern>/<micro>   e.g. #topic/dfs/dfs-template
 // Legacy:      #<pattern>/<micro>         (auto-resolves the tab from the
@@ -1465,6 +1685,17 @@ function applyHash() {
     return
   }
   const parts = h.split('/')
+  // Group By route: #group[/<groupId>]
+  if (parts[0] === 'group') {
+    activeTab       = 'group'
+    activeGroupId   = parts[1] || null
+    activePatternId = null
+    activeMicroId   = null
+    if (activeGroupId) expandedIds.add('group:' + activeGroupId)
+    syncTabButtons()
+    renderNav(); renderMain()
+    return
+  }
   // Detect new shape: first segment is 'ds' or 'topic'.
   if (parts[0] === 'ds' || parts[0] === 'topic') {
     activeTab       = parts[0]
