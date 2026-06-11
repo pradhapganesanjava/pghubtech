@@ -1561,8 +1561,31 @@ const GR = {
     this.tx.x = this.W / 2 - (minX + w / 2) * this.tx.s;
     this.tx.y = this.H / 2 - (minY + h / 2) * this.tx.s;
     this._applyTx();
+  },
+
+  // Re-measure the stage container (it shrinks/grows when the Problems drawer
+  // toggles/resizes, or the window resizes) and re-fit the graph to it.
+  resize() {
+    const ct = this.cid && document.getElementById(this.cid);
+    if (!ct) return;
+    const r = ct.getBoundingClientRect();
+    if (r.width)  this.W = r.width;
+    if (r.height) this.H = r.height;
+    this.fit();
   }
 };
+
+// Re-fit the active graph to its (changed) stage — rAF-throttled so it's smooth
+// during a drawer drag. No-op when no graph is mounted.
+let _graphResizeRaf = 0;
+function resizeGraphView() {
+  if (_graphResizeRaf) return;
+  _graphResizeRaf = requestAnimationFrame(() => {
+    _graphResizeRaf = 0;
+    try { if (typeof GR !== 'undefined' && GR.cid && document.getElementById(GR.cid)) GR.resize(); } catch (_) {}
+  });
+}
+window.addEventListener('resize', resizeGraphView);
 
 // ══════════════════════════════════════════════════════════════
 // UI STATE
@@ -1961,6 +1984,10 @@ function togglePD() {
   } else {
     d.style.maxHeight = '';  // back to closed-height from CSS
   }
+  // The stage just shrank/grew — re-fit the graph once the .2s height
+  // transition settles (and once mid-way so it tracks smoothly).
+  resizeGraphView();
+  setTimeout(resizeGraphView, 230);
 }
 
 // Drag-to-resize handler for the Problems drawer (works for all views)
@@ -1980,6 +2007,7 @@ function togglePD() {
     if (!pdResizing) return;
     const newH = Math.max(46, Math.min(window.innerHeight - 120, pdResizing.startH - (e.clientY - pdResizing.startY)));
     pdResizing.drawer.style.maxHeight = newH + 'px';
+    resizeGraphView();   // live re-fit as the drawer is dragged
   });
   document.addEventListener('mouseup', () => {
     if (!pdResizing) return;
@@ -1987,6 +2015,7 @@ function togglePD() {
     localStorage.setItem('kg_pd_height', pdResizing.drawer.style.maxHeight);
     pdResizing = null;
     document.body.style.cursor = '';
+    resizeGraphView();
   });
 })();
 
