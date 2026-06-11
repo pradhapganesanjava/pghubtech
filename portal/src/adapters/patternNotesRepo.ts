@@ -7,7 +7,7 @@
 
 import { GAuth } from '../lib/gauth'
 import { Config } from '../services/config'
-import { getOrCreateFolder, uploadFileToDrive, updateDriveFileContent, fetchDriveFile, deleteDriveFile } from '../lib/drive'
+import { getOrCreateFolder, uploadFileToDrive, updateDriveFileContent, deleteDriveFile, DRIVE_API_PREFIX } from '../lib/drive'
 
 const BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 const TAB  = 'PatternNotes'                  // NOT LCProblems — keeps Browse untouched
@@ -90,14 +90,27 @@ export async function loadNoteIndex(): Promise<Map<string, PatternNoteMeta>> {
   return map
 }
 
+// Fetch the latest raw note HTML for a Drive file. Cache-busted + no-store:
+// the SAME note is reopened from several navigation paths (e.g. a micro shared
+// across DS/Topic) after in-place edits, and the Drive media URL is identical
+// across edits — without this the browser can return a stale cached body
+// ("old notes"). Kept local so Browse's shared fetchDriveFile is untouched.
+async function fetchNoteBody(driveId: string): Promise<string> {
+  const token = GAuth.getToken()
+  if (!token) throw new Error('Not authenticated')
+  const res = await GAuth.fetch(`${DRIVE_API_PREFIX}${driveId}?alt=media&_=${Date.now()}`, {
+    headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`)
+  return res.text()
+}
+
 // Fetch the raw note HTML document for a key (or null if no note exists).
 export async function getPatternNote(key: string): Promise<{ meta: PatternNoteMeta; raw: string } | null> {
   const idx = _index ?? await loadNoteIndex()
   const meta = idx.get(key)
   if (!meta || !meta.driveId) return null
-  const token = GAuth.getToken()
-  if (!token) throw new Error('Not authenticated')
-  const raw = await (await fetchDriveFile(token, meta.driveId)).text()
+  const raw = await fetchNoteBody(meta.driveId)   // cache-busted → always latest
   return { meta, raw }
 }
 
