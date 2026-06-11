@@ -4304,6 +4304,13 @@ body.resizing-h * {
                   background: var(--bg2); padding: 12px 14px; box-sizing: border-box;
                   overflow-y: auto; }
 
+/* Floating problem-AI window. Reuses .ai-panel's chrome (position, header,
+   resize handle) but sits just BELOW the global "Ask AI" panel (z 9000) so
+   the two never fight for the foreground when both happen to be open. Inside
+   the flex column the chat body grows to fill the space under the header. */
+.prob-ai-panel { z-index: 8500; }
+.prob-ai-panel .prob-ai-inline { flex: 1 1 auto; min-height: 0; height: auto; }
+
 /* Markdown response styling — rich rendering of code blocks, lists,
    headings, inline code, etc. */
 .prob-ai-md { font-size: 13px; line-height: 1.6; color: var(--text); }
