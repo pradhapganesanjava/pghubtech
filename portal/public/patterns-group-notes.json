@@ -1,165 +1,842 @@
 {
-  "_meta": "Group By tab: per-(group × DS) and per-(group × Topic) summaries. groups.<group>.<ds|topic>.<id> = how that DS/Topic shows up in THIS group's problems. general.<ds|topic>.<id> = how that DS/Topic is generally utilized. Rendered inline (expandable) in the Group By detail card — no navigation. Authored from scripts/group-combos.json.",
+  "_meta": "Group By tab summaries. Each entry is { tldr, points[], visual? }. groups.<group>.<ds|topic>.<id> = how that DS/Topic shows up in THIS group's problems. general.<ds|topic>.<id> = how it's generally used (carries the visual + deep mechanics, reused across groups). Rendered inline/expandable in the Group By detail card (no navigation). **bold** and `code` are converted; visual is literal monospace ASCII. Author from scripts/group-combos.json.",
   "general": {
     "ds": {
-      "string": "Strings are the workhorse input for character-level scanning, two-pointer sweeps, DP over substrings/subsequences, and hashing of windows or signatures; immutability often pushes you to indices or a builder.",
-      "array": "Arrays give O(1) indexed access and contiguity, enabling two-pointer sweeps, prefix sums, sliding windows, in-place rewrites, and tabular DP indexed by position.",
-      "tree": "Trees are traversed by DFS (pre/in/post-order) or BFS; many problems reduce to returning an aggregate from each subtree (tree DP) or carrying state down a root-to-leaf path.",
-      "bst": "A BST's in-order traversal yields sorted values, so range / Kth / closest queries and ordered lookups exploit the left < root < right invariant for pruning.",
-      "matrices": "Grids are 2-D arrays traversed by DFS/BFS over 4/8 neighbours, scanned in layers or spirals, or filled with 2-D DP / 2-D prefix sums.",
-      "linked-list": "Linked lists are manipulated by pointer rewiring and two-pointer (fast/slow) tricks; with no random access you reverse, find the middle, or merge in place.",
-      "graph": "Graphs are explored by DFS/BFS or processed in dependency order via topological sort; edges encode constraints between entities.",
-      "trie": "A trie indexes a set of strings by shared prefixes, giving prefix/word lookups and wildcard matching in O(length) per query."
+      "string": {
+        "tldr": "A string is an **immutable char array** — most work is index-walking, two-pointer sweeps, DP over substrings/subsequences, or hashing a window/signature.",
+        "points": [
+          "**Two pointers / center**: compare or expand around `i` (palindromes, reversals).",
+          "**Sliding window**: a contiguous range with a char-count constraint.",
+          "**DP over substrings**: `dp[i][j]` for a span, or `dp[i]` for a prefix.",
+          "**Hashing**: frequency / sorted-key signatures for anagrams & windows."
+        ],
+        "visual": "idx:  0 1 2 3 4\n s :  a b c b a\n      ^L      ^R     two-pointer / expand-around-center"
+      },
+      "array": {
+        "tldr": "An array gives **O(1) indexed, contiguous** access — the substrate for two pointers, prefix sums, sliding windows, in-place rewrites, and tabular DP.",
+        "points": [
+          "**Two pointers**: converge (sorted) or fast/slow.",
+          "**Prefix sums**: any range total in O(1).",
+          "**Sliding window**: variable/fixed contiguous ranges.",
+          "**DP[i]**: state indexed by position."
+        ],
+        "visual": "[ 3  1  2  4  6 ]   O(1) index\n  └ two-ptr · window · prefix · in-place ┘"
+      },
+      "tree": {
+        "tldr": "Trees are walked by **DFS** (pre/in/post-order) or **BFS** (level). Most solutions return an aggregate from each subtree (**tree DP**) or carry state down a root→leaf path.",
+        "points": [
+          "**DFS** for path sums, validation, LCA.",
+          "**BFS** for level-order / shortest depth.",
+          "**Return-from-subtree** combines children at the node."
+        ],
+        "visual": "        (1)\n       /   \\\n     (2)   (3)\n    /  \\\n  (4)  (5)   DFS pre/in/post · BFS by level"
+      },
+      "bst": {
+        "tldr": "A BST's **in-order traversal yields sorted values**; range / Kth / closest queries exploit the `left < root < right` invariant to prune half the tree.",
+        "points": [
+          "**In-order** = ascending sequence.",
+          "**Bounds** carried down prune subtrees.",
+          "Lookup / insert / Kth in O(height)."
+        ],
+        "visual": "      4\n     / \\\n    2   6      in-order → 2 4 6 (sorted)\n   / \\\n  1   3"
+      },
+      "matrices": {
+        "tldr": "A grid is a **2-D array** traversed by DFS/BFS over 4/8 neighbours, scanned in layers/spirals, or filled with **2-D DP / 2-D prefix sums**.",
+        "points": [
+          "**Flood fill / islands** via DFS or BFS.",
+          "**Shortest grid path** via BFS.",
+          "**2-D DP / prefix** over (row, col)."
+        ],
+        "visual": "┌─┬─┬─┐\n├─┼─┼─┤   neighbours: up/down/left/right\n└─┴─┴─┘   2-D DP · 2-D prefix sum"
+      },
+      "linked-list": {
+        "tldr": "No random access — solve by **pointer rewiring** and the **fast/slow two-pointer** trick (middle, cycle, reverse-in-place).",
+        "points": [
+          "**Fast/slow**: middle & cycle detection.",
+          "**Reverse** a segment by relinking.",
+          "**Dummy head** simplifies edge cases."
+        ],
+        "visual": "1 → 2 → 3 → 4 → 5 → /\nslow→     fast→        (fast 2× ⇒ slow at middle)"
+      },
+      "graph": {
+        "tldr": "Edges encode constraints between entities; explore by **DFS/BFS**, or resolve dependency order via **topological sort**.",
+        "points": [
+          "**DFS/BFS** for reachability & components.",
+          "**Topo sort** (Kahn / DFS) for ordering + cycle detection.",
+          "**Dijkstra / BFS** for shortest paths."
+        ],
+        "visual": "A → B → D\n  ↘ C ↗     topo order: A, B, C, D (in-degree 0 first)"
+      },
+      "trie": {
+        "tldr": "A trie indexes many strings by **shared prefixes**, giving prefix/word lookup and **wildcard** matching in O(length) per query.",
+        "points": [
+          "Each node = one character; `*` marks a word end.",
+          "**Prefix queries** branch down children.",
+          "Prunes multi-word search (e.g. grid DFS)."
+        ],
+        "visual": " root\n  └ c ─ a ─┬ t*   (cat)\n          └ r*   (car)   shared prefix 'ca'"
+      }
     },
     "topic": {
-      "hash": "Hashing trades space for O(1) membership / frequency / complement lookups, and for keying items by a canonical signature.",
-      "sorting": "Sorting imposes order so you can two-pointer toward a target, group adjacent equals, or greedily process in monotonic order.",
-      "two-pointers": "Two pointers converge from both ends (sorted-target search) or run at different speeds (fast/slow, sliding bounds) to reach O(n) where brute force is O(n²).",
-      "backtrack": "Backtracking enumerates choices via DFS, applying then undoing each decision, with pruning to skip infeasible branches.",
-      "dfs": "DFS recurses into one path fully before the next — used for tree/graph traversal, connected components, and exhaustive enumeration.",
-      "dp": "DP caches overlapping-subproblem results: define a state and a transition so each subproblem is solved once (top-down memo or bottom-up table).",
-      "sliding-window": "A sliding window keeps a contiguous range satisfying a constraint, expanding/contracting its bounds to scan all valid windows in O(n).",
-      "prefix-sum": "Prefix sums precompute cumulative totals so any range sum is an O(1) difference; pairing with a hash of seen prefixes counts subarrays hitting a target.",
-      "deque-topic": "A monotonic deque keeps candidates ordered at both ends, giving sliding-window min/max and 'shortest subarray' queries in amortized O(n).",
-      "math": "Math / number-theory shortcuts (digits, modular arithmetic, combinatorics, primality) replace brute force with closed-form or O(log n) reasoning.",
-      "trie-topic": "Used as a tool, a trie accelerates prefix matching across many candidate words — e.g. pruning a grid DFS or pairing word fragments.",
-      "bits": "Bitmasks pack a small set or state into an integer for O(1) set ops and DP-over-subsets; XOR/AND tricks expose parity and membership.",
-      "bfs": "BFS explores level by level, giving shortest path / fewest steps in unweighted state graphs.",
-      "shortest-path": "Shortest-path search (BFS for unit edges, Dijkstra for weights) finds minimum-cost routes through a state graph.",
-      "simulation": "Simulation directly models the described process step by step when no shortcut exists.",
-      "heap": "A heap keeps the current best (min/max) at the top in O(log n), powering top-K, priority scheduling, and streaming selection.",
-      "greedy": "Greedy commits to the locally optimal choice (often after sorting) when an exchange argument proves it reaches a global optimum.",
-      "stack-topic": "A stack defers work LIFO — matching/nesting, parsing expressions, and next-greater / monotonic scans.",
-      "interval": "Interval problems sort by start/end then sweep, merging overlaps or counting concurrent intervals."
+      "hash": {
+        "tldr": "Trade space for **O(1) membership / frequency / complement** lookups, or key items by a **canonical signature**.",
+        "points": [
+          "**Seen-set**: dedup / cycle / membership.",
+          "**Freq map**: counts & anagram signatures.",
+          "**Complement**: `target - x` lookup."
+        ],
+        "visual": "map{ key → value }   O(1) avg\n  seen?   freq?   complement(target-x)?"
+      },
+      "sorting": {
+        "tldr": "Impose **order** so you can two-pointer toward a target, group adjacent equals, or process greedily in monotonic order.",
+        "points": [
+          "Enables **two-pointer** target search.",
+          "**Groups** duplicates together.",
+          "Unlocks **greedy** by start/end/cost."
+        ],
+        "visual": "[5 2 8 1] → [1 2 5 8]\n then: two-pointer · group · greedy"
+      },
+      "two-pointers": {
+        "tldr": "Two indices replace a nested loop — **converge** from both ends (sorted target) or run at **different speeds** (fast/slow, window bounds) for **O(n)** vs O(n²).",
+        "points": [
+          "**Converging**: `sum<t → L++`, `sum>t → R--`.",
+          "**Fast/slow**: middle, cycle, dedup in place.",
+          "**Two lists**: merge / match by advancing the lagging pointer."
+        ],
+        "visual": "[2  3  5  8  11  15]  target=13\n L→               ←R\n   sum<t → L++     sum>t → R--    ⇒ 2+11=13 ✓"
+      },
+      "backtrack": {
+        "tldr": "DFS that **applies then undoes** each choice, exploring the decision tree with **pruning** of infeasible branches.",
+        "points": [
+          "**choose → recurse → un-choose**.",
+          "Prune early (bounds, dedup) to cut the tree.",
+          "Used for permutations, subsets, partitions."
+        ],
+        "visual": "        ●  choose\n      / | \\\n     ● ● ●   recurse\n     ✗   ✗   prune dead branches, then un-choose"
+      },
+      "dfs": {
+        "tldr": "Recurse **one path fully** before the next — traversal, connected components, and exhaustive enumeration.",
+        "points": [
+          "Carries **state down** the path.",
+          "**Returns** an aggregate back up.",
+          "Stack/recursion; watch depth."
+        ],
+        "visual": "visit → child → grandchild → … → backtrack\n (go deep first, then siblings)"
+      },
+      "dp": {
+        "tldr": "Cache **overlapping subproblems**: define a **state** and a **transition** so each subproblem is solved once (top-down memo or bottom-up table).",
+        "points": [
+          "**State**: the minimal info to decide.",
+          "**Transition**: build from smaller states.",
+          "**Base cases** seed the table."
+        ],
+        "visual": "dp[i][j] ← dp[i-1][j], dp[i][j-1], dp[i-1][j-1]\n ┌─┬─┬─┐\n ├─┼─┼─┤   fill once, reuse\n └─┴─┴─┘"
+      },
+      "sliding-window": {
+        "tldr": "Maintain a **contiguous range** that satisfies a constraint; **expand** the right edge, **shrink** the left when violated — all valid windows in **O(n)**.",
+        "points": [
+          "Grow `R`; while invalid, advance `L`.",
+          "Track window state (count/sum) incrementally.",
+          "Fixed-width variant slides a constant span."
+        ],
+        "visual": "[ a b c a b c b b ]\n     └── window ──┘   expand R, shrink L on violation"
+      },
+      "prefix-sum": {
+        "tldr": "Precompute **cumulative totals** so any range sum is an O(1) difference; pair with a **hash of seen prefixes** to count subarrays hitting a target.",
+        "points": [
+          "`sum(i..j) = pre[j+1] - pre[i]`.",
+          "**Hash prefixes** → count target subarrays.",
+          "Extends to 2-D grids."
+        ],
+        "visual": "a:   [ 3  1  2  4 ]\npre: [0 3 4 6 10]\n sum(1..2)=pre[3]-pre[1]=6-3=3"
+      },
+      "deque-topic": {
+        "tldr": "A **monotonic deque** keeps candidates ordered at both ends → sliding-window **min/max** and 'shortest subarray' queries in amortized **O(n)**.",
+        "points": [
+          "Pop the back while it's worse than the new item.",
+          "Pop the front when it leaves the window.",
+          "Front always holds the current best."
+        ],
+        "visual": "front ⟵ [ i1  i2  i3 ] ⟶ back\n pop back while worse → push; front = window best"
+      },
+      "math": {
+        "tldr": "Number-theory shortcuts (**digits, modular arithmetic, gcd, combinatorics, primality**) replace brute force with closed-form or O(log n) reasoning.",
+        "points": [
+          "Digit ops via `%10` / `/10`.",
+          "Modular arithmetic avoids overflow.",
+          "Sieve / gcd for divisibility."
+        ],
+        "visual": "x % 10 → last digit   x / 10 → drop it\n gcd, mod, primes  ⇒  closed-form > brute force"
+      },
+      "trie-topic": {
+        "tldr": "As a tool, a trie **prunes prefix matching** across many candidate words — stops impossible prefixes early in a grid DFS or word pairing.",
+        "points": [
+          "Insert all dictionary words once.",
+          "Walk the trie alongside the search.",
+          "Dead prefix ⇒ cut the branch."
+        ],
+        "visual": " root─c─a─┬ t*   walk grid letters down the trie;\n         └ r*   missing child ⇒ stop early"
+      },
+      "bits": {
+        "tldr": "Pack a small **set or state into an integer** for O(1) set ops and **DP-over-subsets**; XOR/AND expose parity & membership.",
+        "points": [
+          "`1 << k` = element k; `mask & (1<<k)` tests it.",
+          "**XOR** cancels pairs / tracks parity.",
+          "Iterate subsets for bitmask DP."
+        ],
+        "visual": "mask = 1 0 1 1   = set {0,1,3}\n        bit 3 … 0\n  &  |  ^  <<  >>   ⇒ DP over subsets"
+      },
+      "bfs": {
+        "tldr": "Explore **level by level** from the source — first time you reach a node is the **fewest steps** (shortest path in an unweighted graph).",
+        "points": [
+          "Queue + visited set.",
+          "Each level = one more step.",
+          "First hit of target = shortest."
+        ],
+        "visual": "L0: [s]\nL1: [a b]\nL2: [c d e]   ← first reach = min steps"
+      },
+      "shortest-path": {
+        "tldr": "Find the **minimum-cost route** through a state graph — **BFS** for unit edges, **Dijkstra** (heap) for weighted edges.",
+        "points": [
+          "Unweighted ⇒ plain BFS.",
+          "Weighted ⇒ Dijkstra with a min-heap.",
+          "State = node (+ extra dims if needed)."
+        ],
+        "visual": "s →(1) a →(3) t\n  ↘(5) b →(1)↗     pick the minimum-cost frontier"
+      },
+      "simulation": {
+        "tldr": "When there's no shortcut, **model the described process step by step** with the right bookkeeping structure.",
+        "points": [
+          "Translate rules directly to state updates.",
+          "Pick a structure that makes each step cheap.",
+          "Correctness over cleverness."
+        ]
+      },
+      "heap": {
+        "tldr": "Keep the current **best (min/max) at the top** in O(log n) — top-K, priority scheduling, and streaming selection.",
+        "points": [
+          "`push` / `pop` in O(log n).",
+          "Size-K heap ⇒ top-K in O(n log k).",
+          "Lazy-delete or re-push for updates."
+        ],
+        "visual": "min-heap (top = smallest)\n     1\n    / \\\n   3   2     pop → 1, then reheapify"
+      },
+      "greedy": {
+        "tldr": "Commit to the **locally optimal** choice (often after sorting) when an **exchange argument** proves it reaches the global optimum.",
+        "points": [
+          "Sort by the right key (end / cost / ratio).",
+          "Take the best compatible next item.",
+          "Prove no swap improves the result."
+        ],
+        "visual": "sort → [pick]  [pick]  skip  [pick]\n local-best each step ⇒ global optimum"
+      },
+      "stack-topic": {
+        "tldr": "**LIFO deferral** — match/nest, parse expressions, and next-greater / monotonic scans.",
+        "points": [
+          "Push openers, pop on a match.",
+          "Save outer context on `(`, resolve on `)`.",
+          "Monotonic stack ⇒ next-greater/smaller."
+        ],
+        "visual": "\"( [ { } ] )\"\n push ( [ {\n   then ) ] }  pop & match the top"
+      },
+      "interval": {
+        "tldr": "**Sort by start/end**, then sweep — merge overlaps or count concurrent intervals.",
+        "points": [
+          "Overlap if `next.start < cur.end`.",
+          "Sort by **end** for max non-overlapping.",
+          "Sweep line counts concurrency."
+        ],
+        "visual": "|--A--|\n     |--B--|        overlap: B.start < A.end\n            |--C--|  (C is separate)"
+      }
     }
   },
   "groups": {
     "sum": {
       "ds": {
-        "array": "The k-sum and subarray-sum families live on arrays: sort + two-pointer (3Sum/4Sum), hash complements (Two Sum), or prefix-sum + hash to count subarrays reaching a target (Subarray Sum Equals K).",
-        "tree": "Sum becomes a root-to-leaf or any-path accumulation — DFS carries the running total down (Path Sum) or returns the best downward sum and combines it through the node (Binary Tree Maximum Path Sum).",
-        "matrices": "On a grid the target-sum query (Max Sum of Rectangle ≤ K) layers 2-D prefix sums with an ordered-set search over column ranges.",
-        "bst": "Two-Sum on a BST uses ordered in-order traversal or a hash of visited values (Two Sum IV, Two Sum BSTs)."
+        "array": {
+          "tldr": "The **k-sum** and **subarray-sum** families live on arrays — three reusable moves cover almost all of them.",
+          "points": [
+            "**Hash complement** (unsorted): `Two Sum` — store seen, look up `target-x`.",
+            "**Sort + two-pointer**: `3Sum` / `4Sum` — fix one, converge the rest.",
+            "**Prefix-sum + hash**: `Subarray Sum Equals K` — count prefixes equal to `cur-K`.",
+            "**Backtrack** when reuse/combinations matter: `Combination Sum`."
+          ],
+          "visual": "Two Sum (hash):  need 9\n [2 7 11 15]\n  ^ seen{2}; at 7 → 9-7=2 in seen ✓"
+        },
+        "tree": {
+          "tldr": "Sum becomes a **root→leaf** or **any-path** accumulation done with DFS.",
+          "points": [
+            "Carry a **running total down** the path: `Path Sum`, `Sum Root to Leaf`.",
+            "**Return the best downward sum** and combine through the node: `Binary Tree Maximum Path Sum`.",
+            "Prefix-sum-on-path + hash counts target paths: `Path Sum III`."
+          ],
+          "visual": "       (5)\n      /   \\        target path sum\n   (4)     (8)     accumulate down each branch\n   /\n (11)"
+        },
+        "matrices": {
+          "tldr": "Target-sum on a grid layers **2-D prefix sums** with an ordered-set search over row/column ranges.",
+          "points": [
+            "Fix a row band, reduce to a **1-D max-subarray ≤ K** problem.",
+            "Use a sorted set of prefixes to find the best bound: `Max Sum of Rectangle No Larger Than K`."
+          ]
+        },
+        "bst": {
+          "tldr": "Two-Sum on a BST reuses **ordering** or a **hash of visited values** during traversal.",
+          "points": [
+            "In-order gives sorted values → two-pointer toward target.",
+            "Or hash seen values while traversing: `Two Sum IV`, `Two Sum BSTs`."
+          ]
+        }
       },
       "topic": {
-        "hash": "A hash of seen values/prefixes gives O(1) complement and sum-so-far lookups — Two Sum's complement, Subarray Sum Equals K's prefix counts.",
-        "sorting": "Sorting first lets the k-sum problems two-pointer inward toward the target and skip duplicates (3Sum, 4Sum).",
-        "two-pointers": "On a sorted array two pointers converge to hit or bound a target sum, turning the inner loop of k-sum from O(n²) to O(n).",
-        "backtrack": "Combination-Sum picks numbers via DFS, subtracting from the remaining target and undoing the choice, pruning when it goes negative.",
-        "dfs": "DFS accumulates the running sum along a path and branches on include/exclude or child choices (Combination Sum, tree max-path).",
-        "dp": "Subset/target sums become knapsack-style DP over (index, remaining sum), counting or deciding reachability (Target Sum, Partition Equal Subset Sum).",
-        "sliding-window": "For positive arrays a window grows/shrinks to keep its sum at or under a bound (Minimum Size Subarray Sum, Binary Subarrays With Sum).",
-        "prefix-sum": "Cumulative sums turn a range-sum target into a difference; hashing prefixes counts subarrays whose sum equals or divides K (Subarray Sums Divisible by K).",
-        "deque-topic": "A monotonic deque over prefix sums finds the shortest subarray with sum ≥ K even with negatives (Shortest Subarray with Sum at Least K).",
-        "math": "Number-theory framing (prime pairing to a target sum) replaces enumeration with a sieve + complement check."
+        "hash": {
+          "tldr": "A hash of **seen values / prefixes** gives O(1) complement and sum-so-far lookups.",
+          "points": [
+            "Complement lookup: `Two Sum` (`target-x` in the set).",
+            "Prefix counts: `Subarray Sum Equals K`, `Subarray Sums Divisible by K` (key by `prefix % k`)."
+          ]
+        },
+        "sorting": {
+          "tldr": "Sorting **first** lets k-sum two-pointer inward and skip duplicates cleanly.",
+          "points": [
+            "Order enables converging pointers: `3Sum`, `4Sum`, `3Sum Closest`.",
+            "Skipping equal neighbours avoids duplicate triples."
+          ]
+        },
+        "two-pointers": {
+          "tldr": "On a **sorted** array two pointers converge to hit or bound a target, dropping the inner loop from O(n²) to O(n).",
+          "points": [
+            "Fix the outer element(s), converge L/R on the rest: `3Sum`, `4Sum`, `3Sum Smaller`.",
+            "`sum < target → L++`, `sum > target → R--`."
+          ],
+          "visual": "fix a=2, need 7 from rest:\n [.. 3  5  8  11 ..]\n     L→         ←R   3+11=14>7→R--  3+5=8>7→R--  done"
+        },
+        "backtrack": {
+          "tldr": "**Combination-Sum** picks numbers via DFS, subtracting from the remaining target and undoing the choice.",
+          "points": [
+            "Branch on include/skip each candidate.",
+            "Prune when the remainder goes negative.",
+            "Reuse-vs-once decided by the recursion index: `Combination Sum I/II/III`."
+          ]
+        },
+        "dfs": {
+          "tldr": "DFS accumulates the **running sum along a path** and branches on choices.",
+          "points": [
+            "Combination Sum: branch on candidate choices.",
+            "Tree max-path: combine child returns at the node."
+          ]
+        },
+        "dp": {
+          "tldr": "Subset/target sums are **knapsack-style DP** over `(index, remaining sum)` — count or decide reachability.",
+          "points": [
+            "Decision: `Target Sum`, `Partition Equal Subset Sum` (reach sum/2).",
+            "Counting orders: `Combination Sum IV` (sum-of-ways)."
+          ],
+          "visual": "dp[s] = can we make sum s?\n s: 0 1 2 3 4 5 6\n    T . . T . . T   ← flip true as items are added"
+        },
+        "sliding-window": {
+          "tldr": "For **positive** arrays a window grows/shrinks to keep its sum at/under a bound.",
+          "points": [
+            "Min length with sum ≥ target: `Minimum Size Subarray Sum`.",
+            "Count windows with an exact sum: `Binary Subarrays With Sum`."
+          ]
+        },
+        "prefix-sum": {
+          "tldr": "Cumulative sums turn a range-sum target into a **difference**; hashing prefixes counts qualifying subarrays.",
+          "points": [
+            "`Continuous Subarray Sum`, `Subarray Sum Equals K`.",
+            "Key by `prefix % k` for divisibility: `Subarray Sums Divisible by K`."
+          ]
+        },
+        "deque-topic": {
+          "tldr": "A monotonic deque over **prefix sums** finds the shortest subarray with sum ≥ K, even with **negatives**.",
+          "points": [
+            "Keep increasing prefixes in the deque.",
+            "Pop front when `pre[i]-pre[front] ≥ K`: `Shortest Subarray with Sum at Least K`.",
+            "Circular variant: `Maximum Sum Circular Subarray`."
+          ]
+        },
+        "math": {
+          "tldr": "Number-theory framing replaces enumeration with a **sieve + complement** check.",
+          "points": [
+            "Sieve primes, then pair `p + q = target`: `Prime Pairs With Target Sum`."
+          ]
+        }
       }
     },
     "palindrome": {
       "ds": {
-        "string": "Most palindrome work is on strings: expand-around-center for substrings (Longest Palindromic Substring, Palindromic Substrings), two-pointer compare from both ends (Valid Palindrome), or DP/partition over substrings (Palindrome Partitioning).",
-        "linked-list": "Palindrome Linked List finds the middle with fast/slow pointers, reverses the second half, then compares the two halves node by node.",
-        "tree": "Pseudo-Palindromic Paths DFS to each leaf tracking digit parities (a bitmask) — a path is palindrome-able when at most one digit has an odd count."
+        "string": {
+          "tldr": "Almost all palindrome work is on strings via three moves: **expand-around-center**, **two-pointer compare**, or **DP/partition** over substrings.",
+          "points": [
+            "**Expand-around-center**: count/find palindromic spans — `Longest Palindromic Substring`, `Palindromic Substrings`.",
+            "**Two-pointer compare** from both ends: `Valid Palindrome` (and the delete-one variant).",
+            "**DP / partition** over substrings: `Palindrome Partitioning`, `Min Insertion Steps`."
+          ],
+          "visual": "expand around center:\n  a b a c a b a\n      ←•→            grow while s[L]==s[R]"
+        },
+        "linked-list": {
+          "tldr": "`Palindrome Linked List`: find the middle, **reverse the second half**, compare halves.",
+          "points": [
+            "Fast/slow pointers locate the middle.",
+            "Reverse the back half in place, then walk both halves inward."
+          ],
+          "visual": "1 → 2 → 3 → 2 → 1\nslow→         reverse 2nd half → compare"
+        },
+        "tree": {
+          "tldr": "`Pseudo-Palindromic Paths`: DFS to each leaf tracking **digit parities** (a bitmask).",
+          "points": [
+            "A path is palindrome-able if **≤ 1 digit** has an odd count.",
+            "Toggle a parity bit per node; check at leaves."
+          ]
+        }
       },
       "topic": {
-        "math": "Palindrome Number reverses digits arithmetically (mod / divide) to compare halves without converting to a string.",
-        "two-pointers": "Two pointers walk inward comparing mirrored characters; the 'delete one' variants branch once on a mismatch (Valid Palindrome II).",
-        "backtrack": "Palindrome Partitioning backtracks over cut positions, keeping a prefix only when it is itself a palindrome.",
-        "hash": "Palindrome-permutation checks count character frequencies — a palindrome allows at most one odd count (Palindrome Permutation, Longest Palindrome).",
-        "trie-topic": "Palindrome Pairs stores reversed words in a trie so each word finds complements that form a palindrome in O(length).",
-        "dp": "Valid Palindrome III is edit-distance-style DP: the longest palindromic subsequence decides how many deletions keep it a palindrome within k.",
-        "dfs": "DFS down each root-to-leaf path carries the parity state used to test palindrome feasibility (Pseudo-Palindromic Paths).",
-        "bits": "A bitmask of character parities compactly represents which letters appear an odd number of times when judging palindrome formability."
+        "math": {
+          "tldr": "`Palindrome Number` reverses digits **arithmetically** to compare halves — no string conversion.",
+          "points": [
+            "Build the reversed half via `%10` / `/10`.",
+            "Stop at the midpoint; compare."
+          ]
+        },
+        "two-pointers": {
+          "tldr": "Two pointers walk **inward comparing mirrored characters**.",
+          "points": [
+            "`Valid Palindrome`: skip non-alphanumerics, compare L/R.",
+            "`Valid Palindrome II`: on a mismatch, branch once (delete L or R)."
+          ],
+          "visual": "A man a plan…\n^L                ^R   compare & move inward"
+        },
+        "backtrack": {
+          "tldr": "`Palindrome Partitioning` backtracks over **cut positions**, keeping a prefix only if it's itself a palindrome.",
+          "points": [
+            "Try every prefix as the next chunk.",
+            "Recurse on the remainder; undo the cut."
+          ]
+        },
+        "hash": {
+          "tldr": "Palindrome-permutation checks count **character frequencies** — at most one odd count is allowed.",
+          "points": [
+            "`Palindrome Permutation`, `Longest Palindrome`.",
+            "Even counts pair up around the center."
+          ]
+        },
+        "trie-topic": {
+          "tldr": "`Palindrome Pairs` stores **reversed words in a trie** so each word finds complements forming a palindrome.",
+          "points": [
+            "Walk a word's chars down reversed-word branches.",
+            "Match when the remaining suffix is itself a palindrome."
+          ]
+        },
+        "dp": {
+          "tldr": "`Valid Palindrome III` is **edit-distance-style DP** — longest palindromic subsequence decides feasibility within k deletions.",
+          "points": [
+            "`dp[i][j]` = LPS of substring i..j.",
+            "Feasible if `len - LPS ≤ k`."
+          ]
+        },
+        "dfs": {
+          "tldr": "DFS down each root→leaf path **carries the parity state** used to test palindrome feasibility.",
+          "points": [
+            "`Pseudo-Palindromic Paths`: toggle a bit per digit; check ≤1 odd at the leaf."
+          ]
+        },
+        "bits": {
+          "tldr": "A **bitmask of character parities** compactly tracks which letters appear an odd number of times.",
+          "points": [
+            "Used to test palindrome formability and disjoint subsequences (`Two Palindromic Subsequences`)."
+          ]
+        }
       }
     },
     "parenthesis": {
       "ds": {
-        "string": "Bracket problems scan a string left-to-right tracking balance — validity, longest valid run, minimum add/remove, or generating well-formed strings."
+        "string": {
+          "tldr": "Bracket problems **scan left-to-right tracking balance** — validity, longest valid run, min add/remove, or generation.",
+          "points": [
+            "Running `open - close` counter (never negative for validity).",
+            "Stack of indices to measure the longest valid stretch.",
+            "Backtracking to generate/repair well-formed strings."
+          ],
+          "visual": "( ( ) ( ) )\n+1+2+1+2+1 0   balance returns to 0 ⇒ valid"
+        }
       },
       "topic": {
-        "stack-topic": "A stack pushes opens and pops on a matching close (or tracks indices) to validate nesting and measure the longest valid stretch (Valid Parentheses, Longest Valid Parentheses).",
-        "backtrack": "Generation/repair backtracks over add-open / add-close (or remove) choices, pruning when closes exceed opens (Generate Parentheses, Remove Invalid Parentheses)."
+        "stack-topic": {
+          "tldr": "A **stack** pushes opens and pops on a matching close (or tracks indices) to validate nesting and measure runs.",
+          "points": [
+            "`Valid Parentheses`: push openers, pop & match.",
+            "`Longest Valid Parentheses`: stack of indices for the current valid base.",
+            "`Min Add/Remove`: counters as a degenerate stack."
+          ]
+        },
+        "backtrack": {
+          "tldr": "Generation/repair **backtracks over add-open / add-close / remove** choices with pruning.",
+          "points": [
+            "`Generate Parentheses`: add `(` while open<n, `)` while close<open.",
+            "`Remove Invalid Parentheses`: BFS/DFS removing the fewest chars.",
+            "`Different Ways to Add Parentheses`: split on each operator, combine results."
+          ]
+        }
       }
     },
     "word-process": {
       "ds": {
-        "string": "Words are strings to key, compare, or segment — dictionary lookups, abbreviation matching, pattern bijection, and frequency counts (Word Break, Word Pattern, Top K Frequent Words).",
-        "matrices": "Word search lays words onto a grid, DFS-ing over neighbours with backtracking and a trie to prune (Word Search I/II, Crossword).",
-        "graph": "Word Ladder treats words as nodes with edges between one-letter neighbours and BFS-es for the shortest transformation.",
-        "array": "When words arrive as a list/tokens, array scans give shortest-distance-between-words and word reversal (Shortest Word Distance, Reverse Words).",
-        "trie": "Add-and-Search Words stores the dictionary in a trie so wildcard ('.') queries branch over children in O(length)."
+        "string": {
+          "tldr": "Words are strings to **key, compare, or segment** — dictionary lookups, abbreviation matching, pattern bijection, frequency.",
+          "points": [
+            "**Segment** against a dictionary: `Word Break`.",
+            "**Bijection** word↔pattern: `Word Pattern`.",
+            "**Frequency / ranking**: `Top K Frequent Words`, `Most Common Word`."
+          ]
+        },
+        "matrices": {
+          "tldr": "Word search lays words on a **grid** and DFS-es over neighbours with backtracking (and a trie to prune).",
+          "points": [
+            "Mark/unmark visited cells during DFS: `Word Search`.",
+            "A trie of all words prunes many starts at once: `Word Search II`.",
+            "Constraint placement: `Crossword`."
+          ],
+          "visual": "grid DFS for \"CAT\":\n C→A→T   try 4 neighbours, backtrack on mismatch"
+        },
+        "graph": {
+          "tldr": "`Word Ladder` treats **words as nodes**, edges between one-letter neighbours.",
+          "points": [
+            "BFS from start word for the shortest chain.",
+            "Generate neighbours by changing each position a–z."
+          ]
+        },
+        "array": {
+          "tldr": "When words arrive as a **token list**, array scans give distance & reversal.",
+          "points": [
+            "`Shortest Word Distance` (I/II/III): track last-seen indices.",
+            "`Reverse Words in a String`: split, reverse, rejoin."
+          ]
+        },
+        "trie": {
+          "tldr": "`Add and Search Words` stores the dictionary in a **trie** so `'.'` wildcards branch over children.",
+          "points": [
+            "Insert words char by char.",
+            "On `'.'`, recurse into every child."
+          ]
+        }
       },
       "topic": {
-        "backtrack": "Grid word search and word-break-II backtrack over letter / segmentation choices, undoing on dead ends.",
-        "dfs": "DFS explores each grid path letter by letter, marking and unmarking cells as it goes (Word Search).",
-        "trie-topic": "A trie of dictionary words prunes the search (grid DFS or prefix replacement) so impossible prefixes stop early (Word Search II, Replace Words).",
-        "bfs": "BFS over one-letter-apart words finds the minimum transformation length (Word Ladder).",
-        "shortest-path": "The word-ladder transformation is a shortest path in an unweighted word graph, solved with BFS.",
-        "dp": "Word Break is DP over prefixes — dp[i] is reachable if some dictionary word ends at i and dp[start] held (also score-maximizing variants).",
-        "two-pointers": "Two indices walk a word and its abbreviation/expansion, or two word lists, to compare and measure distance (Valid Word Abbreviation, Shortest Word Distance).",
-        "hash": "A map enforces the word ↔ pattern bijection or counts word frequencies (Word Pattern, Most Common Word).",
-        "simulation": "Valid Word Square directly checks that row k equals column k by simulating the read.",
-        "heap": "Top K Frequent Words keeps a size-K heap ordered by (count, lexicographic) to pull the K most frequent.",
-        "sorting": "Sorting words by frequency then lexicographically selects the top-K ordering (Top K Frequent Words).",
-        "greedy": "Bold Words greedily merges overlapping matched ranges into the fewest tag spans.",
-        "bits": "Maximum Score Words encodes available letters / a chosen subset as a bitmask to enumerate or DP over word subsets."
+        "backtrack": {
+          "tldr": "Grid search and word-break-II **backtrack over letter / segmentation choices**, undoing on dead ends.",
+          "points": [
+            "`Word Search I/II`: DFS with visited marks.",
+            "`Word Break II`: try every dictionary prefix, recurse on the rest."
+          ]
+        },
+        "dfs": {
+          "tldr": "DFS explores each grid path **letter by letter**, marking/unmarking cells.",
+          "points": [
+            "`Word Search`: 4-direction recursion with a visited flag."
+          ]
+        },
+        "trie-topic": {
+          "tldr": "A **trie of dictionary words** prunes the search so impossible prefixes stop early.",
+          "points": [
+            "`Word Search II`: walk the grid down the trie, cut missing prefixes.",
+            "`Replace Words`: find the shortest root prefix."
+          ]
+        },
+        "bfs": {
+          "tldr": "**BFS over one-letter-apart words** finds the minimum transformation length.",
+          "points": [
+            "`Word Ladder`: level = one substitution; first hit = answer.",
+            "`Word Ladder II`: BFS layers + backtrack to rebuild paths."
+          ],
+          "visual": "hit → hot → dot → dog → cog\n   each step changes ONE letter (BFS levels)"
+        },
+        "shortest-path": {
+          "tldr": "The word-ladder transformation is a **shortest path** in an unweighted word graph (BFS).",
+          "points": [
+            "Unit edges ⇒ BFS gives the minimum number of steps."
+          ]
+        },
+        "dp": {
+          "tldr": "`Word Break` is **DP over prefixes** — reachable if some dictionary word ends here and the start was reachable.",
+          "points": [
+            "`dp[i]` true if `dp[j]` and `s[j..i]` ∈ dict.",
+            "Score-maximizing variant: `Maximum Score Words`."
+          ],
+          "visual": "s = leetcode , dict={leet,code}\n dp: [T . . . T . . . T]  ← reachable cut points"
+        },
+        "two-pointers": {
+          "tldr": "Two indices walk a **word and its abbreviation/expansion**, or two word lists, to compare/measure.",
+          "points": [
+            "`Valid Word Abbreviation`: advance over count runs.",
+            "`Shortest Word Distance`: compare positions of two words."
+          ]
+        },
+        "hash": {
+          "tldr": "A map enforces the **word↔pattern bijection** or counts word frequencies.",
+          "points": [
+            "`Word Pattern`: two maps keep the mapping one-to-one.",
+            "`Most Common Word`: frequency count + banned set."
+          ]
+        },
+        "simulation": {
+          "tldr": "`Valid Word Square` directly **checks row k equals column k** by simulating the read.",
+          "points": [
+            "Compare `grid[r][c]` with `grid[c][r]` for all in-bounds cells."
+          ]
+        },
+        "heap": {
+          "tldr": "`Top K Frequent Words` keeps a **size-K heap** ordered by (count, lexicographic).",
+          "points": [
+            "Count frequencies, then push into a K-heap.",
+            "Tie-break lexicographically."
+          ]
+        },
+        "sorting": {
+          "tldr": "Sorting by **frequency then lexicographically** selects the top-K ordering.",
+          "points": [
+            "`Top K Frequent Words`: sort counts, take first K."
+          ]
+        },
+        "greedy": {
+          "tldr": "`Bold Words` **merges overlapping matched ranges** into the fewest tag spans.",
+          "points": [
+            "Mark covered indices, then coalesce adjacent runs."
+          ]
+        },
+        "bits": {
+          "tldr": "`Maximum Score Words` encodes **available letters / chosen subset as a bitmask** to enumerate word subsets.",
+          "points": [
+            "Bitmask over words; check letter budget per subset."
+          ]
+        }
       }
     },
     "anagram": {
       "ds": {
-        "string": "Anagram tests treat the string as a multiset of characters — sort it, or build a 26-count signature, to compare (Valid Anagram, Group Anagrams).",
-        "array": "Find Anagram Mappings works over index arrays, mapping each value to its position via a hash."
+        "string": {
+          "tldr": "Treat the string as a **multiset of characters** — sort it or build a 26-count signature to compare.",
+          "points": [
+            "`Valid Anagram`: equal frequency vectors.",
+            "`Group Anagrams`: bucket by sorted-key / count-key."
+          ],
+          "visual": "\"eat\" → sort → \"aet\"\n\"tea\" → sort → \"aet\"   same key ⇒ anagrams"
+        },
+        "array": {
+          "tldr": "`Find Anagram Mappings` works over **index arrays**, mapping each value to its position.",
+          "points": [
+            "Hash value→index of the target, then map the source."
+          ]
+        }
       },
       "topic": {
-        "hash": "A frequency-signature (or sorted) key groups and matches anagrams in O(n·k); a value→index map answers mapping queries.",
-        "sliding-window": "Find All Anagrams slides a fixed-width window and compares its char-count vector to the pattern's in O(n)."
+        "hash": {
+          "tldr": "A **frequency-signature (or sorted) key** groups/matches anagrams in O(n·k).",
+          "points": [
+            "26-int count vector as the bucket key.",
+            "Value→index map answers mapping queries."
+          ],
+          "visual": "count: [a:1 e:1 t:1] → key\n same key buckets all anagrams together"
+        },
+        "sliding-window": {
+          "tldr": "`Find All Anagrams` slides a **fixed-width window** comparing char-counts to the pattern.",
+          "points": [
+            "Maintain a window count vector.",
+            "Match when it equals the pattern's vector."
+          ]
+        }
       }
     },
     "subsequence": {
       "ds": {
-        "string": "Subsequence DP over two strings (or a string and a target) counts or measures order-preserving matches — LCS, distinct subsequences, minimum windows.",
-        "array": "On numeric arrays the classic LIS and its variants pick an increasing / wiggle / arithmetic subsequence via DP or patience-sorting."
+        "string": {
+          "tldr": "**Subsequence DP over two strings** counts/measures order-preserving matches.",
+          "points": [
+            "`LCS`, `Distinct Subsequences`: `dp[i][j]` over the two prefixes.",
+            "`Is Subsequence`: greedy two-pointer.",
+            "`Minimum Window Subsequence`: DP tracking the start."
+          ],
+          "visual": "LCS table:\n     a b c\n   a 1 1 1\n   c 1 1 2   diagonal+1 on match"
+        },
+        "array": {
+          "tldr": "On numbers, the classic **LIS** and variants pick an increasing/wiggle/arithmetic subsequence.",
+          "points": [
+            "`Longest Increasing Subsequence`: O(n log n) patience or O(n²) DP.",
+            "`Wiggle`, `Arithmetic`, `Non-decreasing` variants."
+          ]
+        }
       },
       "topic": {
-        "dp": "State is usually (index, …) with transitions over take/skip; LIS, LCS, and distinct-subsequence counts are all tabular DP.",
-        "greedy": "Increasing Triplet keeps the two smallest tails seen so far — a greedy O(1)-space check for an increasing subsequence of length 3.",
-        "two-pointers": "Is-Subsequence walks both sequences with two pointers, advancing the source only on a match (Is Subsequence, Matching Subsequences).",
-        "backtrack": "Non-decreasing Subsequences enumerates valid subsequences by DFS, deduping choices at each level.",
-        "hash": "Longest Arithmetic Subsequence keys DP states by (index, common difference) in a hash map.",
-        "bits": "Two Palindromic Subsequences represents each candidate subsequence as a bitmask to test disjointness and combine lengths.",
-        "heap": "Maximum Subsequence Score sorts by one factor and uses a min-heap to keep the best K of the other while sweeping."
+        "dp": {
+          "tldr": "State is usually **(index, …)** with **take/skip** transitions; LIS/LCS/counts are tabular DP.",
+          "points": [
+            "`LIS`: `dp[i]` = longest ending at i.",
+            "`Distinct Subsequences`: count formations of the target."
+          ]
+        },
+        "greedy": {
+          "tldr": "`Increasing Triplet` keeps the **two smallest tails** seen so far — O(1)-space length-3 check.",
+          "points": [
+            "Track `first < second`; a third bigger value wins."
+          ]
+        },
+        "two-pointers": {
+          "tldr": "`Is Subsequence` walks both sequences, advancing the **source only on a match**.",
+          "points": [
+            "`Matching Subsequences`: bucket queries by next-needed char."
+          ]
+        },
+        "backtrack": {
+          "tldr": "`Non-decreasing Subsequences` **enumerates valid subsequences** by DFS, deduping per level.",
+          "points": [
+            "Only extend with values ≥ last picked.",
+            "Use a per-level seen-set to skip duplicates."
+          ]
+        },
+        "hash": {
+          "tldr": "`Longest Arithmetic Subsequence` keys DP states by **(index, common difference)** in a map.",
+          "points": [
+            "`dp[i][d]` = length ending at i with difference d."
+          ]
+        },
+        "bits": {
+          "tldr": "`Two Palindromic Subsequences` represents each candidate subsequence as a **bitmask** to test disjointness.",
+          "points": [
+            "Enumerate subsets; combine lengths of disjoint palindromic ones."
+          ]
+        },
+        "heap": {
+          "tldr": "`Maximum Subsequence Score` sorts by one factor and uses a **min-heap** to keep the best K of the other.",
+          "points": [
+            "Sort by the multiplier descending; heap holds top-K of the summed factor."
+          ]
+        }
       }
     },
     "buy-sell": {
       "ds": {
-        "array": "The price array is swept left-to-right tracking the best buy/sell state so far; the whole family is one pass over prices."
+        "array": {
+          "tldr": "The **price array is swept once** left-to-right, tracking the best buy/sell state so far.",
+          "points": [
+            "Single pass; no extra structure needed.",
+            "State carried across days is the whole trick."
+          ],
+          "visual": "prices: [7 1 5 3 6 4]\n         buy↑ low      sell↑ high → profit"
+        }
       },
       "topic": {
-        "dp": "A state machine over hold / sold / rest (plus a transaction-count, cooldown, or fee dimension) gives the unified DP for all stock variants (I–IV, cooldown, fee).",
-        "greedy": "When unlimited transactions are allowed, greedily summing every positive day-to-day delta is optimal (Stock II)."
+        "dp": {
+          "tldr": "A **state machine over hold / sold / rest** (plus transaction-count / cooldown / fee) unifies every stock variant.",
+          "points": [
+            "`hold = max(hold, rest - price)`; `sold = hold + price`.",
+            "Add a **k-transaction** dimension for III/IV.",
+            "Add **cooldown / fee** as extra transitions (309, 714)."
+          ],
+          "visual": "states:  REST ⇄ HOLD → SOLD → REST\n         buy↓        sell↑   (cooldown delays re-buy)"
+        },
+        "greedy": {
+          "tldr": "With **unlimited transactions**, greedily sum every **positive day-to-day delta**.",
+          "points": [
+            "`Stock II`: add `max(0, price[i]-price[i-1])`."
+          ],
+          "visual": "[1 5 3 6] → (5-1)+(6-3)=4+3=7   take every up-move"
+        }
       }
     },
     "expression": {
       "ds": {
-        "array": "Evaluate RPN scans a token array, pushing operands and applying each operator to the top two (postfix evaluation).",
-        "string": "Calculators and parsers walk the expression string char by char, handling numbers, operators, nesting, and precedence (Basic Calculator I–III, Decode String, Parse Lisp)."
+        "array": {
+          "tldr": "`Evaluate RPN` scans a **token array**, pushing operands and applying operators to the top two (postfix).",
+          "points": [
+            "Operand → push; operator → pop two, push result."
+          ],
+          "visual": "RPN: 2 1 + 3 *\n push2 push1 →(+)3 push3 →(*)9"
+        },
+        "string": {
+          "tldr": "Calculators/parsers **walk the expression string** handling numbers, operators, nesting & precedence.",
+          "points": [
+            "`Basic Calculator I–III`: stack for signs / nesting.",
+            "`Decode String`: stack saves count + outer string on `[`.",
+            "`Parse Lisp` / `Number of Atoms`: recursive descent."
+          ]
+        }
       },
       "topic": {
-        "stack-topic": "A stack holds pending operands/operators, or saves outer context on '(' and resolves on ')' — the backbone of expression evaluation and string decoding.",
-        "backtrack": "Operator-insertion and different-parenthesizations backtrack over where to split or place operators, evaluating each arrangement (Expression Add Operators, Different Ways to Add Parentheses)."
+        "stack-topic": {
+          "tldr": "A **stack** holds pending operands/operators, or saves outer context on `(` and resolves on `)`.",
+          "points": [
+            "Apply a pending operator when precedence allows.",
+            "On `)`, fold the current frame into the outer one.",
+            "Backbone of evaluation & string decoding."
+          ],
+          "visual": "1+(2*3) :  see '(' → push frame\n           compute 2*3=6 → resolve → 1+6=7"
+        },
+        "backtrack": {
+          "tldr": "Operator-insertion / re-parenthesization **backtrack over splits/placements**, evaluating each arrangement.",
+          "points": [
+            "`Expression Add Operators`: try +, −, ×, and concatenation at each gap.",
+            "`Different Ways to Add Parentheses`: split on each operator, combine sub-results."
+          ]
+        }
       }
     },
     "scheduling": {
       "ds": {
-        "graph": "Course-prerequisite scheduling builds a dependency graph and topologically sorts it (Kahn / DFS) to find a valid order or detect a cycle (Course Schedule I/II/IV).",
-        "array": "Meeting/task scheduling sorts the interval/task array by start or end, then sweeps to count overlaps or pack rooms (Meeting Rooms, Task Scheduler)."
+        "graph": {
+          "tldr": "Course-prerequisite scheduling builds a **dependency graph** and **topologically sorts** it.",
+          "points": [
+            "Edge `a → b` = a must precede b.",
+            "Kahn (in-degree 0 queue) or DFS post-order.",
+            "A cycle ⇒ no valid order: `Course Schedule I/II/IV`."
+          ],
+          "visual": "0 → 1 → 3\n      ↘ 2 ↗   in-degree 0 first ⇒ 0,1,2,3"
+        },
+        "array": {
+          "tldr": "Meeting/task scheduling **sorts the interval/task array**, then sweeps to count overlaps or pack rooms.",
+          "points": [
+            "Sort by start/end; sweep a line.",
+            "`Meeting Rooms II`: min rooms = max concurrency.",
+            "`Task Scheduler`: arrange by frequency + cooldown."
+          ]
+        }
       },
       "topic": {
-        "greedy": "Sort by end (or cost) and greedily admit the next compatible meeting / cheaper assignment (Meeting Rooms, Two City Scheduling).",
-        "interval": "Treated as intervals, meetings are sorted and swept to detect concurrency and the minimum rooms needed (Meeting Rooms).",
-        "heap": "A min-heap tracks earliest-freeing rooms, or the most-frequent task's cooldown, to schedule the next item (Meeting Rooms III, Task Scheduler).",
-        "two-pointers": "Meeting Scheduler walks both people's sorted slot lists with two pointers to find the first common free window.",
-        "dp": "Job-schedule difficulty partitions days into d groups via DP over (day, groups left), minimizing the summed daily maxima.",
-        "hash": "Task Scheduler II maps each task to the next time it may run, looked up in O(1) as tasks stream in."
+        "greedy": {
+          "tldr": "**Sort by end (or cost)** and greedily admit the next compatible / cheaper item.",
+          "points": [
+            "`Meeting Rooms`: earliest-finishing first.",
+            "`Two City Scheduling`: sort by cost difference."
+          ]
+        },
+        "interval": {
+          "tldr": "Treated as **intervals**, meetings are sorted and swept to detect concurrency / minimum rooms.",
+          "points": [
+            "Overlap when `next.start < cur.end`: `Meeting Rooms`."
+          ]
+        },
+        "heap": {
+          "tldr": "A **min-heap** tracks earliest-freeing rooms or the most-frequent task's cooldown.",
+          "points": [
+            "`Meeting Rooms III`: heaps of free rooms + busy-until times.",
+            "`Task Scheduler`: pop highest-count tasks per cycle."
+          ]
+        },
+        "two-pointers": {
+          "tldr": "`Meeting Scheduler` walks **both people's sorted slots** to find the first common free window.",
+          "points": [
+            "Advance the pointer whose slot ends earlier."
+          ]
+        },
+        "dp": {
+          "tldr": "`Minimum Difficulty of a Job Schedule` partitions days into d groups via DP **minimizing summed maxima**.",
+          "points": [
+            "`dp[day][groups]` over split points."
+          ]
+        },
+        "hash": {
+          "tldr": "`Task Scheduler II` maps each task to its **next allowed time**, looked up in O(1).",
+          "points": [
+            "`nextTime[task] = day + cooldown + 1`."
+          ]
+        }
       }
     }
   }
