@@ -632,10 +632,13 @@ function microForEntity(ent) {
 
 // Per-micro pseudo-code + ASCII visuals — same files the Patterns tab's
 // deep-dive uses, so edits there flow here too. Loaded once, lazily.
+// Cache-busted by the parent's ?v= build id (fallback ts) — WITHOUT this the
+// browser serves stale JSON and edits never show in the lineage notes.
 let PG_PSEUDO = {}, PG_VISUALS = {};
 (async () => {
-  try { const r = await fetch('../patterns-pseudo.json');  if (r.ok) { const j = await r.json(); delete j._meta; PG_PSEUDO  = j; } } catch (_) {}
-  try { const r = await fetch('../patterns-visuals.json'); if (r.ok) { const j = await r.json(); delete j._meta; PG_VISUALS = j; } } catch (_) {}
+  const cb = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || Date.now();
+  try { const r = await fetch('../patterns-pseudo.json?v='  + cb, { cache: 'no-store' }); if (r.ok) { const j = await r.json(); delete j._meta; PG_PSEUDO  = j; } } catch (_) {}
+  try { const r = await fetch('../patterns-visuals.json?v=' + cb, { cache: 'no-store' }); if (r.ok) { const j = await r.json(); delete j._meta; PG_VISUALS = j; } } catch (_) {}
 })();
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -2008,8 +2011,11 @@ function updateProblemsDrawer(nodeId, opts = {}) {
   }).join('') + (shown.length > 250 ? `<div class="pd-empty">+${shown.length-250} more — narrow with difficulty filter</div>` : '')
     : '<div class="pd-empty">No problems found for this filter</div>';
 
-  // Auto-open the drawer when there are problems to show (unless caller opts out)
-  if (problems.length > 0 && !opts.noAutoOpen && !drawer.classList.contains('open')) drawer.classList.add('open');
+  // Do NOT auto-open on node click — the drawer stays docked at the bottom
+  // (showing the live count in its header); the user expands it on demand by
+  // clicking the header / ▴ arrow (togglePD). `opts.forceOpen` still lets a
+  // caller open it explicitly.
+  if (opts.forceOpen && problems.length > 0 && !drawer.classList.contains('open')) drawer.classList.add('open');
 }
 
 // Set a node as root — preserves Depth/Direction/Layout/RelTypes unless explicitly passed.
