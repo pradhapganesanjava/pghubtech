@@ -1,0 +1,1280 @@
+{
+  "sum": {
+    "ds": {
+      "array": [
+        {
+          "id": "1",
+          "title": "Two Sum"
+        },
+        {
+          "id": "15",
+          "title": "3Sum"
+        },
+        {
+          "id": "16",
+          "title": "3Sum Closest"
+        },
+        {
+          "id": "18",
+          "title": "4Sum"
+        },
+        {
+          "id": "39",
+          "title": "Combination Sum"
+        },
+        {
+          "id": "40",
+          "title": "Combination Sum II"
+        },
+        {
+          "id": "167",
+          "title": "Two Sum II - Input Array Is Sorted"
+        },
+        {
+          "id": "209",
+          "title": "Minimum Size Subarray Sum"
+        },
+        {
+          "id": "216",
+          "title": "Combination Sum III"
+        },
+        {
+          "id": "259",
+          "title": "3Sum Smaller"
+        },
+        {
+          "id": "327",
+          "title": "Count of Range Sum"
+        },
+        {
+          "id": "363",
+          "title": "Max Sum of Rectangle No Larger Than K"
+        },
+        {
+          "id": "377",
+          "title": "Combination Sum IV"
+        },
+        {
+          "id": "416",
+          "title": "Partition Equal Subset Sum"
+        },
+        {
+          "id": "494",
+          "title": "Target Sum"
+        },
+        {
+          "id": "523",
+          "title": "Continuous Subarray Sum"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "653",
+          "title": "Two Sum IV - Input is a BST"
+        },
+        {
+          "id": "698",
+          "title": "Partition to K Equal Sum Subsets"
+        },
+        {
+          "id": "862",
+          "title": "Shortest Subarray with Sum at Least K"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        },
+        {
+          "id": "923",
+          "title": "3Sum With Multiplicity"
+        },
+        {
+          "id": "930",
+          "title": "Binary Subarrays With Sum"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "1099",
+          "title": "Two Sum Less Than K"
+        },
+        {
+          "id": "1679",
+          "title": "Max Number of K-Sum Pairs"
+        },
+        {
+          "id": "2461",
+          "title": "Maximum Sum of Distinct Subarrays With Length K"
+        },
+        {
+          "id": "2761",
+          "title": "Prime Pairs With Target Sum"
+        },
+        {
+          "id": "10027",
+          "title": "Solve and optimize 3Sum and variants at scale"
+        }
+      ],
+      "tree": [
+        {
+          "id": "112",
+          "title": "Path Sum"
+        },
+        {
+          "id": "113",
+          "title": "Path Sum II"
+        },
+        {
+          "id": "124",
+          "title": "Binary Tree Maximum Path Sum"
+        },
+        {
+          "id": "129",
+          "title": "Sum Root to Leaf Numbers"
+        },
+        {
+          "id": "437",
+          "title": "Path Sum III"
+        },
+        {
+          "id": "10014",
+          "title": "Set second tree values by subtree sums (T2 ← sum of T1 subtree)"
+        }
+      ],
+      "matrices": [
+        {
+          "id": "363",
+          "title": "Max Sum of Rectangle No Larger Than K"
+        }
+      ],
+      "bst": [
+        {
+          "id": "653",
+          "title": "Two Sum IV - Input is a BST"
+        },
+        {
+          "id": "1214",
+          "title": "Two Sum BSTs"
+        }
+      ]
+    },
+    "topic": {
+      "hash": [
+        {
+          "id": "1",
+          "title": "Two Sum"
+        },
+        {
+          "id": "167",
+          "title": "Two Sum II - Input Array Is Sorted"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "653",
+          "title": "Two Sum IV - Input is a BST"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        }
+      ],
+      "sorting": [
+        {
+          "id": "15",
+          "title": "3Sum"
+        },
+        {
+          "id": "16",
+          "title": "3Sum Closest"
+        },
+        {
+          "id": "18",
+          "title": "4Sum"
+        },
+        {
+          "id": "167",
+          "title": "Two Sum II - Input Array Is Sorted"
+        },
+        {
+          "id": "327",
+          "title": "Count of Range Sum"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "15",
+          "title": "3Sum"
+        },
+        {
+          "id": "16",
+          "title": "3Sum Closest"
+        },
+        {
+          "id": "18",
+          "title": "4Sum"
+        },
+        {
+          "id": "167",
+          "title": "Two Sum II - Input Array Is Sorted"
+        },
+        {
+          "id": "259",
+          "title": "3Sum Smaller"
+        },
+        {
+          "id": "923",
+          "title": "3Sum With Multiplicity"
+        },
+        {
+          "id": "1099",
+          "title": "Two Sum Less Than K"
+        },
+        {
+          "id": "1679",
+          "title": "Max Number of K-Sum Pairs"
+        },
+        {
+          "id": "10027",
+          "title": "Solve and optimize 3Sum and variants at scale"
+        }
+      ],
+      "backtrack": [
+        {
+          "id": "39",
+          "title": "Combination Sum"
+        },
+        {
+          "id": "40",
+          "title": "Combination Sum II"
+        },
+        {
+          "id": "216",
+          "title": "Combination Sum III"
+        }
+      ],
+      "dfs": [
+        {
+          "id": "39",
+          "title": "Combination Sum"
+        },
+        {
+          "id": "124",
+          "title": "Binary Tree Maximum Path Sum"
+        }
+      ],
+      "dp": [
+        {
+          "id": "124",
+          "title": "Binary Tree Maximum Path Sum"
+        },
+        {
+          "id": "377",
+          "title": "Combination Sum IV"
+        },
+        {
+          "id": "416",
+          "title": "Partition Equal Subset Sum"
+        },
+        {
+          "id": "494",
+          "title": "Target Sum"
+        },
+        {
+          "id": "698",
+          "title": "Partition to K Equal Sum Subsets"
+        },
+        {
+          "id": "10014",
+          "title": "Set second tree values by subtree sums (T2 ← sum of T1 subtree)"
+        }
+      ],
+      "sliding-window": [
+        {
+          "id": "209",
+          "title": "Minimum Size Subarray Sum"
+        },
+        {
+          "id": "930",
+          "title": "Binary Subarrays With Sum"
+        },
+        {
+          "id": "2461",
+          "title": "Maximum Sum of Distinct Subarrays With Length K"
+        }
+      ],
+      "prefix-sum": [
+        {
+          "id": "363",
+          "title": "Max Sum of Rectangle No Larger Than K"
+        },
+        {
+          "id": "523",
+          "title": "Continuous Subarray Sum"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        }
+      ],
+      "deque-topic": [
+        {
+          "id": "862",
+          "title": "Shortest Subarray with Sum at Least K"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        }
+      ],
+      "math": [
+        {
+          "id": "2761",
+          "title": "Prime Pairs With Target Sum"
+        }
+      ]
+    }
+  },
+  "palindrome": {
+    "ds": {
+      "string": [
+        {
+          "id": "5",
+          "title": "Longest Palindromic Substring"
+        },
+        {
+          "id": "125",
+          "title": "Valid Palindrome"
+        },
+        {
+          "id": "131",
+          "title": "Palindrome Partitioning"
+        },
+        {
+          "id": "214",
+          "title": "Shortest Palindrome"
+        },
+        {
+          "id": "234",
+          "title": "Palindrome Linked List"
+        },
+        {
+          "id": "266",
+          "title": "Palindrome Permutation"
+        },
+        {
+          "id": "336",
+          "title": "Palindrome Pairs"
+        },
+        {
+          "id": "409",
+          "title": "Longest Palindrome"
+        },
+        {
+          "id": "647",
+          "title": "Palindromic Substrings"
+        },
+        {
+          "id": "680",
+          "title": "Valid Palindrome II"
+        },
+        {
+          "id": "1216",
+          "title": "Valid Palindrome III"
+        },
+        {
+          "id": "1312",
+          "title": "Minimum Insertion Steps to Make a String Palindrome"
+        },
+        {
+          "id": "2002",
+          "title": "Maximum Product of the Length of Two Palindromic Subsequences"
+        }
+      ],
+      "linked-list": [
+        {
+          "id": "234",
+          "title": "Palindrome Linked List"
+        }
+      ],
+      "tree": [
+        {
+          "id": "1457",
+          "title": "Pseudo-Palindromic Paths in a Binary Tree"
+        }
+      ]
+    },
+    "topic": {
+      "math": [
+        {
+          "id": "9",
+          "title": "Palindrome Number"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "125",
+          "title": "Valid Palindrome"
+        },
+        {
+          "id": "234",
+          "title": "Palindrome Linked List"
+        },
+        {
+          "id": "680",
+          "title": "Valid Palindrome II"
+        }
+      ],
+      "backtrack": [
+        {
+          "id": "131",
+          "title": "Palindrome Partitioning"
+        }
+      ],
+      "hash": [
+        {
+          "id": "266",
+          "title": "Palindrome Permutation"
+        },
+        {
+          "id": "409",
+          "title": "Longest Palindrome"
+        }
+      ],
+      "trie-topic": [
+        {
+          "id": "336",
+          "title": "Palindrome Pairs"
+        }
+      ],
+      "dp": [
+        {
+          "id": "1216",
+          "title": "Valid Palindrome III"
+        }
+      ],
+      "dfs": [
+        {
+          "id": "1457",
+          "title": "Pseudo-Palindromic Paths in a Binary Tree"
+        }
+      ],
+      "bits": [
+        {
+          "id": "2002",
+          "title": "Maximum Product of the Length of Two Palindromic Subsequences"
+        }
+      ]
+    }
+  },
+  "parenthesis": {
+    "ds": {
+      "string": [
+        {
+          "id": "20",
+          "title": "Valid Parentheses"
+        },
+        {
+          "id": "22",
+          "title": "Generate Parentheses"
+        },
+        {
+          "id": "32",
+          "title": "Longest Valid Parentheses"
+        },
+        {
+          "id": "241",
+          "title": "Different Ways to Add Parentheses"
+        },
+        {
+          "id": "301",
+          "title": "Remove Invalid Parentheses"
+        },
+        {
+          "id": "921",
+          "title": "Minimum Add to Make Parentheses Valid"
+        },
+        {
+          "id": "1249",
+          "title": "Minimum Remove to Make Valid Parentheses"
+        }
+      ]
+    },
+    "topic": {
+      "stack-topic": [
+        {
+          "id": "20",
+          "title": "Valid Parentheses"
+        },
+        {
+          "id": "32",
+          "title": "Longest Valid Parentheses"
+        },
+        {
+          "id": "921",
+          "title": "Minimum Add to Make Parentheses Valid"
+        },
+        {
+          "id": "1249",
+          "title": "Minimum Remove to Make Valid Parentheses"
+        }
+      ],
+      "backtrack": [
+        {
+          "id": "22",
+          "title": "Generate Parentheses"
+        },
+        {
+          "id": "241",
+          "title": "Different Ways to Add Parentheses"
+        },
+        {
+          "id": "301",
+          "title": "Remove Invalid Parentheses"
+        }
+      ]
+    }
+  },
+  "word-process": {
+    "ds": {
+      "string": [
+        {
+          "id": "30",
+          "title": "Substring with Concatenation of All Words"
+        },
+        {
+          "id": "126",
+          "title": "Word Ladder II"
+        },
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        },
+        {
+          "id": "139",
+          "title": "Word Break"
+        },
+        {
+          "id": "140",
+          "title": "Word Break II"
+        },
+        {
+          "id": "186",
+          "title": "Reverse Words in a String II"
+        },
+        {
+          "id": "290",
+          "title": "Word Pattern"
+        },
+        {
+          "id": "291",
+          "title": "Word Pattern II"
+        },
+        {
+          "id": "408",
+          "title": "Valid Word Abbreviation"
+        },
+        {
+          "id": "411",
+          "title": "Minimum Unique Word Abbreviation"
+        },
+        {
+          "id": "648",
+          "title": "Replace Words"
+        },
+        {
+          "id": "692",
+          "title": "Top K Frequent Words"
+        },
+        {
+          "id": "758",
+          "title": "Bold Words in String"
+        },
+        {
+          "id": "809",
+          "title": "Expressive Words"
+        },
+        {
+          "id": "819",
+          "title": "Most Common Word"
+        },
+        {
+          "id": "843",
+          "title": "Guess the Word"
+        },
+        {
+          "id": "1255",
+          "title": "Maximum Score Words Formed by Letters"
+        }
+      ],
+      "matrices": [
+        {
+          "id": "79",
+          "title": "Word Search"
+        },
+        {
+          "id": "212",
+          "title": "Word Search II"
+        },
+        {
+          "id": "2018",
+          "title": "Check if Word Can Be Placed In Crossword"
+        }
+      ],
+      "graph": [
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        }
+      ],
+      "array": [
+        {
+          "id": "151",
+          "title": "Reverse Words in a String"
+        },
+        {
+          "id": "243",
+          "title": "Shortest Word Distance"
+        },
+        {
+          "id": "244",
+          "title": "Shortest Word Distance II"
+        },
+        {
+          "id": "245",
+          "title": "Shortest Word Distance III"
+        }
+      ],
+      "trie": [
+        {
+          "id": "211",
+          "title": "Design Add and Search Words Data Structure"
+        }
+      ]
+    },
+    "topic": {
+      "backtrack": [
+        {
+          "id": "79",
+          "title": "Word Search"
+        },
+        {
+          "id": "140",
+          "title": "Word Break II"
+        },
+        {
+          "id": "212",
+          "title": "Word Search II"
+        },
+        {
+          "id": "291",
+          "title": "Word Pattern II"
+        },
+        {
+          "id": "411",
+          "title": "Minimum Unique Word Abbreviation"
+        },
+        {
+          "id": "843",
+          "title": "Guess the Word"
+        }
+      ],
+      "dfs": [
+        {
+          "id": "79",
+          "title": "Word Search"
+        }
+      ],
+      "trie-topic": [
+        {
+          "id": "79",
+          "title": "Word Search"
+        },
+        {
+          "id": "212",
+          "title": "Word Search II"
+        },
+        {
+          "id": "648",
+          "title": "Replace Words"
+        }
+      ],
+      "bfs": [
+        {
+          "id": "126",
+          "title": "Word Ladder II"
+        },
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        }
+      ],
+      "shortest-path": [
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        }
+      ],
+      "dp": [
+        {
+          "id": "139",
+          "title": "Word Break"
+        },
+        {
+          "id": "1255",
+          "title": "Maximum Score Words Formed by Letters"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "243",
+          "title": "Shortest Word Distance"
+        },
+        {
+          "id": "244",
+          "title": "Shortest Word Distance II"
+        },
+        {
+          "id": "245",
+          "title": "Shortest Word Distance III"
+        },
+        {
+          "id": "408",
+          "title": "Valid Word Abbreviation"
+        },
+        {
+          "id": "809",
+          "title": "Expressive Words"
+        }
+      ],
+      "hash": [
+        {
+          "id": "290",
+          "title": "Word Pattern"
+        },
+        {
+          "id": "819",
+          "title": "Most Common Word"
+        }
+      ],
+      "simulation": [
+        {
+          "id": "422",
+          "title": "Valid Word Square"
+        }
+      ],
+      "heap": [
+        {
+          "id": "692",
+          "title": "Top K Frequent Words"
+        }
+      ],
+      "sorting": [
+        {
+          "id": "692",
+          "title": "Top K Frequent Words"
+        }
+      ],
+      "greedy": [
+        {
+          "id": "758",
+          "title": "Bold Words in String"
+        }
+      ],
+      "bits": [
+        {
+          "id": "1255",
+          "title": "Maximum Score Words Formed by Letters"
+        }
+      ]
+    }
+  },
+  "anagram": {
+    "ds": {
+      "string": [
+        {
+          "id": "49",
+          "title": "Group Anagrams"
+        },
+        {
+          "id": "242",
+          "title": "Valid Anagram"
+        },
+        {
+          "id": "438",
+          "title": "Find All Anagrams in a String"
+        }
+      ],
+      "array": [
+        {
+          "id": "760",
+          "title": "Find Anagram Mappings"
+        }
+      ]
+    },
+    "topic": {
+      "hash": [
+        {
+          "id": "49",
+          "title": "Group Anagrams"
+        },
+        {
+          "id": "242",
+          "title": "Valid Anagram"
+        },
+        {
+          "id": "760",
+          "title": "Find Anagram Mappings"
+        }
+      ],
+      "sliding-window": [
+        {
+          "id": "438",
+          "title": "Find All Anagrams in a String"
+        }
+      ]
+    }
+  },
+  "subsequence": {
+    "ds": {
+      "string": [
+        {
+          "id": "115",
+          "title": "Distinct Subsequences"
+        },
+        {
+          "id": "392",
+          "title": "Is Subsequence"
+        },
+        {
+          "id": "727",
+          "title": "Minimum Window Subsequence"
+        },
+        {
+          "id": "792",
+          "title": "Number of Matching Subsequences"
+        },
+        {
+          "id": "1143",
+          "title": "Longest Common Subsequence"
+        },
+        {
+          "id": "2002",
+          "title": "Maximum Product of the Length of Two Palindromic Subsequences"
+        }
+      ],
+      "array": [
+        {
+          "id": "300",
+          "title": "Longest Increasing Subsequence"
+        },
+        {
+          "id": "334",
+          "title": "Increasing Triplet Subsequence"
+        },
+        {
+          "id": "376",
+          "title": "Wiggle Subsequence"
+        },
+        {
+          "id": "491",
+          "title": "Non-decreasing Subsequences"
+        },
+        {
+          "id": "673",
+          "title": "Number of Longest Increasing Subsequence"
+        },
+        {
+          "id": "1218",
+          "title": "Longest Arithmetic Subsequence of Given Difference"
+        },
+        {
+          "id": "2542",
+          "title": "Maximum Subsequence Score"
+        },
+        {
+          "id": "10021",
+          "title": "Check if each recipe is a contiguous subsequence"
+        }
+      ]
+    },
+    "topic": {
+      "dp": [
+        {
+          "id": "115",
+          "title": "Distinct Subsequences"
+        },
+        {
+          "id": "300",
+          "title": "Longest Increasing Subsequence"
+        },
+        {
+          "id": "376",
+          "title": "Wiggle Subsequence"
+        },
+        {
+          "id": "491",
+          "title": "Non-decreasing Subsequences"
+        },
+        {
+          "id": "673",
+          "title": "Number of Longest Increasing Subsequence"
+        },
+        {
+          "id": "727",
+          "title": "Minimum Window Subsequence"
+        },
+        {
+          "id": "1143",
+          "title": "Longest Common Subsequence"
+        }
+      ],
+      "greedy": [
+        {
+          "id": "334",
+          "title": "Increasing Triplet Subsequence"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "392",
+          "title": "Is Subsequence"
+        },
+        {
+          "id": "792",
+          "title": "Number of Matching Subsequences"
+        },
+        {
+          "id": "10021",
+          "title": "Check if each recipe is a contiguous subsequence"
+        }
+      ],
+      "backtrack": [
+        {
+          "id": "491",
+          "title": "Non-decreasing Subsequences"
+        }
+      ],
+      "hash": [
+        {
+          "id": "1218",
+          "title": "Longest Arithmetic Subsequence of Given Difference"
+        }
+      ],
+      "bits": [
+        {
+          "id": "2002",
+          "title": "Maximum Product of the Length of Two Palindromic Subsequences"
+        }
+      ],
+      "heap": [
+        {
+          "id": "2542",
+          "title": "Maximum Subsequence Score"
+        }
+      ]
+    }
+  },
+  "buy-sell": {
+    "ds": {
+      "array": [
+        {
+          "id": "121",
+          "title": "Best Time to Buy and Sell Stock"
+        },
+        {
+          "id": "122",
+          "title": "Best Time to Buy and Sell Stock II"
+        },
+        {
+          "id": "123",
+          "title": "Best Time to Buy and Sell Stock III"
+        },
+        {
+          "id": "188",
+          "title": "Best Time to Buy and Sell Stock IV"
+        },
+        {
+          "id": "309",
+          "title": "Best Time to Buy and Sell Stock with Cooldown"
+        },
+        {
+          "id": "714",
+          "title": "Best Time to Buy and Sell Stock with Transaction Fee"
+        }
+      ]
+    },
+    "topic": {
+      "dp": [
+        {
+          "id": "121",
+          "title": "Best Time to Buy and Sell Stock"
+        },
+        {
+          "id": "122",
+          "title": "Best Time to Buy and Sell Stock II"
+        },
+        {
+          "id": "123",
+          "title": "Best Time to Buy and Sell Stock III"
+        },
+        {
+          "id": "188",
+          "title": "Best Time to Buy and Sell Stock IV"
+        },
+        {
+          "id": "309",
+          "title": "Best Time to Buy and Sell Stock with Cooldown"
+        },
+        {
+          "id": "714",
+          "title": "Best Time to Buy and Sell Stock with Transaction Fee"
+        }
+      ],
+      "greedy": [
+        {
+          "id": "121",
+          "title": "Best Time to Buy and Sell Stock"
+        },
+        {
+          "id": "122",
+          "title": "Best Time to Buy and Sell Stock II"
+        }
+      ]
+    }
+  },
+  "expression": {
+    "ds": {
+      "array": [
+        {
+          "id": "150",
+          "title": "Evaluate Reverse Polish Notation"
+        }
+      ],
+      "string": [
+        {
+          "id": "224",
+          "title": "Basic Calculator"
+        },
+        {
+          "id": "227",
+          "title": "Basic Calculator II"
+        },
+        {
+          "id": "241",
+          "title": "Different Ways to Add Parentheses"
+        },
+        {
+          "id": "282",
+          "title": "Expression Add Operators"
+        },
+        {
+          "id": "394",
+          "title": "Decode String"
+        },
+        {
+          "id": "439",
+          "title": "Ternary Expression Parser"
+        },
+        {
+          "id": "726",
+          "title": "Number of Atoms"
+        },
+        {
+          "id": "736",
+          "title": "Parse Lisp Expression"
+        },
+        {
+          "id": "772",
+          "title": "Basic Calculator III"
+        },
+        {
+          "id": "1106",
+          "title": "Parsing A Boolean Expression"
+        },
+        {
+          "id": "10018",
+          "title": "Evaluate arithmetic expression with variables"
+        }
+      ]
+    },
+    "topic": {
+      "stack-topic": [
+        {
+          "id": "150",
+          "title": "Evaluate Reverse Polish Notation"
+        },
+        {
+          "id": "224",
+          "title": "Basic Calculator"
+        },
+        {
+          "id": "227",
+          "title": "Basic Calculator II"
+        },
+        {
+          "id": "394",
+          "title": "Decode String"
+        },
+        {
+          "id": "439",
+          "title": "Ternary Expression Parser"
+        },
+        {
+          "id": "726",
+          "title": "Number of Atoms"
+        },
+        {
+          "id": "736",
+          "title": "Parse Lisp Expression"
+        },
+        {
+          "id": "772",
+          "title": "Basic Calculator III"
+        },
+        {
+          "id": "1106",
+          "title": "Parsing A Boolean Expression"
+        },
+        {
+          "id": "10018",
+          "title": "Evaluate arithmetic expression with variables"
+        }
+      ],
+      "backtrack": [
+        {
+          "id": "241",
+          "title": "Different Ways to Add Parentheses"
+        },
+        {
+          "id": "282",
+          "title": "Expression Add Operators"
+        }
+      ]
+    }
+  },
+  "scheduling": {
+    "ds": {
+      "graph": [
+        {
+          "id": "207",
+          "title": "Course Schedule"
+        },
+        {
+          "id": "210",
+          "title": "Course Schedule II"
+        },
+        {
+          "id": "1462",
+          "title": "Course Schedule IV"
+        },
+        {
+          "id": "2127",
+          "title": "Maximum Employees to Be Invited to a Meeting"
+        }
+      ],
+      "array": [
+        {
+          "id": "252",
+          "title": "Meeting Rooms"
+        },
+        {
+          "id": "253",
+          "title": "Meeting Rooms II"
+        },
+        {
+          "id": "621",
+          "title": "Task Scheduler"
+        },
+        {
+          "id": "1029",
+          "title": "Two City Scheduling"
+        },
+        {
+          "id": "1229",
+          "title": "Meeting Scheduler"
+        },
+        {
+          "id": "1235",
+          "title": "Maximum Profit in Job Scheduling"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        },
+        {
+          "id": "2365",
+          "title": "Task Scheduler II"
+        },
+        {
+          "id": "2402",
+          "title": "Meeting Rooms III"
+        }
+      ]
+    },
+    "topic": {
+      "greedy": [
+        {
+          "id": "252",
+          "title": "Meeting Rooms"
+        },
+        {
+          "id": "253",
+          "title": "Meeting Rooms II"
+        },
+        {
+          "id": "1029",
+          "title": "Two City Scheduling"
+        },
+        {
+          "id": "1235",
+          "title": "Maximum Profit in Job Scheduling"
+        }
+      ],
+      "interval": [
+        {
+          "id": "252",
+          "title": "Meeting Rooms"
+        }
+      ],
+      "heap": [
+        {
+          "id": "621",
+          "title": "Task Scheduler"
+        },
+        {
+          "id": "2402",
+          "title": "Meeting Rooms III"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "1229",
+          "title": "Meeting Scheduler"
+        }
+      ],
+      "dp": [
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        }
+      ],
+      "hash": [
+        {
+          "id": "2365",
+          "title": "Task Scheduler II"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "_meta": "Group By tab: per-(group × DS) and per-(group × Topic) summaries. groups.<group>.<ds|topic>.<id> = how that DS/Topic shows up in THIS group's problems. general.<ds|topic>.<id> = how that DS/Topic is generally utilized. Rendered inline (expandable) in the Group By detail card — no navigation. Authored from scripts/group-combos.json.",
+  "general": {
+    "ds": {
+      "string": "Strings are the workhorse input for character-level scanning, two-pointer sweeps, DP over substrings/subsequences, and hashing of windows or signatures; immutability often pushes you to indices or a builder.",
+      "array": "Arrays give O(1) indexed access and contiguity, enabling two-pointer sweeps, prefix sums, sliding windows, in-place rewrites, and tabular DP indexed by position.",
+      "tree": "Trees are traversed by DFS (pre/in/post-order) or BFS; many problems reduce to returning an aggregate from each subtree (tree DP) or carrying state down a root-to-leaf path.",
+      "bst": "A BST's in-order traversal yields sorted values, so range / Kth / closest queries and ordered lookups exploit the left < root < right invariant for pruning.",
+      "matrices": "Grids are 2-D arrays traversed by DFS/BFS over 4/8 neighbours, scanned in layers or spirals, or filled with 2-D DP / 2-D prefix sums.",
+      "linked-list": "Linked lists are manipulated by pointer rewiring and two-pointer (fast/slow) tricks; with no random access you reverse, find the middle, or merge in place.",
+      "graph": "Graphs are explored by DFS/BFS or processed in dependency order via topological sort; edges encode constraints between entities.",
+      "trie": "A trie indexes a set of strings by shared prefixes, giving prefix/word lookups and wildcard matching in O(length) per query."
+    },
+    "topic": {
+      "hash": "Hashing trades space for O(1) membership / frequency / complement lookups, and for keying items by a canonical signature.",
+      "sorting": "Sorting imposes order so you can two-pointer toward a target, group adjacent equals, or greedily process in monotonic order.",
+      "two-pointers": "Two pointers converge from both ends (sorted-target search) or run at different speeds (fast/slow, sliding bounds) to reach O(n) where brute force is O(n²).",
+      "backtrack": "Backtracking enumerates choices via DFS, applying then undoing each decision, with pruning to skip infeasible branches.",
+      "dfs": "DFS recurses into one path fully before the next — used for tree/graph traversal, connected components, and exhaustive enumeration.",
+      "dp": "DP caches overlapping-subproblem results: define a state and a transition so each subproblem is solved once (top-down memo or bottom-up table).",
+      "sliding-window": "A sliding window keeps a contiguous range satisfying a constraint, expanding/contracting its bounds to scan all valid windows in O(n).",
+      "prefix-sum": "Prefix sums precompute cumulative totals so any range sum is an O(1) difference; pairing with a hash of seen prefixes counts subarrays hitting a target.",
+      "deque-topic": "A monotonic deque keeps candidates ordered at both ends, giving sliding-window min/max and 'shortest subarray' queries in amortized O(n).",
+      "math": "Math / number-theory shortcuts (digits, modular arithmetic, combinatorics, primality) replace brute force with closed-form or O(log n) reasoning.",
+      "trie-topic": "Used as a tool, a trie accelerates prefix matching across many candidate words — e.g. pruning a grid DFS or pairing word fragments.",
+      "bits": "Bitmasks pack a small set or state into an integer for O(1) set ops and DP-over-subsets; XOR/AND tricks expose parity and membership.",
+      "bfs": "BFS explores level by level, giving shortest path / fewest steps in unweighted state graphs.",
+      "shortest-path": "Shortest-path search (BFS for unit edges, Dijkstra for weights) finds minimum-cost routes through a state graph.",
+      "simulation": "Simulation directly models the described process step by step when no shortcut exists.",
+      "heap": "A heap keeps the current best (min/max) at the top in O(log n), powering top-K, priority scheduling, and streaming selection.",
+      "greedy": "Greedy commits to the locally optimal choice (often after sorting) when an exchange argument proves it reaches a global optimum.",
+      "stack-topic": "A stack defers work LIFO — matching/nesting, parsing expressions, and next-greater / monotonic scans.",
+      "interval": "Interval problems sort by start/end then sweep, merging overlaps or counting concurrent intervals."
+    }
+  },
+  "groups": {
+    "sum": {
+      "ds": {
+        "array": "The k-sum and subarray-sum families live on arrays: sort + two-pointer (3Sum/4Sum), hash complements (Two Sum), or prefix-sum + hash to count subarrays reaching a target (Subarray Sum Equals K).",
+        "tree": "Sum becomes a root-to-leaf or any-path accumulation — DFS carries the running total down (Path Sum) or returns the best downward sum and combines it through the node (Binary Tree Maximum Path Sum).",
+        "matrices": "On a grid the target-sum query (Max Sum of Rectangle ≤ K) layers 2-D prefix sums with an ordered-set search over column ranges.",
+        "bst": "Two-Sum on a BST uses ordered in-order traversal or a hash of visited values (Two Sum IV, Two Sum BSTs)."
+      },
+      "topic": {
+        "hash": "A hash of seen values/prefixes gives O(1) complement and sum-so-far lookups — Two Sum's complement, Subarray Sum Equals K's prefix counts.",
+        "sorting": "Sorting first lets the k-sum problems two-pointer inward toward the target and skip duplicates (3Sum, 4Sum).",
+        "two-pointers": "On a sorted array two pointers converge to hit or bound a target sum, turning the inner loop of k-sum from O(n²) to O(n).",
+        "backtrack": "Combination-Sum picks numbers via DFS, subtracting from the remaining target and undoing the choice, pruning when it goes negative.",
+        "dfs": "DFS accumulates the running sum along a path and branches on include/exclude or child choices (Combination Sum, tree max-path).",
+        "dp": "Subset/target sums become knapsack-style DP over (index, remaining sum), counting or deciding reachability (Target Sum, Partition Equal Subset Sum).",
+        "sliding-window": "For positive arrays a window grows/shrinks to keep its sum at or under a bound (Minimum Size Subarray Sum, Binary Subarrays With Sum).",
+        "prefix-sum": "Cumulative sums turn a range-sum target into a difference; hashing prefixes counts subarrays whose sum equals or divides K (Subarray Sums Divisible by K).",
+        "deque-topic": "A monotonic deque over prefix sums finds the shortest subarray with sum ≥ K even with negatives (Shortest Subarray with Sum at Least K).",
+        "math": "Number-theory framing (prime pairing to a target sum) replaces enumeration with a sieve + complement check."
+      }
+    },
+    "palindrome": {
+      "ds": {
+        "string": "Most palindrome work is on strings: expand-around-center for substrings (Longest Palindromic Substring, Palindromic Substrings), two-pointer compare from both ends (Valid Palindrome), or DP/partition over substrings (Palindrome Partitioning).",
+        "linked-list": "Palindrome Linked List finds the middle with fast/slow pointers, reverses the second half, then compares the two halves node by node.",
+        "tree": "Pseudo-Palindromic Paths DFS to each leaf tracking digit parities (a bitmask) — a path is palindrome-able when at most one digit has an odd count."
+      },
+      "topic": {
+        "math": "Palindrome Number reverses digits arithmetically (mod / divide) to compare halves without converting to a string.",
+        "two-pointers": "Two pointers walk inward comparing mirrored characters; the 'delete one' variants branch once on a mismatch (Valid Palindrome II).",
+        "backtrack": "Palindrome Partitioning backtracks over cut positions, keeping a prefix only when it is itself a palindrome.",
+        "hash": "Palindrome-permutation checks count character frequencies — a palindrome allows at most one odd count (Palindrome Permutation, Longest Palindrome).",
+        "trie-topic": "Palindrome Pairs stores reversed words in a trie so each word finds complements that form a palindrome in O(length).",
+        "dp": "Valid Palindrome III is edit-distance-style DP: the longest palindromic subsequence decides how many deletions keep it a palindrome within k.",
+        "dfs": "DFS down each root-to-leaf path carries the parity state used to test palindrome feasibility (Pseudo-Palindromic Paths).",
+        "bits": "A bitmask of character parities compactly represents which letters appear an odd number of times when judging palindrome formability."
+      }
+    },
+    "parenthesis": {
+      "ds": {
+        "string": "Bracket problems scan a string left-to-right tracking balance — validity, longest valid run, minimum add/remove, or generating well-formed strings."
+      },
+      "topic": {
+        "stack-topic": "A stack pushes opens and pops on a matching close (or tracks indices) to validate nesting and measure the longest valid stretch (Valid Parentheses, Longest Valid Parentheses).",
+        "backtrack": "Generation/repair backtracks over add-open / add-close (or remove) choices, pruning when closes exceed opens (Generate Parentheses, Remove Invalid Parentheses)."
+      }
+    },
+    "word-process": {
+      "ds": {
+        "string": "Words are strings to key, compare, or segment — dictionary lookups, abbreviation matching, pattern bijection, and frequency counts (Word Break, Word Pattern, Top K Frequent Words).",
+        "matrices": "Word search lays words onto a grid, DFS-ing over neighbours with backtracking and a trie to prune (Word Search I/II, Crossword).",
+        "graph": "Word Ladder treats words as nodes with edges between one-letter neighbours and BFS-es for the shortest transformation.",
+        "array": "When words arrive as a list/tokens, array scans give shortest-distance-between-words and word reversal (Shortest Word Distance, Reverse Words).",
+        "trie": "Add-and-Search Words stores the dictionary in a trie so wildcard ('.') queries branch over children in O(length)."
+      },
+      "topic": {
+        "backtrack": "Grid word search and word-break-II backtrack over letter / segmentation choices, undoing on dead ends.",
+        "dfs": "DFS explores each grid path letter by letter, marking and unmarking cells as it goes (Word Search).",
+        "trie-topic": "A trie of dictionary words prunes the search (grid DFS or prefix replacement) so impossible prefixes stop early (Word Search II, Replace Words).",
+        "bfs": "BFS over one-letter-apart words finds the minimum transformation length (Word Ladder).",
+        "shortest-path": "The word-ladder transformation is a shortest path in an unweighted word graph, solved with BFS.",
+        "dp": "Word Break is DP over prefixes — dp[i] is reachable if some dictionary word ends at i and dp[start] held (also score-maximizing variants).",
+        "two-pointers": "Two indices walk a word and its abbreviation/expansion, or two word lists, to compare and measure distance (Valid Word Abbreviation, Shortest Word Distance).",
+        "hash": "A map enforces the word ↔ pattern bijection or counts word frequencies (Word Pattern, Most Common Word).",
+        "simulation": "Valid Word Square directly checks that row k equals column k by simulating the read.",
+        "heap": "Top K Frequent Words keeps a size-K heap ordered by (count, lexicographic) to pull the K most frequent.",
+        "sorting": "Sorting words by frequency then lexicographically selects the top-K ordering (Top K Frequent Words).",
+        "greedy": "Bold Words greedily merges overlapping matched ranges into the fewest tag spans.",
+        "bits": "Maximum Score Words encodes available letters / a chosen subset as a bitmask to enumerate or DP over word subsets."
+      }
+    },
+    "anagram": {
+      "ds": {
+        "string": "Anagram tests treat the string as a multiset of characters — sort it, or build a 26-count signature, to compare (Valid Anagram, Group Anagrams).",
+        "array": "Find Anagram Mappings works over index arrays, mapping each value to its position via a hash."
+      },
+      "topic": {
+        "hash": "A frequency-signature (or sorted) key groups and matches anagrams in O(n·k); a value→index map answers mapping queries.",
+        "sliding-window": "Find All Anagrams slides a fixed-width window and compares its char-count vector to the pattern's in O(n)."
+      }
+    },
+    "subsequence": {
+      "ds": {
+        "string": "Subsequence DP over two strings (or a string and a target) counts or measures order-preserving matches — LCS, distinct subsequences, minimum windows.",
+        "array": "On numeric arrays the classic LIS and its variants pick an increasing / wiggle / arithmetic subsequence via DP or patience-sorting."
+      },
+      "topic": {
+        "dp": "State is usually (index, …) with transitions over take/skip; LIS, LCS, and distinct-subsequence counts are all tabular DP.",
+        "greedy": "Increasing Triplet keeps the two smallest tails seen so far — a greedy O(1)-space check for an increasing subsequence of length 3.",
+        "two-pointers": "Is-Subsequence walks both sequences with two pointers, advancing the source only on a match (Is Subsequence, Matching Subsequences).",
+        "backtrack": "Non-decreasing Subsequences enumerates valid subsequences by DFS, deduping choices at each level.",
+        "hash": "Longest Arithmetic Subsequence keys DP states by (index, common difference) in a hash map.",
+        "bits": "Two Palindromic Subsequences represents each candidate subsequence as a bitmask to test disjointness and combine lengths.",
+        "heap": "Maximum Subsequence Score sorts by one factor and uses a min-heap to keep the best K of the other while sweeping."
+      }
+    },
+    "buy-sell": {
+      "ds": {
+        "array": "The price array is swept left-to-right tracking the best buy/sell state so far; the whole family is one pass over prices."
+      },
+      "topic": {
+        "dp": "A state machine over hold / sold / rest (plus a transaction-count, cooldown, or fee dimension) gives the unified DP for all stock variants (I–IV, cooldown, fee).",
+        "greedy": "When unlimited transactions are allowed, greedily summing every positive day-to-day delta is optimal (Stock II)."
+      }
+    },
+    "expression": {
+      "ds": {
+        "array": "Evaluate RPN scans a token array, pushing operands and applying each operator to the top two (postfix evaluation).",
+        "string": "Calculators and parsers walk the expression string char by char, handling numbers, operators, nesting, and precedence (Basic Calculator I–III, Decode String, Parse Lisp)."
+      },
+      "topic": {
+        "stack-topic": "A stack holds pending operands/operators, or saves outer context on '(' and resolves on ')' — the backbone of expression evaluation and string decoding.",
+        "backtrack": "Operator-insertion and different-parenthesizations backtrack over where to split or place operators, evaluating each arrangement (Expression Add Operators, Different Ways to Add Parentheses)."
+      }
+    },
+    "scheduling": {
+      "ds": {
+        "graph": "Course-prerequisite scheduling builds a dependency graph and topologically sorts it (Kahn / DFS) to find a valid order or detect a cycle (Course Schedule I/II/IV).",
+        "array": "Meeting/task scheduling sorts the interval/task array by start or end, then sweeps to count overlaps or pack rooms (Meeting Rooms, Task Scheduler)."
+      },
+      "topic": {
+        "greedy": "Sort by end (or cost) and greedily admit the next compatible meeting / cheaper assignment (Meeting Rooms, Two City Scheduling).",
+        "interval": "Treated as intervals, meetings are sorted and swept to detect concurrency and the minimum rooms needed (Meeting Rooms).",
+        "heap": "A min-heap tracks earliest-freeing rooms, or the most-frequent task's cooldown, to schedule the next item (Meeting Rooms III, Task Scheduler).",
+        "two-pointers": "Meeting Scheduler walks both people's sorted slot lists with two pointers to find the first common free window.",
+        "dp": "Job-schedule difficulty partitions days into d groups via DP over (day, groups left), minimizing the summed daily maxima.",
+        "hash": "Task Scheduler II maps each task to the next time it may run, looked up in O(1) as tasks stream in."
+      }
+    }
+  }
+}
