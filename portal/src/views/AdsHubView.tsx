@@ -30,6 +30,8 @@ import CodePanel from '../components/CodePanel'
 import HandwritingPad from '../components/HandwritingPad'
 import type { HwDoc, HandwritingPadHandle } from '../components/HandwritingPad'
 import RichEditor from '../components/RichEditor'
+import PatternNotePanel from '../components/PatternNotePanel'
+import { getPatternNote } from '../adapters/patternNotesRepo'
 import { useToast } from '../components/Toast'
 import AudioReader from '../components/AudioReader'
 import { htmlToSpokenText } from '../lib/audioMode'
@@ -296,10 +298,31 @@ export default function AdsHubView() {
   // as clicking a row in the AdsHub list. Avoids opening a new tab +
   // re-login flow.
   const patternsFrameRef = useRef<HTMLIFrameElement>(null)
+  // Editable pattern-note panel — opened from the patterns iframe (pgnote-open).
+  // Wholly separate from Browse problem notes (own repo / tab / Drive folder).
+  const [patternNote, setPatternNote] = useState<{ key: string; title: string } | null>(null)
   // Current portal theme (data-theme on <html>; absent ⇒ 'dark').
   const currentTheme = () => document.documentElement.getAttribute('data-theme') || 'dark'
   const sendPatternsTheme = () =>
     patternsFrameRef.current?.contentWindow?.postMessage({ type: 'pghub-theme', theme: currentTheme() }, '*')
+
+  // Strip <img> from the inline preview the iframe renders (Drive media URLs
+  // need an auth header so they won't load cross-frame; the editor panel shows
+  // them fine). Replace with a small marker so text/code notes stay clean.
+  const inlineNoteHtml = (bodyHtml: string) =>
+    sanitizeHtml(bodyHtml).replace(/<img\b[^>]*>/gi, '🖼️')
+  // Answer the iframe's pgnote-get: fetch the saved note (if any) and post it
+  // back for inline display under the authored content.
+  const sendPatternNote = (key: string) => {
+    void (async () => {
+      let html = '', hasNote = false
+      try {
+        const got = await getPatternNote(key)
+        if (got) { hasNote = true; html = inlineNoteHtml(extractEditableBody(got.raw)) }
+      } catch { /* not signed in / no tab yet → treated as no note */ }
+      patternsFrameRef.current?.contentWindow?.postMessage({ type: 'pgnote-data', key, hasNote, html }, '*')
+    })()
+  }
 
   // Keep the Patterns iframe's theme in sync with the portal — push on mount
   // and whenever the portal's data-theme attribute changes (Settings → Theme).
@@ -316,6 +339,12 @@ export default function AdsHubView() {
       const d = e.data
       if (!d || typeof d !== 'object') return
       if (d.type === 'pghub-ready') { sendPatternsTheme(); return }  // iframe attached its listener → (re)send theme
+      // Pattern-note bridge (separate from Browse notes).
+      if (d.type === 'pgnote-open' && typeof d.key === 'string') {
+        setPatternNote({ key: d.key, title: typeof d.title === 'string' ? d.title : d.key })
+        return
+      }
+      if (d.type === 'pgnote-get' && typeof d.key === 'string') { sendPatternNote(d.key); return }
       if (d.type === 'pghub-open-problem' && (typeof d.id === 'number' || typeof d.id === 'string')) {
         const id = String(d.id)
         const num = String(parseInt(id, 10))
@@ -1834,6 +1863,18 @@ export default function AdsHubView() {
           onClose={() => setAiOpen(false)}
         />
       )}
+      {/* Editable pattern-note panel — opened from the patterns iframe. Its own
+          storage (patternNotesRepo); does not touch Browse problem notes. */}
+      <PatternNotePanel
+        open={!!patternNote}
+        noteKey={patternNote?.key || ''}
+        title={patternNote?.title || ''}
+        onClose={() => setPatternNote(null)}
+        onSaved={(key, hasNote, body) => {
+          patternsFrameRef.current?.contentWindow?.postMessage(
+            { type: 'pgnote-data', key, hasNote, html: hasNote ? inlineNoteHtml(body) : '' }, '*')
+        }}
+      />
     </div>
   )
 }
