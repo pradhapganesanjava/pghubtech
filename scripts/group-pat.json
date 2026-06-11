@@ -1,0 +1,397 @@
+{
+  "1": [
+    "pat_group::sum"
+  ],
+  "5": [
+    "pat_group::palindrome"
+  ],
+  "9": [
+    "pat_group::palindrome"
+  ],
+  "15": [
+    "pat_group::sum"
+  ],
+  "16": [
+    "pat_group::sum"
+  ],
+  "18": [
+    "pat_group::sum"
+  ],
+  "20": [
+    "pat_group::parenthesis"
+  ],
+  "22": [
+    "pat_group::parenthesis"
+  ],
+  "30": [
+    "pat_group::word-process"
+  ],
+  "32": [
+    "pat_group::parenthesis"
+  ],
+  "39": [
+    "pat_group::sum"
+  ],
+  "40": [
+    "pat_group::sum"
+  ],
+  "49": [
+    "pat_group::anagram"
+  ],
+  "79": [
+    "pat_group::word-process"
+  ],
+  "112": [
+    "pat_group::sum"
+  ],
+  "113": [
+    "pat_group::sum"
+  ],
+  "115": [
+    "pat_group::subsequence"
+  ],
+  "121": [
+    "pat_group::buy-sell"
+  ],
+  "122": [
+    "pat_group::buy-sell"
+  ],
+  "123": [
+    "pat_group::buy-sell"
+  ],
+  "124": [
+    "pat_group::sum"
+  ],
+  "125": [
+    "pat_group::palindrome"
+  ],
+  "126": [
+    "pat_group::word-process"
+  ],
+  "127": [
+    "pat_group::word-process"
+  ],
+  "129": [
+    "pat_group::sum"
+  ],
+  "131": [
+    "pat_group::palindrome"
+  ],
+  "139": [
+    "pat_group::word-process"
+  ],
+  "140": [
+    "pat_group::word-process"
+  ],
+  "150": [
+    "pat_group::expression"
+  ],
+  "151": [
+    "pat_group::word-process"
+  ],
+  "167": [
+    "pat_group::sum"
+  ],
+  "186": [
+    "pat_group::word-process"
+  ],
+  "188": [
+    "pat_group::buy-sell"
+  ],
+  "207": [
+    "pat_group::scheduling"
+  ],
+  "209": [
+    "pat_group::sum"
+  ],
+  "210": [
+    "pat_group::scheduling"
+  ],
+  "211": [
+    "pat_group::word-process"
+  ],
+  "212": [
+    "pat_group::word-process"
+  ],
+  "214": [
+    "pat_group::palindrome"
+  ],
+  "216": [
+    "pat_group::sum"
+  ],
+  "224": [
+    "pat_group::expression"
+  ],
+  "227": [
+    "pat_group::expression"
+  ],
+  "234": [
+    "pat_group::palindrome"
+  ],
+  "241": [
+    "pat_group::parenthesis",
+    "pat_group::expression"
+  ],
+  "242": [
+    "pat_group::anagram"
+  ],
+  "243": [
+    "pat_group::word-process"
+  ],
+  "244": [
+    "pat_group::word-process"
+  ],
+  "245": [
+    "pat_group::word-process"
+  ],
+  "252": [
+    "pat_group::scheduling"
+  ],
+  "253": [
+    "pat_group::scheduling"
+  ],
+  "259": [
+    "pat_group::sum"
+  ],
+  "266": [
+    "pat_group::palindrome"
+  ],
+  "282": [
+    "pat_group::expression"
+  ],
+  "290": [
+    "pat_group::word-process"
+  ],
+  "291": [
+    "pat_group::word-process"
+  ],
+  "300": [
+    "pat_group::subsequence"
+  ],
+  "301": [
+    "pat_group::parenthesis"
+  ],
+  "309": [
+    "pat_group::buy-sell"
+  ],
+  "327": [
+    "pat_group::sum"
+  ],
+  "334": [
+    "pat_group::subsequence"
+  ],
+  "336": [
+    "pat_group::palindrome"
+  ],
+  "363": [
+    "pat_group::sum"
+  ],
+  "376": [
+    "pat_group::subsequence"
+  ],
+  "377": [
+    "pat_group::sum"
+  ],
+  "392": [
+    "pat_group::subsequence"
+  ],
+  "394": [
+    "pat_group::expression"
+  ],
+  "408": [
+    "pat_group::word-process"
+  ],
+  "409": [
+    "pat_group::palindrome"
+  ],
+  "411": [
+    "pat_group::word-process"
+  ],
+  "416": [
+    "pat_group::sum"
+  ],
+  "422": [
+    "pat_group::word-process"
+  ],
+  "437": [
+    "pat_group::sum"
+  ],
+  "438": [
+    "pat_group::anagram"
+  ],
+  "439": [
+    "pat_group::expression"
+  ],
+  "491": [
+    "pat_group::subsequence"
+  ],
+  "494": [
+    "pat_group::sum"
+  ],
+  "523": [
+    "pat_group::sum"
+  ],
+  "560": [
+    "pat_group::sum"
+  ],
+  "621": [
+    "pat_group::scheduling"
+  ],
+  "647": [
+    "pat_group::palindrome"
+  ],
+  "648": [
+    "pat_group::word-process"
+  ],
+  "653": [
+    "pat_group::sum"
+  ],
+  "673": [
+    "pat_group::subsequence"
+  ],
+  "680": [
+    "pat_group::palindrome"
+  ],
+  "692": [
+    "pat_group::word-process"
+  ],
+  "698": [
+    "pat_group::sum"
+  ],
+  "714": [
+    "pat_group::buy-sell"
+  ],
+  "726": [
+    "pat_group::expression"
+  ],
+  "727": [
+    "pat_group::subsequence"
+  ],
+  "736": [
+    "pat_group::expression"
+  ],
+  "758": [
+    "pat_group::word-process"
+  ],
+  "760": [
+    "pat_group::anagram"
+  ],
+  "772": [
+    "pat_group::expression"
+  ],
+  "792": [
+    "pat_group::subsequence"
+  ],
+  "809": [
+    "pat_group::word-process"
+  ],
+  "819": [
+    "pat_group::word-process"
+  ],
+  "843": [
+    "pat_group::word-process"
+  ],
+  "862": [
+    "pat_group::sum"
+  ],
+  "918": [
+    "pat_group::sum"
+  ],
+  "921": [
+    "pat_group::parenthesis"
+  ],
+  "923": [
+    "pat_group::sum"
+  ],
+  "930": [
+    "pat_group::sum"
+  ],
+  "974": [
+    "pat_group::sum"
+  ],
+  "1029": [
+    "pat_group::scheduling"
+  ],
+  "1099": [
+    "pat_group::sum"
+  ],
+  "1106": [
+    "pat_group::expression"
+  ],
+  "1143": [
+    "pat_group::subsequence"
+  ],
+  "1214": [
+    "pat_group::sum"
+  ],
+  "1216": [
+    "pat_group::palindrome"
+  ],
+  "1218": [
+    "pat_group::subsequence"
+  ],
+  "1229": [
+    "pat_group::scheduling"
+  ],
+  "1235": [
+    "pat_group::scheduling"
+  ],
+  "1249": [
+    "pat_group::parenthesis"
+  ],
+  "1255": [
+    "pat_group::word-process"
+  ],
+  "1312": [
+    "pat_group::palindrome"
+  ],
+  "1335": [
+    "pat_group::scheduling"
+  ],
+  "1457": [
+    "pat_group::palindrome"
+  ],
+  "1462": [
+    "pat_group::scheduling"
+  ],
+  "1679": [
+    "pat_group::sum"
+  ],
+  "2002": [
+    "pat_group::palindrome",
+    "pat_group::subsequence"
+  ],
+  "2018": [
+    "pat_group::word-process"
+  ],
+  "2127": [
+    "pat_group::scheduling"
+  ],
+  "2365": [
+    "pat_group::scheduling"
+  ],
+  "2402": [
+    "pat_group::scheduling"
+  ],
+  "2461": [
+    "pat_group::sum"
+  ],
+  "2542": [
+    "pat_group::subsequence"
+  ],
+  "2761": [
+    "pat_group::sum"
+  ],
+  "10014": [
+    "pat_group::sum"
+  ],
+  "10018": [
+    "pat_group::expression"
+  ],
+  "10021": [
+    "pat_group::subsequence"
+  ],
+  "10027": [
+    "pat_group::sum"
+  ]
+}
