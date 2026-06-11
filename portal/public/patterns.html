@@ -264,14 +264,38 @@
   .detail-panel[hidden] { display: none; }
   .detail-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45);
                      animation: detailFadeIn .15s ease-out; pointer-events: auto; }
-  .detail-drawer { position: absolute; top: 0; right: 0; width: min(620px, 94vw); height: 100vh;
+  /* Flex column: sticky header (always shows which detail) + scrolling body. */
+  .detail-drawer { position: absolute; top: 0; right: 0; width: min(820px, 96vw); height: 100vh;
                    background: var(--bg2); border-left: 1px solid var(--border);
-                   box-shadow: -4px 0 24px rgba(0,0,0,.5); overflow-y: auto;
-                   padding: 18px 26px 32px; pointer-events: auto;
+                   box-shadow: -4px 0 24px rgba(0,0,0,.5); overflow: hidden;
+                   display: flex; flex-direction: column; pointer-events: auto;
                    animation: detailSlideIn .18s ease-out; }
+  /* Drag the left edge to resize the drawer width. */
+  .detail-resize { position: absolute; left: 0; top: 0; width: 10px; height: 100%; cursor: ew-resize; z-index: 5;
+                   touch-action: none; }
+  .detail-resize::before { content: ''; position: absolute; left: 0; top: 0; width: 3px; height: 100%;
+                   background: var(--primary); opacity: 0; transition: opacity .12s; }
+  .detail-resize:hover::before, body.drawer-resizing .detail-resize::before { opacity: .6; }
+  /* Pinned header — stays put while the body scrolls. Double-click toggles width.
+     Condenses to a compact one-line title once the body is scrolled (more
+     reading space); full header returns at the top. */
+  .detail-head { flex-shrink: 0; display: flex; align-items: flex-start; gap: 10px;
+                 padding: 14px 22px 10px 26px; border-bottom: 1px solid var(--border);
+                 background: var(--bg2); cursor: pointer; user-select: none;
+                 transition: padding .15s ease; }
+  .detail-head-title { flex: 1; min-width: 0; }
+  .detail-head-title h2 { margin: 4px 0 0; font-size: 19px; transition: font-size .15s ease; }
+  .detail-head-title .detail-eyebrow { margin: 0; }
+  .detail-head-title .detail-id { margin-bottom: 0; }
+  .detail-head.condensed { padding-top: 8px; padding-bottom: 7px; align-items: center; }
+  .detail-head.condensed .detail-eyebrow,
+  .detail-head.condensed .detail-id { display: none; }
+  .detail-head.condensed .detail-head-title h2 { font-size: 14px; margin: 0;
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .detail-content { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 26px 32px; }
   @keyframes detailFadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes detailSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .detail-close { position: absolute; top: 10px; right: 12px; width: 30px; height: 30px;
+  .detail-close { flex-shrink: 0; margin-top: 2px; width: 30px; height: 30px;
                   border-radius: 50%; background: var(--bg3); border: 1px solid var(--border);
                   color: var(--text); cursor: pointer; font-size: 18px; line-height: 1;
                   display: inline-flex; align-items: center; justify-content: center; padding: 0; }
@@ -410,7 +434,11 @@
   <div id="micro-detail-panel" class="detail-panel" hidden>
     <div class="detail-backdrop" onclick="closeMicroDetail()"></div>
     <aside class="detail-drawer" role="dialog" aria-labelledby="detail-title">
-      <button class="detail-close" onclick="closeMicroDetail()" aria-label="Close">×</button>
+      <div class="detail-resize" title="Drag to resize"></div>
+      <div class="detail-head" id="detail-head" ondblclick="toggleDrawerWidth()" title="Double-click to toggle width">
+        <div class="detail-head-title" id="detail-head-title"></div>
+        <button class="detail-close" onclick="closeMicroDetail()" aria-label="Close">×</button>
+      </div>
       <div class="detail-content" id="detail-content"></div>
     </aside>
   </div>
@@ -1574,11 +1602,12 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
     ? `📦 ${p.name} (DS core)`
     : `🧰 ${p.name} (Topic)`
 
-  const html = `
+  const head = `
     <div class="detail-eyebrow">${parentTag}${embeddedUnderDsId ? ` · embedded under ${embeddedUnderDsId}` : ''}</div>
     <h2 id="detail-title">${m.name}</h2>
-    <div class="detail-id"><code>${m.id}</code></div>
+    <div class="detail-id"><code>${m.id}</code></div>`
 
+  const html = `
     <div class="detail-section">
       <h4>When</h4><p>${m.when}</p>
     </div>
@@ -1615,7 +1644,7 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
     ${noteSectionHtml('micro/' + m.id, m.name)}
   `
 
-  document.getElementById('detail-content').innerHTML = html
+  setDrawerContent(head, html)
   requestPatternNote('micro/' + m.id)
   const panel = document.getElementById('micro-detail-panel')
   panel.hidden = false
@@ -1626,6 +1655,55 @@ function closeMicroDetail() {
   document.getElementById('micro-detail-panel').hidden = true
   document.body.classList.remove('detail-open')
 }
+
+// Set the pinned header + scrolling body of the drawer. Body always resets to
+// the top so the header context matches what's in view (full header at top).
+function setDrawerContent(headHtml, bodyHtml) {
+  const head = document.getElementById('detail-head-title')
+  const body = document.getElementById('detail-content')
+  if (head) head.innerHTML = headHtml
+  if (body) { body.innerHTML = bodyHtml; body.scrollTop = 0 }
+  const hd = document.getElementById('detail-head')
+  if (hd) hd.classList.remove('condensed')   // start with the full header
+}
+
+// Shrink the header to a compact one-line title once the body is scrolled.
+function updateHeadCondense() {
+  const body = document.getElementById('detail-content')
+  const hd   = document.getElementById('detail-head')
+  if (body && hd) hd.classList.toggle('condensed', body.scrollTop > 16)
+}
+
+// ── Drawer width: drag the left edge, or double-click the header to toggle ──
+const DRAWER_MAXVW   = () => Math.round(window.innerWidth * 0.96)
+const DRAWER_DEFAULT = () => Math.min(820, DRAWER_MAXVW())
+const DRAWER_WIDE    = () => Math.min(1200, DRAWER_MAXVW())
+const DRAWER_MIN     = 380
+let drawerWide = false
+function applyDrawerWidth(px) {
+  const el = document.querySelector('.detail-drawer')
+  if (el) el.style.width = Math.max(DRAWER_MIN, Math.min(px, DRAWER_MAXVW())) + 'px'
+}
+function toggleDrawerWidth() {
+  drawerWide = !drawerWide
+  applyDrawerWidth(drawerWide ? DRAWER_WIDE() : DRAWER_DEFAULT())
+}
+function initDrawerResize() {
+  const handle = document.querySelector('.detail-resize')
+  if (!handle) return
+  let dragging = false
+  handle.addEventListener('pointerdown', e => {
+    dragging = true; try { handle.setPointerCapture(e.pointerId) } catch {}
+    document.body.classList.add('drawer-resizing'); e.preventDefault()
+  })
+  handle.addEventListener('pointermove', e => { if (dragging) applyDrawerWidth(window.innerWidth - e.clientX) })
+  const end = e => { dragging = false; try { handle.releasePointerCapture(e.pointerId) } catch {} ; document.body.classList.remove('drawer-resizing') }
+  handle.addEventListener('pointerup', end)
+  handle.addEventListener('pointercancel', end)
+  const body = document.getElementById('detail-content')
+  if (body) body.addEventListener('scroll', updateHeadCondense, { passive: true })
+}
+initDrawerResize()
 
 // ESC closes the drawer.
 document.addEventListener('keydown', e => {
@@ -1846,7 +1924,13 @@ function renderComboList(g, kind, entries) {
       <span class="caret">›</span>
     </button>`).join('')}</div>`
 }
-// Full breakdown for one (group × dim), rendered into the side drawer.
+// Header (pinned) for a (group × dim).
+function comboHeadHtml(g, kind, dimId) {
+  const gMeta = groupMeta(g), p = comboMeta(dimId)
+  return `<div class="detail-eyebrow">🗂 ${gMeta.name} · ${kind === 'ds' ? 'Data structure' : 'Topic'}</div>
+    <h2 id="detail-title">${gMeta.icon} ${gMeta.name} <span style="color:var(--text3)">×</span> ${p.icon} ${p.name}</h2>`
+}
+// Scrolling body for a (group × dim).
 function comboDetailHtml(g, kind, dimId) {
   const gMeta = groupMeta(g)
   const p     = comboMeta(dimId)
@@ -1854,8 +1938,6 @@ function comboDetailHtml(g, kind, dimId) {
   const gen   = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][dimId]) || ''
   const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
   return `
-    <div class="detail-eyebrow">🗂 ${gMeta.name} · ${kind === 'ds' ? 'Data structure' : 'Topic'}</div>
-    <h2 id="detail-title">${gMeta.icon} ${gMeta.name} <span style="color:var(--text3)">×</span> ${p.icon} ${p.name}</h2>
     ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
     ${renderProblemSolutions(g, kind, dimId, inG)}
     ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
@@ -1868,7 +1950,7 @@ function comboDetailHtml(g, kind, dimId) {
 let activeCombo = null
 function openComboDetail(g, kind, dimId) {
   activeCombo = g + '|' + kind + '|' + dimId
-  document.getElementById('detail-content').innerHTML = comboDetailHtml(g, kind, dimId)
+  setDrawerContent(comboHeadHtml(g, kind, dimId), comboDetailHtml(g, kind, dimId))
   requestPatternNote('group/' + g + '/' + kind + '/' + dimId)
   const panel = document.getElementById('micro-detail-panel')
   panel.hidden = false

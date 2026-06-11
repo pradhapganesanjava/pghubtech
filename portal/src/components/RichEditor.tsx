@@ -205,6 +205,36 @@ export default function RichEditor({ value, onChange, onPasteImage, allowHtmlEmb
     if (el) { e.preventDefault(); openEmbed(el) }
   }
 
+  // The <pre> code block the caret is currently inside, or null.
+  function currentPre(): HTMLElement | null {
+    const sel = window.getSelection()
+    if (!sel || !sel.rangeCount || !ref.current) return null
+    let node: Node | null = sel.anchorNode
+    while (node && node !== ref.current) {
+      if (node.nodeType === 1 && (node as HTMLElement).tagName === 'PRE') return node as HTMLElement
+      node = node.parentNode
+    }
+    return null
+  }
+
+  // Code block button: wrap the line in <pre>, then guarantee an empty
+  // paragraph right after it so there's always normal-text space below the
+  // block (you can click into it, or double-Enter out — see handleKeyDown).
+  function makeCodeBlock() {
+    exec('formatBlock', 'pre')
+    const pre = currentPre()
+    if (pre && ref.current && !pre.nextElementSibling) {
+      const p = document.createElement('p')
+      p.innerHTML = '<br>'
+      pre.after(p)          // caret stays in the <pre>
+      emit()
+    }
+  }
+
+  // True after a lone Enter pressed inside a <pre> (reset by any other key) —
+  // lets a second Enter on a blank line break OUT of the code block.
+  const dblEnterRef = useRef(false)
+
   // Insert a fresh <p> immediately after the block the caret is in (so the
   // user can escape a <pre>/<blockquote>/<h2>/etc. and keep typing normal
   // text below). Bound to the ¶ toolbar button and Ctrl/Cmd+Enter.
@@ -239,7 +269,23 @@ export default function RichEditor({ value, onChange, onPasteImage, allowHtmlEmb
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       newParagraphBelow()
+      dblEnterRef.current = false
+      return
     }
+    // Inside a code block: a second Enter (on a blank line) breaks OUT of the
+    // <pre> into a normal paragraph below, instead of adding more blank lines.
+    if (e.key === 'Enter' && !e.shiftKey && currentPre()) {
+      if (dblEnterRef.current) {
+        e.preventDefault()
+        document.execCommand('delete')   // remove the blank line the first Enter made
+        newParagraphBelow()
+        dblEnterRef.current = false
+      } else {
+        dblEnterRef.current = true       // first Enter — let it add a newline
+      }
+      return
+    }
+    dblEnterRef.current = false
   }
 
   function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
@@ -309,9 +355,9 @@ export default function RichEditor({ value, onChange, onPasteImage, allowHtmlEmb
               key={b.cmd + (b.arg ?? '')}
               type="button"
               className="rf-tb-btn"
-              title={b.title}
+              title={b.cmd === 'formatBlock' && b.arg === 'pre' ? 'Code block (↵↵ on a blank line to exit)' : b.title}
               style={b.style}
-              onClick={() => exec(b.cmd, b.arg)}
+              onClick={() => (b.cmd === 'formatBlock' && b.arg === 'pre') ? makeCodeBlock() : exec(b.cmd, b.arg)}
             >
               {b.label}
             </button>
@@ -338,7 +384,7 @@ export default function RichEditor({ value, onChange, onPasteImage, allowHtmlEmb
           <button type="button" className="rf-tb-btn" title="Insert HTML section (styles/markup render on save)" onClick={() => openEmbed()}>＋&lt;/&gt;</button>
         )}
         <span className="rf-tb-divider" />
-        <button type="button" className="rf-tb-btn" title="New paragraph below (Ctrl/Cmd+Enter)" onClick={newParagraphBelow}>¶</button>
+        <button type="button" className="rf-tb-btn" title="New line below this block — exit a code block / heading / quote (Ctrl/Cmd+Enter)" onClick={newParagraphBelow}>¶</button>
         <button type="button" className="rf-tb-btn" title="Clear formatting" onClick={() => exec('removeFormat')}>⊘</button>
       </div>
       <div
