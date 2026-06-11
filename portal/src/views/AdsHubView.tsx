@@ -311,16 +311,24 @@ export default function AdsHubView() {
   // them fine). Replace with a small marker so text/code notes stay clean.
   const inlineNoteHtml = (bodyHtml: string) =>
     sanitizeHtml(bodyHtml).replace(/<img\b[^>]*>/gi, '🖼️')
-  // Answer the iframe's pgnote-get: fetch the saved note (if any) and post it
-  // back for inline display under the authored content.
-  const sendPatternNote = (key: string) => {
+  // Post a pgnote-data message to every iframe on the page (the patterns
+  // reference AND the lineage graph both render My-notes). Namespaced type, so
+  // unrelated iframes ignore it.
+  const broadcastToFrames = (msg: object) =>
+    document.querySelectorAll('iframe').forEach(f => { try { f.contentWindow?.postMessage(msg, '*') } catch { /* cross-origin */ } })
+  // Answer a pgnote-get: fetch the saved note (if any) and post it back. Reply
+  // to the SOURCE window (e.source) so it works for whichever iframe asked
+  // (patterns reference or lineage graph).
+  const sendPatternNote = (key: string, target?: MessageEventSource | null) => {
     void (async () => {
       let html = '', hasNote = false
       try {
         const got = await getPatternNote(key)
         if (got) { hasNote = true; html = inlineNoteHtml(extractEditableBody(got.raw)) }
       } catch { /* not signed in / no tab yet → treated as no note */ }
-      patternsFrameRef.current?.contentWindow?.postMessage({ type: 'pgnote-data', key, hasNote, html }, '*')
+      const msg = { type: 'pgnote-data', key, hasNote, html }
+      if (target) (target as Window).postMessage(msg, '*')
+      else broadcastToFrames(msg)
     })()
   }
 
@@ -344,7 +352,7 @@ export default function AdsHubView() {
         setPatternNote({ key: d.key, title: typeof d.title === 'string' ? d.title : d.key })
         return
       }
-      if (d.type === 'pgnote-get' && typeof d.key === 'string') { sendPatternNote(d.key); return }
+      if (d.type === 'pgnote-get' && typeof d.key === 'string') { sendPatternNote(d.key, e.source); return }
       if (d.type === 'pghub-open-problem' && (typeof d.id === 'number' || typeof d.id === 'string')) {
         const id = String(d.id)
         const num = String(parseInt(id, 10))
@@ -1871,8 +1879,9 @@ export default function AdsHubView() {
         title={patternNote?.title || ''}
         onClose={() => setPatternNote(null)}
         onSaved={(key, hasNote, body) => {
-          patternsFrameRef.current?.contentWindow?.postMessage(
-            { type: 'pgnote-data', key, hasNote, html: hasNote ? inlineNoteHtml(body) : '' }, '*')
+          // Push to every iframe so the patterns reference AND the lineage
+          // graph both reflect the edit live.
+          broadcastToFrames({ type: 'pgnote-data', key, hasNote, html: hasNote ? inlineNoteHtml(body) : '' })
         }}
       />
     </div>
