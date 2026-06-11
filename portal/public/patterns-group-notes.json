@@ -451,30 +451,67 @@
     "parenthesis": {
       "ds": {
         "string": {
-          "tldr": "Bracket problems **scan left-to-right tracking balance** — validity, longest valid run, min add/remove, or generation.",
-          "points": [
-            "Running `open - close` counter (never negative for validity).",
-            "Stack of indices to measure the longest valid stretch.",
-            "Backtracking to generate/repair well-formed strings."
+          "tldr": "Every bracket problem is a variation on **one invariant**: the running **balance** `bal = (#open − #close)` scanned left→right.",
+          "insight": [
+            "A string of one bracket type is valid **iff** two things hold: `bal` **never goes negative** (no `)` before a matching `(`) and `bal == 0` at the end (every `(` is closed). That is the whole theory — validation, repair, longest-run, and generation are all just *questions asked against this invariant*.",
+            "The key realization for an interview: with a **single** bracket type you do **not** need a stack — a single integer counter is enough, because a stack here only ever holds a run of identical `(`. You reach for a real stack only when (a) there are **multiple** bracket types `()[]{}` that must match by kind, or (b) you need the **index/position** of an opener (to measure a span or to mark it for deletion)."
           ],
-          "visual": "( ( ) ( ) )\n+1+2+1+2+1 0   balance returns to 0 ⇒ valid"
+          "tricks": [
+            "**Counter, not stack** for one type: maintain `bal`, fail fast if `bal < 0`, accept iff `bal == 0`.",
+            "**Two-pass for two-sided repair**: a left→right pass catches surplus `)`; a right→left pass catches surplus `(` (used by 921 / 1249).",
+            "Repair count = **unmatched opens + unmatched closes**, counted independently.",
+            "Need **lengths or positions** (32) or to **delete specific chars** (1249)? push **indices**; value-only validity (20/921)? push/track nothing but a counter."
+          ],
+          "pseudo": "isValid(s):            # single bracket type\n  bal = 0\n  for c in s:\n    bal += (c == '(') ? +1 : -1\n    if bal < 0: return false      # ')' with no open\n  return bal == 0                 # all opens closed",
+          "problems": [
+            { "id": 20,   "title": "Valid Parentheses", "note": "**Multiple types** ⇒ real **stack**: push each opener; on a closer the popped top must be its match. Valid iff the stack ends empty." },
+            { "id": 22,   "title": "Generate Parentheses", "note": "The string is the canvas — **backtrack** placing `(`/`)`, pruned by the invariant `close < open`. See ×Backtracking." },
+            { "id": 32,   "title": "Longest Valid Parentheses", "note": "Needs **positions** ⇒ stack of **indices** (with a `-1` sentinel); a valid run length is `i − stack.top`. (DP alternative: `dp[i]` from the matched `(`.)" },
+            { "id": 241,  "title": "Different Ways to Add Parentheses", "note": "Re-parenthesize an **expression**: split at every operator, recurse on the two substrings, combine all left×right results — divide & conquer over substrings." },
+            { "id": 301,  "title": "Remove Invalid Parentheses", "note": "Compute the **minimum** surplus `(` and `)` to drop, then search removing exactly that many — minimal edit to restore `bal` validity." },
+            { "id": 921,  "title": "Minimum Add to Make Parentheses Valid", "note": "Pure **counter**: track open surplus + closes that underflow; answer = leftover opens + leftover closes." },
+            { "id": 1249, "title": "Minimum Remove to Make Valid Parentheses", "note": "Mark indices of unmatched `)` (underflow) and unmatched `(` (left on the stack), then rebuild the string skipping marked indices." }
+          ]
         }
       },
       "topic": {
         "stack-topic": {
-          "tldr": "A **stack** pushes opens and pops on a matching close (or tracks indices) to validate nesting and measure runs.",
-          "points": [
-            "`Valid Parentheses`: push openers, pop & match.",
-            "`Longest Valid Parentheses`: stack of indices for the current valid base.",
-            "`Min Add/Remove`: counters as a degenerate stack."
+          "tldr": "Reach for a **stack** the moment you must remember **which / where** an opener was — not just **how many**.",
+          "insight": [
+            "The stack stores one of two things: the **opener character** (to enforce type matching in `()[]{}`, problem 20) or the **opener's index** (to measure spans or mark positions, problems 32 / 1249). If you never need either, the stack collapses into a plain counter — which is exactly why the single-type problems (921) can drop it.",
+            "The signature move for span problems is the **`-1` sentinel** pushed at the bottom: it lets you compute a valid run as `i − stack.top` uniformly, with no special case for a run that starts at index 0. Whatever remains on the stack at the end is precisely the set of **unmatched openers** — the things you must add to or remove from the string."
+          ],
+          "tricks": [
+            "Push **indices**, not characters, when the answer is a length or a position.",
+            "**Sentinel `-1`** at the bottom makes `i − top` the current valid-run length without edge cases (32).",
+            "If the stack pops to empty on every match, it *is* a counter — that's the bridge to the O(1)-space single-type solutions.",
+            "**Leftovers on the stack** = the unmatched openers to fix (delete in 1249, count in 921)."
+          ],
+          "pseudo": "longestValid(s):\n  st = [-1]                     # sentinel base index\n  best = 0\n  for i, c in enumerate(s):\n    if c == '(': st.push(i)\n    else:\n      st.pop()\n      if st.empty(): st.push(i)            # broken: new base\n      else: best = max(best, i - st.top())  # valid run length\n  return best",
+          "problems": [
+            { "id": 20,   "title": "Valid Parentheses", "note": "Push openers; each closer must equal the **matching** popped top — this is the case a bare counter can't handle (`([)]` is invalid)." },
+            { "id": 32,   "title": "Longest Valid Parentheses", "note": "Stack of **indices** + `-1` sentinel; after each pop the live valid length is `i − top`. Track the max." },
+            { "id": 921,  "title": "Minimum Add to Make Parentheses Valid", "note": "A stack of opens popped by closes — but since there's one type it reduces to two counters; additions = unmatched on each side." },
+            { "id": 1249, "title": "Minimum Remove to Make Valid Parentheses", "note": "Stack holds **indices** of unmatched `(`; a closer with an empty stack is an unmatched `)`. Remove every marked index." }
           ]
         },
         "backtrack": {
-          "tldr": "Generation/repair **backtracks over add-open / add-close / remove** choices with pruning.",
-          "points": [
-            "`Generate Parentheses`: add `(` while open<n, `)` while close<open.",
-            "`Remove Invalid Parentheses`: BFS/DFS removing the fewest chars.",
-            "`Different Ways to Add Parentheses`: split on each operator, combine results."
+          "tldr": "Backtracking appears when the task is to **enumerate** or **repair** rather than validate — explore a decision tree of placements/removals and **prune with the balance invariant**.",
+          "insight": [
+            "Brute-forcing all `2^(2n)` bracket strings (or all subsets of chars to remove) is exponential; backtracking is only tractable because the **invariant prunes whole subtrees**. In generation, refusing to add `)` when `close == open` kills every prefix that can never recover. In removal, pre-computing the **exact** surplus means you never recurse deeper than necessary.",
+            "Problem 241 is the interesting outlier: it's backtracking *as divide & conquer*. Splitting at each operator yields independent left/right subproblems whose result **sets** are combined — and because substrings repeat, **memoization** turns it from exponential into polynomial."
+          ],
+          "tricks": [
+            "**Prune with the invariant**: generate `(` only while `open < n`, `)` only while `close < open`.",
+            "For removal, compute the **minimum** removals first, then search exactly that depth (301).",
+            "**Dedup siblings** (skip equal consecutive removals) so identical results aren't produced twice.",
+            "Combine **result sets** (not single values) when recursing on subexpressions, and **memoize** by substring (241)."
+          ],
+          "pseudo": "generate(open, close, cur):       # 22\n  if len(cur) == 2*n: emit(cur); return\n  if open  < n:     generate(open+1, close,   cur + '(')\n  if close < open:  generate(open,   close+1, cur + ')')   # prune: never close past open",
+          "problems": [
+            { "id": 22,  "title": "Generate Parentheses", "note": "DFS adding `(` (while `open < n`) or `)` (while `close < open`); the second guard prunes every invalid prefix, so only well-formed strings are emitted." },
+            { "id": 241, "title": "Different Ways to Add Parentheses", "note": "Recurse at **every operator**: for each, combine each left result with each right result. **Memoize** by substring to avoid recomputing shared subexpressions." },
+            { "id": 301, "title": "Remove Invalid Parentheses", "note": "First count min `(`/`)` to remove; then DFS removing exactly that many, **deduping** sibling removals, and keep only strings that end fully valid." }
           ]
         }
       }
