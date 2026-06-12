@@ -1312,6 +1312,7 @@ anchor_id,tag
 1657,pat_ds::string::hash::freq-counter
 1668,pat_ds::string::dp::dp-1d-linear
 1671,pat_ds::array::dp::dp-lis
+1671,pat_group::subsequence
 1676,pat_ds::tree::core::lca-dfs
 1679,pat_ds::array::two-pointers::tp-k-sum
 1679,pat_group::sum
