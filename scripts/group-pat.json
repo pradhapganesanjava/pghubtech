@@ -367,6 +367,9 @@
   "1462": [
     "pat_group::scheduling"
   ],
+  "1671": [
+    "pat_group::subsequence"
+  ],
   "1679": [
     "pat_group::sum"
   ],

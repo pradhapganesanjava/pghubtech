@@ -329,8 +329,11 @@
   /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
   .tree-applies-row { padding-left: 22px; }
   /* ── Group By: inline expandable DS/Topic combo cards ─────────────────── */
-  /* Master list: clickable subcategory cards (detail opens in the side drawer). */
-  .group-combo-list { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 4px; }
+  /* Master list: each subsection = a clickable card (opens the drawer write-up)
+     with its problems listed inline beneath it. */
+  .group-combo-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 4px; }
+  .group-combo-row  { display: flex; flex-direction: column; gap: 5px; }
+  .group-combo-probs { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 8px; }
   .group-combo-card { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
                     background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
                     cursor: pointer; padding: 9px 12px; color: var(--text); font: inherit; transition: border-color .12s, background .12s; }
@@ -1915,14 +1918,23 @@ function comboMeta(dimId) {
 // its full breakdown in the side drawer (no inline expand).
 function renderComboList(g, kind, entries) {
   if (!entries.length) return '<p class="lede" style="color:var(--text3)">none</p>'
-  return `<div class="group-combo-list">${entries.map(({ p, count }) => `
-    <button class="group-combo-card${activeCombo === (g + '|' + kind + '|' + p.id) ? ' active' : ''}"
-            onclick="openComboDetail('${g}','${kind}','${p.id}')">
-      <span class="ico">${p.icon}</span>
-      <span class="nm">${p.name}</span>
-      <span class="cnt">${count} problem${count > 1 ? 's' : ''}</span>
-      <span class="caret">›</span>
-    </button>`).join('')}</div>`
+  return `<div class="group-combo-list">${entries.map(({ p, count }) => {
+    // Show each subsection's problems inline (chips) right under its card, so
+    // the per-DS / per-Topic breakdown is visible without opening the drawer.
+    // The card header still opens the drawer for the how-it's-solved write-up.
+    const ids = groupComboProblems(g, kind, p.id)
+    const chips = ids.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
+    return `<div class="group-combo-row">
+      <button class="group-combo-card${activeCombo === (g + '|' + kind + '|' + p.id) ? ' active' : ''}"
+              onclick="openComboDetail('${g}','${kind}','${p.id}')" title="Open how-it's-solved write-up">
+        <span class="ico">${p.icon}</span>
+        <span class="nm">${p.name}</span>
+        <span class="cnt">${count} problem${count > 1 ? 's' : ''}</span>
+        <span class="caret">›</span>
+      </button>
+      <div class="group-combo-probs anchor-list">${chips}</div>
+    </div>`
+  }).join('')}</div>`
 }
 // Header (pinned) for a (group × dim).
 function comboHeadHtml(g, kind, dimId) {
