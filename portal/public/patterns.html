@@ -1937,9 +1937,11 @@ function comboDetailHtml(g, kind, dimId) {
   const inG   = (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g][kind] && GROUP_NOTES.groups[g][kind][dimId]) || ''
   const gen   = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][dimId]) || ''
   const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
+  // Problems FIRST — the concrete list the user clicked in for — then the
+  // (often long) write-up below, so the problems are never buried.
   return `
-    ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
     ${renderProblemSolutions(g, kind, dimId, inG)}
+    ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
     ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
     <a class="topic-ds-open" href="#${openTab}/${p.id}"
        onclick="event.preventDefault(); closeMicroDetail(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
