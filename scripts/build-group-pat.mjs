@@ -40,7 +40,11 @@ const GROUPS = {
                    1214, 1679, 2461, 2761, 10014, 10027],
   // ── discovered / proposed (flagged for review) ──
   anagram:        [49, 242, 438, 760],
-  subsequence:    [115, 300, 334, 376, 392, 491, 673, 727, 792, 1143, 1218, 2002, 2542, 10021],
+  // Strict: ordered, NON-contiguous subset on a linear DS (no subarray/substring).
+  // LIS family (300/334/376/673/1218/354/646/1048), two-sequence/LCS
+  // (115/392/727/792/1143/583), palindromic-subseq (2002/1312), enumerate (491),
+  // subset-optimum (2542). #10021 was contiguous → excluded.
+  subsequence:    [115, 300, 334, 354, 376, 392, 491, 583, 646, 673, 727, 792, 1048, 1143, 1218, 1312, 2002, 2542],
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
 }
 

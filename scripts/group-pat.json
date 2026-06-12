@@ -183,6 +183,9 @@
   "336": [
     "pat_group::palindrome"
   ],
+  "354": [
+    "pat_group::subsequence"
+  ],
   "363": [
     "pat_group::sum"
   ],
@@ -234,8 +237,14 @@
   "560": [
     "pat_group::sum"
   ],
+  "583": [
+    "pat_group::subsequence"
+  ],
   "621": [
     "pat_group::scheduling"
+  ],
+  "646": [
+    "pat_group::subsequence"
   ],
   "647": [
     "pat_group::palindrome"
@@ -312,6 +321,9 @@
   "1029": [
     "pat_group::scheduling"
   ],
+  "1048": [
+    "pat_group::subsequence"
+  ],
   "1099": [
     "pat_group::sum"
   ],
@@ -343,7 +355,8 @@
     "pat_group::word-process"
   ],
   "1312": [
-    "pat_group::palindrome"
+    "pat_group::palindrome",
+    "pat_group::subsequence"
   ],
   "1335": [
     "pat_group::scheduling"
@@ -387,9 +400,6 @@
   ],
   "10018": [
     "pat_group::expression"
-  ],
-  "10021": [
-    "pat_group::subsequence"
   ],
   "10027": [
     "pat_group::sum"
