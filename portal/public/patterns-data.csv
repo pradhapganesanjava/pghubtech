@@ -595,6 +595,7 @@ anchor_id,tag
 351,pat_ds::matrices::backtrack::word-search-dfs
 353,pat_ds::matrices::core::mat-grid-dfs-bfs
 354,pat_ds::array::dp::dp-lis
+354,pat_group::subsequence
 356,pat_ds::matrices::hash::seen-set
 358,pat_ds::string::heap::event-driven-scheduling
 359,pat_ds::array::hash::freq-counter
@@ -794,6 +795,7 @@ anchor_id,tag
 583,pat_ds::string::core::edit-distance-dp
 583,pat_topic::dp::dp-2-strings
 583,pat_ds::string::dp::dp-2-strings
+583,pat_group::subsequence
 588,pat_ds::trie::core::trie-basic
 589,pat_ds::tree::dfs::dfs-iterative-stack
 604,pat_topic::design::lazy-decode-iterator
@@ -816,6 +818,7 @@ anchor_id,tag
 643,pat_ds::array::sliding-window::sw-fixed
 644,pat_ds::array::binary-search::bs-on-answer
 646,pat_ds::array::greedy::greedy-end-sorted
+646,pat_group::subsequence
 647,pat_ds::string::core::expand-around-center
 647,pat_group::palindrome
 648,pat_topic::trie-topic::trie-autocomplete
@@ -1093,6 +1096,7 @@ anchor_id,tag
 1047,pat_topic::stack-topic::parens-rewrite
 1047,pat_ds::string::stack-topic::parens-rewrite
 1048,pat_ds::array::dp::dp-lis
+1048,pat_group::subsequence
 1049,pat_topic::dp::knapsack-01
 1049,pat_ds::array::dp::knapsack-01
 1055,pat_ds::string::two-pointers::tp-merge-walk
@@ -1213,6 +1217,7 @@ anchor_id,tag
 1295,pat_ds::array::math::sum-formulas
 1312,pat_ds::string::core::expand-around-center
 1312,pat_group::palindrome
+1312,pat_group::subsequence
 1314,pat_topic::prefix-sum::ps-2d
 1314,pat_ds::matrices::prefix-sum::ps-2d
 1318,pat_topic::bits::kernighan-popcount
@@ -1472,7 +1477,6 @@ anchor_id,tag
 10019,pat_ds::graph::core::dag-longest-path
 10020,pat_ds::trie::core::trie-basic
 10021,pat_ds::array::two-pointers::tp-merge-walk
-10021,pat_group::subsequence
 10025,pat_ds::graph::core::topo-sort
 10026,pat_ds::graph::core::cycle-3color
 10027,pat_ds::array::two-pointers::tp-k-sum
