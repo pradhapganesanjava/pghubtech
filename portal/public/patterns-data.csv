@@ -574,6 +574,8 @@ anchor_id,tag
 337,pat_ds::tree::dp::tree-dp
 338,pat_topic::bits::kernighan-popcount
 338,pat_ds::array::bits::kernighan-popcount
+338,pat_ds::array::dp::dp-1d-linear
+338,pat_topic::dp::dp-1d-linear
 340,pat_ds::string::sliding-window::sw-distinct-count
 341,pat_topic::dfs::dfs-iterative-stack
 341,pat_ds::tree::dfs::dfs-iterative-stack
@@ -739,6 +741,8 @@ anchor_id,tag
 505,pat_ds::matrices::heap::dijkstra
 505,pat_topic::shortest-path::dijkstra
 505,pat_ds::graph::shortest-path::dijkstra
+509,pat_ds::array::dp::dp-1d-linear
+509,pat_topic::dp::dp-1d-linear
 515,pat_topic::bfs::bfs-level-order
 515,pat_ds::tree::bfs::bfs-level-order
 518,pat_topic::dp::knapsack-unbounded
