@@ -1,0 +1,13 @@
+{
+  "78":   ["pat_group::subset-selection"],
+  "90":   ["pat_group::subset-selection"],
+  "39":   ["pat_group::subset-selection"],
+  "40":   ["pat_group::subset-selection"],
+  "216":  ["pat_group::subset-selection"],
+  "416":  ["pat_group::subset-selection"],
+  "494":  ["pat_group::subset-selection"],
+  "698":  ["pat_group::subset-selection"],
+  "1125": ["pat_group::subset-selection"],
+  "1255": ["pat_group::subset-selection"],
+  "2542": ["pat_group::subset-selection"]
+}

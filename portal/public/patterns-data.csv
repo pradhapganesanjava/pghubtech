@@ -73,9 +73,11 @@ anchor_id,tag
 39,pat_topic::dfs::dfs-backtrack-undo
 39,pat_ds::array::dfs::dfs-backtrack-undo
 39,pat_group::sum
+39,pat_group::subset-selection
 40,pat_topic::backtrack::subset-combination
 40,pat_ds::array::backtrack::subset-combination
 40,pat_group::sum
+40,pat_group::subset-selection
 41,pat_ds::array::core::index-as-hash
 42,pat_topic::stack-topic::monotonic-stack
 42,pat_ds::array::stack-topic::monotonic-stack
@@ -151,6 +153,7 @@ anchor_id,tag
 78,pat_ds::array::bits::bitmask-enumerate
 78,pat_topic::dfs::dfs-backtrack-undo
 78,pat_ds::array::dfs::dfs-backtrack-undo
+78,pat_group::subset-selection
 79,pat_topic::backtrack::word-search-dfs
 79,pat_ds::matrices::backtrack::word-search-dfs
 79,pat_topic::dfs::dfs-backtrack-undo
@@ -177,6 +180,7 @@ anchor_id,tag
 90,pat_ds::array::backtrack::subset-combination
 90,pat_topic::bits::bitmask-enumerate
 90,pat_ds::array::bits::bitmask-enumerate
+90,pat_group::subset-selection
 91,pat_topic::dp::dp-1d-linear
 91,pat_ds::string::dp::dp-1d-linear
 92,pat_ds::linked-list::core::iterative-reverse
@@ -400,6 +404,7 @@ anchor_id,tag
 216,pat_topic::backtrack::subset-combination
 216,pat_ds::array::backtrack::subset-combination
 216,pat_group::sum
+216,pat_group::subset-selection
 217,pat_topic::hash::seen-set
 217,pat_ds::array::hash::seen-set
 219,pat_topic::hash::seen-set
@@ -663,6 +668,7 @@ anchor_id,tag
 416,pat_topic::dp::knapsack-01
 416,pat_ds::array::dp::knapsack-01
 416,pat_group::sum
+416,pat_group::subset-selection
 417,pat_topic::dfs::dfs-template
 417,pat_ds::matrices::dfs::dfs-template
 418,pat_ds::array::greedy::running-extreme
@@ -730,6 +736,7 @@ anchor_id,tag
 494,pat_topic::dp::knapsack-01
 494,pat_ds::array::dp::knapsack-01
 494,pat_group::sum
+494,pat_group::subset-selection
 496,pat_topic::stack-topic::monotonic-stack
 496,pat_ds::array::stack-topic::monotonic-stack
 499,pat_ds::matrices::heap::dijkstra
@@ -866,6 +873,7 @@ anchor_id,tag
 698,pat_topic::dp::bitmask-dp
 698,pat_ds::array::dp::bitmask-dp
 698,pat_group::sum
+698,pat_group::subset-selection
 700,pat_ds::bst::core::bst-insert-delete
 701,pat_ds::bst::core::bst-insert-delete
 703,pat_topic::heap::top-k
@@ -1136,6 +1144,7 @@ anchor_id,tag
 1123,pat_ds::tree::core::lca-dfs
 1125,pat_topic::dp::bitmask-dp
 1125,pat_ds::array::dp::bitmask-dp
+1125,pat_group::subset-selection
 1130,pat_topic::dp::interval-dp
 1130,pat_ds::array::dp::interval-dp
 1133,pat_ds::array::hash::freq-counter
@@ -1210,6 +1219,7 @@ anchor_id,tag
 1255,pat_topic::bits::bitmask-enumerate
 1255,pat_ds::string::bits::bitmask-enumerate
 1255,pat_group::word-process
+1255,pat_group::subset-selection
 1259,pat_ds::array::dp::interval-dp
 1265,pat_ds::linked-list::dfs::dfs-iterative-stack
 1268,pat_topic::trie-topic::trie-autocomplete
@@ -1445,6 +1455,7 @@ anchor_id,tag
 2517,pat_ds::array::binary-search::bs-on-answer-compound
 2542,pat_ds::array::heap::top-k
 2542,pat_group::subsequence
+2542,pat_group::subset-selection
 2559,pat_topic::prefix-sum::ps-1d
 2559,pat_ds::array::prefix-sum::ps-1d
 2611,pat_ds::array::greedy::exchange-argument

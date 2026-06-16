@@ -47,7 +47,12 @@ const GROUPS = {
   subsequence:    [115, 300, 334, 354, 376, 392, 491, 583, 646, 673, 727, 792, 1048, 1143, 1218, 1312, 1671, 2002, 2542],
   // Optimal subset choice where ORDER doesn't matter (vs subsequence) — pick a
   // subset under a constraint (max/count/partition); backtrack or bitmask-DP.
-  'subset-selection': [1239],
+  // Sub-patterns by solution shape: enumerate include-exclude (78/90),
+  // combination-to-target (39/40/216), subset-sum/partition knapsack
+  // (416/494/698), bitmask-DP / set-cover (698/1125/1239/1255),
+  // optimal-under-constraint sort+heap (2542). Several are multi-group (sum,
+  // word-process, subsequence).
+  'subset-selection': [39, 40, 78, 90, 216, 416, 494, 698, 1125, 1239, 1255, 2542],
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
 }
 
