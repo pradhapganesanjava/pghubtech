@@ -30,16 +30,24 @@
     "pat_group::parenthesis"
   ],
   "39": [
-    "pat_group::sum"
+    "pat_group::sum",
+    "pat_group::subset-selection"
   ],
   "40": [
-    "pat_group::sum"
+    "pat_group::sum",
+    "pat_group::subset-selection"
   ],
   "49": [
     "pat_group::anagram"
   ],
+  "78": [
+    "pat_group::subset-selection"
+  ],
   "79": [
     "pat_group::word-process"
+  ],
+  "90": [
+    "pat_group::subset-selection"
   ],
   "112": [
     "pat_group::sum"
@@ -117,7 +125,8 @@
     "pat_group::palindrome"
   ],
   "216": [
-    "pat_group::sum"
+    "pat_group::sum",
+    "pat_group::subset-selection"
   ],
   "224": [
     "pat_group::expression"
@@ -211,7 +220,8 @@
     "pat_group::word-process"
   ],
   "416": [
-    "pat_group::sum"
+    "pat_group::sum",
+    "pat_group::subset-selection"
   ],
   "422": [
     "pat_group::word-process"
@@ -229,7 +239,8 @@
     "pat_group::subsequence"
   ],
   "494": [
-    "pat_group::sum"
+    "pat_group::sum",
+    "pat_group::subset-selection"
   ],
   "523": [
     "pat_group::sum"
@@ -265,7 +276,8 @@
     "pat_group::word-process"
   ],
   "698": [
-    "pat_group::sum"
+    "pat_group::sum",
+    "pat_group::subset-selection"
   ],
   "714": [
     "pat_group::buy-sell"
@@ -330,6 +342,9 @@
   "1106": [
     "pat_group::expression"
   ],
+  "1125": [
+    "pat_group::subset-selection"
+  ],
   "1143": [
     "pat_group::subsequence"
   ],
@@ -355,7 +370,8 @@
     "pat_group::parenthesis"
   ],
   "1255": [
-    "pat_group::word-process"
+    "pat_group::word-process",
+    "pat_group::subset-selection"
   ],
   "1312": [
     "pat_group::palindrome",
@@ -396,7 +412,8 @@
     "pat_group::sum"
   ],
   "2542": [
-    "pat_group::subsequence"
+    "pat_group::subsequence",
+    "pat_group::subset-selection"
   ],
   "2761": [
     "pat_group::sum"
