@@ -348,6 +348,9 @@
   "1235": [
     "pat_group::scheduling"
   ],
+  "1239": [
+    "pat_group::subset-selection"
+  ],
   "1249": [
     "pat_group::parenthesis"
   ],

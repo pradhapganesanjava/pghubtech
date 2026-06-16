@@ -45,6 +45,9 @@ const GROUPS = {
   // (115/392/727/792/1143/583), palindromic-subseq (2002/1312), enumerate (491),
   // subset-optimum (2542). #10021 was contiguous → excluded.
   subsequence:    [115, 300, 334, 354, 376, 392, 491, 583, 646, 673, 727, 792, 1048, 1143, 1218, 1312, 1671, 2002, 2542],
+  // Optimal subset choice where ORDER doesn't matter (vs subsequence) — pick a
+  // subset under a constraint (max/count/partition); backtrack or bitmask-DP.
+  'subset-selection': [1239],
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
 }
 
