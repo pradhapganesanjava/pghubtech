@@ -1187,6 +1187,11 @@ anchor_id,tag
 1236,pat_ds::graph::dfs::dfs-template
 1239,pat_topic::bits::bitmask-enumerate
 1239,pat_ds::string::bits::bitmask-enumerate
+1239,pat_ds::array::backtrack::subset-combination
+1239,pat_topic::backtrack::subset-combination
+1239,pat_ds::array::dp::bitmask-dp
+1239,pat_topic::dp::bitmask-dp
+1239,pat_group::subset-selection
 1242,pat_topic::concurrency::thread-pool-fanout
 1244,pat_topic::design::ordered-aggregate
 1245,pat_ds::tree::core::post-order-depth

@@ -1,0 +1,9 @@
+{
+  "1239": [
+    "pat_ds::array::backtrack::subset-combination",
+    "pat_topic::backtrack::subset-combination",
+    "pat_ds::array::dp::bitmask-dp",
+    "pat_topic::dp::bitmask-dp",
+    "pat_group::subset-selection"
+  ]
+}
