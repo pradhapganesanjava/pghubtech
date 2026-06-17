@@ -33,6 +33,16 @@ const NODES_HEADERS = [
   'created_at', 'updated_at', 'kind',
 ] as const
 
+// Google Sheets caps a single cell at 50 000 characters. `content` (sanitised
+// HTML) can blow past that, so we split it: the first chunk stays in the
+// `content` column (D), the rest spill into overflow columns (J onward) and
+// are re-joined on read. Leave headroom under the hard 50k limit.
+const MAX_CELL  = 49000
+// A:Z — 9 base columns + up to 17 content-overflow columns (≈ 882k chars).
+// Writing the full width every save also clears stale overflow cells left
+// behind when a note shrinks back below the cell limit.
+const ROW_WIDTH = 26
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface Note {
@@ -177,7 +187,7 @@ async function ensureNodesTab(noteId: string): Promise<void> {
 export async function loadNodes(noteId: string): Promise<NoteNode[]> {
   await ensureNodesTab(noteId)
   const r = await GAuth.fetch(
-    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A2:I`)}`,
+    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A2:Z`)}`,
     { headers: authHeaders() },
   )
   const d = await r.json() as { values?: string[][] }
@@ -211,7 +221,7 @@ export async function addNode(
     kind,
   }
   await GAuth.fetch(
-    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:I`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:Z`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
       method:  'POST',
       headers: authHeaders(true),
@@ -228,7 +238,7 @@ export async function updateNode(noteId: string, node: NoteNode): Promise<void> 
   const updated = { ...node, updatedAt: new Date().toISOString() }
   await writeRange(
     noteId,
-    `${NODES_TAB}!A${rowIdx}:I${rowIdx}`,
+    `${NODES_TAB}!A${rowIdx}:Z${rowIdx}`,
     [nodeToRow(updated)],
   )
 }
@@ -294,11 +304,12 @@ export async function deleteNode(noteId: string, id: string): Promise<void> {
 function rowToNode(r: string[]): NoteNode | null {
   if (!r[0]) return null
   const rawKind = (r[8] ?? '').trim().toLowerCase()
+  // content = column D + any overflow columns (J onward), concatenated back.
   return {
     id:        r[0],
     parentId:  r[1] ?? '',
     title:     r[2] ?? '',
-    content:   r[3] ?? '',
+    content:   (r[3] ?? '') + r.slice(9).join(''),
     position:  parseInt(r[4] ?? '0', 10) || 0,
     tags:      (r[5] ?? '').split(',').map(t => t.trim()).filter(Boolean),
     createdAt: r[6] ?? '',
@@ -308,17 +319,39 @@ function rowToNode(r: string[]): NoteNode | null {
 }
 
 function nodeToRow(n: NoteNode): string[] {
-  return [
+  const chunks = splitCell(n.content)
+  // Content cells available: column D + (ROW_WIDTH - 9) overflow columns.
+  if (chunks.length > ROW_WIDTH - 8) {
+    throw new Error(
+      `Note content too large (${n.content.length} chars; max ~${MAX_CELL * (ROW_WIDTH - 8)})`,
+    )
+  }
+  const row = [
     n.id,
     n.parentId,
     n.title,
-    n.content,
+    chunks[0] ?? '',
     String(n.position),
     n.tags.join(', '),
     n.createdAt,
     n.updatedAt,
     n.kind,
+    ...chunks.slice(1),
   ]
+  // Pad to full width so stale overflow cells from a previous, larger save
+  // are overwritten with blanks rather than left to corrupt the next read.
+  while (row.length < ROW_WIDTH) row.push('')
+  return row
+}
+
+// Split a string into ≤MAX_CELL chunks. Slicing by UTF-16 code unit may cut a
+// surrogate pair across cells, but plain concatenation on read reassembles the
+// exact original string, so it's lossless.
+function splitCell(s: string): string[] {
+  if (s.length <= MAX_CELL) return [s]
+  const out: string[] = []
+  for (let i = 0; i < s.length; i += MAX_CELL) out.push(s.slice(i, i + MAX_CELL))
+  return out
 }
 
 function collectDescendants(all: NoteNode[], rootId: string): Set<string> {

@@ -71,6 +71,43 @@ function strokeToSvgD(s: HwStroke): string {
   return d + 'Z'
 }
 
+// ── Serialisation helpers (used by the Notes drawing block) ──────────────────
+// A drawing is persisted as a `<div class="hw-doc" data-doc="{HwDoc JSON}">`
+// wrapper containing one baked <svg> per page. The JSON lets us re-open the
+// pad for editing; the SVG renders crisply in read-only view (and survives the
+// HTML sanitiser, which keeps svg/path by default).
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+function hwDocToSvg(doc: HwDoc): string {
+  return (doc.pages ?? []).map(p => {
+    const paths = (p.strokes ?? []).map(s => {
+      const d = strokeToSvgD(s)
+      return d ? `<path d="${d}" fill="${s.color}"/>` : ''
+    }).join('')
+    return `<svg class="hw-page-svg" viewBox="0 0 ${PAGE_W} ${PAGE_H}" `
+      + `preserveAspectRatio="xMidYMid meet" xmlns="${SVG_NS}" `
+      + `style="display:block;width:100%;max-width:420px;height:auto;margin:6px 0;`
+      + `border:1px solid #e2e2ea;border-radius:8px;background:#fff">${paths}</svg>`
+  }).join('')
+}
+
+export function hwDocToBlockHtml(doc: HwDoc): string {
+  const wrap = document.createElement('div')
+  wrap.className = 'hw-doc'
+  wrap.setAttribute('data-doc', JSON.stringify(doc))   // outerHTML escapes the attribute
+  wrap.innerHTML = hwDocToSvg(doc)
+  return wrap.outerHTML
+}
+
+export function parseHwDoc(html: string): HwDoc | null {
+  try {
+    const d  = new DOMParser().parseFromString(html, 'text/html')
+    const el = d.querySelector('.hw-doc')
+    if (!el) return null
+    return JSON.parse(el.getAttribute('data-doc') ?? '') as HwDoc
+  } catch { return null }
+}
+
 function ensureSize(canvas: HTMLCanvasElement) {
   const r = canvas.getBoundingClientRect()
   const dpr = window.devicePixelRatio || 1
@@ -499,8 +536,14 @@ function ReactPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadPr
 // ───────────────────────────────────────────────────────────────────────────
 // Outer pad — shared toolbar, state, mode selector
 // ───────────────────────────────────────────────────────────────────────────
-const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
-  function HandwritingPad({ initialDoc }, ref) {
+const HandwritingPad = forwardRef<HandwritingPadHandle, {
+  initialDoc?: HwDoc
+  // Fired whenever the document changes (stroke committed/erased, page added/
+  // removed, …). Used by controlled callers like the Notes drawing block; the
+  // imperative getDoc() ref is still available for save-on-demand callers.
+  onChange?: (doc: HwDoc) => void
+}>(
+  function HandwritingPad({ initialDoc, onChange }, ref) {
     const [pages, setPages] = useState<HwPage[]>(
       initialDoc?.pages?.length ? initialDoc.pages.map(p => ({ strokes: p.strokes ?? [] })) : [{ strokes: [] }],
     )
@@ -514,6 +557,15 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, { initialDoc?: HwDoc }>(
 
     const pagesRef = useRef(pages);   pagesRef.current = pages
     const idxRef   = useRef(pageIdx); idxRef.current = pageIdx
+
+    // Notify controlled callers on every edit. Skip the initial mount so just
+    // opening an existing drawing doesn't mark the note dirty.
+    const onChangeRef = useRef(onChange); onChangeRef.current = onChange
+    const mountedRef  = useRef(false)
+    useEffect(() => {
+      if (!mountedRef.current) { mountedRef.current = true; return }
+      onChangeRef.current?.({ pages })
+    }, [pages])
 
     useImperativeHandle(ref, () => ({
       getDoc: () => ({ pages: pagesRef.current }),
