@@ -3074,6 +3074,16 @@ body.resizing-h * {
   border-color: var(--primary);
 }
 .page-block-add-spacer:hover { color: var(--text); }
+.page-block-add-drawing:hover { color: var(--text); border-color: var(--primary); }
+
+/* Drawing block — embeds the shared HandwritingPad. */
+.page-block-kind-lbl {
+  font-size: 11px; color: var(--text2);
+  padding: 0 6px; font-weight: 600;
+}
+.page-block-drawing .hw-wrap { margin-top: 4px; }
+.page-render-drawing { margin: 6px 0; }
+.page-render-drawing .hw-page-svg { max-width: 100%; }
 
 /* Spacer block — a thin dashed rule with hover-revealed actions. */
 .page-spacer {

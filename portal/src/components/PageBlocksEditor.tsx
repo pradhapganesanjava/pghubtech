@@ -6,14 +6,16 @@
 // inside node.content. Plain-HTML legacy content is auto-wrapped as a
 // single depth-0 block, so older pages keep loading.
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import RichEditor from './RichEditor'
+import HandwritingPad, { hwDocToBlockHtml, parseHwDoc } from './HandwritingPad'
+import type { HwDoc } from './HandwritingPad'
 import { sanitizeHtml } from '../lib/sanitize'
 
 const SENTINEL  = '__PGBLOCKS__\n'
 const MAX_DEPTH = 6
 
-export type BlockKind = 'content' | 'spacer'
+export type BlockKind = 'content' | 'spacer' | 'drawing'
 
 export interface PageBlock {
   id:    string
@@ -39,7 +41,9 @@ export function parseBlocks(content: string): PageBlock[] {
             id:    String(d.id),
             depth: Math.max(0, Math.min(MAX_DEPTH, parseInt(d.depth, 10) || 0)),
             html:  String(d.html ?? ''),
-            kind:  d.kind === 'spacer' ? 'spacer' : 'content',
+            kind:  d.kind === 'spacer' ? 'spacer'
+                 : d.kind === 'drawing' ? 'drawing'
+                 : 'content',
           }))
         if (cleaned.length > 0) return cleaned
       }
@@ -82,6 +86,10 @@ export function renderBlocksAsHtml(blocks: PageBlock[]): string {
     if ((b.kind ?? 'content') === 'spacer') {
       return `<div style="margin-left:${indent}px;height:18px"></div>`
     }
+    if (b.kind === 'drawing') {
+      // b.html already holds the `.hw-doc` wrapper + baked <svg> pages.
+      return `<div class="page-render-block page-render-drawing" style="margin-left:${indent}px">${b.html}</div>`
+    }
     const html = wrapTables(b.html)
     return `<div class="page-render-block" style="margin-left:${indent}px">${html}</div>`
   }).join('\n')
@@ -109,6 +117,9 @@ export default function PageBlocksEditor({ blocks, onChange, onPasteImage }: Pro
   }
   function addSpacer() {
     onChange([...blocks, newBlock(0, '', 'spacer')])
+  }
+  function addDrawing() {
+    onChange([...blocks, newBlock(0, '', 'drawing')])
   }
   function deleteBlock(id: string) {
     onChange(blocks.filter(b => b.id !== id))
@@ -154,6 +165,9 @@ export default function PageBlocksEditor({ blocks, onChange, onPasteImage }: Pro
         <button className="page-block-add page-block-add-spacer" type="button" onClick={addSpacer}>
           ＋ Spacer
         </button>
+        <button className="page-block-add page-block-add-drawing" type="button" onClick={addDrawing}>
+          ✏️ Drawing
+        </button>
       </div>
     </div>
   )
@@ -178,7 +192,29 @@ function BlockView({
 }) {
   const [mode, setMode] = useState<Mode>('rich')
   const indentPx = block.depth * 24
-  const isSpacer = (block.kind ?? 'content') === 'spacer'
+  const isSpacer  = (block.kind ?? 'content') === 'spacer'
+  const isDrawing = block.kind === 'drawing'
+
+  if (isDrawing) {
+    return (
+      <div
+        className="page-block page-block-drawing"
+        style={{ marginLeft: indentPx }}
+        data-depth={block.depth}
+      >
+        <div className="page-block-toolbar">
+          <button className="pgb-btn" type="button" onClick={onOutdent} disabled={block.depth === 0}        title="Outdent">⇤</button>
+          <button className="pgb-btn" type="button" onClick={onIndent}  disabled={block.depth >= MAX_DEPTH} title="Indent">⇥</button>
+          <span className="page-block-depth">L{block.depth}</span>
+          <span className="page-block-kind-lbl">✏️ Drawing</span>
+          <button className="pgb-btn" type="button" onClick={onMoveUp}   disabled={first} title="Move up">↑</button>
+          <button className="pgb-btn" type="button" onClick={onMoveDown} disabled={last}  title="Move down">↓</button>
+          <button className="pgb-btn page-block-rm" type="button" onClick={onDelete} title="Remove drawing">✕</button>
+        </div>
+        <DrawingBlock html={block.html} onChangeHtml={onChangeHtml} />
+      </div>
+    )
+  }
 
   if (isSpacer) {
     return (
@@ -282,5 +318,23 @@ function BlockView({
         />
       )}
     </div>
+  )
+}
+
+// A drawing block embeds the shared HandwritingPad. We parse the persisted
+// HwDoc once on mount (so live edits don't reset the pad), and re-bake the
+// block HTML — stroke JSON + baked SVG — on every change.
+function DrawingBlock({
+  html, onChangeHtml,
+}: {
+  html:         string
+  onChangeHtml: (v: string) => void
+}) {
+  const initialDoc = useMemo(() => parseHwDoc(html) ?? undefined, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <HandwritingPad
+      initialDoc={initialDoc}
+      onChange={(doc: HwDoc) => onChangeHtml(hwDocToBlockHtml(doc))}
+    />
   )
 }
