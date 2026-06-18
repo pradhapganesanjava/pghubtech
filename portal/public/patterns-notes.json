@@ -39,16 +39,25 @@
   },
 
   "dp-1d-linear": {
-    "70":  "Climbing stairs. dp[i] = dp[i-1] + dp[i-2]. Two rolling vars; O(1) space.",
-    "198": "House robber. dp[i] = max(dp[i-1], dp[i-2] + a[i]). Two rolling vars.",
-    "213": "House robber II (circular). Two passes: rob houses [0..n-2] OR [1..n-1] (exclude first or last); max of the two.",
-    "91":  "Decode ways. dp[i] = dp[i-1] (if s[i-1] != '0') + dp[i-2] (if s[i-2..i-1] in 10..26).",
-    "139": "Word break. dp[i] = ∃ j<i: dp[j] AND s[j..i] ∈ dict. Substring check trie or set.",
-    "322": "Coin change min. dp[w] = 1 + min(dp[w-c] for c in coins). O(W·n) — unbounded knapsack shape but lives here as the simplest DP intro.",
-    "746": "Min cost climbing stairs. dp[i] = cost[i] + min(dp[i-1], dp[i-2]).",
-    "837": "New 21 Game. dp[i] = (dp[i-1] + … + dp[i-W])/W; maintain rolling sum to drop the inner loop. Probability variant of climbing-stairs.",
-    "403": "Frog jump. dp[stone] = set of arrival speeds; transitions {v-1,v,v+1} to stones[stone]+v. Hash-of-sets shape, but still linear DP over stones.",
-    "343": "Integer break. dp[n] = max over i in 1..n-1 of max(i*(n-i), i*dp[n-i]). O(n²) but technically 1D (knapsack-style)."
+    "338": "Counting bits. dp[i] = dp[i>>1] + (i&1) (or dp[i & (i-1)] + 1). Reads a NON-adjacent earlier index → full table retained, cannot roll to O(1). The canonical contrast to rolling-state-fixed-window."
+  },
+
+  "rolling-state-fixed-window": {
+    "509":  "Fibonacci. dp[i] = dp[i-1] + dp[i-2]. Window width 2 → keep two scalars (a, b = b, a+b). O(1) space, never allocate the table.",
+    "70":   "Climbing stairs. dp[i] = dp[i-1] + dp[i-2]. Same 2-wide window as Fib; answer is a count of ways.",
+    "198":  "House robber. dp[i] = max(dp[i-1], dp[i-2] + a[i]). Two rolling vars; only the last two states matter.",
+    "213":  "House robber II (circular). Two linear passes over [0..n-2] and [1..n-1]; each pass is the same 2-wide rolling window, take the max.",
+    "91":   "Decode ways. dp[i] = dp[i-1] (if s[i-1]≠'0') + dp[i-2] (if s[i-2..i-1] ∈ 10..26). Fixed 2-back window despite the validity guards.",
+    "746":  "Min cost climbing stairs. dp[i] = cost[i] + min(dp[i-1], dp[i-2]). 2-wide window.",
+    "1137": "Tribonacci. dp[i] = dp[i-1] + dp[i-2] + dp[i-3]. Window width 3 → three rolling scalars; still O(1) space."
+  },
+
+  "rolling-state-variable-window": {
+    "837": "New 21 Game. dp[i] = (dp[i+1] + … + dp[i+W]) / W (prob of stopping < K). Window width W is a runtime parameter; keep ONE running sum, slide it (window += dp[i] − dp[i+W]) → O(n) not O(n·W)."
+  },
+
+  "augmented-state-reachability": {
+    "403": "Frog jump. State = (stone, speed). reach[stone] = set of arrival speeds; from each speed v branch to v-1,v,v+1 and land if the target stone exists. Goal reachable iff reach[last] is non-empty. Each node holds a SET of states → no scalar roll."
   },
 
   "dfs-template": {
@@ -571,7 +580,8 @@
     "1048": "Longest String Chain. Sort by length; dp[word] = 1 + max(dp[word minus one char]).",
     "491":  "Increasing Subsequences. Backtrack (NOT DP — listed for related shape).",
     "1671": "Min Removals to Make Mountain. LIS forward + LDS backward; max(L[i]+R[i]-1) gives mountain len.",
-    "376":  "Wiggle Subsequence. Two dp tracks: longest ending up vs ending down."
+    "376":  "Wiggle Subsequence. Two dp tracks: longest ending up vs ending down.",
+    "139":  "Word break. dp[i] = ∃ j<i: dp[j] AND s[j..i] ∈ dict. Boolean-segmentation variant of the scan-all-prior skeleton (OR instead of max); no patience-sort speedup. Substring check via set/trie."
   },
 
   "dp-row-build": {
@@ -601,7 +611,8 @@
     "377":  "Combination Sum IV (permutations). Outer loop w, inner loop coins ⇒ permutations counted.",
     "279":  "Perfect Squares. dp[n] = 1 + min(dp[n-k²]) for k² ≤ n.",
     "983":  "Min Cost Tickets. dp[day] = min over (1, 7, 30)-day tickets.",
-    "1449": "Largest Number Cost. dp[cost] = string-max-of(dp[cost - cost(d)] + d)."
+    "1449": "Largest Number Cost. dp[cost] = string-max-of(dp[cost - cost(d)] + d).",
+    "343":  "Integer Break. dp[n] = max over j of max(j*(n-j), j*dp[n-j]). Max-PRODUCT objective; n is the target, summand sizes j are the reusable choices."
   },
 
   "interval-dp": {

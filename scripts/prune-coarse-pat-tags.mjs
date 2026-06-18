@@ -46,7 +46,7 @@ const COL_TAGS = 7
 // reflects batches 4–6 (commits f5d5ace, d535ef0, this turn).
 const SUPERSEDES = {
   // batch 4
-  'dp::dp-1d-linear':              new Set(['dp-lis', 'dp-row-build']),
+  'dp::dp-1d-linear':              new Set(['dp-lis', 'dp-row-build', 'rolling-state-fixed-window']),
   'two-pointers::tp-converging':   new Set(['tp-k-sum', 'tp-area-greedy']),
   'greedy::sort-and-sweep':        new Set(['greedy-end-sorted']),
   // batch 5
