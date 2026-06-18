@@ -65,6 +65,22 @@ const CORRECTIONS = [
     why: 'Shortest Path to Get All Keys — (r,c,keysBitmask) state-augmented.' },
   { id: 1102, add: ['pat_ds::matrices::bfs::bfs-state-augmented'],
     why: 'Path With Maximum Minimum Value — alternative formulation, bfs over (r,c,minSoFar).' },
+
+  // Re-home stragglers out of dp-1d-linear after the rolling-state-fixed-window split.
+  { id: 139, drop: ['pat_topic::dp::dp-1d-linear', 'pat_ds::string::dp::dp-1d-linear'],
+    add:  ['pat_topic::dp::dp-lis', 'pat_ds::string::dp::dp-lis'],
+    why: 'Word Break — dp[i]=∃j<i dp[j]∧s[j..i]∈dict scans ALL prior states (OR-segmentation), not a constant lookback → dp-lis skeleton.' },
+  { id: 322, drop: ['pat_topic::dp::dp-1d-linear', 'pat_ds::array::dp::dp-1d-linear'],
+    why: 'Coin Change — ranges over a choice set of coins; already carries knapsack-unbounded, so dp-1d-linear is redundant.' },
+  { id: 343, drop: ['pat_topic::dp::dp-1d-linear', 'pat_ds::array::dp::dp-1d-linear'],
+    add:  ['pat_topic::dp::knapsack-unbounded', 'pat_ds::array::dp::knapsack-unbounded'],
+    why: 'Integer Break — partition n into REUSABLE summands maximizing product; unbounded-knapsack skeleton (max-product objective).' },
+  { id: 837, drop: ['pat_topic::dp::dp-1d-linear', 'pat_ds::array::dp::dp-1d-linear'],
+    add:  ['pat_topic::dp::rolling-state-variable-window', 'pat_ds::array::dp::rolling-state-variable-window'],
+    why: 'New 21 Game — contiguous W-wide window sum kept O(1) via running sum; W is a parameter (new micro rolling-state-variable-window).' },
+  { id: 403, drop: ['pat_topic::dp::dp-1d-linear', 'pat_ds::array::dp::dp-1d-linear'],
+    add:  ['pat_topic::dp::augmented-state-reachability', 'pat_ds::array::dp::augmented-state-reachability'],
+    why: 'Frog Jump — (stone, speed) augmented-state reachability; each node holds a SET of states (new micro augmented-state-reachability).' },
 ]
 
 // ── env + auth ──────────────────────────────────────────────────────────
