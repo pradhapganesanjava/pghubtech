@@ -727,7 +727,7 @@ anchor_id,tag
 480,pat_ds::array::heap::two-heap-median
 484,pat_ds::array::core::in-place-read-write
 487,pat_ds::array::sliding-window::sw-shrink-violation
-489,pat_ds::graph::dfs::dfs-template
+489,pat_ds::graph::dfs::dfs-motion-undo
 490,pat_ds::matrices::dfs::dfs-template
 491,pat_topic::backtrack::subset-combination
 491,pat_ds::array::backtrack::subset-combination
@@ -930,6 +930,7 @@ anchor_id,tag
 752,pat_ds::string::bfs::bfs-bidirectional
 752,pat_topic::shortest-path::bfs
 752,pat_ds::graph::shortest-path::bfs
+752,pat_ds::array::bfs::bfs-encoded-state
 753,pat_ds::graph::core::euler-tour
 758,pat_ds::string::greedy::sort-and-sweep
 758,pat_group::word-process
@@ -945,6 +946,7 @@ anchor_id,tag
 772,pat_topic::stack-topic::expression-eval
 772,pat_ds::string::stack-topic::expression-eval
 772,pat_group::expression
+773,pat_ds::matrices::bfs::bfs-encoded-state
 778,pat_topic::heap::dijkstra
 778,pat_ds::matrices::heap::dijkstra
 778,pat_topic::shortest-path::dijkstra
@@ -998,6 +1000,7 @@ anchor_id,tag
 862,pat_topic::deque-topic::monotonic-deque
 862,pat_ds::array::deque-topic::monotonic-deque
 862,pat_group::sum
+864,pat_ds::matrices::bfs::bfs-state-augmented
 870,pat_topic::greedy::exchange-argument
 870,pat_ds::array::greedy::exchange-argument
 872,pat_ds::tree::dfs::dfs-parallel-trees
@@ -1133,6 +1136,7 @@ anchor_id,tag
 1100,pat_ds::string::sliding-window::sw-distinct-count
 1101,pat_topic::union-find::uf-with-size
 1101,pat_ds::array::union-find::uf-with-size
+1102,pat_ds::matrices::bfs::bfs-state-augmented
 1106,pat_topic::stack-topic::decode-string
 1106,pat_ds::string::stack-topic::decode-string
 1106,pat_group::expression
@@ -1172,7 +1176,7 @@ anchor_id,tag
 1167,pat_ds::array::heap::top-k
 1180,pat_topic::math::sum-formulas
 1188,pat_ds::queue::core::queue-from-stacks
-1192,pat_ds::graph::dfs::dfs-template
+1192,pat_ds::graph::core::tarjan-bridges
 1197,pat_ds::graph::bfs::bfs-shortest-unweighted
 1198,pat_ds::matrices::hash::freq-counter
 1202,pat_topic::union-find::uf-with-size
@@ -1230,11 +1234,11 @@ anchor_id,tag
 1272,pat_ds::array::greedy::sort-and-sweep
 1277,pat_ds::matrices::dp::dp-2d-square
 1283,pat_ds::array::binary-search::bs-on-answer
-1284,pat_ds::matrices::bfs::bfs-shortest-unweighted
+1284,pat_ds::matrices::bfs::bfs-encoded-state
 1291,pat_ds::array::bfs::bfs-encoded-state
 1292,pat_topic::prefix-sum::ps-2d
 1292,pat_ds::matrices::prefix-sum::ps-2d
-1293,pat_ds::matrices::bfs::bfs-shortest-unweighted
+1293,pat_ds::matrices::bfs::bfs-state-augmented
 1295,pat_topic::math::sum-formulas
 1295,pat_ds::array::math::sum-formulas
 1312,pat_ds::string::core::expand-around-center
@@ -1317,6 +1321,7 @@ anchor_id,tag
 1547,pat_topic::dp::interval-dp
 1547,pat_ds::array::dp::interval-dp
 1567,pat_ds::array::core::kadane
+1568,pat_ds::graph::core::tarjan-bridges
 1584,pat_ds::graph::core::mst
 1610,pat_ds::array::sliding-window::sw-shrink-violation
 1622,pat_topic::math::fast-power
