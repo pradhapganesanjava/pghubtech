@@ -24,6 +24,16 @@ const __dir      = dirname(fileURLToPath(import.meta.url))
 const CREDS_PATH = join(__dir, 'credentials.json')
 const TOKEN_PATH = join(__dir, '.token.json')
 const DO_WRITE   = process.argv.includes('--write')
+// Optional id allowlist:  --only 139,322,343   (or --only=139,322).
+// Restricts the run to those corrections — lets a single themed subset
+// (e.g. the DP re-homing) be applied without touching unrelated rows.
+const ONLY = (() => {
+  const inline = process.argv.find(a => a.startsWith('--only='))
+  if (inline) return new Set(inline.slice(7).split(',').map(s => s.trim()).filter(Boolean))
+  const i = process.argv.indexOf('--only')
+  if (i >= 0 && process.argv[i + 1]) return new Set(process.argv[i + 1].split(',').map(s => s.trim()).filter(Boolean))
+  return null
+})()
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 const TAB    = 'LCProblems'
 const COL_ID   = 1
@@ -143,6 +153,7 @@ async function main() {
   let totalDropped = 0, totalAdded = 0, rowsTouched = 0
 
   for (const corr of CORRECTIONS) {
+    if (ONLY && !ONLY.has(String(corr.id))) continue
     const row = byId.get(String(corr.id))
     if (!row) { console.log(`    LC ${corr.id} not in sheet — skipping`); continue }
 
