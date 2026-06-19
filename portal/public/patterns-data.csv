@@ -39,12 +39,14 @@ anchor_id,tag
 20,pat_topic::stack-topic::bracket-match
 20,pat_ds::string::stack-topic::bracket-match
 20,pat_group::parenthesis
+20,pat_group::parenthesis::bracket-stack
 21,pat_ds::linked-list::core::dummy-head-merge
 21,pat_topic::two-pointers::tp-merge-walk
 21,pat_ds::linked-list::two-pointers::tp-merge-walk
 22,pat_ds::string::backtrack::partition-on-string
 22,pat_ds::string::backtrack::combinatorial-product
 22,pat_group::parenthesis
+22,pat_group::parenthesis::backtrack-generate
 23,pat_ds::linked-list::core::dummy-head-merge
 23,pat_topic::heap::k-way-merge
 23,pat_ds::linked-list::heap::k-way-merge
@@ -59,6 +61,8 @@ anchor_id,tag
 32,pat_topic::stack-topic::bracket-match
 32,pat_ds::string::stack-topic::bracket-match
 32,pat_group::parenthesis
+32,pat_group::parenthesis::balance-counter
+32,pat_group::parenthesis::bracket-stack
 33,pat_topic::binary-search::bs-rotated
 33,pat_ds::array::binary-search::bs-rotated
 34,pat_topic::binary-search::bs-textbook
@@ -134,8 +138,6 @@ anchor_id,tag
 67,pat_ds::string::two-pointers::tp-converging
 68,pat_topic::simulation::line-format
 69,pat_topic::binary-search::bs-on-answer
-70,pat_topic::dp::dp-1d-linear
-70,pat_ds::array::dp::dp-1d-linear
 71,pat_ds::string::stack-topic::parens-rewrite
 72,pat_ds::string::core::edit-distance-dp
 72,pat_topic::dp::dp-2-strings
@@ -181,8 +183,6 @@ anchor_id,tag
 90,pat_topic::bits::bitmask-enumerate
 90,pat_ds::array::bits::bitmask-enumerate
 90,pat_group::subset-selection
-91,pat_topic::dp::dp-1d-linear
-91,pat_ds::string::dp::dp-1d-linear
 92,pat_ds::linked-list::core::iterative-reverse
 93,pat_topic::backtrack::partition-on-string
 93,pat_ds::string::backtrack::partition-on-string
@@ -280,8 +280,6 @@ anchor_id,tag
 137,pat_topic::bits::xor-cancel
 137,pat_ds::array::bits::xor-cancel
 138,pat_ds::linked-list::hash::seen-set
-139,pat_topic::dp::dp-1d-linear
-139,pat_ds::string::dp::dp-1d-linear
 139,pat_group::word-process
 140,pat_topic::backtrack::partition-on-string
 140,pat_ds::string::backtrack::partition-on-string
@@ -359,8 +357,6 @@ anchor_id,tag
 191,pat_ds::array::bits::kernighan-popcount
 191,pat_topic::bits::power-of-two-trick
 191,pat_ds::array::bits::power-of-two-trick
-198,pat_topic::dp::dp-1d-linear
-198,pat_ds::array::dp::dp-1d-linear
 199,pat_topic::bfs::bfs-level-order
 199,pat_ds::tree::bfs::bfs-level-order
 200,pat_ds::graph::core::cc-dfs-uf
@@ -393,8 +389,6 @@ anchor_id,tag
 212,pat_topic::trie-topic::trie-grid-dfs
 212,pat_ds::matrices::trie-topic::trie-grid-dfs
 212,pat_group::word-process
-213,pat_topic::dp::dp-1d-linear
-213,pat_ds::array::dp::dp-1d-linear
 214,pat_ds::string::core::string-match-kmp
 214,pat_group::palindrome
 215,pat_topic::heap::top-k
@@ -444,6 +438,7 @@ anchor_id,tag
 241,pat_ds::string::backtrack::partition-on-string
 241,pat_group::parenthesis
 241,pat_group::expression
+241,pat_group::parenthesis::divide-split
 242,pat_ds::string::core::anagram-keying
 242,pat_topic::hash::freq-counter
 242,pat_ds::string::hash::freq-counter
@@ -532,6 +527,7 @@ anchor_id,tag
 300,pat_group::subsequence
 301,pat_ds::string::backtrack::partition-on-string
 301,pat_group::parenthesis
+301,pat_group::parenthesis::search-removal
 303,pat_topic::prefix-sum::ps-1d
 303,pat_ds::array::prefix-sum::ps-1d
 304,pat_ds::array::core::prefix-sum-hashmap
@@ -555,8 +551,6 @@ anchor_id,tag
 317,pat_ds::matrices::bfs::bfs-multi-source
 317,pat_topic::shortest-path::bfs
 317,pat_ds::graph::shortest-path::bfs
-322,pat_topic::dp::dp-1d-linear
-322,pat_ds::array::dp::dp-1d-linear
 322,pat_topic::dp::knapsack-unbounded
 322,pat_ds::array::dp::knapsack-unbounded
 323,pat_ds::graph::core::cc-dfs-uf
@@ -586,7 +580,6 @@ anchor_id,tag
 341,pat_ds::tree::dfs::dfs-iterative-stack
 342,pat_topic::bits::power-of-two-trick
 342,pat_ds::array::bits::power-of-two-trick
-343,pat_ds::array::dp::dp-1d-linear
 344,pat_ds::string::two-pointers::tp-converging
 345,pat_ds::string::two-pointers::tp-converging
 346,pat_ds::queue::core::moving-average-stream
@@ -650,7 +643,6 @@ anchor_id,tag
 399,pat_ds::graph::union-find::uf-weighted
 402,pat_topic::stack-topic::parens-rewrite
 402,pat_ds::string::stack-topic::parens-rewrite
-403,pat_ds::array::dp::dp-1d-linear
 404,pat_ds::tree::dfs::dfs-template
 406,pat_topic::greedy::exchange-argument
 406,pat_ds::array::greedy::exchange-argument
@@ -748,8 +740,6 @@ anchor_id,tag
 505,pat_ds::matrices::heap::dijkstra
 505,pat_topic::shortest-path::dijkstra
 505,pat_ds::graph::shortest-path::dijkstra
-509,pat_ds::array::dp::dp-1d-linear
-509,pat_topic::dp::dp-1d-linear
 515,pat_topic::bfs::bfs-level-order
 515,pat_ds::tree::bfs::bfs-level-order
 518,pat_topic::dp::knapsack-unbounded
@@ -920,8 +910,6 @@ anchor_id,tag
 744,pat_topic::binary-search::bs-textbook
 744,pat_ds::array::binary-search::bs-textbook
 745,pat_ds::trie::core::trie-wildcard
-746,pat_topic::dp::dp-1d-linear
-746,pat_ds::array::dp::dp-1d-linear
 750,pat_ds::matrices::core::mat-grid-dfs-bfs
 752,pat_ds::string::core::word-ladder-bfs
 752,pat_topic::bfs::bfs-shortest-unweighted
@@ -982,7 +970,6 @@ anchor_id,tag
 828,pat_ds::string::core::in-place-read-write
 833,pat_ds::string::greedy::sort-and-sweep
 836,pat_ds::matrices::core::mat-grid-dfs-bfs
-837,pat_ds::array::dp::dp-1d-linear
 841,pat_ds::graph::dfs::dfs-template
 843,pat_ds::string::backtrack::partition-on-string
 843,pat_group::word-process
@@ -1040,6 +1027,7 @@ anchor_id,tag
 921,pat_topic::stack-topic::bracket-match
 921,pat_ds::string::stack-topic::bracket-match
 921,pat_group::parenthesis
+921,pat_group::parenthesis::balance-counter
 923,pat_ds::array::two-pointers::tp-k-sum
 923,pat_group::sum
 924,pat_ds::graph::union-find::uf-with-size
@@ -1151,7 +1139,6 @@ anchor_id,tag
 1134,pat_topic::math::digit-number-construct
 1135,pat_ds::graph::core::mst
 1136,pat_ds::graph::core::topo-sort
-1137,pat_ds::array::dp::dp-1d-linear
 1139,pat_ds::matrices::dp::dp-2d-square
 1143,pat_ds::string::core::edit-distance-dp
 1143,pat_topic::dp::dp-2-strings
@@ -1213,6 +1200,7 @@ anchor_id,tag
 1249,pat_topic::stack-topic::bracket-match
 1249,pat_ds::string::stack-topic::bracket-match
 1249,pat_group::parenthesis
+1249,pat_group::parenthesis::bracket-stack
 1254,pat_ds::matrices::core::mat-grid-dfs-bfs
 1255,pat_topic::dp::bitmask-dp
 1255,pat_ds::string::dp::bitmask-dp
@@ -1510,11 +1498,18 @@ anchor_id,tag
 10045,pat_ds::graph::core::dag-longest-path
 10046,pat_topic::binary-search::bs-on-answer-compound
 10046,pat_ds::array::binary-search::bs-on-answer-compound
-20,pat_group::parenthesis::bracket-stack
-22,pat_group::parenthesis::backtrack-generate
-32,pat_group::parenthesis::balance-counter
-32,pat_group::parenthesis::bracket-stack
-241,pat_group::parenthesis::divide-split
-301,pat_group::parenthesis::search-removal
-921,pat_group::parenthesis::balance-counter
-1249,pat_group::parenthesis::bracket-stack
+70,pat_topic::dp::rolling-state-fixed-window
+91,pat_topic::dp::rolling-state-fixed-window
+139,pat_topic::dp::dp-lis
+139,pat_ds::string::dp::dp-lis
+198,pat_topic::dp::rolling-state-fixed-window
+213,pat_topic::dp::rolling-state-fixed-window
+343,pat_topic::dp::knapsack-unbounded
+343,pat_ds::array::dp::knapsack-unbounded
+403,pat_topic::dp::augmented-state-reachability
+403,pat_ds::array::dp::augmented-state-reachability
+509,pat_topic::dp::rolling-state-fixed-window
+746,pat_topic::dp::rolling-state-fixed-window
+837,pat_topic::dp::rolling-state-variable-window
+837,pat_ds::array::dp::rolling-state-variable-window
+1137,pat_topic::dp::rolling-state-fixed-window
