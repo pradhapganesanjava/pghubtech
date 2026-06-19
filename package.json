@@ -4,6 +4,8 @@
   "scripts": {
     "dev": "npm run dev --prefix portal",
     "build": "npm run build --prefix portal",
-    "install": "npm install --prefix portal"
+    "install": "npm install --prefix portal",
+    "patterns:csv": "node scripts/build-patterns-csv.mjs --write",
+    "patterns:sync": "node scripts/build-patterns-csv.mjs --write && npm run build"
   }
 }
