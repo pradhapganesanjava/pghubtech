@@ -56,6 +56,26 @@ const GROUPS = {
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
 }
 
+// ── Sub-group micro-patterns ────────────────────────────────────────────────
+// SUBGROUPS[group][micro] = ids that solve the group via that engine. Emitted
+// as `pat_group::<group>::<micro>` (3-level), ADDITIVE to the 2-level
+// pat_group::<group> tag above. A problem may appear under several micros when
+// it admits more than one engine (e.g. #32 has both a counter and a stack form).
+const SUBGROUPS = {
+  parenthesis: {
+    // integer balance scan over a single-type ()  — counter, no stack
+    'balance-counter':    [921, 32],
+    // push opens / indices; typed brackets ()[]{} or need positions to erase
+    'bracket-stack':      [20, 32, 1249],
+    // enumerate the valid solution space via balance-pruned backtracking
+    'backtrack-generate': [22],
+    // BFS/DFS trying removals, returning ALL minimum-length valid strings
+    'search-removal':     [301],
+    // divide & conquer: split at operators and recurse (expression shapes)
+    'divide-split':       [241],
+  },
+}
+
 async function main() {
   const tagged = JSON.parse(await readFile(join(__dir, 'pat-tagged.json'), 'utf8'))
   const known  = new Map(tagged.map(p => [String(p.id), p]))
@@ -67,6 +87,17 @@ async function main() {
       const key = String(id)
       if (!known.has(key)) { unknown.push(`${group}:${key}`); continue }
       ;(out[key] = out[key] || []).push(`pat_group::${group}`)
+    }
+  }
+
+  // Sub-group micro tags (3-level), additive to the 2-level group tag.
+  for (const [group, micros] of Object.entries(SUBGROUPS)) {
+    for (const [micro, ids] of Object.entries(micros)) {
+      for (const id of ids) {
+        const key = String(id)
+        if (!known.has(key)) { unknown.push(`${group}::${micro}:${key}`); continue }
+        ;(out[key] = out[key] || []).push(`pat_group::${group}::${micro}`)
+      }
     }
   }
 

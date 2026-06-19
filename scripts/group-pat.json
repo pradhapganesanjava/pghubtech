@@ -18,16 +18,20 @@
     "pat_group::sum"
   ],
   "20": [
-    "pat_group::parenthesis"
+    "pat_group::parenthesis",
+    "pat_group::parenthesis::bracket-stack"
   ],
   "22": [
-    "pat_group::parenthesis"
+    "pat_group::parenthesis",
+    "pat_group::parenthesis::backtrack-generate"
   ],
   "30": [
     "pat_group::word-process"
   ],
   "32": [
-    "pat_group::parenthesis"
+    "pat_group::parenthesis",
+    "pat_group::parenthesis::balance-counter",
+    "pat_group::parenthesis::bracket-stack"
   ],
   "39": [
     "pat_group::sum",
@@ -139,7 +143,8 @@
   ],
   "241": [
     "pat_group::parenthesis",
-    "pat_group::expression"
+    "pat_group::expression",
+    "pat_group::parenthesis::divide-split"
   ],
   "242": [
     "pat_group::anagram"
@@ -178,7 +183,8 @@
     "pat_group::subsequence"
   ],
   "301": [
-    "pat_group::parenthesis"
+    "pat_group::parenthesis",
+    "pat_group::parenthesis::search-removal"
   ],
   "309": [
     "pat_group::buy-sell"
@@ -319,7 +325,8 @@
     "pat_group::sum"
   ],
   "921": [
-    "pat_group::parenthesis"
+    "pat_group::parenthesis",
+    "pat_group::parenthesis::balance-counter"
   ],
   "923": [
     "pat_group::sum"
@@ -367,7 +374,8 @@
     "pat_group::subset-selection"
   ],
   "1249": [
-    "pat_group::parenthesis"
+    "pat_group::parenthesis",
+    "pat_group::parenthesis::bracket-stack"
   ],
   "1255": [
     "pat_group::word-process",

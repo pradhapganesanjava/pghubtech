@@ -1510,3 +1510,11 @@ anchor_id,tag
 10045,pat_ds::graph::core::dag-longest-path
 10046,pat_topic::binary-search::bs-on-answer-compound
 10046,pat_ds::array::binary-search::bs-on-answer-compound
+20,pat_group::parenthesis::bracket-stack
+22,pat_group::parenthesis::backtrack-generate
+32,pat_group::parenthesis::balance-counter
+32,pat_group::parenthesis::bracket-stack
+241,pat_group::parenthesis::divide-split
+301,pat_group::parenthesis::search-removal
+921,pat_group::parenthesis::balance-counter
+1249,pat_group::parenthesis::bracket-stack

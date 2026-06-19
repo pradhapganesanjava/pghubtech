@@ -2926,6 +2926,33 @@
       }
     },
     "parenthesis": {
+      "micros": {
+        "balance-counter": {
+          "name": "Balance Counter Scan",
+          "when": "Single bracket type `()` where you only need a verdict or a count — track an integer **balance**, no stack.",
+          "mechanism": "`bal += 1` on `(`, `bal -= 1` on `)`; `bal < 0` mid-scan ⇒ extra `)`, leftover `bal` ⇒ extra `(`. Two-pass (L→R then R→L) for symmetric counting (#32 alt, #921)."
+        },
+        "bracket-stack": {
+          "name": "Bracket / Index Stack",
+          "when": "Typed brackets `()[]{}` that must match by kind, OR you need the **positions** to locate/erase unmatched brackets.",
+          "mechanism": "Push opens (or their indices) on a stack; on a close the top must match. Leftover stack = unmatched opens; pop-on-empty = unmatched close (#20, #32, #1249)."
+        },
+        "backtrack-generate": {
+          "name": "Backtrack Generate",
+          "when": "**Enumerate** all valid bracketings rather than validate an existing string.",
+          "mechanism": "Grow the string under the invariant `open <= n` and `close < open`; record at length `2n`. Pruning keeps every prefix valid by construction (#22)."
+        },
+        "search-removal": {
+          "name": "Search for Min Removals",
+          "when": "Return **all** minimum-length valid strings after removing the fewest brackets.",
+          "mechanism": "Pre-count extra `(` and `)`; BFS/DFS removing exactly that many, dedup removals, validate each candidate by a balance scan (#301)."
+        },
+        "divide-split": {
+          "name": "Divide & Conquer at Operators",
+          "when": "Compute every way to **parenthesize** an expression (results, not validity).",
+          "mechanism": "Split at each operator into `left op right`, recurse both sides to lists of values, combine every `l × r` pair. Memoize substrings (#241)."
+        }
+      },
       "ds": {
         "string": {
           "tldr": "Treat the **string** of brackets as a sequence where balance (`open - close`) must never dip below 0 and must end at 0 — tracked by a **stack** or a running **counter**.",
