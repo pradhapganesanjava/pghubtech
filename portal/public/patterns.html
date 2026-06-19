@@ -344,6 +344,17 @@
   .group-combo-card .cnt { color: var(--text2); font-size: 11px; }
   .group-combo-card .caret { margin-left: auto; color: var(--text3); font-size: 16px; }
   .group-combo-card:hover .caret { color: var(--primary); }
+  /* Engine sub-patterns within a group (pat_group::<g>::<micro>). */
+  .group-micro-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 8px; }
+  .group-micro { background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid var(--primary);
+                 border-radius: 8px; padding: 10px 12px; }
+  .group-micro-hd { display: flex; align-items: center; gap: 8px; }
+  .group-micro-id { font-size: 9px; color: var(--text3); padding: 2px 6px; background: var(--bg3);
+                    border-radius: 3px; font-family: monospace; text-transform: uppercase; letter-spacing: .3px; }
+  .group-micro-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .group-micro-hd .cnt { color: var(--text2); font-size: 11px; }
+  .group-micro-when { font-size: 12.5px; line-height: 1.5; color: var(--text); margin: 7px 0 0; }
+  .group-micro-mech { font-size: 12px; line-height: 1.45; color: var(--text2); margin: 5px 0 0; }
   .combo-block { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; }
   .combo-block.combo-ingroup { background: rgba(var(--primary-rgb), .07); border: 1px solid var(--border); }
   .combo-block.combo-general { background: var(--bg3); }
@@ -543,6 +554,19 @@ function groupInvolved(g) {
     .map(([id, count]) => ({ p: PATTERNS.find(x => x.id === id) || { id, name: id.replace(/-/g, ' '), icon: '•' }, count }))
     .sort((a, b) => b.count - a.count || a.p.name.localeCompare(b.p.name))
   return { ds: build(dsCount), topic: build(topicCount) }
+}
+// Engine sub-patterns within a group: micro → sorted unique ids. Driven by the
+// 3-level pat_group::<group>::<micro> tags parsed into ANCHOR_DATA.groupMicro.
+function groupMicros(g) {
+  const gm = (ANCHOR_DATA && ANCHOR_DATA.groupMicro && ANCHOR_DATA.groupMicro[g]) || {}
+  const out = {}
+  for (const [micro, ids] of Object.entries(gm)) out[micro] = [...new Set(ids)].sort((a, b) => Number(a) - Number(b))
+  return out
+}
+// Display definitions (name/when/mechanism) live in patterns-group-notes.json
+// under groups.<group>.micros — content, decoupled from the tag→id mapping.
+function groupMicroDefs(g) {
+  return (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g].micros) || {}
 }
 
 // Prefer the CSV-derived list; fall back to the hand-coded DS_TOPIC_LINKS
@@ -845,7 +869,7 @@ function parsePatternData(csvText) {
   //   group: groupId → [ids]                         (pat_group:: rows)
   //   byId:  id → { ds:Set<dsId>, topic:Set<topicId> } reverse map, lets the
   //          Group By tab report which DS / Topics each group's problems touch.
-  const out = { core: {}, topic: {}, dsTopic: {}, group: {}, byId: {} }
+  const out = { core: {}, topic: {}, dsTopic: {}, group: {}, groupMicro: {}, byId: {} }
   const byId = (id) => (out.byId[id] = out.byId[id] || { ds: new Set(), topic: new Set() })
   for (let i = 1; i < lines.length; i++) {
     const m = lines[i].match(/^(\d+)\s*,\s*(?:"([^"]*)"|([^\n]*))$/)
@@ -877,6 +901,14 @@ function parsePatternData(csvText) {
       // pat_group::<group>  — logical problem family (subject matter).
       const group = parts[1]
       ;((out.group[group] = out.group[group] || [])).push(id)
+    } else if (parts[0] === 'pat_group' && parts.length === 3) {
+      // pat_group::<group>::<micro>  — solution-engine sub-pattern within a
+      // family. The id still counts in the flat family (groupProblemIds dedups)
+      // and additionally lands under the per-engine bucket.
+      const group = parts[1], micro = parts[2]
+      ;((out.group[group] = out.group[group] || [])).push(id)
+      const gm = (out.groupMicro[group] = out.groupMicro[group] || {})
+      ;((gm[micro] = gm[micro] || [])).push(id)
     }
   }
   return out
@@ -1826,6 +1858,34 @@ function groupAnchorChips(ids) {
     `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`
   ).join('')}</div>`
 }
+// Engine sub-patterns for a group, rendered as a list of mini-cards. Each shows
+// the micro id + name, a when/mechanism line (from notes), and its problems.
+// Order follows the notes definition order, then any untyped extras A-Z.
+function renderGroupMicros(g) {
+  const micros = groupMicros(g)
+  const ids = Object.keys(micros)
+  if (!ids.length) return ''
+  const defs = groupMicroDefs(g)
+  const defOrder = Object.keys(defs)
+  const ordered = [...defOrder.filter(m => micros[m]), ...ids.filter(m => !defOrder.includes(m)).sort()]
+  const cards = ordered.map(mid => {
+    const def  = defs[mid] || {}
+    const list = micros[mid]
+    const name = def.name || mid.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    const when = def.when      ? `<p class="group-micro-when">${mdLite(def.when)}</p>` : ''
+    const mech = def.mechanism ? `<p class="group-micro-mech">⚙ ${mdLite(def.mechanism)}</p>` : ''
+    const chips = list.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
+    return `<div class="group-micro">
+      <div class="group-micro-hd">
+        <span class="group-micro-id">${escHtml(mid)}</span>
+        <span class="group-micro-name">${escHtml(name)}</span>
+        <span class="cnt">${list.length}</span>
+      </div>${when}${mech}
+      <div class="anchor-list">${chips}</div>
+    </div>`
+  }).join('')
+  return `<div class="group-micro-list">${cards}</div>`
+}
 // Problems in a group that touch a given DS / Topic dimension.
 function groupComboProblems(g, kind, dimId) {
   return groupProblemIds(g).filter(id => {
@@ -1998,6 +2058,14 @@ function renderGroupMain(main) {
     ${renderComboList(activeGroupId, 'ds', inv.ds)}
     <h3>Topics involved <span class="hd-count">(${inv.topic.length})</span></h3>
     ${renderComboList(activeGroupId, 'topic', inv.topic)}
+    ${(() => {
+      const micros = groupMicros(activeGroupId)
+      const n = Object.keys(micros).length
+      if (!n) return ''
+      return `<h3>Micro-patterns <span class="hd-count">(${n})</span></h3>
+        <p class="lede" style="margin-top:-2px;color:var(--text3)">Solution engines within <strong>${meta.name}</strong> — the same family split by how it's actually solved.</p>
+        ${renderGroupMicros(activeGroupId)}`
+    })()}
     <h3>All problems <span class="hd-count">(${ids.length})</span></h3>
     ${groupAnchorChips(ids)}
   `
