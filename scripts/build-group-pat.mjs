@@ -56,8 +56,8 @@ const GROUPS = {
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
   // Online / streaming: maintain a running statistic over an unbounded
   // arriving sequence without rescanning (two-heap median, bounded heap,
-  // moving window). Seeded with 295; siblings 346/703/480/352 are candidates.
-  stream:         [295],
+  // moving window, ordered-interval merge).
+  stream:         [295, 346, 352, 480, 703],
 }
 
 // ── Sub-group micro-patterns ────────────────────────────────────────────────
@@ -77,6 +77,16 @@ const SUBGROUPS = {
     'search-removal':     [301],
     // divide & conquer: split at operators and recurse (expression shapes)
     'divide-split':       [241],
+  },
+  stream: {
+    // two balanced heaps split at the median (max-heap lower / min-heap upper)
+    'two-heap-median':       [295, 480],
+    // fixed-size-k heap; its top is the k-th order statistic
+    'bounded-heap':          [703],
+    // fixed-width window + running aggregate (queue + sum)
+    'moving-window':         [346],
+    // maintain sorted intervals, merge on insert (ordered map / binary search)
+    'ordered-interval-merge': [352],
   },
 }
 

@@ -1,3 +1,7 @@
 {
-  "295": ["pat_group::stream"]
+  "295": ["pat_group::stream", "pat_group::stream::two-heap-median"],
+  "480": ["pat_group::stream", "pat_group::stream::two-heap-median"],
+  "703": ["pat_group::stream", "pat_group::stream::bounded-heap"],
+  "346": ["pat_group::stream", "pat_group::stream::moving-window"],
+  "352": ["pat_group::stream", "pat_group::stream::ordered-interval-merge"]
 }

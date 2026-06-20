@@ -180,7 +180,8 @@
     "pat_group::word-process"
   ],
   "295": [
-    "pat_group::stream"
+    "pat_group::stream",
+    "pat_group::stream::two-heap-median"
   ],
   "300": [
     "pat_group::subsequence"
@@ -200,6 +201,14 @@
   ],
   "336": [
     "pat_group::palindrome"
+  ],
+  "346": [
+    "pat_group::stream",
+    "pat_group::stream::moving-window"
+  ],
+  "352": [
+    "pat_group::stream",
+    "pat_group::stream::ordered-interval-merge"
   ],
   "354": [
     "pat_group::subsequence"
@@ -244,6 +253,10 @@
   "439": [
     "pat_group::expression"
   ],
+  "480": [
+    "pat_group::stream",
+    "pat_group::stream::two-heap-median"
+  ],
   "491": [
     "pat_group::subsequence"
   ],
@@ -287,6 +300,10 @@
   "698": [
     "pat_group::sum",
     "pat_group::subset-selection"
+  ],
+  "703": [
+    "pat_group::stream",
+    "pat_group::stream::bounded-heap"
   ],
   "714": [
     "pat_group::buy-sell"
