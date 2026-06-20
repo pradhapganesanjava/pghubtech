@@ -603,6 +603,8 @@ anchor_id,tag
 351,pat_ds::matrices::backtrack::word-search-dfs
 352,pat_group::stream
 352,pat_group::stream::ordered-interval-merge
+352,pat_topic::design::ordered-interval-merge
+352,pat_ds::array::design::ordered-interval-merge
 353,pat_ds::matrices::core::mat-grid-dfs-bfs
 354,pat_ds::array::dp::dp-lis
 354,pat_group::subsequence
