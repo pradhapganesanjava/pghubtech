@@ -60,6 +60,10 @@
     "403": "Frog jump. State = (stone, speed). reach[stone] = set of arrival speeds; from each speed v branch to v-1,v,v+1 and land if the target stone exists. Goal reachable iff reach[last] is non-empty. Each node holds a SET of states → no scalar roll."
   },
 
+  "ordered-interval-merge": {
+    "352": "Data Stream as Disjoint Intervals. Keep intervals in an ordered map start→end. On addNum(v): skip if already covered; locate the floor/ceil neighbours by binary search; merge if v touches the left (end+1==v) and/or right (v+1==start) interval, erasing absorbed ones. getIntervals returns entries in key order. O(log n) per add."
+  },
+
   "dfs-template": {
     "200":  "Number of Islands. For each unvisited '1', DFS (mark to '0' or visited set), ++count. Same as dfs-grid-flood — listed under both pre-prune.",
     "695":  "Max area of island. DFS RETURNS subtree-area (1 + sum of 4 neighbour calls); track global max.",

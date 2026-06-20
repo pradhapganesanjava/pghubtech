@@ -3646,8 +3646,12 @@
     "title": "Data Stream as Disjoint Intervals",
     "difficulty": "Hard",
     "topics": "Hash Table; Binary Search; Union-Find; Design; Data Stream; Ordered Set",
-    "pat_ds": [],
-    "pat_topic": [],
+    "pat_ds": [
+      "pat_ds::array::design::ordered-interval-merge"
+    ],
+    "pat_topic": [
+      "pat_topic::design::ordered-interval-merge"
+    ],
     "pat_group": [
       "pat_group::stream",
       "pat_group::stream::ordered-interval-merge"
