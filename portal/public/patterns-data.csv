@@ -522,6 +522,7 @@ anchor_id,tag
 294,pat_ds::string::backtrack::partition-on-string
 295,pat_topic::heap::two-heap-median
 295,pat_ds::array::heap::two-heap-median
+295,pat_group::stream
 297,pat_ds::tree::core::serialize-tree
 298,pat_ds::tree::hash::hash-chain-build
 299,pat_ds::string::hash::freq-counter

@@ -54,6 +54,10 @@ const GROUPS = {
   // word-process, subsequence).
   'subset-selection': [39, 40, 78, 90, 216, 416, 494, 698, 1125, 1239, 1255, 2542],
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
+  // Online / streaming: maintain a running statistic over an unbounded
+  // arriving sequence without rescanning (two-heap median, bounded heap,
+  // moving window). Seeded with 295; siblings 346/703/480/352 are candidates.
+  stream:         [295],
 }
 
 // ── Sub-group micro-patterns ────────────────────────────────────────────────
