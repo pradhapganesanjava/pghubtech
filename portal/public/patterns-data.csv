@@ -289,8 +289,6 @@ anchor_id,tag
 140,pat_ds::string::backtrack::partition-on-string
 140,pat_group::word-process
 141,pat_ds::linked-list::core::floyd-cycle
-141,pat_topic::hash::seen-set
-141,pat_ds::linked-list::hash::seen-set
 141,pat_topic::two-pointers::tp-fast-slow
 141,pat_ds::linked-list::two-pointers::tp-fast-slow
 142,pat_ds::linked-list::core::floyd-cycle
@@ -513,8 +511,6 @@ anchor_id,tag
 286,pat_ds::graph::shortest-path::bfs
 287,pat_ds::array::core::index-as-hash
 287,pat_ds::linked-list::core::floyd-cycle
-287,pat_topic::hash::seen-set
-287,pat_ds::array::hash::seen-set
 287,pat_topic::two-pointers::tp-fast-slow
 287,pat_ds::array::two-pointers::tp-fast-slow
 289,pat_topic::simulation::grid-simulate
