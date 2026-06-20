@@ -251,6 +251,35 @@
     }
   },
   "groups": {
+    "stream": {
+      "topic": {
+        "heap": {
+          "tldr": "Maintain a running statistic over the **stream** with TWO heaps that split the data at the median: a max-heap for the lower half, a min-heap for the upper half.",
+          "headline": "Balance the two heaps so their sizes differ by at most 1 — the median is then O(1) at the tops.",
+          "tricks": [
+            { "k": "Two-heap split", "v": "max-heap `lo` holds the smaller half, min-heap `hi` the larger half; keep `0 <= len(lo) - len(hi) <= 1`." },
+            { "k": "Insert", "v": "Push to `lo`, move `lo`'s top into `hi`; if `hi` grew larger, move `hi`'s top back to `lo`. Stays ordered + balanced." },
+            { "k": "Median", "v": "Odd total → top of `lo`; even → average of the two tops. O(1) query, O(log n) add." }
+          ],
+          "pseudo": "addNum(x):\n  lo.pushMax(x)\n  hi.pushMin(lo.popMax())        // hand largest-of-lower up\n  if len(hi) > len(lo):\n    lo.pushMax(hi.popMin())      // rebalance\nfindMedian():\n  return len(lo) > len(hi) ? lo.top : (lo.top + hi.top) / 2",
+          "problems": [
+            {
+              "id": 295,
+              "title": "Find Median from Data Stream",
+              "tag": "two-heap median",
+              "points": [
+                "Two heaps: max-heap `lo` (lower half) + min-heap `hi` (upper half).",
+                "On add: balance so the sizes differ by at most 1.",
+                "Median = top of `lo` (odd count) or average of both tops (even).",
+                "O(log n) add, O(1) median."
+              ],
+              "note": "The streaming twist: you can't re-sort on each query, so you keep the split incrementally.",
+              "visual": "stream: 1, 2, 3\nadd 1: lo=[1]            med=1\nadd 2: lo=[1] hi=[2]     med=1.5\nadd 3: lo=[2,1] hi=[3]   med=2"
+            }
+          ]
+        }
+      }
+    },
     "sum": {
       "ds": {
         "array": {

@@ -521,6 +521,7 @@ const GROUPS = [
   { id: 'subsequence',  icon: '〰️', name: 'Subsequence',   intro: 'Order-preserving (non-contiguous) selection — LIS, LCS, is-subsequence, matching/counting variants.' },
   { id: 'subset-selection', icon: '🎯', name: 'Subset Selection', intro: 'Pick an OPTIMAL subset (order-independent) under a constraint — maximize / count / partition. Only membership matters, not order; usually backtracking (include-exclude) or bitmask-DP over subsets.' },
   { id: 'scheduling',   icon: '🗓️', name: 'Scheduling',    intro: 'Order/select tasks under constraints — course prerequisites (topo), meeting rooms, task scheduler, job scheduling.' },
+  { id: 'stream',       icon: '🌊', name: 'Stream',         intro: 'Online / streaming — maintain a running statistic (median, k-th largest, moving average) over an unbounded arriving sequence as elements come in, without rescanning. Usually two heaps, a bounded heap, or a moving window.' },
 ]
 function groupMeta(id) {
   return GROUPS.find(g => g.id === id) || { id, icon: '🗂', name: id.replace(/-/g, ' '), intro: '' }
