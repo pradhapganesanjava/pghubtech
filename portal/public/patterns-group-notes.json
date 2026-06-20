@@ -252,6 +252,28 @@
   },
   "groups": {
     "stream": {
+      "micros": {
+        "two-heap-median": {
+          "name": "Two-Heap Median",
+          "when": "Need the running **median** (or a balanced split) of the stream.",
+          "mechanism": "Max-heap `lo` (lower half) + min-heap `hi` (upper half), kept balanced to a size diff ≤ 1; median = the tops. O(log n) add, O(1) query. Windowed variant (#480) adds lazy deletion of the element leaving the window."
+        },
+        "bounded-heap": {
+          "name": "Bounded Heap (size-k)",
+          "when": "Track the **k-th** largest/smallest as elements arrive.",
+          "mechanism": "Keep a size-k min-heap (for k-th largest): push each value, pop when size > k. The heap top is the answer. O(log k) per add, O(1) query (#703)."
+        },
+        "moving-window": {
+          "name": "Moving Window Aggregate",
+          "when": "Running statistic over the **last N** arrivals (fixed window).",
+          "mechanism": "Fixed-size queue + a running aggregate: enqueue the new value, dequeue the oldest, adjust the sum/count. O(1) per add (#346)."
+        },
+        "ordered-interval-merge": {
+          "name": "Ordered Interval Merge",
+          "when": "Maintain the stream as a set of **disjoint sorted intervals**, merging on insert.",
+          "mechanism": "Ordered map / sorted list of intervals; on add, binary-search the insert position and merge overlapping neighbours. O(log n) locate + amortized merge (#352)."
+        }
+      },
       "topic": {
         "heap": {
           "tldr": "Maintain a running statistic over the **stream** with TWO heaps that split the data at the median: a max-heap for the lower half, a min-heap for the upper half.",
@@ -275,6 +297,30 @@
               ],
               "note": "The streaming twist: you can't re-sort on each query, so you keep the split incrementally.",
               "visual": "stream: 1, 2, 3\nadd 1: lo=[1]            med=1\nadd 2: lo=[1] hi=[2]     med=1.5\nadd 3: lo=[2,1] hi=[3]   med=2"
+            },
+            {
+              "id": 480,
+              "title": "Sliding Window Median",
+              "tag": "two-heap median (windowed)",
+              "points": [
+                "Same two-heap split, but over a sliding window of size k.",
+                "When the window advances, the outgoing element must be removed — use LAZY deletion (a `to-remove` count map) and only pop when it surfaces at a heap top.",
+                "Rebalance after each add+remove so sizes stay within 1.",
+                "Median read off the tops as in #295."
+              ],
+              "note": "The window removal is what separates this from #295 — heaps don't support arbitrary delete, so defer it."
+            },
+            {
+              "id": 703,
+              "title": "Kth Largest Element in a Stream",
+              "tag": "bounded heap",
+              "points": [
+                "Keep a min-heap capped at size k.",
+                "On add: push, then pop while size > k.",
+                "The heap top is the k-th largest seen so far.",
+                "O(log k) per add — no full sort needed."
+              ],
+              "visual": "k=3  stream: 4,5,8,2\nadd 4: [4]\nadd 5: [4,5]\nadd 8: [4,5,8]      top=4\nadd 2: [4,5,8] (2 dropped)  top=4"
             }
           ]
         }

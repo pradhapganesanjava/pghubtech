@@ -11,7 +11,9 @@
     "pat_topic": [
       "pat_topic::hash::complement-lookup"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "2",
@@ -58,7 +60,9 @@
       "pat_ds::string::core::expand-around-center"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "6",
@@ -80,7 +84,9 @@
     "pat_topic": [
       "pat_topic::math::digit-number-construct"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "10",
@@ -152,7 +158,9 @@
     "pat_topic": [
       "pat_topic::sorting::sort-then-twoptr"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "16",
@@ -166,7 +174,9 @@
     "pat_topic": [
       "pat_topic::sorting::sort-then-twoptr"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "17",
@@ -191,7 +201,9 @@
     "pat_topic": [
       "pat_topic::sorting::sort-then-twoptr"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "19",
@@ -218,7 +230,10 @@
     "pat_topic": [
       "pat_topic::stack-topic::bracket-match"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::parenthesis::bracket-stack"
+    ]
   },
   {
     "id": "21",
@@ -244,7 +259,10 @@
       "pat_ds::string::backtrack::combinatorial-product"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::parenthesis::backtrack-generate"
+    ]
   },
   {
     "id": "23",
@@ -324,7 +342,9 @@
       "pat_ds::string::core::minimum-window"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "31",
@@ -348,7 +368,11 @@
     "pat_topic": [
       "pat_topic::stack-topic::bracket-match"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::parenthesis::balance-counter",
+      "pat_group::parenthesis::bracket-stack"
+    ]
   },
   {
     "id": "33",
@@ -426,7 +450,10 @@
       "pat_topic::backtrack::subset-combination",
       "pat_topic::dfs::dfs-backtrack-undo"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "40",
@@ -439,7 +466,10 @@
     "pat_topic": [
       "pat_topic::backtrack::subset-combination"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "41",
@@ -543,7 +573,9 @@
     "pat_topic": [
       "pat_topic::hash::freq-counter"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::anagram"
+    ]
   },
   {
     "id": "50",
@@ -786,11 +818,9 @@
     "title": "Climbing Stairs",
     "difficulty": "Easy",
     "topics": "Math; Dynamic Programming; Memoization",
-    "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
-    ],
+    "pat_ds": [],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear"
+      "pat_topic::dp::rolling-state-fixed-window"
     ],
     "pat_group": []
   },
@@ -892,7 +922,9 @@
       "pat_topic::bits::bitmask-enumerate",
       "pat_topic::dfs::dfs-backtrack-undo"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "79",
@@ -909,7 +941,9 @@
       "pat_topic::dfs::dfs-backtrack-undo",
       "pat_topic::trie-topic::trie-grid-dfs"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "80",
@@ -1023,18 +1057,18 @@
       "pat_topic::backtrack::subset-combination",
       "pat_topic::bits::bitmask-enumerate"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "91",
     "title": "Decode Ways",
     "difficulty": "Medium",
     "topics": "String; Dynamic Programming",
-    "pat_ds": [
-      "pat_ds::string::dp::dp-1d-linear"
-    ],
+    "pat_ds": [],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear"
+      "pat_topic::dp::rolling-state-fixed-window"
     ],
     "pat_group": []
   },
@@ -1265,7 +1299,9 @@
       "pat_ds::tree::core::path-sum-dfs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "113",
@@ -1276,7 +1312,9 @@
       "pat_ds::tree::core::path-sum-dfs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "114",
@@ -1300,7 +1338,9 @@
     "pat_topic": [
       "pat_topic::dp::dp-2-strings"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "116",
@@ -1370,7 +1410,9 @@
       "pat_topic::dp::state-machine-dp",
       "pat_topic::greedy::running-extreme"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::buy-sell"
+    ]
   },
   {
     "id": "122",
@@ -1385,7 +1427,9 @@
       "pat_topic::dp::state-machine-dp",
       "pat_topic::greedy::running-extreme"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::buy-sell"
+    ]
   },
   {
     "id": "123",
@@ -1398,7 +1442,9 @@
     "pat_topic": [
       "pat_topic::dp::state-machine-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::buy-sell"
+    ]
   },
   {
     "id": "124",
@@ -1414,7 +1460,9 @@
       "pat_topic::dp::tree-dp",
       "pat_topic::dfs::dfs-tree-orders"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "125",
@@ -1428,7 +1476,9 @@
     "pat_topic": [
       "pat_topic::two-pointers::tp-converging"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "126",
@@ -1442,7 +1492,9 @@
     "pat_topic": [
       "pat_topic::bfs::bfs-bidirectional"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "127",
@@ -1460,7 +1512,9 @@
       "pat_topic::bfs::bfs-bidirectional",
       "pat_topic::shortest-path::bfs"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "128",
@@ -1482,7 +1536,9 @@
       "pat_ds::tree::core::path-sum-dfs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "130",
@@ -1510,7 +1566,9 @@
     "pat_topic": [
       "pat_topic::backtrack::partition-on-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "133",
@@ -1590,12 +1648,14 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; String; Dynamic Programming; Trie; Memoization",
     "pat_ds": [
-      "pat_ds::string::dp::dp-1d-linear"
+      "pat_ds::string::dp::dp-lis"
     ],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear"
+      "pat_topic::dp::dp-lis"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "140",
@@ -1608,7 +1668,9 @@
     "pat_topic": [
       "pat_topic::backtrack::partition-on-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "141",
@@ -1617,11 +1679,9 @@
     "topics": "Hash Table; Linked List; Two Pointers",
     "pat_ds": [
       "pat_ds::linked-list::core::floyd-cycle",
-      "pat_ds::linked-list::hash::seen-set",
       "pat_ds::linked-list::two-pointers::tp-fast-slow"
     ],
     "pat_topic": [
-      "pat_topic::hash::seen-set",
       "pat_topic::two-pointers::tp-fast-slow"
     ],
     "pat_group": []
@@ -1725,7 +1785,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::expression-eval"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "151",
@@ -1736,7 +1798,9 @@
       "pat_ds::array::core::rotate-reverse"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "152",
@@ -1872,7 +1936,9 @@
       "pat_topic::hash::complement-lookup",
       "pat_topic::sorting::sort-then-twoptr"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "169",
@@ -1948,7 +2014,9 @@
       "pat_ds::string::core::rotate-reverse"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "187",
@@ -1975,7 +2043,9 @@
     "pat_topic": [
       "pat_topic::dp::state-machine-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::buy-sell"
+    ]
   },
   {
     "id": "189",
@@ -2020,11 +2090,9 @@
     "title": "House Robber",
     "difficulty": "Medium",
     "topics": "Array; Dynamic Programming",
-    "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
-    ],
+    "pat_ds": [],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear"
+      "pat_topic::dp::rolling-state-fixed-window"
     ],
     "pat_group": []
   },
@@ -2136,7 +2204,9 @@
       "pat_ds::graph::core::cycle-3color"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "208",
@@ -2160,7 +2230,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-shrink-violation"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "210",
@@ -2171,7 +2243,9 @@
       "pat_ds::graph::core::topo-sort"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "211",
@@ -2183,7 +2257,9 @@
       "pat_ds::trie::core::trie-wildcard"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "212",
@@ -2198,18 +2274,18 @@
       "pat_topic::backtrack::word-search-dfs",
       "pat_topic::trie-topic::trie-grid-dfs"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "213",
     "title": "House Robber II",
     "difficulty": "Medium",
     "topics": "Array; Dynamic Programming",
-    "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
-    ],
+    "pat_ds": [],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear"
+      "pat_topic::dp::rolling-state-fixed-window"
     ],
     "pat_group": []
   },
@@ -2222,7 +2298,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "215",
@@ -2250,7 +2328,10 @@
     "pat_topic": [
       "pat_topic::backtrack::subset-combination"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "217",
@@ -2322,7 +2403,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::expression-eval"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "225",
@@ -2358,7 +2441,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::expression-eval"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "228",
@@ -2432,7 +2517,9 @@
     "pat_topic": [
       "pat_topic::two-pointers::tp-fast-slow"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "235",
@@ -2501,7 +2588,11 @@
       "pat_ds::string::backtrack::partition-on-string"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::expression",
+      "pat_group::parenthesis::divide-split"
+    ]
   },
   {
     "id": "242",
@@ -2515,7 +2606,9 @@
     "pat_topic": [
       "pat_topic::hash::freq-counter"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::anagram"
+    ]
   },
   {
     "id": "243",
@@ -2526,7 +2619,9 @@
       "pat_ds::array::two-pointers::tp-converging"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "244",
@@ -2537,7 +2632,9 @@
       "pat_ds::array::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "245",
@@ -2548,7 +2645,9 @@
       "pat_ds::array::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "247",
@@ -2596,7 +2695,9 @@
       "pat_topic::greedy::sort-and-sweep",
       "pat_topic::interval::interval-sort-start-overlap"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "253",
@@ -2609,7 +2710,9 @@
     "pat_topic": [
       "pat_topic::greedy::sort-and-sweep"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "254",
@@ -2665,7 +2768,9 @@
       "pat_ds::array::two-pointers::tp-count-pairs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "260",
@@ -2724,7 +2829,9 @@
       "pat_ds::string::hash::freq-counter"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "268",
@@ -2890,7 +2997,9 @@
     "pat_topic": [
       "pat_topic::backtrack::partition-on-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "283",
@@ -2938,11 +3047,9 @@
     "pat_ds": [
       "pat_ds::array::core::index-as-hash",
       "pat_ds::linked-list::core::floyd-cycle",
-      "pat_ds::array::hash::seen-set",
       "pat_ds::array::two-pointers::tp-fast-slow"
     ],
     "pat_topic": [
-      "pat_topic::hash::seen-set",
       "pat_topic::two-pointers::tp-fast-slow"
     ],
     "pat_group": []
@@ -2967,7 +3074,9 @@
       "pat_ds::string::hash::bijection-map"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "291",
@@ -2978,7 +3087,9 @@
       "pat_ds::string::backtrack::partition-on-string"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "293",
@@ -3013,7 +3124,10 @@
     "pat_topic": [
       "pat_topic::heap::two-heap-median"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::stream",
+      "pat_group::stream::two-heap-median"
+    ]
   },
   {
     "id": "297",
@@ -3057,7 +3171,9 @@
       "pat_ds::array::dp::dp-lis"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "301",
@@ -3068,7 +3184,10 @@
       "pat_ds::string::backtrack::partition-on-string"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::parenthesis::search-removal"
+    ]
   },
   {
     "id": "303",
@@ -3121,7 +3240,9 @@
     "pat_topic": [
       "pat_topic::dp::state-machine-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::buy-sell"
+    ]
   },
   {
     "id": "310",
@@ -3216,11 +3337,9 @@
     "difficulty": "Medium",
     "topics": "Array; Dynamic Programming; Breadth-First Search",
     "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear",
       "pat_ds::array::dp::knapsack-unbounded"
     ],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear",
       "pat_topic::dp::knapsack-unbounded"
     ],
     "pat_group": []
@@ -3261,7 +3380,9 @@
     "pat_topic": [
       "pat_topic::sorting::merge-sort-counting"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "328",
@@ -3327,7 +3448,9 @@
       "pat_ds::array::greedy::running-extreme"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "336",
@@ -3338,7 +3461,9 @@
       "pat_ds::string::trie-topic::trie-grid-dfs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "337",
@@ -3359,10 +3484,12 @@
     "difficulty": "Easy",
     "topics": "Dynamic Programming; Bit Manipulation",
     "pat_ds": [
-      "pat_ds::array::bits::kernighan-popcount"
+      "pat_ds::array::bits::kernighan-popcount",
+      "pat_ds::array::dp::dp-1d-linear"
     ],
     "pat_topic": [
-      "pat_topic::bits::kernighan-popcount"
+      "pat_topic::bits::kernighan-popcount",
+      "pat_topic::dp::dp-1d-linear"
     ],
     "pat_group": []
   },
@@ -3409,9 +3536,11 @@
     "difficulty": "Medium",
     "topics": "Math; Dynamic Programming",
     "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
+      "pat_ds::array::dp::knapsack-unbounded"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::knapsack-unbounded"
+    ],
     "pat_group": []
   },
   {
@@ -3445,7 +3574,10 @@
       "pat_ds::queue::core::moving-average-stream"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::stream",
+      "pat_group::stream::moving-window"
+    ]
   },
   {
     "id": "347",
@@ -3510,6 +3642,18 @@
     "pat_group": []
   },
   {
+    "id": "352",
+    "title": "Data Stream as Disjoint Intervals",
+    "difficulty": "Hard",
+    "topics": "Hash Table; Binary Search; Union-Find; Design; Data Stream; Ordered Set",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::stream",
+      "pat_group::stream::ordered-interval-merge"
+    ]
+  },
+  {
     "id": "353",
     "title": "Design Snake Game",
     "difficulty": "Medium",
@@ -3529,7 +3673,9 @@
       "pat_ds::array::dp::dp-lis"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "356",
@@ -3598,7 +3744,9 @@
     "pat_topic": [
       "pat_topic::prefix-sum::ps-2d"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "365",
@@ -3705,7 +3853,9 @@
       "pat_ds::array::dp::dp-lis"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "377",
@@ -3718,7 +3868,9 @@
     "pat_topic": [
       "pat_topic::dp::knapsack-unbounded"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "378",
@@ -3801,7 +3953,9 @@
       "pat_ds::string::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "394",
@@ -3816,7 +3970,9 @@
       "pat_topic::stack-topic::expression-eval",
       "pat_topic::stack-topic::decode-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "395",
@@ -3861,9 +4017,11 @@
     "difficulty": "Hard",
     "topics": "Array; Dynamic Programming",
     "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
+      "pat_ds::array::dp::augmented-state-reachability"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::augmented-state-reachability"
+    ],
     "pat_group": []
   },
   {
@@ -3910,7 +4068,9 @@
       "pat_ds::string::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "409",
@@ -3921,7 +4081,9 @@
       "pat_ds::string::hash::freq-counter"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "410",
@@ -3945,7 +4107,9 @@
       "pat_ds::string::backtrack::partition-on-string"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "413",
@@ -3980,7 +4144,10 @@
     "pat_topic": [
       "pat_topic::dp::knapsack-01"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "417",
@@ -4028,7 +4195,9 @@
     "pat_topic": [
       "pat_topic::simulation::board-validate"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "424",
@@ -4135,7 +4304,9 @@
       "pat_ds::tree::core::path-sum-dfs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "438",
@@ -4150,7 +4321,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-fixed"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::anagram"
+    ]
   },
   {
     "id": "439",
@@ -4161,7 +4334,9 @@
       "pat_ds::string::stack-topic::expression-eval"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "442",
@@ -4360,7 +4535,10 @@
     "pat_topic": [
       "pat_topic::heap::two-heap-median"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::stream",
+      "pat_group::stream::two-heap-median"
+    ]
   },
   {
     "id": "484",
@@ -4390,7 +4568,7 @@
     "difficulty": "Hard",
     "topics": "Backtracking; Interactive",
     "pat_ds": [
-      "pat_ds::graph::dfs::dfs-template"
+      "pat_ds::graph::dfs::dfs-motion-undo"
     ],
     "pat_topic": [],
     "pat_group": []
@@ -4418,7 +4596,9 @@
     "pat_topic": [
       "pat_topic::backtrack::subset-combination"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "493",
@@ -4444,7 +4624,10 @@
     "pat_topic": [
       "pat_topic::dp::knapsack-01"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "496",
@@ -4512,6 +4695,17 @@
     "pat_group": []
   },
   {
+    "id": "509",
+    "title": "Fibonacci Number",
+    "difficulty": "Easy",
+    "topics": "Math; Dynamic Programming; Recursion; Memoization",
+    "pat_ds": [],
+    "pat_topic": [
+      "pat_topic::dp::rolling-state-fixed-window"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "515",
     "title": "Find Largest Value in Each Tree Row",
     "difficulty": "Medium",
@@ -4549,7 +4743,9 @@
     "pat_topic": [
       "pat_topic::prefix-sum::ps-hashmap"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "525",
@@ -4729,7 +4925,9 @@
       "pat_topic::hash::complement-lookup",
       "pat_topic::prefix-sum::ps-hashmap"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "563",
@@ -4804,7 +5002,9 @@
     "pat_topic": [
       "pat_topic::dp::dp-2-strings"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "588",
@@ -4894,7 +5094,9 @@
     "pat_topic": [
       "pat_topic::heap::event-driven-scheduling"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "622",
@@ -4999,7 +5201,9 @@
       "pat_ds::array::greedy::greedy-end-sorted"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "647",
@@ -5010,7 +5214,9 @@
       "pat_ds::string::core::expand-around-center"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "648",
@@ -5023,7 +5229,9 @@
     "pat_topic": [
       "pat_topic::trie-topic::trie-autocomplete"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "649",
@@ -5070,7 +5278,9 @@
     "pat_topic": [
       "pat_topic::hash::complement-lookup"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "658",
@@ -5126,7 +5336,9 @@
       "pat_ds::array::dp::dp-lis"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "676",
@@ -5151,7 +5363,9 @@
     "pat_topic": [
       "pat_topic::two-pointers::tp-converging"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "684",
@@ -5214,7 +5428,9 @@
       "pat_topic::heap::top-k",
       "pat_topic::sorting::bucket-sort-freq"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "694",
@@ -5253,7 +5469,10 @@
     "pat_topic": [
       "pat_topic::dp::bitmask-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "700",
@@ -5288,7 +5507,10 @@
     "pat_topic": [
       "pat_topic::heap::top-k"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::stream",
+      "pat_group::stream::bounded-heap"
+    ]
   },
   {
     "id": "704",
@@ -5358,7 +5580,9 @@
     "pat_topic": [
       "pat_topic::dp::state-machine-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::buy-sell"
+    ]
   },
   {
     "id": "716",
@@ -5430,7 +5654,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::decode-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "727",
@@ -5441,7 +5667,9 @@
       "pat_ds::string::dp::dp-2-strings"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "728",
@@ -5514,7 +5742,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::decode-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "737",
@@ -5584,11 +5814,9 @@
     "title": "Min Cost Climbing Stairs",
     "difficulty": "Easy",
     "topics": "Array; Dynamic Programming",
-    "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
-    ],
+    "pat_ds": [],
     "pat_topic": [
-      "pat_topic::dp::dp-1d-linear"
+      "pat_topic::dp::rolling-state-fixed-window"
     ],
     "pat_group": []
   },
@@ -5612,7 +5840,8 @@
       "pat_ds::string::core::word-ladder-bfs",
       "pat_ds::string::bfs::bfs-shortest-unweighted",
       "pat_ds::string::bfs::bfs-bidirectional",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::shortest-path::bfs",
+      "pat_ds::array::bfs::bfs-encoded-state"
     ],
     "pat_topic": [
       "pat_topic::bfs::bfs-shortest-unweighted",
@@ -5641,7 +5870,9 @@
       "pat_ds::string::greedy::sort-and-sweep"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "759",
@@ -5667,7 +5898,9 @@
       "pat_ds::array::hash::freq-counter"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::anagram"
+    ]
   },
   {
     "id": "763",
@@ -5713,6 +5946,19 @@
     "pat_topic": [
       "pat_topic::stack-topic::expression-eval"
     ],
+    "pat_group": [
+      "pat_group::expression"
+    ]
+  },
+  {
+    "id": "773",
+    "title": "Sliding Puzzle",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Backtracking; Breadth-First Search; Memoization; Matrix",
+    "pat_ds": [
+      "pat_ds::matrices::bfs::bfs-encoded-state"
+    ],
+    "pat_topic": [],
     "pat_group": []
   },
   {
@@ -5811,7 +6057,9 @@
       "pat_ds::string::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "794",
@@ -5870,7 +6118,9 @@
       "pat_ds::string::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "814",
@@ -5906,7 +6156,9 @@
       "pat_ds::string::hash::freq-counter"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "821",
@@ -5969,9 +6221,11 @@
     "difficulty": "Medium",
     "topics": "Math; Dynamic Programming; Sliding Window; Probability and Statistics",
     "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
+      "pat_ds::array::dp::rolling-state-variable-window"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::rolling-state-variable-window"
+    ],
     "pat_group": []
   },
   {
@@ -5994,7 +6248,9 @@
       "pat_ds::string::backtrack::partition-on-string"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "844",
@@ -6077,6 +6333,19 @@
     "pat_topic": [
       "pat_topic::deque-topic::monotonic-deque"
     ],
+    "pat_group": [
+      "pat_group::sum"
+    ]
+  },
+  {
+    "id": "864",
+    "title": "Shortest Path to Get All Keys",
+    "difficulty": "Hard",
+    "topics": "Array; Bit Manipulation; Breadth-First Search; Matrix",
+    "pat_ds": [
+      "pat_ds::matrices::bfs::bfs-state-augmented"
+    ],
+    "pat_topic": [],
     "pat_group": []
   },
   {
@@ -6315,7 +6584,9 @@
       "pat_topic::deque-topic::monotonic-deque",
       "pat_topic::deque-topic::deque-window-constraint"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "919",
@@ -6339,7 +6610,10 @@
     "pat_topic": [
       "pat_topic::stack-topic::bracket-match"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::parenthesis::balance-counter"
+    ]
   },
   {
     "id": "923",
@@ -6350,7 +6624,9 @@
       "pat_ds::array::two-pointers::tp-k-sum"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "924",
@@ -6374,7 +6650,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-at-most-k"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "931",
@@ -6571,7 +6849,9 @@
       "pat_topic::hash::complement-lookup",
       "pat_topic::prefix-sum::ps-hashmap"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "977",
@@ -6767,7 +7047,9 @@
     "pat_topic": [
       "pat_topic::greedy::exchange-argument"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "1047",
@@ -6791,7 +7073,9 @@
       "pat_ds::array::dp::dp-lis"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "1049",
@@ -6932,7 +7216,9 @@
       "pat_ds::array::two-pointers::tp-count-pairs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "1100",
@@ -6959,6 +7245,17 @@
     "pat_group": []
   },
   {
+    "id": "1102",
+    "title": "Path With Maximum Minimum Value",
+    "difficulty": "Medium",
+    "topics": "Array; Binary Search; Depth-First Search; Breadth-First Search; Union-Find; Heap (Priority Queue); Matrix",
+    "pat_ds": [
+      "pat_ds::matrices::bfs::bfs-state-augmented"
+    ],
+    "pat_topic": [],
+    "pat_group": []
+  },
+  {
     "id": "1106",
     "title": "Parsing A Boolean Expression",
     "difficulty": "Hard",
@@ -6969,7 +7266,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::decode-string"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "1109",
@@ -7061,7 +7360,9 @@
     "pat_topic": [
       "pat_topic::dp::bitmask-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "1130",
@@ -7125,10 +7426,10 @@
     "title": "N-th Tribonacci Number",
     "difficulty": "Easy",
     "topics": "Math; Dynamic Programming; Memoization",
-    "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
+    "pat_ds": [],
+    "pat_topic": [
+      "pat_topic::dp::rolling-state-fixed-window"
     ],
-    "pat_topic": [],
     "pat_group": []
   },
   {
@@ -7154,7 +7455,9 @@
     "pat_topic": [
       "pat_topic::dp::dp-2-strings"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "1150",
@@ -7267,7 +7570,7 @@
     "difficulty": "Hard",
     "topics": "Depth-First Search; Graph Theory; Biconnected Component",
     "pat_ds": [
-      "pat_ds::graph::dfs::dfs-template"
+      "pat_ds::graph::core::tarjan-bridges"
     ],
     "pat_topic": [],
     "pat_group": []
@@ -7340,7 +7643,9 @@
       "pat_ds::bst::core::inorder-bst"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "1216",
@@ -7351,7 +7656,9 @@
       "pat_ds::string::dp::dp-2-strings"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "1218",
@@ -7362,7 +7669,9 @@
       "pat_ds::array::hash::hash-chain-build"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "1219",
@@ -7396,7 +7705,9 @@
       "pat_ds::array::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "1231",
@@ -7420,7 +7731,9 @@
       "pat_ds::array::greedy::greedy-end-sorted"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "1236",
@@ -7439,12 +7752,18 @@
     "difficulty": "Medium",
     "topics": "Array; String; Backtracking; Bit Manipulation",
     "pat_ds": [
-      "pat_ds::string::bits::bitmask-enumerate"
+      "pat_ds::string::bits::bitmask-enumerate",
+      "pat_ds::array::backtrack::subset-combination",
+      "pat_ds::array::dp::bitmask-dp"
     ],
     "pat_topic": [
-      "pat_topic::bits::bitmask-enumerate"
+      "pat_topic::bits::bitmask-enumerate",
+      "pat_topic::backtrack::subset-combination",
+      "pat_topic::dp::bitmask-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "1242",
@@ -7507,7 +7826,10 @@
       "pat_topic::stack-topic::parens-rewrite",
       "pat_topic::stack-topic::bracket-match"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::parenthesis",
+      "pat_group::parenthesis::bracket-stack"
+    ]
   },
   {
     "id": "1254",
@@ -7533,7 +7855,10 @@
       "pat_topic::dp::bitmask-dp",
       "pat_topic::bits::bitmask-enumerate"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "1259",
@@ -7609,7 +7934,7 @@
     "difficulty": "Hard",
     "topics": "Array; Hash Table; Bit Manipulation; Breadth-First Search; Matrix",
     "pat_ds": [
-      "pat_ds::matrices::bfs::bfs-shortest-unweighted"
+      "pat_ds::matrices::bfs::bfs-encoded-state"
     ],
     "pat_topic": [],
     "pat_group": []
@@ -7644,7 +7969,7 @@
     "difficulty": "Hard",
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
-      "pat_ds::matrices::bfs::bfs-shortest-unweighted"
+      "pat_ds::matrices::bfs::bfs-state-augmented"
     ],
     "pat_topic": [],
     "pat_group": []
@@ -7671,7 +7996,10 @@
       "pat_ds::string::core::expand-around-center"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome",
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "1314",
@@ -7744,7 +8072,9 @@
       "pat_ds::array::dp::interval-dp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "1337",
@@ -8079,7 +8409,9 @@
       "pat_ds::tree::dfs::dfs-tree-orders"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome"
+    ]
   },
   {
     "id": "1462",
@@ -8090,7 +8422,9 @@
       "pat_ds::graph::core::ancestor-reachability"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "1463",
@@ -8332,6 +8666,17 @@
     "pat_group": []
   },
   {
+    "id": "1568",
+    "title": "Minimum Number of Days to Disconnect Island",
+    "difficulty": "Hard",
+    "topics": "Array; Depth-First Search; Breadth-First Search; Matrix; Strongly Connected Component",
+    "pat_ds": [
+      "pat_ds::graph::core::tarjan-bridges"
+    ],
+    "pat_topic": [],
+    "pat_group": []
+  },
+  {
     "id": "1584",
     "title": "Min Cost to Connect All Points",
     "difficulty": "Medium",
@@ -8478,7 +8823,9 @@
       "pat_ds::array::dp::dp-lis"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "1676",
@@ -8500,7 +8847,9 @@
       "pat_ds::array::two-pointers::tp-k-sum"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "1696",
@@ -8884,7 +9233,10 @@
       "pat_ds::string::bits::bitmask-enumerate"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::palindrome",
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "2007",
@@ -8939,7 +9291,9 @@
       "pat_ds::matrices::core::mat-grid-dfs-bfs"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::word-process"
+    ]
   },
   {
     "id": "2050",
@@ -9048,7 +9402,9 @@
       "pat_ds::graph::core::dag-longest-path"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "2130",
@@ -9211,7 +9567,9 @@
       "pat_ds::array::hash::freq-counter"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "2390",
@@ -9244,7 +9602,9 @@
       "pat_ds::array::heap::event-driven-scheduling"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
   },
   {
     "id": "2406",
@@ -9290,7 +9650,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-fixed"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "2462",
@@ -9347,7 +9709,10 @@
       "pat_ds::array::heap::top-k"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence",
+      "pat_group::subset-selection"
+    ]
   },
   {
     "id": "2559",
@@ -9434,7 +9799,9 @@
     "pat_topic": [
       "pat_topic::math::sieve"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "2812",
@@ -9625,7 +9992,9 @@
       "pat_ds::tree::dp::tree-dp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "10015",
@@ -9658,7 +10027,9 @@
       "pat_ds::string::stack-topic::expression-eval"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::expression"
+    ]
   },
   {
     "id": "10019",
@@ -9724,7 +10095,9 @@
       "pat_ds::array::two-pointers::tp-k-sum"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "10029",

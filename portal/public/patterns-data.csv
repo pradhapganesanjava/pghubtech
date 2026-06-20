@@ -523,6 +523,7 @@ anchor_id,tag
 295,pat_topic::heap::two-heap-median
 295,pat_ds::array::heap::two-heap-median
 295,pat_group::stream
+295,pat_group::stream::two-heap-median
 297,pat_ds::tree::core::serialize-tree
 298,pat_ds::tree::hash::hash-chain-build
 299,pat_ds::string::hash::freq-counter
@@ -588,6 +589,8 @@ anchor_id,tag
 344,pat_ds::string::two-pointers::tp-converging
 345,pat_ds::string::two-pointers::tp-converging
 346,pat_ds::queue::core::moving-average-stream
+346,pat_group::stream
+346,pat_group::stream::moving-window
 347,pat_topic::heap::top-k
 347,pat_ds::array::heap::top-k
 347,pat_topic::sorting::bucket-sort-freq
@@ -598,6 +601,8 @@ anchor_id,tag
 349,pat_ds::array::hash::seen-set
 350,pat_ds::array::hash::freq-counter
 351,pat_ds::matrices::backtrack::word-search-dfs
+352,pat_group::stream
+352,pat_group::stream::ordered-interval-merge
 353,pat_ds::matrices::core::mat-grid-dfs-bfs
 354,pat_ds::array::dp::dp-lis
 354,pat_group::subsequence
@@ -722,6 +727,8 @@ anchor_id,tag
 474,pat_ds::string::dp::knapsack-01
 480,pat_topic::heap::two-heap-median
 480,pat_ds::array::heap::two-heap-median
+480,pat_group::stream
+480,pat_group::stream::two-heap-median
 484,pat_ds::array::core::in-place-read-write
 487,pat_ds::array::sliding-window::sw-shrink-violation
 489,pat_ds::graph::dfs::dfs-motion-undo
@@ -876,6 +883,8 @@ anchor_id,tag
 701,pat_ds::bst::core::bst-insert-delete
 703,pat_topic::heap::top-k
 703,pat_ds::array::heap::top-k
+703,pat_group::stream
+703,pat_group::stream::bounded-heap
 704,pat_topic::binary-search::bs-textbook
 704,pat_ds::array::binary-search::bs-textbook
 705,pat_ds::trie::core::trie-basic
