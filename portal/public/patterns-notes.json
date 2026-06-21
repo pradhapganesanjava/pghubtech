@@ -236,6 +236,10 @@
     "120": "Triangle (bottom-up). dp[c] = triangle[r][c] + min(dp[c], dp[c+1]) sweeping r from bottom-1 → 0. One-array rolling, O(n) space."
   },
 
+  "dp-grid-two-pass": {
+    "542": "01 Matrix. dp[r][c] = distance to nearest 0. Init 0-cells to 0, others to INF. Pass 1 (top-left→bottom-right) relaxes against up+left (+1); pass 2 (bottom-right→top-left) relaxes against down+right (+1). Two sweeps cover all 4 directions. O(m·n). Same result as multi-source BFS, written as a DP."
+  },
+
   "prefix-sum-hashmap": {
     "560": "Subarray Sum K. Map[prefix] = count of prior occurrences. For each new prefix, answer += map.get(prefix − K, 0); then ++map[prefix]. Handles negatives (sliding window can't).",
     "974": "Subarray Sums Divisible by K. Map[prefix mod K] = count. Same engine, but key on residue. Normalise negative mods via ((mod + K) % K).",
