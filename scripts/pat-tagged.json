@@ -4831,11 +4831,13 @@
     "topics": "Array; Dynamic Programming; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::shortest-path::bfs",
+      "pat_ds::matrices::dp::dp-grid-two-pass"
     ],
     "pat_topic": [
       "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::shortest-path::bfs",
+      "pat_topic::dp::dp-grid-two-pass"
     ],
     "pat_group": []
   },

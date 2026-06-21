@@ -780,6 +780,8 @@ anchor_id,tag
 542,pat_ds::matrices::bfs::bfs-multi-source
 542,pat_topic::shortest-path::bfs
 542,pat_ds::graph::shortest-path::bfs
+542,pat_topic::dp::dp-grid-two-pass
+542,pat_ds::matrices::dp::dp-grid-two-pass
 543,pat_ds::tree::core::post-order-depth
 543,pat_topic::dp::tree-dp
 543,pat_ds::tree::dp::tree-dp
