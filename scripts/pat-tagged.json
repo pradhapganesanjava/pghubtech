@@ -7900,10 +7900,12 @@
     "difficulty": "Medium",
     "topics": "Array; String; Binary Search; Trie; Sorting; Heap (Priority Queue)",
     "pat_ds": [
-      "pat_ds::string::trie-topic::trie-autocomplete"
+      "pat_ds::string::trie-topic::trie-autocomplete",
+      "pat_ds::string::greedy::running-boundary"
     ],
     "pat_topic": [
-      "pat_topic::trie-topic::trie-autocomplete"
+      "pat_topic::trie-topic::trie-autocomplete",
+      "pat_topic::greedy::running-boundary"
     ],
     "pat_group": [
       "pat_group::word-process"

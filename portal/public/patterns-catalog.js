@@ -728,6 +728,12 @@ window.PG_PATTERNS = [
         cost: 'O(n).',
         contrast: 'Same idea as Kadane but framed as "buy low, sell high".',
         anchors: [121, 122, 152, 53] },
+      { id: 'running-boundary', name: 'Running Boundary (Sorted + Forward-Only Index)',
+        when: 'Sorted/structured input where the matching region is CONTIGUOUS and a sequence of queries TIGHTENS monotonically — answer them with a single index that only ever runs forward to the region\'s boundary, never resetting.',
+        how: 'Sort so matches form one contiguous block. Carry a boundary index across queries; for each (stricter) query advance the index while it fails the predicate, then read from there. The monotone queries guarantee the boundary only moves right.',
+        cost: 'O(n log n) sort + O(n + Σqueries) sweep — the boundary advances at most n times total, not per query.',
+        contrast: 'vs running-extreme (carries a running VALUE — min/max) — this carries a running INDEX/boundary. vs bs-textbook lower_bound (O(log n) PER query) — same block-start, but amortized to O(1) each by exploiting monotone queries. vs tp-converging (two ends inward) — a single same-direction forward boundary.',
+        anchors: [1268] },
     ],
   },
 
