@@ -8091,9 +8091,11 @@
     "difficulty": "Hard",
     "topics": "Array; Dynamic Programming",
     "pat_ds": [
-      "pat_ds::array::dp::interval-dp"
+      "pat_ds::array::dp::dp-linear-partition"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::dp-linear-partition"
+    ],
     "pat_group": [
       "pat_group::scheduling",
       "pat_group::partition",

@@ -1275,10 +1275,11 @@ anchor_id,tag
 1334,pat_ds::graph::core::floyd-warshall
 1334,pat_topic::shortest-path::floyd-warshall
 1334,pat_ds::graph::shortest-path::floyd-warshall
-1335,pat_ds::array::dp::interval-dp
 1335,pat_group::scheduling
 1335,pat_group::partition
 1335,pat_group::partition::partition-dp
+1335,pat_topic::dp::dp-linear-partition
+1335,pat_ds::array::dp::dp-linear-partition
 1337,pat_ds::matrices::heap::top-k
 1338,pat_ds::array::sorting::bucket-sort-freq
 1351,pat_ds::matrices::binary-search::bs-textbook

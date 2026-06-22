@@ -91,6 +91,9 @@ const CORRECTIONS = [
   { id: 403, drop: ['pat_topic::dp::dp-1d-linear', 'pat_ds::array::dp::dp-1d-linear'],
     add:  ['pat_topic::dp::augmented-state-reachability', 'pat_ds::array::dp::augmented-state-reachability'],
     why: 'Frog Jump — (stone, speed) augmented-state reachability; each node holds a SET of states (new micro augmented-state-reachability).' },
+  { id: 1335, drop: ['pat_topic::dp::interval-dp', 'pat_ds::array::dp::interval-dp'],
+    add:  ['pat_topic::dp::dp-linear-partition', 'pat_ds::array::dp::dp-linear-partition'],
+    why: 'Min Difficulty of a Job Schedule — partition jobs into d CONTIGUOUS days minimizing sum of daily maxes = linear k-segment partition DP, not [i,j] interval DP.' },
 ]
 
 // ── env + auth ──────────────────────────────────────────────────────────
