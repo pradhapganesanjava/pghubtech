@@ -633,7 +633,8 @@
   },
 
   "dp-linear-partition": {
-    "410": "Split Array Largest Sum (DP form). dp[p][i] = min over cut j of max(dp[p-1][j], sum(nums[j:i])). O(k·n²) with prefix sums — slower than binary-search-on-answer (O(n log sum)) but generalizes to arbitrary per-segment aggregates. 2nd dimension is the piece count."
+    "410": "Split Array Largest Sum (DP form). dp[p][i] = min over cut j of max(dp[p-1][j], sum(nums[j:i])). O(k·n²) with prefix sums — slower than binary-search-on-answer (O(n log sum)) but generalizes to arbitrary per-segment aggregates. 2nd dimension is the piece count.",
+    "1335": "Min Difficulty of a Job Schedule. dp[d][i] = min over cut j of dp[d-1][j] + max(jobs[j:i]). Partition jobs into d contiguous days, minimizing the sum of daily maxes. O(d·n²). Linear k-segment partition — NOT [i,j] interval DP."
   },
 
   "state-machine-dp": {
