@@ -4095,14 +4095,17 @@
     "difficulty": "Hard",
     "topics": "Array; Binary Search; Dynamic Programming; Greedy; Prefix Sum",
     "pat_ds": [
-      "pat_ds::array::binary-search::bs-on-answer-compound"
+      "pat_ds::array::binary-search::bs-on-answer-compound",
+      "pat_ds::array::dp::dp-linear-partition"
     ],
     "pat_topic": [
-      "pat_topic::binary-search::bs-on-answer-compound"
+      "pat_topic::binary-search::bs-on-answer-compound",
+      "pat_topic::dp::dp-linear-partition"
     ],
     "pat_group": [
       "pat_group::partition",
-      "pat_group::partition::subarray-binary-search"
+      "pat_group::partition::subarray-binary-search",
+      "pat_group::partition::partition-dp"
     ]
   },
   {

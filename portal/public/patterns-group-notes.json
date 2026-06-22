@@ -257,6 +257,11 @@
           "name": "Subarray Partition via Binary Search (on the Answer)",
           "when": "Partition a CONTIGUOUS array into k pieces optimizing a min-max / max-min objective that is MONOTONIC in a threshold.",
           "mechanism": "Binary-search the answer value; for each candidate threshold, greedily sweep the array counting how many pieces it forces — feasible if ≤ k. Narrow to the smallest feasible threshold. O(n · log(sum − max))."
+        },
+        "partition-dp": {
+          "name": "Partition DP (K-Segment Table)",
+          "when": "Same k-contiguous-partition objective — when the per-segment aggregate isn't monotone in a threshold, or you want an exact DP rather than binary-search-on-answer.",
+          "mechanism": "dp[p][i] = best over cut j of combine(dp[p-1][j], seg(j..i)); 2D over (#pieces, prefix). O(k·n²) with prefix sums. The exact alternative to binary-search-on-answer — slower for 410 but generalizes to arbitrary segment costs."
         }
       },
       "topic": {

@@ -632,6 +632,10 @@
     "87":   "Scramble String. Split + recurse on (matching pair OR swapped pair); memoize."
   },
 
+  "dp-linear-partition": {
+    "410": "Split Array Largest Sum (DP form). dp[p][i] = min over cut j of max(dp[p-1][j], sum(nums[j:i])). O(k·n²) with prefix sums — slower than binary-search-on-answer (O(n log sum)) but generalizes to arbitrary per-segment aggregates. 2nd dimension is the piece count."
+  },
+
   "state-machine-dp": {
     "121": "Stock I (1 trade). cash and hold states.",
     "122": "Stock II (unlim). Same 2 states; sell-then-buy freely.",

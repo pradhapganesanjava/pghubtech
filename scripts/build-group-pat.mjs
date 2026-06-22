@@ -96,6 +96,8 @@ const SUBGROUPS = {
     // partition a contiguous array into k pieces; binary-search the answer
     // (min-max / max-min objective) + greedy feasibility sweep
     'subarray-binary-search': [410],
+    // exact k-segment partition DP: dp[p][i] = min over cut of combine(...)
+    'partition-dp':           [410],
   },
 }
 
