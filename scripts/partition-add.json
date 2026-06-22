@@ -1,0 +1,5 @@
+{
+  "1011": ["pat_group::partition", "pat_group::partition::subarray-binary-search"],
+  "1231": ["pat_group::partition", "pat_group::partition::subarray-binary-search"],
+  "1335": ["pat_group::partition", "pat_group::partition::partition-dp"]
+}
