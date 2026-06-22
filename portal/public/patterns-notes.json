@@ -807,6 +807,10 @@
     "277":  "Find Celebrity. Pass 1 elimination (cand = (cand knows i) ? i : cand); pass 2 verify."
   },
 
+  "running-boundary": {
+    "1268": "Search Suggestions System (sort solution). Sort products; carry a single `left` index across the growing prefixes. For each prefix, advance left while products[left] doesn't match, then take up to 3. left never resets — prefixes only tighten, so the match-block start only moves right — giving O(n) amortized over all prefixes, no per-prefix binary search. The trie-autocomplete tag is the other approach."
+  },
+
   "greedy-end-sorted": {
     "435":  "Non-overlapping Intervals. Sort by END; keep first; greedily take next with start ≥ cur.end; answer = n − kept.",
     "452":  "Min Arrows Burst Balloons. Sort by end; greedy pick smallest end as arrow; advance past all overlapping.",
