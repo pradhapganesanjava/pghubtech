@@ -406,6 +406,9 @@
     "pat_group::word-process",
     "pat_group::subset-selection"
   ],
+  "1268": [
+    "pat_group::word-process"
+  ],
   "1312": [
     "pat_group::palindrome",
     "pat_group::subsequence"
