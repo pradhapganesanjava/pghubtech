@@ -7011,7 +7011,10 @@
     "pat_topic": [
       "pat_topic::binary-search::bs-on-answer-compound"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::partition",
+      "pat_group::partition::subarray-binary-search"
+    ]
   },
   {
     "id": "1019",
@@ -7732,7 +7735,10 @@
     "pat_topic": [
       "pat_topic::binary-search::bs-on-answer-compound"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::partition",
+      "pat_group::partition::subarray-binary-search"
+    ]
   },
   {
     "id": "1235",
@@ -8089,7 +8095,9 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::scheduling"
+      "pat_group::scheduling",
+      "pat_group::partition",
+      "pat_group::partition::partition-dp"
     ]
   },
   {

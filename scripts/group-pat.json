@@ -362,6 +362,10 @@
   "974": [
     "pat_group::sum"
   ],
+  "1011": [
+    "pat_group::partition",
+    "pat_group::partition::subarray-binary-search"
+  ],
   "1029": [
     "pat_group::scheduling"
   ],
@@ -392,6 +396,10 @@
   "1229": [
     "pat_group::scheduling"
   ],
+  "1231": [
+    "pat_group::partition",
+    "pat_group::partition::subarray-binary-search"
+  ],
   "1235": [
     "pat_group::scheduling"
   ],
@@ -414,7 +422,9 @@
     "pat_group::subsequence"
   ],
   "1335": [
-    "pat_group::scheduling"
+    "pat_group::scheduling",
+    "pat_group::partition",
+    "pat_group::partition::partition-dp"
   ],
   "1457": [
     "pat_group::palindrome"

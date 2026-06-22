@@ -61,7 +61,7 @@ const GROUPS = {
   // Partition: split a sequence into contiguous pieces optimizing / satisfying
   // a constraint (minimize the largest piece, count splits, partition by a
   // predicate). Engines: binary-search-on-answer, partition DP.
-  partition:      [410],
+  partition:      [410, 1011, 1231, 1335],
 }
 
 // ── Sub-group micro-patterns ────────────────────────────────────────────────
@@ -95,9 +95,9 @@ const SUBGROUPS = {
   partition: {
     // partition a contiguous array into k pieces; binary-search the answer
     // (min-max / max-min objective) + greedy feasibility sweep
-    'subarray-binary-search': [410],
+    'subarray-binary-search': [410, 1011, 1231],
     // exact k-segment partition DP: dp[p][i] = min over cut of combine(...)
-    'partition-dp':           [410],
+    'partition-dp':           [410, 1335],
   },
 }
 

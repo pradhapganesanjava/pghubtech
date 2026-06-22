@@ -1118,6 +1118,8 @@ anchor_id,tag
 1006,pat_ds::array::stack-topic::expression-eval
 1011,pat_topic::binary-search::bs-on-answer-compound
 1011,pat_ds::array::binary-search::bs-on-answer-compound
+1011,pat_group::partition
+1011,pat_group::partition::subarray-binary-search
 1019,pat_topic::stack-topic::monotonic-stack
 1019,pat_ds::linked-list::stack-topic::monotonic-stack
 1023,pat_ds::string::two-pointers::tp-merge-walk
@@ -1212,6 +1214,8 @@ anchor_id,tag
 1229,pat_group::scheduling
 1231,pat_topic::binary-search::bs-on-answer-compound
 1231,pat_ds::array::binary-search::bs-on-answer-compound
+1231,pat_group::partition
+1231,pat_group::partition::subarray-binary-search
 1235,pat_ds::array::greedy::greedy-end-sorted
 1235,pat_group::scheduling
 1236,pat_ds::graph::dfs::dfs-template
@@ -1273,6 +1277,8 @@ anchor_id,tag
 1334,pat_ds::graph::shortest-path::floyd-warshall
 1335,pat_ds::array::dp::interval-dp
 1335,pat_group::scheduling
+1335,pat_group::partition
+1335,pat_group::partition::partition-dp
 1337,pat_ds::matrices::heap::top-k
 1338,pat_ds::array::sorting::bucket-sort-freq
 1351,pat_ds::matrices::binary-search::bs-textbook
