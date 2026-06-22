@@ -236,7 +236,8 @@
   ],
   "410": [
     "pat_group::partition",
-    "pat_group::partition::subarray-binary-search"
+    "pat_group::partition::subarray-binary-search",
+    "pat_group::partition::partition-dp"
   ],
   "411": [
     "pat_group::word-process"
