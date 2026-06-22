@@ -251,6 +251,42 @@
     }
   },
   "groups": {
+    "partition": {
+      "micros": {
+        "subarray-binary-search": {
+          "name": "Subarray Partition via Binary Search (on the Answer)",
+          "when": "Partition a CONTIGUOUS array into k pieces optimizing a min-max / max-min objective that is MONOTONIC in a threshold.",
+          "mechanism": "Binary-search the answer value; for each candidate threshold, greedily sweep the array counting how many pieces it forces — feasible if ≤ k. Narrow to the smallest feasible threshold. O(n · log(sum − max))."
+        }
+      },
+      "topic": {
+        "binary-search": {
+          "tldr": "Split into k contiguous subarrays minimizing the largest sum → the answer is MONOTONIC, so **binary-search the answer** and verify by a greedy partition sweep.",
+          "headline": "Search space = [max(nums), sum(nums)]; feasibility(mid) = greedy piece count ≤ k.",
+          "tricks": [
+            { "k": "Search bounds", "v": "`lo = max element` (a piece must hold the biggest), `hi = total sum` (one piece)." },
+            { "k": "Feasibility", "v": "Greedy: walk nums, start a new piece when the running sum would exceed `mid`; count pieces. Feasible iff `count <= k`." },
+            { "k": "Monotonic", "v": "Larger allowed max ⇒ fewer pieces ⇒ feasibility is monotone, so binary search converges to the min feasible max." }
+          ],
+          "pseudo": "feasible(cap):\n  pieces, cur = 1, 0\n  for x in nums:\n    if cur + x > cap: pieces += 1; cur = 0\n    cur += x\n  return pieces <= k\nlo, hi = max(nums), sum(nums)\nwhile lo < hi:\n  mid = (lo + hi) // 2\n  if feasible(mid): hi = mid\n  else:             lo = mid + 1\nreturn lo",
+          "problems": [
+            {
+              "id": 410,
+              "title": "Split Array Largest Sum",
+              "tag": "binary search on answer",
+              "points": [
+                "Minimize the largest subarray sum over k contiguous splits.",
+                "Binary-search the candidate max in `[max(nums), sum(nums)]`.",
+                "`feasible(mid)`: greedy count of pieces needed with cap `mid`; `<= k` ⇒ ok.",
+                "O(n log(sum)). DP alternative is O(k·n²)."
+              ],
+              "note": "The partition is implicit — you never enumerate splits, you binary-search the objective and let the greedy sweep place the cuts.",
+              "visual": "nums=[7,2,5,10,8] k=2\nlo=10 hi=32\nmid=21 -> [7,2,5][10,8] = 2 pieces ok -> hi=21\nmid=15 -> [7,2,5][10][8]  = 3 > 2   -> lo=16\n... converges to 18"
+            }
+          ]
+        }
+      }
+    },
     "stream": {
       "micros": {
         "two-heap-median": {
