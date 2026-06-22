@@ -234,6 +234,10 @@
   "409": [
     "pat_group::palindrome"
   ],
+  "410": [
+    "pat_group::partition",
+    "pat_group::partition::subarray-binary-search"
+  ],
   "411": [
     "pat_group::word-process"
   ],

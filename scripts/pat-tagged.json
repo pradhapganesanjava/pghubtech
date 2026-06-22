@@ -4100,7 +4100,10 @@
     "pat_topic": [
       "pat_topic::binary-search::bs-on-answer-compound"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::partition",
+      "pat_group::partition::subarray-binary-search"
+    ]
   },
   {
     "id": "411",
