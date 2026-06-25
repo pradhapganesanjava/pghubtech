@@ -62,6 +62,9 @@ const GROUPS = {
   // a constraint (minimize the largest piece, count splits, partition by a
   // predicate). Engines: binary-search-on-answer, partition DP.
   partition:      [410, 1011, 1231, 1335],
+  // Minimum Change: fewest removals/deletions/changes to make a collection
+  // consistent (non-overlapping, all-unique, equalized, valid shape).
+  'min-change':   [435, 945, 1647, 1671, 2449],
 }
 
 // ── Sub-group micro-patterns ────────────────────────────────────────────────

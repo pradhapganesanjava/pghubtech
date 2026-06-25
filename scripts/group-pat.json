@@ -249,6 +249,9 @@
   "422": [
     "pat_group::word-process"
   ],
+  "435": [
+    "pat_group::min-change"
+  ],
   "437": [
     "pat_group::sum"
   ],
@@ -359,6 +362,9 @@
   "930": [
     "pat_group::sum"
   ],
+  "945": [
+    "pat_group::min-change"
+  ],
   "974": [
     "pat_group::sum"
   ],
@@ -432,8 +438,12 @@
   "1462": [
     "pat_group::scheduling"
   ],
+  "1647": [
+    "pat_group::min-change"
+  ],
   "1671": [
-    "pat_group::subsequence"
+    "pat_group::subsequence",
+    "pat_group::min-change"
   ],
   "1679": [
     "pat_group::sum"
@@ -453,6 +463,9 @@
   ],
   "2402": [
     "pat_group::scheduling"
+  ],
+  "2449": [
+    "pat_group::min-change"
   ],
   "2461": [
     "pat_group::sum"
