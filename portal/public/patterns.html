@@ -914,6 +914,17 @@ function parsePatternData(csvText) {
       ;((gm[micro] = gm[micro] || [])).push(id)
     }
   }
+  // De-dup every id list: a problem tagged with BOTH pat_topic::T::M and
+  // pat_ds::D::T::M lands in out.topic[T][M] twice (both branches push), which
+  // would render the same #id chip twice and inflate counts. Keep unique ids.
+  const dedupArrays = (node) => {
+    for (const k in node) {
+      const v = node[k]
+      if (Array.isArray(v)) node[k] = [...new Set(v)]
+      else if (v && typeof v === 'object') dedupArrays(v)
+    }
+  }
+  ;[out.core, out.topic, out.dsTopic, out.group, out.groupMicro].forEach(dedupArrays)
   return out
 }
 
