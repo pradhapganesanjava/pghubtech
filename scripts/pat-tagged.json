@@ -4292,7 +4292,9 @@
     "pat_topic": [
       "pat_topic::interval::interval-sort-end-greedy"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::min-change"
+    ]
   },
   {
     "id": "436",
@@ -6738,7 +6740,9 @@
       "pat_ds::array::greedy::sort-and-sweep"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::min-change"
+    ]
   },
   {
     "id": "946",
@@ -8794,7 +8798,9 @@
       "pat_ds::string::greedy::running-extreme"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::min-change"
+    ]
   },
   {
     "id": "1648",
@@ -8850,7 +8856,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subsequence"
+      "pat_group::subsequence",
+      "pat_group::min-change"
     ]
   },
   {
@@ -9663,7 +9670,9 @@
       "pat_ds::array::greedy::exchange-argument"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::min-change"
+    ]
   },
   {
     "id": "2461",

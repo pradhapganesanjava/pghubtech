@@ -525,6 +525,7 @@ const GROUPS = [
   { id: 'scheduling',   icon: '🗓️', name: 'Scheduling',    intro: 'Order/select tasks under constraints — course prerequisites (topo), meeting rooms, task scheduler, job scheduling.' },
   { id: 'stream',       icon: '🌊', name: 'Stream',         intro: 'Online / streaming — maintain a running statistic (median, k-th largest, moving average) over an unbounded arriving sequence as elements come in, without rescanning. Usually two heaps, a bounded heap, or a moving window.' },
   { id: 'partition',    icon: '✂️', name: 'Partition',      intro: 'Split a sequence into contiguous pieces optimizing or satisfying a constraint — minimize the largest piece, count valid splits, partition by a predicate. Usually binary-search-on-answer (with a greedy feasibility check) or partition DP.' },
+  { id: 'min-change',   icon: '🔧', name: 'Minimum Change',  intro: 'Fewest removals / deletions / changes to make a collection CONSISTENT — non-overlapping, all-unique, equalized, or a valid shape. The answer is the operation count; usually greedy (sort + sweep) or DP.' },
 ]
 function groupMeta(id) {
   return GROUPS.find(g => g.id === id) || { id, icon: '🗂', name: id.replace(/-/g, ' '), intro: '' }
