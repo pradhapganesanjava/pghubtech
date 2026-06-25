@@ -530,10 +530,9 @@ function groupMeta(id) {
 // Group ids that actually have problems in the CSV, in GROUPS order, with any
 // CSV-only groups (not listed above) appended alphabetically.
 function visibleGroups() {
+  // Alphabetical by display name (falls back to the id for unmetadata'd groups).
   const present = ANCHOR_DATA && ANCHOR_DATA.group ? Object.keys(ANCHOR_DATA.group) : []
-  const ordered = GROUPS.map(g => g.id).filter(id => present.includes(id))
-  const extras  = present.filter(id => !GROUPS.some(g => g.id === id)).sort()
-  return [...ordered, ...extras]
+  return present.sort((a, b) => groupMeta(a).name.localeCompare(groupMeta(b).name))
 }
 function groupProblemIds(g) {
   const ids = (ANCHOR_DATA && ANCHOR_DATA.group && ANCHOR_DATA.group[g]) || []
@@ -988,7 +987,9 @@ const $ = sel => document.querySelector(sel)
 
 // Patterns visible under the current tab.
 function visiblePatterns() {
+  // Alphabetical by display name within the active tab (DS / Topic).
   return PATTERNS.filter(p => (p.tab || 'ds') === activeTab)
+                 .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 function setTab(t) {
