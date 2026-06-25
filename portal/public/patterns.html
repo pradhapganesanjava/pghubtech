@@ -474,6 +474,8 @@
 // for that high-level pattern.
 
 const PATTERNS = window.PG_PATTERNS  // catalog moved to ./patterns-catalog.js (shared with lineage graph)
+// Alphabetize the micro-patterns inside every card (in place, once at load).
+PATTERNS.forEach(p => { if (Array.isArray(p.micros)) p.micros.sort((a, b) => a.name.localeCompare(b.name)) })
 
 // ── DS ↔ Topic cross-link ────────────────────────────────────────────────
 // Each DS pattern lists the Topic patterns whose techniques commonly show
@@ -760,11 +762,11 @@ function microsForEmbed(topicId, dsId) {
   if (!t) return []
   const derived = DERIVED?.dsTopicMicros?.[dsId]?.[topicId]
   const allow   = derived || (TOPIC_DS_MICROS[topicId] || {})[dsId]
+  // allowlist still decides WHICH micros apply under this (DS, topic);
+  // display order is alphabetical, like everywhere else (t.micros is pre-sorted).
   if (!allow) return t.micros
-  const order = new Map(allow.map((id, i) => [id, i]))
-  return t.micros
-    .filter(m => order.has(m.id))
-    .sort((a, b) => order.get(a.id) - order.get(b.id))
+  const allowSet = new Set(allow)
+  return t.micros.filter(m => allowSet.has(m.id))
 }
 
 // ── Data file (CSV) ──────────────────────────────────────────────────────
