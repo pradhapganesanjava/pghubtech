@@ -8,6 +8,9 @@
   "9": [
     "pat_group::palindrome"
   ],
+  "10": [
+    "pat_group::pattern-matching"
+  ],
   "15": [
     "pat_group::sum"
   ],
@@ -25,6 +28,9 @@
     "pat_group::parenthesis",
     "pat_group::parenthesis::backtrack-generate"
   ],
+  "28": [
+    "pat_group::pattern-matching"
+  ],
   "30": [
     "pat_group::word-process"
   ],
@@ -40,6 +46,9 @@
   "40": [
     "pat_group::sum",
     "pat_group::subset-selection"
+  ],
+  "44": [
+    "pat_group::pattern-matching"
   ],
   "49": [
     "pat_group::anagram"
@@ -110,6 +119,9 @@
   "188": [
     "pat_group::buy-sell"
   ],
+  "205": [
+    "pat_group::pattern-matching"
+  ],
   "207": [
     "pat_group::scheduling"
   ],
@@ -120,13 +132,15 @@
     "pat_group::scheduling"
   ],
   "211": [
-    "pat_group::word-process"
+    "pat_group::word-process",
+    "pat_group::pattern-matching"
   ],
   "212": [
     "pat_group::word-process"
   ],
   "214": [
-    "pat_group::palindrome"
+    "pat_group::palindrome",
+    "pat_group::pattern-matching"
   ],
   "216": [
     "pat_group::sum",
@@ -174,10 +188,12 @@
     "pat_group::expression"
   ],
   "290": [
-    "pat_group::word-process"
+    "pat_group::word-process",
+    "pat_group::pattern-matching"
   ],
   "291": [
-    "pat_group::word-process"
+    "pat_group::word-process",
+    "pat_group::pattern-matching"
   ],
   "295": [
     "pat_group::stream",
@@ -261,6 +277,9 @@
   "439": [
     "pat_group::expression"
   ],
+  "459": [
+    "pat_group::pattern-matching"
+  ],
   "480": [
     "pat_group::stream",
     "pat_group::stream::two-heap-median"
@@ -299,8 +318,14 @@
   "673": [
     "pat_group::subsequence"
   ],
+  "676": [
+    "pat_group::pattern-matching"
+  ],
   "680": [
     "pat_group::palindrome"
+  ],
+  "686": [
+    "pat_group::pattern-matching"
   ],
   "692": [
     "pat_group::word-process"
@@ -325,6 +350,9 @@
   "736": [
     "pat_group::expression"
   ],
+  "745": [
+    "pat_group::pattern-matching"
+  ],
   "758": [
     "pat_group::word-process"
   ],
@@ -337,6 +365,9 @@
   "792": [
     "pat_group::subsequence"
   ],
+  "796": [
+    "pat_group::pattern-matching"
+  ],
   "809": [
     "pat_group::word-process"
   ],
@@ -348,6 +379,9 @@
   ],
   "862": [
     "pat_group::sum"
+  ],
+  "890": [
+    "pat_group::pattern-matching"
   ],
   "918": [
     "pat_group::sum"
@@ -371,6 +405,9 @@
   "1011": [
     "pat_group::partition",
     "pat_group::partition::subarray-binary-search"
+  ],
+  "1023": [
+    "pat_group::pattern-matching"
   ],
   "1029": [
     "pat_group::scheduling"
@@ -431,6 +468,12 @@
     "pat_group::scheduling",
     "pat_group::partition",
     "pat_group::partition::partition-dp"
+  ],
+  "1392": [
+    "pat_group::pattern-matching"
+  ],
+  "1408": [
+    "pat_group::pattern-matching"
   ],
   "1457": [
     "pat_group::palindrome"
