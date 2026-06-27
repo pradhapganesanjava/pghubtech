@@ -65,6 +65,10 @@ const GROUPS = {
   // Minimum Change: fewest removals/deletions/changes to make a collection
   // consistent (non-overlapping, all-unique, equalized, valid shape).
   'min-change':   [435, 945, 1647, 1671, 2449],
+  // Pattern Matching: match a string/sequence against a pattern or locate a
+  // pattern in text — exact (KMP/Z), regex/wildcard (DP or trie), structural
+  // pattern<->word isomorphism. (Excludes edit-distance/LCS DP.)
+  'pattern-matching': [10, 28, 44, 205, 211, 214, 290, 291, 459, 676, 686, 745, 796, 890, 1023, 1392, 1408],
 }
 
 // ── Sub-group micro-patterns ────────────────────────────────────────────────
