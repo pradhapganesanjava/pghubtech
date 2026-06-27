@@ -100,7 +100,9 @@
     "pat_topic": [
       "pat_topic::dp::dp-2-strings"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "11",
@@ -331,7 +333,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "30",
@@ -508,7 +512,9 @@
     "pat_topic": [
       "pat_topic::dp::dp-2-strings"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "45",
@@ -2181,7 +2187,9 @@
       "pat_ds::string::hash::bijection-map"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "206",
@@ -2258,7 +2266,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::word-process"
+      "pat_group::word-process",
+      "pat_group::pattern-matching"
     ]
   },
   {
@@ -2299,7 +2308,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::palindrome"
+      "pat_group::palindrome",
+      "pat_group::pattern-matching"
     ]
   },
   {
@@ -3075,7 +3085,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::word-process"
+      "pat_group::word-process",
+      "pat_group::pattern-matching"
     ]
   },
   {
@@ -3088,7 +3099,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::word-process"
+      "pat_group::word-process",
+      "pat_group::pattern-matching"
     ]
   },
   {
@@ -4472,7 +4484,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "460",
@@ -5363,7 +5377,9 @@
       "pat_ds::trie::core::trie-wildcard"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "680",
@@ -5416,7 +5432,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "687",
@@ -5821,7 +5839,9 @@
       "pat_ds::trie::core::trie-wildcard"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "746",
@@ -6095,7 +6115,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "802",
@@ -6494,7 +6516,9 @@
       "pat_ds::string::hash::freq-counter"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "895",
@@ -7042,7 +7066,9 @@
       "pat_ds::string::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "1024",
@@ -8255,7 +8281,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "1396",
@@ -8277,7 +8305,9 @@
       "pat_ds::string::core::string-match-kmp"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::pattern-matching"
+    ]
   },
   {
     "id": "1423",

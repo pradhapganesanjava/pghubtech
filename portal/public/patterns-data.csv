@@ -16,6 +16,7 @@ anchor_id,tag
 10,pat_ds::string::core::edit-distance-dp
 10,pat_topic::dp::dp-2-strings
 10,pat_ds::string::dp::dp-2-strings
+10,pat_group::pattern-matching
 11,pat_ds::array::two-pointers::tp-area-greedy
 12,pat_ds::string::math::digit-number-construct
 13,pat_ds::string::math::digit-number-construct
@@ -55,6 +56,7 @@ anchor_id,tag
 26,pat_ds::array::core::in-place-read-write
 27,pat_ds::array::core::in-place-read-write
 28,pat_ds::string::core::string-match-kmp
+28,pat_group::pattern-matching
 30,pat_ds::string::core::minimum-window
 30,pat_group::word-process
 31,pat_ds::array::backtrack::next-permutation-algo
@@ -89,6 +91,7 @@ anchor_id,tag
 44,pat_ds::string::core::edit-distance-dp
 44,pat_topic::dp::dp-2-strings
 44,pat_ds::string::dp::dp-2-strings
+44,pat_group::pattern-matching
 45,pat_ds::array::greedy::running-extreme
 46,pat_topic::backtrack::permutation
 46,pat_ds::array::backtrack::permutation
@@ -374,6 +377,7 @@ anchor_id,tag
 204,pat_topic::math::sieve
 204,pat_ds::array::math::sieve
 205,pat_ds::string::hash::bijection-map
+205,pat_group::pattern-matching
 206,pat_ds::linked-list::core::iterative-reverse
 207,pat_ds::graph::core::topo-sort
 207,pat_ds::graph::core::cycle-3color
@@ -387,6 +391,7 @@ anchor_id,tag
 211,pat_ds::trie::core::trie-basic
 211,pat_ds::trie::core::trie-wildcard
 211,pat_group::word-process
+211,pat_group::pattern-matching
 212,pat_topic::backtrack::word-search-dfs
 212,pat_ds::matrices::backtrack::word-search-dfs
 212,pat_topic::trie-topic::trie-grid-dfs
@@ -395,6 +400,7 @@ anchor_id,tag
 213,pat_topic::dp::rolling-state-fixed-window
 214,pat_ds::string::core::string-match-kmp
 214,pat_group::palindrome
+214,pat_group::pattern-matching
 215,pat_topic::heap::top-k
 215,pat_ds::array::heap::top-k
 215,pat_topic::sorting::quickselect
@@ -516,8 +522,10 @@ anchor_id,tag
 289,pat_topic::simulation::grid-simulate
 290,pat_ds::string::hash::bijection-map
 290,pat_group::word-process
+290,pat_group::pattern-matching
 291,pat_ds::string::backtrack::partition-on-string
 291,pat_group::word-process
+291,pat_group::pattern-matching
 293,pat_ds::string::backtrack::partition-on-string
 294,pat_ds::string::backtrack::partition-on-string
 295,pat_topic::heap::two-heap-median
@@ -724,6 +732,7 @@ anchor_id,tag
 452,pat_ds::array::greedy::greedy-end-sorted
 456,pat_ds::array::stack-topic::monotonic-stack
 459,pat_ds::string::core::string-match-kmp
+459,pat_group::pattern-matching
 460,pat_ds::linked-list::core::dll-cache-design
 461,pat_topic::bits::kernighan-popcount
 461,pat_ds::array::bits::kernighan-popcount
@@ -865,6 +874,7 @@ anchor_id,tag
 673,pat_ds::array::dp::dp-lis
 673,pat_group::subsequence
 676,pat_ds::trie::core::trie-wildcard
+676,pat_group::pattern-matching
 680,pat_ds::string::core::palindrome-two-ptr
 680,pat_topic::two-pointers::tp-converging
 680,pat_ds::string::two-pointers::tp-converging
@@ -874,6 +884,7 @@ anchor_id,tag
 685,pat_topic::union-find::uf-basic
 685,pat_ds::graph::union-find::uf-basic
 686,pat_ds::string::core::string-match-kmp
+686,pat_group::pattern-matching
 687,pat_ds::tree::core::post-order-depth
 692,pat_topic::heap::top-k
 692,pat_ds::string::heap::top-k
@@ -937,6 +948,7 @@ anchor_id,tag
 744,pat_topic::binary-search::bs-textbook
 744,pat_ds::array::binary-search::bs-textbook
 745,pat_ds::trie::core::trie-wildcard
+745,pat_group::pattern-matching
 746,pat_topic::dp::rolling-state-fixed-window
 750,pat_ds::matrices::core::mat-grid-dfs-bfs
 752,pat_ds::string::core::word-ladder-bfs
@@ -982,6 +994,7 @@ anchor_id,tag
 792,pat_group::subsequence
 794,pat_topic::simulation::board-validate
 796,pat_ds::string::core::string-match-kmp
+796,pat_group::pattern-matching
 802,pat_ds::graph::core::topo-sort
 802,pat_ds::graph::core::cycle-3color
 802,pat_ds::graph::core::ancestor-reachability
@@ -1036,6 +1049,7 @@ anchor_id,tag
 886,pat_ds::graph::core::bipartite
 889,pat_ds::tree::core::construct-from-traversals
 890,pat_ds::string::hash::freq-counter
+890,pat_group::pattern-matching
 895,pat_ds::stack::core::min-stack-design
 901,pat_ds::stack::core::validate-stack-seq
 901,pat_topic::stack-topic::monotonic-stack
@@ -1125,6 +1139,7 @@ anchor_id,tag
 1019,pat_topic::stack-topic::monotonic-stack
 1019,pat_ds::linked-list::stack-topic::monotonic-stack
 1023,pat_ds::string::two-pointers::tp-merge-walk
+1023,pat_group::pattern-matching
 1024,pat_ds::array::greedy::sort-and-sweep
 1029,pat_topic::greedy::exchange-argument
 1029,pat_ds::array::greedy::exchange-argument
@@ -1300,8 +1315,10 @@ anchor_id,tag
 1376,pat_ds::tree::dfs::dfs-template
 1381,pat_ds::stack::core::min-stack-design
 1392,pat_ds::string::core::string-match-kmp
+1392,pat_group::pattern-matching
 1396,pat_ds::linked-list::core::dll-cache-design
 1408,pat_ds::string::core::string-match-kmp
+1408,pat_group::pattern-matching
 1423,pat_topic::sliding-window::sw-fixed
 1423,pat_ds::array::sliding-window::sw-fixed
 1426,pat_ds::array::hash::seen-set
@@ -1548,20 +1565,3 @@ anchor_id,tag
 10045,pat_ds::graph::core::dag-longest-path
 10046,pat_topic::binary-search::bs-on-answer-compound
 10046,pat_ds::array::binary-search::bs-on-answer-compound
-10,pat_group::pattern-matching
-28,pat_group::pattern-matching
-44,pat_group::pattern-matching
-205,pat_group::pattern-matching
-211,pat_group::pattern-matching
-214,pat_group::pattern-matching
-290,pat_group::pattern-matching
-291,pat_group::pattern-matching
-459,pat_group::pattern-matching
-676,pat_group::pattern-matching
-686,pat_group::pattern-matching
-745,pat_group::pattern-matching
-796,pat_group::pattern-matching
-890,pat_group::pattern-matching
-1023,pat_group::pattern-matching
-1392,pat_group::pattern-matching
-1408,pat_group::pattern-matching
