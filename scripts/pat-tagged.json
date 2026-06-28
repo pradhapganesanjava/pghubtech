@@ -2209,9 +2209,12 @@
     "topics": "Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
       "pat_ds::graph::core::topo-sort",
-      "pat_ds::graph::core::cycle-3color"
+      "pat_ds::graph::core::cycle-3color",
+      "pat_ds::graph::topo-sort::kahn-bfs"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
     "pat_group": [
       "pat_group::scheduling"
     ]
@@ -2248,9 +2251,12 @@
     "difficulty": "Medium",
     "topics": "Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::kahn-bfs"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
     "pat_group": [
       "pat_group::scheduling"
     ]
@@ -2865,9 +2871,12 @@
     "difficulty": "Hard",
     "topics": "Array; String; Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::kahn-bfs"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
     "pat_group": []
   },
   {
@@ -3262,9 +3271,12 @@
     "difficulty": "Medium",
     "topics": "Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::leaf-peeling"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::leaf-peeling"
+    ],
     "pat_group": []
   },
   {
@@ -3413,9 +3425,12 @@
     "difficulty": "Hard",
     "topics": "Array; Dynamic Programming; Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort; Memoization; Matrix",
     "pat_ds": [
-      "pat_ds::graph::core::dag-longest-path"
+      "pat_ds::graph::core::dag-longest-path",
+      "pat_ds::graph::topo-sort::dag-critical-path"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dag-critical-path"
+    ],
     "pat_group": []
   },
   {
@@ -4390,9 +4405,12 @@
     "difficulty": "Medium",
     "topics": "Array; Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::kahn-bfs"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
     "pat_group": []
   },
   {
@@ -6127,9 +6145,12 @@
     "pat_ds": [
       "pat_ds::graph::core::topo-sort",
       "pat_ds::graph::core::cycle-3color",
-      "pat_ds::graph::core::ancestor-reachability"
+      "pat_ds::graph::core::ancestor-reachability",
+      "pat_ds::graph::topo-sort::dfs-cycle-detect"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dfs-cycle-detect"
+    ],
     "pat_group": []
   },
   {
@@ -7174,9 +7195,12 @@
     "difficulty": "Medium",
     "topics": "Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::cycle-3color"
+      "pat_ds::graph::core::cycle-3color",
+      "pat_ds::graph::topo-sort::dfs-cycle-detect"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dfs-cycle-detect"
+    ],
     "pat_group": []
   },
   {
@@ -7461,9 +7485,12 @@
     "difficulty": "Medium",
     "topics": "Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::layered-waves"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::layered-waves"
+    ],
     "pat_group": []
   },
   {
@@ -9149,9 +9176,12 @@
     "topics": "Hash Table; String; Dynamic Programming; Graph Theory; Topological Sort; Memoization; Counting",
     "pat_ds": [
       "pat_ds::graph::core::topo-sort",
-      "pat_ds::graph::core::dag-longest-path"
+      "pat_ds::graph::core::dag-longest-path",
+      "pat_ds::graph::topo-sort::dag-critical-path"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dag-critical-path"
+    ],
     "pat_group": []
   },
   {
@@ -9365,9 +9395,12 @@
     "topics": "Array; Dynamic Programming; Graph Theory; Topological Sort",
     "pat_ds": [
       "pat_ds::graph::core::topo-sort",
-      "pat_ds::graph::core::dag-longest-path"
+      "pat_ds::graph::core::dag-longest-path",
+      "pat_ds::graph::topo-sort::dag-critical-path"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dag-critical-path"
+    ],
     "pat_group": []
   },
   {
@@ -9462,9 +9495,12 @@
     "difficulty": "Hard",
     "topics": "Array; Dynamic Programming; Depth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::graph::core::dag-longest-path"
+      "pat_ds::graph::core::dag-longest-path",
+      "pat_ds::graph::topo-sort::dag-critical-path"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dag-critical-path"
+    ],
     "pat_group": [
       "pat_group::scheduling"
     ]
@@ -9977,9 +10013,12 @@
     "difficulty": "Medium",
     "topics": "Graph; Topological Sort; Depth-First Search; Hash Table",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::kahn-bfs"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
     "pat_group": []
   },
   {
@@ -10043,9 +10082,12 @@
     "difficulty": "Easy",
     "topics": "Graph; Topological Sort; BFS",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::kahn-bfs"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
     "pat_group": []
   },
   {
@@ -10102,9 +10144,12 @@
     "difficulty": "Medium",
     "topics": "Graph; Topological Sort; BFS",
     "pat_ds": [
-      "pat_ds::graph::core::dag-longest-path"
+      "pat_ds::graph::core::dag-longest-path",
+      "pat_ds::graph::topo-sort::dag-critical-path"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dag-critical-path"
+    ],
     "pat_group": []
   },
   {
@@ -10135,9 +10180,12 @@
     "difficulty": "Medium",
     "topics": "Graph; Topological Sort; BFS",
     "pat_ds": [
-      "pat_ds::graph::core::topo-sort"
+      "pat_ds::graph::core::topo-sort",
+      "pat_ds::graph::topo-sort::layered-waves"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::layered-waves"
+    ],
     "pat_group": []
   },
   {
@@ -10146,9 +10194,12 @@
     "difficulty": "Hard",
     "topics": "Graph; Depth-First Search; Stack",
     "pat_ds": [
-      "pat_ds::graph::core::cycle-3color"
+      "pat_ds::graph::core::cycle-3color",
+      "pat_ds::graph::topo-sort::dfs-cycle-detect"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dfs-cycle-detect"
+    ],
     "pat_group": []
   },
   {
@@ -10225,9 +10276,12 @@
     "difficulty": "Hard",
     "topics": "Graph; Topological Sort; Dynamic Programming; Design; Simulation",
     "pat_ds": [
-      "pat_ds::graph::core::dag-longest-path"
+      "pat_ds::graph::core::dag-longest-path",
+      "pat_ds::graph::topo-sort::dag-critical-path"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::topo-sort::dag-critical-path"
+    ],
     "pat_group": []
   },
   {
