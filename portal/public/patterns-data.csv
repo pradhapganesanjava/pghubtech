@@ -1565,3 +1565,6 @@ anchor_id,tag
 10045,pat_ds::graph::core::dag-longest-path
 10046,pat_topic::binary-search::bs-on-answer-compound
 10046,pat_ds::array::binary-search::bs-on-answer-compound
+10047,pat_topic::stack-topic::expression-eval
+10047,pat_ds::string::stack-topic::expression-eval
+10047,pat_group::expression
