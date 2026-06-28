@@ -1,0 +1,18 @@
+<h2>Approach</h2>
+<ol>
+  <li><b>Store</b> &mdash; <code>Map&lt;filename, Set&lt;token&gt;&gt;</code> for O(1) membership, plus an <b>inverted index</b> <code>Map&lt;token, Set&lt;filename&gt;&gt;</code> so <code>GetAllFiles</code> never rescans every document.</li>
+  <li><b>Evaluate the predicate</b> with the classic operator-precedence parser &mdash; two stacks (operands + operators) or recursive descent. Parentheses highest, then <code>&amp;&amp;</code> binds tighter than <code>||</code>. Operands resolve to <b>booleans</b> (token membership) instead of numbers.</li>
+  <li><b>CheckContains(filename, predicate)</b> &mdash; evaluate the expression against that one document's token set.</li>
+  <li><b>GetAllFiles(predicate)</b> &mdash; evaluate the parse tree over the inverted index with <b>set operations</b>: <code>&amp;&amp;</code> = intersection, <code>||</code> = union.</li>
+</ol>
+<p>In one line: <b>Basic Calculator III</b> precedence/parens evaluation with boolean operands, layered on an <b>inverted-index boolean-retrieval</b> store. Complexity: build O(total tokens); CheckContains O(predicate); GetAllFiles O(predicate &times; matched files).</p>
+
+<h2>Refer</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/basic-calculator-iii/" target="_blank" rel="noopener">#772 &middot; Basic Calculator III</a> &mdash; <b>Hard</b> &mdash; precedence + parentheses evaluation (structural twin)</li>
+  <li><a href="https://leetcode.com/problems/parsing-a-boolean-expression/" target="_blank" rel="noopener">#1106 &middot; Parsing A Boolean Expression</a> &mdash; <b>Hard</b> &mdash; boolean operators + parens (semantic twin)</li>
+  <li><a href="https://leetcode.com/problems/basic-calculator-ii/" target="_blank" rel="noopener">#227 &middot; Basic Calculator II</a> &mdash; <b>Medium</b> &mdash; precedence without parens via a stack (the <code>&amp;&amp;</code>-over-<code>||</code> trick)</li>
+  <li><a href="https://leetcode.com/problems/basic-calculator/" target="_blank" rel="noopener">#224 &middot; Basic Calculator</a> &mdash; <b>Hard</b> &mdash; parentheses handling</li>
+  <li><a href="https://leetcode.com/problems/evaluate-reverse-polish-notation/" target="_blank" rel="noopener">#150 &middot; Evaluate Reverse Polish Notation</a> &mdash; <b>Medium</b> &mdash; stack-based evaluation</li>
+  <li><a href="https://leetcode.com/problems/design-search-autocomplete-system/" target="_blank" rel="noopener">#642 &middot; Design Search Autocomplete System</a> &mdash; <b>Hard</b> &mdash; inverted-index / search-store design (the GetAllFiles side)</li>
+</ul>
