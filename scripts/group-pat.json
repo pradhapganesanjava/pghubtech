@@ -528,5 +528,8 @@
   ],
   "10027": [
     "pat_group::sum"
+  ],
+  "10047": [
+    "pat_group::expression"
   ]
 }

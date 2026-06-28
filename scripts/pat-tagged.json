@@ -10242,5 +10242,20 @@
       "pat_topic::binary-search::bs-on-answer-compound"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10047",
+    "title": "Document Store with Boolean Predicate Search",
+    "difficulty": "Hard",
+    "topics": "Design; Stack; String; Hash Table",
+    "pat_ds": [
+      "pat_ds::string::stack-topic::expression-eval"
+    ],
+    "pat_topic": [
+      "pat_topic::stack-topic::expression-eval"
+    ],
+    "pat_group": [
+      "pat_group::expression"
+    ]
   }
 ]
