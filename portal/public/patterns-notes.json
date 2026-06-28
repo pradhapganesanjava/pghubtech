@@ -247,6 +247,24 @@
   "leaf-peeling": {
     "310":  "Minimum Height Trees. Trim all degree-1 leaves layer by layer; the last 1 or 2 nodes remaining are the MHT roots."
   },
+  "lp-dag": {
+    "1857": "Largest Color Value in a Directed Graph. Topo-order DP of per-color path counts; cycle ⇒ -1.",
+    "2050": "Parallel Courses III. finish[v] = time[v] + max(finish[pred]); answer = max(finish) = critical path.",
+    "2127": "Maximum Employees to Be Invited. Functional graph: longest chains feeding 2-cycles + largest cycle.",
+    "10019": "Compute total time to finish all courses. Earliest-finish topo DP = longest weighted path.",
+    "10045": "Course Completion Time. Same critical-path DP; answer = max finish."
+  },
+  "lp-grid": {
+    "329":  "Longest Increasing Path in a Matrix. Grid is an implicit DAG (edges to strictly larger cells); memoize the longest run from each cell. = lp-dag specialised to a grid; also dfs::dfs-memo + topo-sort::dag-critical-path. O(R·C)."
+  },
+  "lp-tree": {
+    "124":  "Binary Tree Maximum Path Sum. Post-order: each node returns max downward sum; update best with node + left + right (clamp negatives to 0).",
+    "543":  "Diameter of Binary Tree. Post-order depths; best = max(L + R) edges through each node.",
+    "687":  "Longest Univalue Path. Like diameter but only extend through equal-value children.",
+    "1245": "Tree Diameter (general tree). Two BFS/DFS, or one post-order combining the top two child depths.",
+    "1372": "Longest ZigZag Path. Post-order returning (left-extend, right-extend); alternate direction each step.",
+    "1522": "Diameter of N-Ary Tree. Post-order; combine the top TWO child depths among all children."
+  },
   "topo-sort": {
     "207":  "Course Schedule — can you finish? Kahn: queue of in-deg 0; decrement neighbours' in-deg; if final processed count == n, yes. Alternative: DFS 3-color cycle detect.",
     "210":  "Course Schedule II — output order. Same Kahn; record pop order. Result is the topological ordering (any valid one).",

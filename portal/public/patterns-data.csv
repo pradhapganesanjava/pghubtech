@@ -250,6 +250,8 @@ anchor_id,tag
 124,pat_topic::dfs::dfs-tree-orders
 124,pat_ds::tree::dfs::dfs-tree-orders
 124,pat_group::sum
+124,pat_topic::longest-path::lp-tree
+124,pat_ds::tree::longest-path::lp-tree
 125,pat_ds::string::core::palindrome-two-ptr
 125,pat_topic::two-pointers::tp-converging
 125,pat_ds::string::two-pointers::tp-converging
@@ -588,6 +590,9 @@ anchor_id,tag
 329,pat_topic::dfs::dfs-memo
 329,pat_ds::matrices::dfs::dfs-memo
 329,pat_ds::graph::dfs::dfs-memo
+329,pat_topic::longest-path::lp-grid
+329,pat_ds::matrices::longest-path::lp-grid
+329,pat_ds::graph::longest-path::lp-grid
 330,pat_ds::array::greedy::running-extreme
 332,pat_ds::graph::core::euler-tour
 333,pat_ds::bst::core::bst-bounds-validate
@@ -818,6 +823,8 @@ anchor_id,tag
 543,pat_ds::tree::dp::tree-dp
 543,pat_topic::dfs::dfs-tree-orders
 543,pat_ds::tree::dfs::dfs-tree-orders
+543,pat_topic::longest-path::lp-tree
+543,pat_ds::tree::longest-path::lp-tree
 545,pat_ds::tree::dfs::dfs-tree-orders
 547,pat_ds::graph::core::cc-dfs-uf
 547,pat_topic::dfs::dfs-template
@@ -902,6 +909,8 @@ anchor_id,tag
 686,pat_ds::string::core::string-match-kmp
 686,pat_group::pattern-matching
 687,pat_ds::tree::core::post-order-depth
+687,pat_topic::longest-path::lp-tree
+687,pat_ds::tree::longest-path::lp-tree
 692,pat_topic::heap::top-k
 692,pat_ds::string::heap::top-k
 692,pat_topic::sorting::bucket-sort-freq
@@ -1268,6 +1277,8 @@ anchor_id,tag
 1242,pat_topic::concurrency::thread-pool-fanout
 1244,pat_topic::design::ordered-aggregate
 1245,pat_ds::tree::core::post-order-depth
+1245,pat_topic::longest-path::lp-tree
+1245,pat_ds::tree::longest-path::lp-tree
 1248,pat_topic::sliding-window::sw-at-most-k
 1248,pat_ds::array::sliding-window::sw-at-most-k
 1248,pat_topic::prefix-sum::ps-hashmap
@@ -1334,6 +1345,8 @@ anchor_id,tag
 1368,pat_ds::graph::shortest-path::zero-one-bfs
 1372,pat_topic::dp::tree-dp
 1372,pat_ds::tree::dp::tree-dp
+1372,pat_topic::longest-path::lp-tree
+1372,pat_ds::tree::longest-path::lp-tree
 1376,pat_ds::tree::dfs::dfs-template
 1381,pat_ds::stack::core::min-stack-design
 1392,pat_ds::string::core::string-match-kmp
@@ -1380,6 +1393,8 @@ anchor_id,tag
 1499,pat_ds::array::deque-topic::deque-window-constraint
 1506,pat_ds::tree::bits::xor-cancel
 1522,pat_ds::tree::dp::tree-dp
+1522,pat_topic::longest-path::lp-tree
+1522,pat_ds::tree::longest-path::lp-tree
 1530,pat_ds::tree::dfs::dfs-template
 1531,pat_ds::string::dp::interval-dp
 1533,pat_topic::interactive::interactive-bsearch
@@ -1452,6 +1467,8 @@ anchor_id,tag
 1857,pat_ds::graph::core::dag-longest-path
 1857,pat_topic::topo-sort::dag-critical-path
 1857,pat_ds::graph::topo-sort::dag-critical-path
+1857,pat_topic::longest-path::lp-dag
+1857,pat_ds::graph::longest-path::lp-dag
 1882,pat_topic::heap::event-driven-scheduling
 1882,pat_ds::array::heap::event-driven-scheduling
 1893,pat_topic::prefix-sum::difference-array
@@ -1482,6 +1499,8 @@ anchor_id,tag
 2050,pat_ds::graph::core::dag-longest-path
 2050,pat_topic::topo-sort::dag-critical-path
 2050,pat_ds::graph::topo-sort::dag-critical-path
+2050,pat_topic::longest-path::lp-dag
+2050,pat_ds::graph::longest-path::lp-dag
 2062,pat_ds::string::sliding-window::sw-distinct-count
 2076,pat_topic::union-find::uf-weighted
 2076,pat_ds::graph::union-find::uf-weighted
@@ -1499,6 +1518,8 @@ anchor_id,tag
 2127,pat_group::scheduling
 2127,pat_topic::topo-sort::dag-critical-path
 2127,pat_ds::graph::topo-sort::dag-critical-path
+2127,pat_topic::longest-path::lp-dag
+2127,pat_ds::graph::longest-path::lp-dag
 2130,pat_ds::linked-list::core::slow-fast-middle
 2141,pat_topic::binary-search::bs-on-answer
 2141,pat_ds::array::binary-search::bs-on-answer
@@ -1585,6 +1606,8 @@ anchor_id,tag
 10019,pat_ds::graph::core::dag-longest-path
 10019,pat_topic::topo-sort::dag-critical-path
 10019,pat_ds::graph::topo-sort::dag-critical-path
+10019,pat_topic::longest-path::lp-dag
+10019,pat_ds::graph::longest-path::lp-dag
 10020,pat_ds::trie::core::trie-basic
 10021,pat_ds::array::two-pointers::tp-merge-walk
 10025,pat_ds::graph::core::topo-sort
@@ -1603,6 +1626,8 @@ anchor_id,tag
 10045,pat_ds::graph::core::dag-longest-path
 10045,pat_topic::topo-sort::dag-critical-path
 10045,pat_ds::graph::topo-sort::dag-critical-path
+10045,pat_topic::longest-path::lp-dag
+10045,pat_ds::graph::longest-path::lp-dag
 10046,pat_topic::binary-search::bs-on-answer-compound
 10046,pat_ds::array::binary-search::bs-on-answer-compound
 10047,pat_topic::stack-topic::expression-eval
