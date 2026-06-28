@@ -1,18 +1,197 @@
-<h2>Approach</h2>
-<ol>
-  <li><b>Store</b> &mdash; <code>Map&lt;filename, Set&lt;token&gt;&gt;</code> for O(1) membership, plus an <b>inverted index</b> <code>Map&lt;token, Set&lt;filename&gt;&gt;</code> so <code>GetAllFiles</code> never rescans every document.</li>
-  <li><b>Evaluate the predicate</b> with the classic operator-precedence parser &mdash; two stacks (operands + operators) or recursive descent. Parentheses highest, then <code>&amp;&amp;</code> binds tighter than <code>||</code>. Operands resolve to <b>booleans</b> (token membership) instead of numbers.</li>
-  <li><b>CheckContains(filename, predicate)</b> &mdash; evaluate the expression against that one document's token set.</li>
-  <li><b>GetAllFiles(predicate)</b> &mdash; evaluate the parse tree over the inverted index with <b>set operations</b>: <code>&amp;&amp;</code> = intersection, <code>||</code> = union.</li>
-</ol>
-<p>In one line: <b>Basic Calculator III</b> precedence/parens evaluation with boolean operands, layered on an <b>inverted-index boolean-retrieval</b> store. Complexity: build O(total tokens); CheckContains O(predicate); GetAllFiles O(predicate &times; matched files).</p>
+<h1>Document Store with Boolean Predicate Search</h1>
+<p>A progressive (3-part) build: an in-memory document store, full boolean predicate evaluation, then a multi-document query backed by an inverted index — plus a distributed-system follow-up.</p>
+
+<h2>Part 1 &mdash; INSERT_DOC and OR-only CHECK_CONTAINS</h2>
+<h3>Problem</h3>
+<p>Maintain an in-memory map from <code>filename</code> to the set of words it contains.</p>
+<ul>
+  <li><code>INSERT_DOC &lt;filename&gt; &lt;word1&gt; &lt;word2&gt; ...</code> &mdash; store the words under <code>filename</code>. Return <code>ERROR</code> if the document already exists or no words were given, else <code>OK</code>.</li>
+  <li><code>CHECK_CONTAINS &lt;filename&gt; &lt;predicate&gt;</code> &mdash; here the predicate is an OR-chain (<code>a</code>, <code>a || b</code>, <code>a || b || c</code>). Print <code>true</code> if at least one term is in the file's word set, else <code>false</code>; <code>ERROR</code> if the filename is unknown.</li>
+</ul>
+<h3>Example</h3>
+<pre>INSERT_DOC notes.txt apple banana cherry
+INSERT_DOC notes.txt fig
+INSERT_DOC empty.txt
+CHECK_CONTAINS notes.txt apple
+CHECK_CONTAINS notes.txt grape
+CHECK_CONTAINS notes.txt grape || cherry
+CHECK_CONTAINS missing.txt apple
+---- expected ----
+OK
+ERROR
+ERROR
+true
+false
+true
+ERROR</pre>
+<h3>Solution</h3>
+<p>The <code>Server</code> owns one <code>documents</code> dict keyed by filename. The dispatcher reads a line, routes by command name, and prints exactly one line per command.</p>
+<pre>import sys
+
+class Server:
+    def __init__(self) -&gt; None:
+        self.documents: dict[str, set[str]] = {}
+
+    def insert_doc(self, filename: str, words: list[str]) -&gt; str:
+        if not words:
+            return "ERROR"
+        if filename in self.documents:
+            return "ERROR"
+        self.documents[filename] = set(words)
+        return "OK"
+
+    def check_contains(self, filename: str, predicate: str) -&gt; str:
+        if filename not in self.documents:
+            return "ERROR"
+        words = self.documents[filename]
+        terms = [t.strip() for t in predicate.split("||")]
+        return "true" if any(t in words for t in terms) else "false"
+
+def main() -&gt; None:
+    server = Server()
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            if line.startswith("INSERT_DOC "):
+                parts = line.split()
+                filename, words = parts[1], parts[2:]
+                print(server.insert_doc(filename, words))
+            elif line.startswith("CHECK_CONTAINS "):
+                _, filename, predicate = line.split(maxsplit=2)
+                print(server.check_contains(filename, predicate))
+            else:
+                print("ERROR")
+        except (ValueError, IndexError):
+            print("ERROR")</pre>
+<p>Design choices that carry forward:</p>
+<ul>
+  <li>Documents are <code>set[str]</code> &rarr; O(1) term lookup, automatic dedupe. Word frequency isn't needed for boolean queries.</li>
+  <li><code>split(maxsplit=2)</code> keeps the predicate's internal whitespace intact; Part 2 reuses this exact dispatch.</li>
+  <li>Predicate parsing is isolated &mdash; Part 2 lifts it into a free function so Part 3 can call it per document.</li>
+</ul>
+<p><b>Complexity:</b> INSERT_DOC O(W) for W words; CHECK_CONTAINS O(T) for T terms.</p>
+
+<h2>Part 2 &mdash; Full Boolean Predicates</h2>
+<h3>Problem</h3>
+<p>Extend the predicate to mix <code>&amp;&amp;</code> and <code>||</code>, with <code>&amp;&amp;</code> binding tighter than <code>||</code>: <code>a &amp;&amp; b || c</code> &equiv; <code>(a &amp;&amp; b) || c</code>. Part 1 validation still applies.</p>
+<h3>Example</h3>
+<pre>INSERT_DOC f1 apple banana cherry
+CHECK_CONTAINS f1 apple &amp;&amp; banana
+CHECK_CONTAINS f1 apple &amp;&amp; grape
+CHECK_CONTAINS f1 apple &amp;&amp; grape || cherry
+CHECK_CONTAINS f1 grape &amp;&amp; pear || apple &amp;&amp; date
+---- expected ----
+OK
+true
+false
+true
+false</pre>
+<h3>Solution</h3>
+<p>Pull the evaluator out of the class. The key insight: <code>a &amp;&amp; b || c &amp;&amp; d</code> is already in <b>disjunctive normal form</b>. Split on <code>||</code> to get OR-clauses, split each on <code>&amp;&amp;</code> to get AND-terms; the predicate is true iff any clause has all its terms present.</p>
+<pre>def evaluate_predicate(words: set[str], predicate: str) -&gt; bool:
+    for clause in predicate.split("||"):
+        terms = [t.strip() for t in clause.split("&amp;&amp;")]
+        if not all(terms):
+            continue
+        if all(t in words for t in terms):
+            return True
+    return False</pre>
+<p><code>check_contains</code> becomes a one-liner:</p>
+<pre>def check_contains(self, filename: str, predicate: str) -&gt; str:
+    if filename not in self.documents:
+        return "ERROR"
+    return "true" if evaluate_predicate(self.documents[filename], predicate) else "false"</pre>
+<p><b>Why DNF splitting works:</b> with <code>&amp;&amp;</code> higher-precedence than <code>||</code> and no parentheses, every predicate is structurally <code>(term &amp;&amp; ...) || (term &amp;&amp; ...) || ...</code>. Split on the lower-precedence operator first, then the higher &mdash; no recursion needed.</p>
+<blockquote><b>Stretch:</b> if the interviewer adds parentheses or a <code>!</code> operator, linear splitting breaks. The fix is a recursive-descent parser with three levels: <code>or_expr -&gt; and_expr ('||' and_expr)*</code>, <code>and_expr -&gt; unary ('&amp;&amp;' unary)*</code>, <code>unary -&gt; '!'? term | '(' or_expr ')'</code>.</blockquote>
+<p><b>Complexity:</b> O(T), T = total terms.</p>
+
+<h2>Part 3 &mdash; GET_ALL_FILES with an Inverted Index</h2>
+<h3>Problem</h3>
+<p><code>GET_ALL_FILES &lt;predicate&gt;</code> &mdash; return every stored document satisfying the predicate (same grammar as Part 2). Print matching filenames in lexicographic order, comma-joined, no spaces; print <code>None</code> if nothing matches.</p>
+<h3>Example</h3>
+<pre>INSERT_DOC f1 apple banana
+INSERT_DOC f2 banana cherry
+INSERT_DOC f3 cherry date
+GET_ALL_FILES apple
+GET_ALL_FILES banana
+GET_ALL_FILES apple || cherry
+GET_ALL_FILES banana &amp;&amp; cherry
+GET_ALL_FILES grape
+---- expected ----
+OK
+OK
+OK
+f1
+f1,f2
+f1,f2,f3
+f2
+None</pre>
+<h3>Naive solution</h3>
+<p>Reuse <code>evaluate_predicate</code> against every document &mdash; correct but O(F &times; T) per query.</p>
+<pre>def get_all_files(self, predicate: str) -&gt; str:
+    matches = sorted(
+        name for name, words in self.documents.items()
+        if evaluate_predicate(words, predicate)
+    )
+    return ",".join(matches) if matches else "None"</pre>
+<h3>Optimized &mdash; inverted index</h3>
+<p>Keep a second map <code>index: dict[str, set[str]]</code> from word &rarr; set of filenames. Shift cost from query time to insert time. Per AND-clause, <b>intersect</b> the posting lists; <b>union</b> the per-clause results for the OR.</p>
+<pre>class Server:
+    def __init__(self) -&gt; None:
+        self.documents: dict[str, set[str]] = {}
+        self.index: dict[str, set[str]] = {}
+
+    def insert_doc(self, filename: str, words: list[str]) -&gt; str:
+        if not words or filename in self.documents:
+            return "ERROR"
+        unique = set(words)
+        self.documents[filename] = unique
+        for w in unique:
+            self.index.setdefault(w, set()).add(filename)
+        return "OK"
+
+    def get_all_files(self, predicate: str) -&gt; str:
+        matches: set[str] = set()
+        for clause in predicate.split("||"):
+            terms = [t.strip() for t in clause.split("&amp;&amp;")]
+            if not all(terms):
+                continue
+            postings = [self.index.get(t, set()) for t in terms]
+            clause_match = set.intersection(*postings) if postings else set()
+            matches |= clause_match
+        if not matches:
+            return "None"
+        return ",".join(sorted(matches))</pre>
+<p><code>check_contains</code> is unchanged &mdash; only <code>insert_doc</code> and <code>get_all_files</code> touch the index. Dispatcher additions:</p>
+<pre>elif line.startswith("CHECK_CONTAINS "):
+    _, filename, predicate = line.split(maxsplit=2)
+    print(server.check_contains(filename, predicate))
+elif line.startswith("GET_ALL_FILES "):
+    _, predicate = line.split(maxsplit=1)
+    print(server.get_all_files(predicate))</pre>
+<p><b>Why faster:</b> the query only touches posting lists of words in the predicate, not every document. Intersect in increasing posting-list size to keep the running set small (sort postings by <code>len()</code> before <code>set.intersection</code> &mdash; the standard production tweak).</p>
+<p><b>Complexity:</b> INSERT_DOC O(W); GET_ALL_FILES O(&Sigma; posting-list sizes for the predicate's terms) &mdash; typically &laquo; F.</p>
+
+<h2>Follow-up &mdash; Distributed System Design</h2>
+<h3>Sharding</h3>
+<ul>
+  <li><b>Shard by document id (filename).</b> Hash the filename; route INSERT_DOC and per-file CHECK_CONTAINS to one shard &mdash; cheap writes + per-file reads. Cost lands on GET_ALL_FILES, which must fan out to every shard and merge at the coordinator.</li>
+  <li><b>Shard by term (inverted-index partitioning).</b> Hash each word; store its posting list on one shard. GET_ALL_FILES touches only a few shards, but a W-word INSERT_DOC triggers W cross-shard writes.</li>
+</ul>
+<p>Most production search systems use <b>document sharding</b> (writes &raquo; GET_ALL_FILES, throughput scales with shard count). Use consistent hashing on the filename so adding/removing shards re-routes only a slice of the keyspace.</p>
+<h3>Replication</h3>
+<p>Per shard, run a leader + two followers (RF=3). Writes hit the leader, replicate sync/async per durability needs. CHECK_CONTAINS / GET_ALL_FILES reads can hit any follower &mdash; more read throughput, at the cost of read-your-writes lag on async replicas.</p>
+<h3>Consistency</h3>
+<p>For read-your-writes, route follow-up reads to the leader or attach a write-version token followers check before serving. For most search workloads eventual consistency is fine &mdash; a document landing a few seconds late in GET_ALL_FILES is rarely a correctness problem.</p>
 
 <h2>Refer</h2>
 <ul>
   <li><a href="https://leetcode.com/problems/basic-calculator-iii/" target="_blank" rel="noopener">#772 &middot; Basic Calculator III</a> &mdash; <b>Hard</b> &mdash; precedence + parentheses evaluation (structural twin)</li>
   <li><a href="https://leetcode.com/problems/parsing-a-boolean-expression/" target="_blank" rel="noopener">#1106 &middot; Parsing A Boolean Expression</a> &mdash; <b>Hard</b> &mdash; boolean operators + parens (semantic twin)</li>
-  <li><a href="https://leetcode.com/problems/basic-calculator-ii/" target="_blank" rel="noopener">#227 &middot; Basic Calculator II</a> &mdash; <b>Medium</b> &mdash; precedence without parens via a stack (the <code>&amp;&amp;</code>-over-<code>||</code> trick)</li>
+  <li><a href="https://leetcode.com/problems/basic-calculator-ii/" target="_blank" rel="noopener">#227 &middot; Basic Calculator II</a> &mdash; <b>Medium</b> &mdash; precedence without parens via a stack</li>
   <li><a href="https://leetcode.com/problems/basic-calculator/" target="_blank" rel="noopener">#224 &middot; Basic Calculator</a> &mdash; <b>Hard</b> &mdash; parentheses handling</li>
   <li><a href="https://leetcode.com/problems/evaluate-reverse-polish-notation/" target="_blank" rel="noopener">#150 &middot; Evaluate Reverse Polish Notation</a> &mdash; <b>Medium</b> &mdash; stack-based evaluation</li>
-  <li><a href="https://leetcode.com/problems/design-search-autocomplete-system/" target="_blank" rel="noopener">#642 &middot; Design Search Autocomplete System</a> &mdash; <b>Hard</b> &mdash; inverted-index / search-store design (the GetAllFiles side)</li>
+  <li><a href="https://leetcode.com/problems/design-search-autocomplete-system/" target="_blank" rel="noopener">#642 &middot; Design Search Autocomplete System</a> &mdash; <b>Hard</b> &mdash; inverted-index / search-store design</li>
 </ul>
