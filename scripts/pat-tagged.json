@@ -6513,7 +6513,7 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; String",
     "pat_ds": [
-      "pat_ds::string::hash::freq-counter"
+      "pat_ds::string::hash::bijection-map"
     ],
     "pat_topic": [],
     "pat_group": [

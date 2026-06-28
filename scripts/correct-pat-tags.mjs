@@ -97,6 +97,9 @@ const CORRECTIONS = [
   { id: 1106, drop: ['pat_topic::stack-topic::decode-string', 'pat_ds::string::stack-topic::decode-string'],
     add:  ['pat_topic::stack-topic::expression-eval', 'pat_ds::string::stack-topic::expression-eval'],
     why: 'Parsing A Boolean Expression — operator-precedence + parens evaluation (Basic Calculator family), not nested-count decode-string.' },
+  { id: 890, drop: ['pat_topic::hash::freq-counter', 'pat_ds::string::hash::freq-counter'],
+    add:  ['pat_ds::string::hash::bijection-map'],
+    why: 'Find and Replace Pattern — word matches pattern iff a consistent two-way char<->char map exists (bijection, like 205/290), not frequency counting. Catalog already anchors it under bijection-map.' },
 ]
 
 // ── env + auth ──────────────────────────────────────────────────────────
