@@ -3426,7 +3426,8 @@
     "topics": "Array; Dynamic Programming; Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort; Memoization; Matrix",
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
-      "pat_ds::graph::topo-sort::dag-critical-path"
+      "pat_ds::graph::topo-sort::dag-critical-path",
+      "pat_ds::matrices::topo-sort::dag-critical-path"
     ],
     "pat_topic": [
       "pat_topic::topo-sort::dag-critical-path"
