@@ -7306,10 +7306,10 @@
     "difficulty": "Hard",
     "topics": "String; Stack; Recursion",
     "pat_ds": [
-      "pat_ds::string::stack-topic::decode-string"
+      "pat_ds::string::stack-topic::expression-eval"
     ],
     "pat_topic": [
-      "pat_topic::stack-topic::decode-string"
+      "pat_topic::stack-topic::expression-eval"
     ],
     "pat_group": [
       "pat_group::expression"
