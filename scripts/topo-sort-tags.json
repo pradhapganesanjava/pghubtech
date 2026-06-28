@@ -1,0 +1,74 @@
+{
+  "207": [
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs"
+  ],
+  "210": [
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs"
+  ],
+  "269": [
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs"
+  ],
+  "310": [
+    "pat_topic::topo-sort::leaf-peeling",
+    "pat_ds::graph::topo-sort::leaf-peeling"
+  ],
+  "329": [
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path"
+  ],
+  "444": [
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs"
+  ],
+  "802": [
+    "pat_topic::topo-sort::dfs-cycle-detect",
+    "pat_ds::graph::topo-sort::dfs-cycle-detect"
+  ],
+  "1059": [
+    "pat_topic::topo-sort::dfs-cycle-detect",
+    "pat_ds::graph::topo-sort::dfs-cycle-detect"
+  ],
+  "1136": [
+    "pat_topic::topo-sort::layered-waves",
+    "pat_ds::graph::topo-sort::layered-waves"
+  ],
+  "1857": [
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path"
+  ],
+  "2050": [
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path"
+  ],
+  "2127": [
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path"
+  ],
+  "10004": [
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs"
+  ],
+  "10012": [
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs"
+  ],
+  "10019": [
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path"
+  ],
+  "10025": [
+    "pat_topic::topo-sort::layered-waves",
+    "pat_ds::graph::topo-sort::layered-waves"
+  ],
+  "10026": [
+    "pat_topic::topo-sort::dfs-cycle-detect",
+    "pat_ds::graph::topo-sort::dfs-cycle-detect"
+  ],
+  "10045": [
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path"
+  ]
+}

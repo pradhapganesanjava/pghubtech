@@ -216,6 +216,34 @@
     "222":  "Count Complete Tree Nodes. Hybrid post-order + binary-search: compare leftmost vs rightmost path lengths; if equal, perfect = 2^h − 1; else recurse both. O(log² n)."
   },
 
+  "kahn-bfs": {
+    "207":  "Course Schedule. Can-finish = Kahn processes all N courses (no leftover ⇒ no cycle).",
+    "210":  "Course Schedule II. Return the Kahn order; [] if a cycle remains. Use a min-heap for the lexicographically smallest order.",
+    "269":  "Alien Dictionary. Build edges from the first differing char of adjacent words, then Kahn for the letter order; a prefix-after-longer-word or a cycle ⇒ invalid.",
+    "444":  "Sequence Reconstruction. The order is UNIQUE iff at every Kahn step the queue holds exactly one node.",
+    "10004": "Privilege Resolution. Topological order over the privilege-dependency DAG.",
+    "10012": "Schedule prerequisite classes with retakes. Kahn; on a failed/retaken course push it back onto the queue and re-run."
+  },
+  "dfs-cycle-detect": {
+    "802":  "Find Eventual Safe States. A node is safe iff it reaches no cycle — 3-color DFS (or Kahn on the reversed graph).",
+    "1059": "All Paths Source→Dest. Valid iff no reachable cycle and every terminal node is the destination — 3-color DFS.",
+    "10026": "Implement DFS (recursive + iterative) with cycle detection + topo order. Reverse of finishing order = a topological order."
+  },
+  "dag-critical-path": {
+    "329":  "Longest Increasing Path in a Matrix. DFS-memo on the implicit DAG (edges to strictly larger neighbours); answer = max path length.",
+    "1857": "Largest Color Value in a Directed Graph. Topo DP of per-color counts along paths; a cycle ⇒ -1.",
+    "2050": "Parallel Courses III. finish[v] = time[v] + max(finish[pred]); answer = max(finish). Each course starts when ITS prereqs finish (not a barrier).",
+    "2127": "Maximum Employees to Be Invited. Functional graph: longest chains feeding 2-cycles, plus the largest pure cycle.",
+    "10019": "Compute total time to finish all courses (per-task duration). Earliest-finish topo DP.",
+    "10045": "Course Completion Time. Same earliest-finish topo DP; answer = max finish."
+  },
+  "layered-waves": {
+    "1136": "Parallel Courses. Min semesters = number of Kahn waves (= longest dependency chain).",
+    "10025": "Schedule dependent services with layered startup. Each wave starts only after the entire previous wave is up."
+  },
+  "leaf-peeling": {
+    "310":  "Minimum Height Trees. Trim all degree-1 leaves layer by layer; the last 1 or 2 nodes remaining are the MHT roots."
+  },
   "topo-sort": {
     "207":  "Course Schedule — can you finish? Kahn: queue of in-deg 0; decrement neighbours' in-deg; if final processed count == n, yes. Alternative: DFS 3-color cycle detect.",
     "210":  "Course Schedule II — output order. Same Kahn; record pop order. Result is the topological ordering (any valid one).",
