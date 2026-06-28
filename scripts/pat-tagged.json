@@ -803,10 +803,11 @@
     "difficulty": "Hard",
     "topics": "Array; String; Simulation",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::line-format"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::line-format"
+    ]
   },
   {
     "id": "69",
@@ -1461,15 +1462,16 @@
       "pat_ds::tree::core::post-order-depth",
       "pat_ds::tree::dp::tree-dp",
       "pat_ds::tree::dfs::dfs-tree-orders",
-      "pat_ds::tree::longest-path::lp-tree"
+      "pat_ds::tree::core::lp-tree"
     ],
     "pat_topic": [
       "pat_topic::dp::tree-dp",
-      "pat_topic::dfs::dfs-tree-orders",
-      "pat_topic::longest-path::lp-tree"
+      "pat_topic::dfs::dfs-tree-orders"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-tree"
     ]
   },
   {
@@ -1513,15 +1515,16 @@
       "pat_ds::string::core::word-ladder-bfs",
       "pat_ds::string::bfs::bfs-shortest-unweighted",
       "pat_ds::string::bfs::bfs-bidirectional",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
       "pat_topic::bfs::bfs-shortest-unweighted",
-      "pat_topic::bfs::bfs-bidirectional",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-bidirectional"
     ],
     "pat_group": [
-      "pat_group::word-process"
+      "pat_group::word-process",
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
     ]
   },
   {
@@ -3002,10 +3005,11 @@
     "difficulty": "Medium",
     "topics": "Array; Design; Queue; Iterator",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::design::multi-stream-iterator"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::multi-stream-iterator"
+    ]
   },
   {
     "id": "282",
@@ -3052,13 +3056,15 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-multi-source"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "287",
@@ -3081,10 +3087,11 @@
     "difficulty": "Medium",
     "topics": "Array; Matrix; Simulation",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::grid-simulate"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::grid-simulate"
+    ]
   },
   {
     "id": "290",
@@ -3349,13 +3356,15 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-multi-source"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "322",
@@ -3432,15 +3441,17 @@
       "pat_ds::matrices::topo-sort::dag-critical-path",
       "pat_ds::matrices::dfs::dfs-memo",
       "pat_ds::graph::dfs::dfs-memo",
-      "pat_ds::matrices::longest-path::lp-grid",
-      "pat_ds::graph::longest-path::lp-grid"
+      "pat_ds::matrices::core::lp-grid",
+      "pat_ds::graph::core::lp-grid"
     ],
     "pat_topic": [
       "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::dfs::dfs-memo",
-      "pat_topic::longest-path::lp-grid"
+      "pat_topic::dfs::dfs-memo"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-grid"
+    ]
   },
   {
     "id": "330",
@@ -3683,14 +3694,14 @@
     "difficulty": "Hard",
     "topics": "Hash Table; Binary Search; Union-Find; Design; Data Stream; Ordered Set",
     "pat_ds": [
-      "pat_ds::array::design::ordered-interval-merge"
+      "pat_ds::array::core::ordered-interval-merge"
     ],
-    "pat_topic": [
-      "pat_topic::design::ordered-interval-merge"
-    ],
+    "pat_topic": [],
     "pat_group": [
       "pat_group::stream",
-      "pat_group::stream::ordered-interval-merge"
+      "pat_group::stream::ordered-interval-merge",
+      "pat_group::design",
+      "pat_group::design::ordered-interval-merge"
     ]
   },
   {
@@ -3942,10 +3953,11 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Math; Design; Randomized",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::design::array-hash-random"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::array-hash-random"
+    ]
   },
   {
     "id": "383",
@@ -4238,11 +4250,11 @@
     "difficulty": "Easy",
     "topics": "Array; Matrix",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::board-validate"
-    ],
+    "pat_topic": [],
     "pat_group": [
-      "pat_group::word-process"
+      "pat_group::word-process",
+      "pat_group::simulation",
+      "pat_group::simulation::board-validate"
     ]
   },
   {
@@ -4308,13 +4320,15 @@
     "pat_ds": [
       "pat_ds::string::core::word-ladder-bfs",
       "pat_ds::string::bfs::bfs-shortest-unweighted",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-shortest-unweighted",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-shortest-unweighted"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "435",
@@ -4702,12 +4716,13 @@
     "topics": "Array; String; Depth-First Search; Breadth-First Search; Graph Theory; Heap (Priority Queue); Matrix; Shortest Path",
     "pat_ds": [
       "pat_ds::matrices::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
-    "pat_topic": [
-      "pat_topic::shortest-path::dijkstra"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "502",
@@ -4740,12 +4755,13 @@
     "topics": "Array; Depth-First Search; Breadth-First Search; Graph Theory; Heap (Priority Queue); Matrix; Shortest Path",
     "pat_ds": [
       "pat_ds::matrices::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
-    "pat_topic": [
-      "pat_topic::shortest-path::dijkstra"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "509",
@@ -4880,15 +4896,17 @@
     "topics": "Array; Dynamic Programming; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs",
+      "pat_ds::graph::core::bfs",
       "pat_ds::matrices::dp::dp-grid-two-pass"
     ],
     "pat_topic": [
       "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs",
       "pat_topic::dp::dp-grid-two-pass"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "543",
@@ -4899,14 +4917,16 @@
       "pat_ds::tree::core::post-order-depth",
       "pat_ds::tree::dp::tree-dp",
       "pat_ds::tree::dfs::dfs-tree-orders",
-      "pat_ds::tree::longest-path::lp-tree"
+      "pat_ds::tree::core::lp-tree"
     ],
     "pat_topic": [
       "pat_topic::dp::tree-dp",
-      "pat_topic::dfs::dfs-tree-orders",
-      "pat_topic::longest-path::lp-tree"
+      "pat_topic::dfs::dfs-tree-orders"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-tree"
+    ]
   },
   {
     "id": "545",
@@ -5091,10 +5111,11 @@
     "difficulty": "Easy",
     "topics": "Array; String; Design; Iterator",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::design::lazy-decode-iterator"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::lazy-decode-iterator"
+    ]
   },
   {
     "id": "605",
@@ -5472,12 +5493,13 @@
     "topics": "Tree; Depth-First Search; Binary Tree",
     "pat_ds": [
       "pat_ds::tree::core::post-order-depth",
-      "pat_ds::tree::longest-path::lp-tree"
+      "pat_ds::tree::core::lp-tree"
     ],
-    "pat_topic": [
-      "pat_topic::longest-path::lp-tree"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-tree"
+    ]
   },
   {
     "id": "692",
@@ -5841,13 +5863,15 @@
     "topics": "Depth-First Search; Breadth-First Search; Graph Theory; Heap (Priority Queue); Shortest Path",
     "pat_ds": [
       "pat_ds::graph::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
     "pat_topic": [
-      "pat_topic::heap::dijkstra",
-      "pat_topic::shortest-path::dijkstra"
+      "pat_topic::heap::dijkstra"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "744",
@@ -5906,15 +5930,17 @@
       "pat_ds::string::core::word-ladder-bfs",
       "pat_ds::string::bfs::bfs-shortest-unweighted",
       "pat_ds::string::bfs::bfs-bidirectional",
-      "pat_ds::graph::shortest-path::bfs",
+      "pat_ds::graph::core::bfs",
       "pat_ds::array::bfs::bfs-encoded-state"
     ],
     "pat_topic": [
       "pat_topic::bfs::bfs-shortest-unweighted",
-      "pat_topic::bfs::bfs-bidirectional",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-bidirectional"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "753",
@@ -6034,13 +6060,15 @@
     "topics": "Array; Binary Search; Depth-First Search; Breadth-First Search; Union-Find; Heap (Priority Queue); Matrix",
     "pat_ds": [
       "pat_ds::matrices::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
     "pat_topic": [
-      "pat_topic::heap::dijkstra",
-      "pat_topic::shortest-path::dijkstra"
+      "pat_topic::heap::dijkstra"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "783",
@@ -6082,15 +6110,17 @@
     "topics": "Dynamic Programming; Depth-First Search; Breadth-First Search; Graph Theory; Heap (Priority Queue); Shortest Path",
     "pat_ds": [
       "pat_ds::graph::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra",
-      "pat_ds::graph::shortest-path::bellman-ford"
+      "pat_ds::graph::core::dijkstra",
+      "pat_ds::graph::core::bellman-ford"
     ],
     "pat_topic": [
-      "pat_topic::heap::dijkstra",
-      "pat_topic::shortest-path::dijkstra",
-      "pat_topic::shortest-path::bellman-ford"
+      "pat_topic::heap::dijkstra"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra",
+      "pat_group::shortest-path::bellman-ford"
+    ]
   },
   {
     "id": "788",
@@ -6133,10 +6163,11 @@
     "difficulty": "Medium",
     "topics": "Array; Matrix",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::board-validate"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::board-validate"
+    ]
   },
   {
     "id": "796",
@@ -6211,12 +6242,13 @@
     "topics": "Array; Hash Table; Breadth-First Search",
     "pat_ds": [
       "pat_ds::graph::bfs::bfs-shortest-unweighted",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
-    "pat_topic": [
-      "pat_topic::shortest-path::bfs"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "819",
@@ -6612,12 +6644,13 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-shortest-unweighted",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
-    "pat_topic": [
-      "pat_topic::shortest-path::bfs"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "914",
@@ -6758,13 +6791,15 @@
     "topics": "Array; Depth-First Search; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-zero-one",
-      "pat_ds::graph::shortest-path::zero-one-bfs"
+      "pat_ds::graph::core::zero-one-bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-zero-one",
-      "pat_topic::shortest-path::zero-one-bfs"
+      "pat_topic::bfs::bfs-zero-one"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::zero-one-bfs"
+    ]
   },
   {
     "id": "938",
@@ -7031,13 +7066,15 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-multi-source"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "1004",
@@ -7281,13 +7318,15 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-shortest-unweighted",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-shortest-unweighted",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-shortest-unweighted"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "1099",
@@ -7587,13 +7626,15 @@
     "topics": "Array; Dynamic Programming; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-multi-source"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "1165",
@@ -7871,10 +7912,11 @@
     "difficulty": "Medium",
     "topics": "Hash Table; Design; Sorting",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::design::ordered-aggregate"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::ordered-aggregate"
+    ]
   },
   {
     "id": "1245",
@@ -7883,12 +7925,13 @@
     "topics": "Tree; Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
       "pat_ds::tree::core::post-order-depth",
-      "pat_ds::tree::longest-path::lp-tree"
+      "pat_ds::tree::core::lp-tree"
     ],
-    "pat_topic": [
-      "pat_topic::longest-path::lp-tree"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-tree"
+    ]
   },
   {
     "id": "1248",
@@ -8151,13 +8194,13 @@
     "difficulty": "Medium",
     "topics": "Dynamic Programming; Graph Theory; Shortest Path",
     "pat_ds": [
-      "pat_ds::graph::core::floyd-warshall",
-      "pat_ds::graph::shortest-path::floyd-warshall"
+      "pat_ds::graph::core::floyd-warshall"
     ],
-    "pat_topic": [
-      "pat_topic::shortest-path::floyd-warshall"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::floyd-warshall"
+    ]
   },
   {
     "id": "1335",
@@ -8273,13 +8316,15 @@
     "topics": "Array; Breadth-First Search; Graph Theory; Heap (Priority Queue); Matrix; Shortest Path",
     "pat_ds": [
       "pat_ds::graph::bfs::bfs-zero-one",
-      "pat_ds::graph::shortest-path::zero-one-bfs"
+      "pat_ds::graph::core::zero-one-bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-zero-one",
-      "pat_topic::shortest-path::zero-one-bfs"
+      "pat_topic::bfs::bfs-zero-one"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::zero-one-bfs"
+    ]
   },
   {
     "id": "1372",
@@ -8288,13 +8333,15 @@
     "topics": "Dynamic Programming; Tree; Depth-First Search; Binary Tree",
     "pat_ds": [
       "pat_ds::tree::dp::tree-dp",
-      "pat_ds::tree::longest-path::lp-tree"
+      "pat_ds::tree::core::lp-tree"
     ],
     "pat_topic": [
-      "pat_topic::dp::tree-dp",
-      "pat_topic::longest-path::lp-tree"
+      "pat_topic::dp::tree-dp"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-tree"
+    ]
   },
   {
     "id": "1376",
@@ -8699,12 +8746,13 @@
     "topics": "Tree; Depth-First Search",
     "pat_ds": [
       "pat_ds::tree::dp::tree-dp",
-      "pat_ds::tree::longest-path::lp-tree"
+      "pat_ds::tree::core::lp-tree"
     ],
-    "pat_topic": [
-      "pat_topic::longest-path::lp-tree"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-tree"
+    ]
   },
   {
     "id": "1530",
@@ -8734,10 +8782,11 @@
     "difficulty": "Medium",
     "topics": "Array; Binary Search; Interactive",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::interactive::interactive-bsearch"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::interactive",
+      "pat_group::interactive::interactive-bsearch"
+    ]
   },
   {
     "id": "1538",
@@ -8745,10 +8794,11 @@
     "difficulty": "Medium",
     "topics": "Array; Math; Interactive",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::interactive::interactive-deduce"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::interactive",
+      "pat_group::interactive::interactive-deduce"
+    ]
   },
   {
     "id": "1547",
@@ -8827,13 +8877,15 @@
     "topics": "Array; Binary Search; Depth-First Search; Breadth-First Search; Union-Find; Heap (Priority Queue); Matrix",
     "pat_ds": [
       "pat_ds::matrices::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
     "pat_topic": [
-      "pat_topic::heap::dijkstra",
-      "pat_topic::shortest-path::dijkstra"
+      "pat_topic::heap::dijkstra"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "1639",
@@ -9034,13 +9086,15 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-shortest-unweighted",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-shortest-unweighted",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-shortest-unweighted"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "1732",
@@ -9082,13 +9136,15 @@
     "topics": "Array; Breadth-First Search; Matrix",
     "pat_ds": [
       "pat_ds::matrices::bfs::bfs-multi-source",
-      "pat_ds::graph::shortest-path::bfs"
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-multi-source",
-      "pat_topic::shortest-path::bfs"
+      "pat_topic::bfs::bfs-multi-source"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   },
   {
     "id": "1768",
@@ -9200,13 +9256,15 @@
       "pat_ds::graph::core::topo-sort",
       "pat_ds::graph::core::dag-longest-path",
       "pat_ds::graph::topo-sort::dag-critical-path",
-      "pat_ds::graph::longest-path::lp-dag"
+      "pat_ds::graph::core::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::longest-path::lp-dag"
+      "pat_topic::topo-sort::dag-critical-path"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-dag"
+    ]
   },
   {
     "id": "1882",
@@ -9299,10 +9357,11 @@
     "difficulty": "Medium",
     "topics": "Array; Matrix; Enumeration",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::board-validate"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::board-validate"
+    ]
   },
   {
     "id": "1970",
@@ -9421,13 +9480,15 @@
       "pat_ds::graph::core::topo-sort",
       "pat_ds::graph::core::dag-longest-path",
       "pat_ds::graph::topo-sort::dag-critical-path",
-      "pat_ds::graph::longest-path::lp-dag"
+      "pat_ds::graph::core::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::longest-path::lp-dag"
+      "pat_topic::topo-sort::dag-critical-path"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-dag"
+    ]
   },
   {
     "id": "2062",
@@ -9523,14 +9584,15 @@
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
       "pat_ds::graph::topo-sort::dag-critical-path",
-      "pat_ds::graph::longest-path::lp-dag"
+      "pat_ds::graph::core::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::longest-path::lp-dag"
+      "pat_topic::topo-sort::dag-critical-path"
     ],
     "pat_group": [
-      "pat_group::scheduling"
+      "pat_group::scheduling",
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-dag"
     ]
   },
   {
@@ -9619,13 +9681,15 @@
     "topics": "Array; Breadth-First Search; Graph Theory; Heap (Priority Queue); Matrix; Shortest Path",
     "pat_ds": [
       "pat_ds::graph::bfs::bfs-zero-one",
-      "pat_ds::graph::shortest-path::zero-one-bfs"
+      "pat_ds::graph::core::zero-one-bfs"
     ],
     "pat_topic": [
-      "pat_topic::bfs::bfs-zero-one",
-      "pat_topic::shortest-path::zero-one-bfs"
+      "pat_topic::bfs::bfs-zero-one"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::zero-one-bfs"
+    ]
   },
   {
     "id": "2300",
@@ -9644,10 +9708,11 @@
     "difficulty": "Easy",
     "topics": "Array; Simulation",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::tiered-scan"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::tiered-scan"
+    ]
   },
   {
     "id": "2334",
@@ -9669,10 +9734,11 @@
     "difficulty": "Medium",
     "topics": "Hash Table; Design; Heap (Priority Queue); Ordered Set",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::design::ordered-aggregate"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::ordered-aggregate"
+    ]
   },
   {
     "id": "2352",
@@ -9887,13 +9953,15 @@
     "topics": "Graph Theory; Design; Heap (Priority Queue); Shortest Path",
     "pat_ds": [
       "pat_ds::graph::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
     "pat_topic": [
-      "pat_topic::heap::dijkstra",
-      "pat_topic::shortest-path::dijkstra"
+      "pat_topic::heap::dijkstra"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "2659",
@@ -9912,10 +9980,11 @@
     "difficulty": "Medium",
     "topics": "",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::design::observer-pubsub"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::observer-pubsub"
+    ]
   },
   {
     "id": "2761",
@@ -9939,13 +10008,15 @@
     "topics": "Array; Binary Search; Breadth-First Search; Union-Find; Heap (Priority Queue); Matrix",
     "pat_ds": [
       "pat_ds::matrices::heap::dijkstra",
-      "pat_ds::graph::shortest-path::dijkstra"
+      "pat_ds::graph::core::dijkstra"
     ],
     "pat_topic": [
-      "pat_topic::heap::dijkstra",
-      "pat_topic::shortest-path::dijkstra"
+      "pat_topic::heap::dijkstra"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::dijkstra"
+    ]
   },
   {
     "id": "2848",
@@ -10088,10 +10159,11 @@
     "difficulty": "Medium",
     "topics": "Array; Matrix; Simulation",
     "pat_ds": [],
-    "pat_topic": [
-      "pat_topic::simulation::board-validate"
-    ],
-    "pat_group": []
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::board-validate"
+    ]
   },
   {
     "id": "10009",
@@ -10174,13 +10246,15 @@
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
       "pat_ds::graph::topo-sort::dag-critical-path",
-      "pat_ds::graph::longest-path::lp-dag"
+      "pat_ds::graph::core::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::longest-path::lp-dag"
+      "pat_topic::topo-sort::dag-critical-path"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-dag"
+    ]
   },
   {
     "id": "10020",
@@ -10308,13 +10382,15 @@
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
       "pat_ds::graph::topo-sort::dag-critical-path",
-      "pat_ds::graph::longest-path::lp-dag"
+      "pat_ds::graph::core::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::longest-path::lp-dag"
+      "pat_topic::topo-sort::dag-critical-path"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::longest-path",
+      "pat_group::longest-path::lp-dag"
+    ]
   },
   {
     "id": "10046",

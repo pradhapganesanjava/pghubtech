@@ -69,6 +69,12 @@ const GROUPS = {
   // pattern in text — exact (KMP/Z), regex/wildcard (DP or trie), structural
   // pattern<->word isomorphism. (Excludes edit-distance/LCS DP.)
   'pattern-matching': [10, 28, 44, 205, 211, 214, 290, 291, 459, 676, 686, 745, 796, 890, 1023, 1392, 1408],
+  // ── moved from Topics → Group By (shortest/longest path, interactive, design, simulation) ──
+  'shortest-path':[127, 286, 317, 433, 499, 505, 542, 743, 752, 778, 787, 815, 909, 934, 994, 1091, 1162, 1334, 1368, 1631, 1730, 1765, 2290, 2642, 2812],
+  'longest-path': [124, 329, 543, 687, 1245, 1372, 1522, 1857, 2050, 2127, 10019, 10045],
+  interactive:    [1533, 1538],
+  design:         [281, 352, 380, 604, 1244, 2336, 2694],
+  simulation:     [68, 289, 422, 794, 1958, 2303, 10008],
 }
 
 // ── Sub-group micro-patterns ────────────────────────────────────────────────
@@ -105,6 +111,37 @@ const SUBGROUPS = {
     'subarray-binary-search': [410, 1011, 1231],
     // exact k-segment partition DP: dp[p][i] = min over cut of combine(...)
     'partition-dp':           [410, 1335],
+  },
+  // ── moved from Topics → Group By ──
+  'shortest-path': {
+    'bfs':                    [127, 286, 317, 433, 542, 752, 815, 909, 994, 1091, 1162, 1730, 1765],
+    'dijkstra':               [499, 505, 743, 778, 787, 1631, 2642, 2812],
+    'bellman-ford':           [787],
+    'zero-one-bfs':           [934, 1368, 2290],
+    'floyd-warshall':         [1334],
+  },
+  'longest-path': {
+    'lp-tree':                [124, 543, 687, 1245, 1372, 1522],
+    'lp-grid':                [329],
+    'lp-dag':                 [1857, 2050, 2127, 10019, 10045],
+  },
+  interactive: {
+    'interactive-bsearch':    [1533],
+    'interactive-deduce':     [1538],
+  },
+  design: {
+    'multi-stream-iterator':  [281],
+    'ordered-interval-merge': [352],
+    'array-hash-random':      [380],
+    'lazy-decode-iterator':   [604],
+    'ordered-aggregate':      [1244, 2336],
+    'observer-pubsub':        [2694],
+  },
+  simulation: {
+    'line-format':            [68],
+    'grid-simulate':          [289],
+    'board-validate':         [422, 794, 1958, 10008],
+    'tiered-scan':            [2303],
   },
 }
 
