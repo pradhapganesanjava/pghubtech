@@ -1048,8 +1048,8 @@ anchor_id,tag
 885,pat_ds::matrices::core::mat-spiral
 886,pat_ds::graph::core::bipartite
 889,pat_ds::tree::core::construct-from-traversals
-890,pat_ds::string::hash::freq-counter
 890,pat_group::pattern-matching
+890,pat_ds::string::hash::bijection-map
 895,pat_ds::stack::core::min-stack-design
 901,pat_ds::stack::core::validate-stack-seq
 901,pat_topic::stack-topic::monotonic-stack
