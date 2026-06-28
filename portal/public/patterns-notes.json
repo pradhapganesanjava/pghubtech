@@ -64,6 +64,9 @@
     "352": "Data Stream as Disjoint Intervals. Keep intervals in an ordered map start→end. On addNum(v): skip if already covered; locate the floor/ceil neighbours by binary search; merge if v touches the left (end+1==v) and/or right (v+1==start) interval, erasing absorbed ones. getIntervals returns entries in key order. O(log n) per add."
   },
 
+  "dfs-memo": {
+    "329":  "Longest Increasing Path in a Matrix. dfs(r,c) = longest strictly-increasing run starting at (r,c); cache it. The grid is an implicit DAG (edges to larger neighbours), so memoized DFS = top-down DP = DAG longest path. O(R·C). Also tagged topo-sort::dag-critical-path and DS matrices + graph."
+  },
   "dfs-template": {
     "200":  "Number of Islands. For each unvisited '1', DFS (mark to '0' or visited set), ++count. Same as dfs-grid-flood — listed under both pre-prune.",
     "695":  "Max area of island. DFS RETURNS subtree-area (1 + sum of 4 neighbour calls); track global max.",

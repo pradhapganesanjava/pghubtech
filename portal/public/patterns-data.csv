@@ -585,6 +585,9 @@ anchor_id,tag
 329,pat_topic::topo-sort::dag-critical-path
 329,pat_ds::graph::topo-sort::dag-critical-path
 329,pat_ds::matrices::topo-sort::dag-critical-path
+329,pat_topic::dfs::dfs-memo
+329,pat_ds::matrices::dfs::dfs-memo
+329,pat_ds::graph::dfs::dfs-memo
 330,pat_ds::array::greedy::running-extreme
 332,pat_ds::graph::core::euler-tour
 333,pat_ds::bst::core::bst-bounds-validate

@@ -3427,10 +3427,13 @@
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
       "pat_ds::graph::topo-sort::dag-critical-path",
-      "pat_ds::matrices::topo-sort::dag-critical-path"
+      "pat_ds::matrices::topo-sort::dag-critical-path",
+      "pat_ds::matrices::dfs::dfs-memo",
+      "pat_ds::graph::dfs::dfs-memo"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path"
+      "pat_topic::topo-sort::dag-critical-path",
+      "pat_topic::dfs::dfs-memo"
     ],
     "pat_group": []
   },
