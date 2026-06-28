@@ -251,6 +251,46 @@
     }
   },
   "groups": {
+    "shortest-path": {
+      "micros": {
+        "bfs": { "name": "BFS — Unweighted (Equal Edges)", "when": "Shortest path / fewest moves when every edge has the SAME cost (weight 1): grid moves, word ladders, multi-source spread.", "mechanism": "Queue BFS from the source(s); the FIRST time you reach a node IS its shortest distance (dist = parent + 1). No relaxation — skip already-visited." },
+        "zero-one-bfs": { "name": "0-1 BFS (Deque)", "when": "Shortest path where every edge weight is 0 or 1 (free vs cost-1 move, flip / no-flip).", "mechanism": "Deque BFS: relax edges, pushing 0-weight neighbours to the FRONT and 1-weight to the BACK. First pop of a node is final." },
+        "dijkstra": { "name": "Dijkstra — Non-Negative Weights", "when": "Single-source shortest path in a weighted graph, all weights ≥ 0 (\"minimum cost / time\").", "mechanism": "Min-heap of (dist, node); pop the smallest, skip stale (d > dist[node]), relax outgoing edges, push improved." },
+        "bellman-ford": { "name": "Bellman-Ford — Negative Weights / Bounded Hops", "when": "Shortest path with NEGATIVE edge weights, negative-cycle detection, or a bounded hop count (≤ K edges).", "mechanism": "Relax EVERY edge V-1 times (dist[v] = min(dist[v], dist[u] + w)); one more pass that still improves ⇒ negative cycle. For ≤ K stops, relax K+1 times on a fresh copy each round." },
+        "floyd-warshall": { "name": "Floyd-Warshall — All-Pairs Shortest Path", "when": "Shortest distance between EVERY pair of nodes; small dense graph (V ≤ ~400); edges may be negative (no negative cycle).", "mechanism": "dist[i][j] = edge weight or ∞ (0 on diagonal). Triple loop with k OUTERMOST: dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])." }
+      }
+    },
+    "longest-path": {
+      "micros": {
+        "lp-dag": { "name": "Longest Path in a DAG (Critical Path)", "when": "Longest dependency chain / earliest-finish / critical path on a directed ACYCLIC graph, possibly with per-node weights.", "mechanism": "Process in topological order; finish[v] = w[v] + max(finish[pred]); answer = max(finish). Same engine as topo-sort → dag-critical-path, viewed as \"longest path\"." },
+        "lp-grid": { "name": "Longest Increasing Path in a Grid", "when": "Longest strictly-increasing path through a matrix (step to a larger 4-neighbour).", "mechanism": "The grid is an implicit DAG (edges point to strictly larger cells); memoize the longest run starting at each cell; answer = max over all cells." },
+        "lp-tree": { "name": "Longest Path in a Tree (Diameter)", "when": "Diameter / longest node-to-node path / maximum path sum in a tree.", "mechanism": "Post-order DFS: each node returns its best single downward extension; at the node combine the top TWO child extensions to update a global best." }
+      }
+    },
+    "interactive": {
+      "micros": {
+        "interactive-bsearch": { "name": "Comparison-Query Binary Search", "when": "Find an extreme/target in a hidden array where you may only ASK an oracle to compare two ranges/elements (find the larger half, guess number).", "mechanism": "Each query compares two halves and tells you which side holds the answer; recurse into that half. Frame the oracle result as the monotone predicate that drives a standard binary search." },
+        "interactive-deduce": { "name": "Deduce via Pairwise/Reference Queries", "when": "Determine values/majority in a hidden array using a limited budget of relational queries (are these equal? is this the majority?).", "mechanism": "Pick a reference element; query others against it to partition into \"same\" vs \"different\" groups by relation; combine group sizes (and a couple of extra reference flips) to infer the global answer within the call budget." }
+      }
+    },
+    "design": {
+      "micros": {
+        "array-hash-random": { "name": "Array + Hash Swap-Remove (O(1) Random)", "when": "insert, delete, AND getRandom all in O(1) (RandomizedSet / collection).", "mechanism": "Dynamic array holds values; hash map value→index. delete = swap target with the LAST element, pop, fix the moved element\\'s index. getRandom = array[rand]." },
+        "multi-stream-iterator": { "name": "Round-Robin / Multi-Stream Iterator", "when": "Interleave or merge several iterators/lists behind a single next()/hasNext().", "mechanism": "Queue of active cursors; next() pops a cursor, reads it, then re-enqueues it if it still has elements. Generalises to k streams (zigzag)." },
+        "lazy-decode-iterator": { "name": "Lazy-Decode Iterator (Run-Length Cursor)", "when": "Iterate an encoded/compressed representation without expanding it (compressed string, RLE).", "mechanism": "Keep a (current symbol, remaining count) cursor; next() decrements count, advancing to the next run when it hits 0; peek() reads without consuming." },
+        "ordered-aggregate": { "name": "Heap/Set + Map Hybrid (Ranked / Reusable State)", "when": "Support pop-extreme + add-back, or top-K with live updates (smallest-infinite-set, leaderboard).", "mechanism": "Min/max-heap for ordering + a hash map/set for membership or per-key totals; a boundary pointer can stand in for an infinite contiguous range. Reconcile lazily (skip stale heap entries)." },
+        "ordered-interval-merge": { "name": "Disjoint-Interval Set (Merge on Insert)", "when": "Maintain a running set of DISJOINT sorted intervals as points/ranges arrive, and query the merged cover (Data Stream as Disjoint Intervals / SummaryRanges, Range Module-lite).", "mechanism": "Keep intervals in an ORDERED map / sorted list keyed by start. On insert, binary-search the slot, then merge with the left/right neighbour if they touch or overlap; erase the absorbed ones." },
+        "observer-pubsub": { "name": "Observer / Pub-Sub Emitter", "when": "Register callbacks per event name, unsubscribe, and dispatch to all current listeners on emit.", "mechanism": "Map event → subscribers (id→callback). subscribe returns a handle that removes itself; emit iterates a SNAPSHOT so handlers may (un)subscribe mid-dispatch." }
+      }
+    },
+    "simulation": {
+      "micros": {
+        "grid-simulate": { "name": "In-Place Grid Step (Encoded Next-State)", "when": "Advance every cell one step from its neighbours simultaneously (Game of Life, cellular automata).", "mechanism": "Encode the next state in spare BITS of the current cell (e.g. old | new<<1) so all reads still see the OLD value; a second pass shifts to drop the old bit." },
+        "board-validate": { "name": "Board / State Rule Validation (Invariants + Ray Scan)", "when": "Decide whether a configuration is REACHABLE/legal or a move is valid (tic-tac-toe, Reversi flip, valid word square).", "mechanism": "Check counting invariants (turn parity, win exclusivity) and/or scan each of the 8 directions as a ray applying the rule. Reject on the first violated invariant." },
+        "line-format": { "name": "Greedy Line Packing / Formatting", "when": "Lay items into fixed-width lines distributing leftover space (text justification, word wrap).", "mechanism": "Greedily pack as many words as fit; for a full line spread extra spaces left-to-right (remainder to the leftmost gaps); the last line / a lone word is left-justified." },
+        "tiered-scan": { "name": "Piecewise / Tiered Accumulation", "when": "Apply per-band rules to a value crossing thresholds (tax brackets, tiered pricing).", "mechanism": "Walk the bands in order; for each take min(remaining, band-width) × band-rate; subtract from remaining until it is exhausted." }
+      }
+    },
     "partition": {
       "micros": {
         "subarray-binary-search": {

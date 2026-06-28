@@ -527,6 +527,11 @@ const GROUPS = [
   { id: 'partition',    icon: '✂️', name: 'Partition',      intro: 'Split a sequence into contiguous pieces optimizing or satisfying a constraint — minimize the largest piece, count valid splits, partition by a predicate. Usually binary-search-on-answer (with a greedy feasibility check) or partition DP.' },
   { id: 'min-change',   icon: '🔧', name: 'Minimum Change',  intro: 'Fewest removals / deletions / changes to make a collection CONSISTENT — non-overlapping, all-unique, equalized, or a valid shape. The answer is the operation count; usually greedy (sort + sweep) or DP.' },
   { id: 'pattern-matching', icon: '🔎', name: 'Pattern Matching', intro: 'Match a string/sequence against a pattern, or locate a pattern in text — exact substring search (KMP / Z-algorithm), regex / wildcard matching (DP or trie), and structural pattern↔word isomorphism.' },
+  { id: 'shortest-path', icon: '🛣️', name: 'Shortest Path',  intro: 'Pick the shortest-path algorithm by the edge weights — all-equal → BFS; {0,1} → 0-1 BFS; non-negative → Dijkstra; negatives / bounded hops → Bellman-Ford; all-pairs on a small dense graph → Floyd-Warshall.' },
+  { id: 'longest-path',  icon: '📏', name: 'Longest Path',   intro: 'Find the LONGEST path / chain — NP-hard in general but tractable on a DAG (topological-order DP / critical path), a tree (diameter via post-order), or a grid where moves go to strictly larger cells (memoized DFS).' },
+  { id: 'interactive',   icon: '🎯', name: 'Interactive Queries', intro: 'Hidden input you can only probe via a query oracle within a budget — binary-search by comparison queries, or deduce values/majority via pairwise/reference queries.' },
+  { id: 'design',        icon: '🧩', name: 'Data-Structure Design', intro: 'Design a data structure meeting specific operations + complexity bounds — combine primitives (array+hash, heap+map, iterators, ordered structures) to hit the targets.' },
+  { id: 'simulation',    icon: '🎲', name: 'Simulation',     intro: 'Directly simulate the described process step by step — grid steps, board/rule validation, line formatting, tiered accumulation.' },
 ]
 function groupMeta(id) {
   return GROUPS.find(g => g.id === id) || { id, icon: '🗂', name: id.replace(/-/g, ' '), intro: '' }
@@ -1892,13 +1897,18 @@ function renderGroupMicros(g) {
     const name = def.name || mid.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
     const when = def.when      ? `<p class="group-micro-when">${mdLite(def.when)}</p>` : ''
     const mech = def.mechanism ? `<p class="group-micro-mech">⚙ ${mdLite(def.mechanism)}</p>` : ''
+    // Reuse the shared per-micro sidecars (keyed by micro id) so a sub-micro
+    // shows the same pseudo / ASCII visual a Topic micro card would — content
+    // is preserved when a Topic is moved to a Group.
+    const pseudo = PATTERN_PSEUDO[mid]  ? `<pre class="combo-pseudo">${escHtml(PATTERN_PSEUDO[mid])}</pre>` : ''
+    const visual = PATTERN_VISUALS[mid] ? `<pre class="combo-visual">${escHtml(PATTERN_VISUALS[mid])}</pre>` : ''
     const chips = list.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
     return `<div class="group-micro">
       <div class="group-micro-hd">
         <span class="group-micro-id">${escHtml(mid)}</span>
         <span class="group-micro-name">${escHtml(name)}</span>
         <span class="cnt">${list.length}</span>
-      </div>${when}${mech}
+      </div>${when}${mech}${pseudo}${visual}
       <div class="anchor-list">${chips}</div>
     </div>`
   }).join('')
