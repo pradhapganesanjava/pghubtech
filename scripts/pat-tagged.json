@@ -1460,11 +1460,13 @@
     "pat_ds": [
       "pat_ds::tree::core::post-order-depth",
       "pat_ds::tree::dp::tree-dp",
-      "pat_ds::tree::dfs::dfs-tree-orders"
+      "pat_ds::tree::dfs::dfs-tree-orders",
+      "pat_ds::tree::longest-path::lp-tree"
     ],
     "pat_topic": [
       "pat_topic::dp::tree-dp",
-      "pat_topic::dfs::dfs-tree-orders"
+      "pat_topic::dfs::dfs-tree-orders",
+      "pat_topic::longest-path::lp-tree"
     ],
     "pat_group": [
       "pat_group::sum"
@@ -3429,11 +3431,14 @@
       "pat_ds::graph::topo-sort::dag-critical-path",
       "pat_ds::matrices::topo-sort::dag-critical-path",
       "pat_ds::matrices::dfs::dfs-memo",
-      "pat_ds::graph::dfs::dfs-memo"
+      "pat_ds::graph::dfs::dfs-memo",
+      "pat_ds::matrices::longest-path::lp-grid",
+      "pat_ds::graph::longest-path::lp-grid"
     ],
     "pat_topic": [
       "pat_topic::topo-sort::dag-critical-path",
-      "pat_topic::dfs::dfs-memo"
+      "pat_topic::dfs::dfs-memo",
+      "pat_topic::longest-path::lp-grid"
     ],
     "pat_group": []
   },
@@ -4893,11 +4898,13 @@
     "pat_ds": [
       "pat_ds::tree::core::post-order-depth",
       "pat_ds::tree::dp::tree-dp",
-      "pat_ds::tree::dfs::dfs-tree-orders"
+      "pat_ds::tree::dfs::dfs-tree-orders",
+      "pat_ds::tree::longest-path::lp-tree"
     ],
     "pat_topic": [
       "pat_topic::dp::tree-dp",
-      "pat_topic::dfs::dfs-tree-orders"
+      "pat_topic::dfs::dfs-tree-orders",
+      "pat_topic::longest-path::lp-tree"
     ],
     "pat_group": []
   },
@@ -5464,9 +5471,12 @@
     "difficulty": "Medium",
     "topics": "Tree; Depth-First Search; Binary Tree",
     "pat_ds": [
-      "pat_ds::tree::core::post-order-depth"
+      "pat_ds::tree::core::post-order-depth",
+      "pat_ds::tree::longest-path::lp-tree"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::longest-path::lp-tree"
+    ],
     "pat_group": []
   },
   {
@@ -7872,9 +7882,12 @@
     "difficulty": "Medium",
     "topics": "Tree; Depth-First Search; Breadth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
-      "pat_ds::tree::core::post-order-depth"
+      "pat_ds::tree::core::post-order-depth",
+      "pat_ds::tree::longest-path::lp-tree"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::longest-path::lp-tree"
+    ],
     "pat_group": []
   },
   {
@@ -8274,10 +8287,12 @@
     "difficulty": "Medium",
     "topics": "Dynamic Programming; Tree; Depth-First Search; Binary Tree",
     "pat_ds": [
-      "pat_ds::tree::dp::tree-dp"
+      "pat_ds::tree::dp::tree-dp",
+      "pat_ds::tree::longest-path::lp-tree"
     ],
     "pat_topic": [
-      "pat_topic::dp::tree-dp"
+      "pat_topic::dp::tree-dp",
+      "pat_topic::longest-path::lp-tree"
     ],
     "pat_group": []
   },
@@ -8683,9 +8698,12 @@
     "difficulty": "Medium",
     "topics": "Tree; Depth-First Search",
     "pat_ds": [
-      "pat_ds::tree::dp::tree-dp"
+      "pat_ds::tree::dp::tree-dp",
+      "pat_ds::tree::longest-path::lp-tree"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::longest-path::lp-tree"
+    ],
     "pat_group": []
   },
   {
@@ -9181,10 +9199,12 @@
     "pat_ds": [
       "pat_ds::graph::core::topo-sort",
       "pat_ds::graph::core::dag-longest-path",
-      "pat_ds::graph::topo-sort::dag-critical-path"
+      "pat_ds::graph::topo-sort::dag-critical-path",
+      "pat_ds::graph::longest-path::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path"
+      "pat_topic::topo-sort::dag-critical-path",
+      "pat_topic::longest-path::lp-dag"
     ],
     "pat_group": []
   },
@@ -9400,10 +9420,12 @@
     "pat_ds": [
       "pat_ds::graph::core::topo-sort",
       "pat_ds::graph::core::dag-longest-path",
-      "pat_ds::graph::topo-sort::dag-critical-path"
+      "pat_ds::graph::topo-sort::dag-critical-path",
+      "pat_ds::graph::longest-path::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path"
+      "pat_topic::topo-sort::dag-critical-path",
+      "pat_topic::longest-path::lp-dag"
     ],
     "pat_group": []
   },
@@ -9500,10 +9522,12 @@
     "topics": "Array; Dynamic Programming; Depth-First Search; Graph Theory; Topological Sort",
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
-      "pat_ds::graph::topo-sort::dag-critical-path"
+      "pat_ds::graph::topo-sort::dag-critical-path",
+      "pat_ds::graph::longest-path::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path"
+      "pat_topic::topo-sort::dag-critical-path",
+      "pat_topic::longest-path::lp-dag"
     ],
     "pat_group": [
       "pat_group::scheduling"
@@ -10149,10 +10173,12 @@
     "topics": "Graph; Topological Sort; BFS",
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
-      "pat_ds::graph::topo-sort::dag-critical-path"
+      "pat_ds::graph::topo-sort::dag-critical-path",
+      "pat_ds::graph::longest-path::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path"
+      "pat_topic::topo-sort::dag-critical-path",
+      "pat_topic::longest-path::lp-dag"
     ],
     "pat_group": []
   },
@@ -10281,10 +10307,12 @@
     "topics": "Graph; Topological Sort; Dynamic Programming; Design; Simulation",
     "pat_ds": [
       "pat_ds::graph::core::dag-longest-path",
-      "pat_ds::graph::topo-sort::dag-critical-path"
+      "pat_ds::graph::topo-sort::dag-critical-path",
+      "pat_ds::graph::longest-path::lp-dag"
     ],
     "pat_topic": [
-      "pat_topic::topo-sort::dag-critical-path"
+      "pat_topic::topo-sort::dag-critical-path",
+      "pat_topic::longest-path::lp-dag"
     ],
     "pat_group": []
   },
