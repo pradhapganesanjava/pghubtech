@@ -94,6 +94,9 @@ const CORRECTIONS = [
   { id: 1335, drop: ['pat_topic::dp::interval-dp', 'pat_ds::array::dp::interval-dp'],
     add:  ['pat_topic::dp::dp-linear-partition', 'pat_ds::array::dp::dp-linear-partition'],
     why: 'Min Difficulty of a Job Schedule — partition jobs into d CONTIGUOUS days minimizing sum of daily maxes = linear k-segment partition DP, not [i,j] interval DP.' },
+  { id: 1106, drop: ['pat_topic::stack-topic::decode-string', 'pat_ds::string::stack-topic::decode-string'],
+    add:  ['pat_topic::stack-topic::expression-eval', 'pat_ds::string::stack-topic::expression-eval'],
+    why: 'Parsing A Boolean Expression — operator-precedence + parens evaluation (Basic Calculator family), not nested-count decode-string.' },
 ]
 
 // ── env + auth ──────────────────────────────────────────────────────────

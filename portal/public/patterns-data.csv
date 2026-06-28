@@ -1171,9 +1171,9 @@ anchor_id,tag
 1101,pat_topic::union-find::uf-with-size
 1101,pat_ds::array::union-find::uf-with-size
 1102,pat_ds::matrices::bfs::bfs-state-augmented
-1106,pat_topic::stack-topic::decode-string
-1106,pat_ds::string::stack-topic::decode-string
 1106,pat_group::expression
+1106,pat_topic::stack-topic::expression-eval
+1106,pat_ds::string::stack-topic::expression-eval
 1109,pat_topic::prefix-sum::difference-array
 1109,pat_ds::array::prefix-sum::difference-array
 1110,pat_ds::tree::dfs::dfs-tree-mutate

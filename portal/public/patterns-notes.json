@@ -1052,13 +1052,13 @@
     "772":  "Basic Calc III. Recurse on '(' contents; otherwise like 227.",
     "150":  "Evaluate RPN. Stack of operands; on operator pop 2.",
     "394":  "Decode String. Stack of (count, prefix-string); on ']' pop and repeat.",
-    "1006": "Clumsy Factorial. Simulate * / + − precedence with stack."
+    "1006": "Clumsy Factorial. Simulate * / + − precedence with stack.",
+    "1106": "Parsing A Boolean Expression. Operator-precedence eval of &/|/! with parens (booleans as operands) — same two-stack / recursive-descent shape as Basic Calculator III."
   },
 
   "decode-string": {
     "394":  "Decode String. Stack of (count, accumulated-prefix); on ']' pop and append count copies.",
     "726":  "Number of Atoms. Stack of counter-maps; on ')' multiply popped map by count, merge into outer.",
-    "1106": "Parsing Boolean Expr. Stack-based parser; on ')' apply operator to popped operands.",
     "736":  "Lisp Expression Eval. Parser with environment stack for let-bindings."
   },
 
