@@ -1,0 +1,16 @@
+{
+  "slug": "custom-robot-collect-candies-grid",
+  "frontend_id": "10054",
+  "title": "Robot Collecting Candies on a Grid",
+  "difficulty": "Hard",
+  "topics": ["Breadth-First Search", "Matrix", "Bitmask", "Graph"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::matrices::grid",
+    "_prob::grid::collect-all-bfs",
+    "pat_ds::matrices::bfs::bfs-state-augmented",
+    "pat_ds::graph::core::bfs"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are given a 2D grid containing a robot start position and multiple cells with candies (plus walkable cells and walls). The robot moves one step at a time in the 4 directions and collects a candy when it steps on that cell. Complete the core logic so the robot collects <strong>all</strong> candies, and return the <strong>minimum number of moves</strong> to do so (or <code>-1</code> if impossible).</p>\n  <h3>Grid legend</h3>\n  <ul>\n    <li><code>R</code> — robot start &nbsp;·&nbsp; <code>C</code> — candy &nbsp;·&nbsp; <code>.</code> — empty &nbsp;·&nbsp; <code>#</code> — wall</li>\n  </ul>\n  <h3>Output</h3>\n  <p>One integer: fewest moves for the robot to collect every candy.</p>\n  <h3>Example</h3>\n  <pre>R . C\n. # .\nC . .\n----\n6</pre>\n  <p>Candies at (0,2) and (2,0); the wall is at (1,1). Collect one (2 moves), then the other (4 moves) &rarr; 6.</p>\n  <p><em>Equivalent to LeetCode 864 (keys &equiv; candies). See <strong>Notes</strong> for the state-augmented BFS, the trio, and references.</em></p>\n</div>"
+}

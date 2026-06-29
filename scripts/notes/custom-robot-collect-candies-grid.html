@@ -1,0 +1,37 @@
+<h2>Approach &mdash; state-augmented BFS (position + collected bitmask)</h2>
+<p>With several candies to gather, the order matters, so the search state is not just the cell but <b>(row, col, collected-mask)</b> &mdash; a bit per candy. BFS over that state graph gives the fewest moves (every step costs 1).</p>
+<pre>idx = {candy_cell: i for i, candy_cell in enumerate(candies)}   # bit index
+FULL = (1 &lt;&lt; len(candies)) - 1
+start = (r0, c0, 0)
+seen = {start}
+q = deque([(r0, c0, 0, 0)])            # row, col, mask, dist
+while q:
+    r, c, mask, d = q.popleft()
+    if (r, c) in idx:
+        mask |= (1 &lt;&lt; idx[(r, c)])
+    if mask == FULL:
+        return d
+    for nr, nc in neighbors(r, c):
+        if in_bounds and grid[nr][nc] != '#':
+            ns = (nr, nc, mask)
+            if ns not in seen:
+                seen.add(ns); q.append((nr, nc, mask, d + 1))
+return -1</pre>
+<p>State space <b>O(rows &middot; cols &middot; 2&#7580;)</b> for <code>c</code> candies &mdash; fine for small <code>c</code> (&le; ~12&ndash;16).</p>
+<h3>Alternative when candies are few but the grid is huge</h3>
+<p>BFS pairwise distances between {start} &cup; candies (c+1 BFS runs), then a <b>TSP bitmask-DP</b> over those c+1 nodes: <code>dp[mask][i]</code> = min cost to have collected <code>mask</code> ending at candy <code>i</code>. O(2&#7580; &middot; c&sup2;) &mdash; independent of grid size.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; level-synchronous BFS: expand all frontier states of a distance layer in parallel, dedup into the next layer. The shared <code>seen</code> set needs a concurrent set / sharded locks.</li>
+  <li><b>Streaming</b> &mdash; candies appear/disappear over time: keep the (cell,mask) BFS layers and, on a change, only re-expand states whose reachable target-mask changed &mdash; avoid a full restart.</li>
+  <li><b>O(1)-space</b> &mdash; the visited set is inherently O(rows&middot;cols&middot;2&#7580;). For few candies, the TSP-bitmask route above shrinks state to O(2&#7580;&middot;c) &mdash; the practical "small extra state" variant.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/shortest-path-to-get-all-keys/" target="_blank" rel="noopener">#864 &middot; Shortest Path to Get All Keys</a> &mdash; <b>Hard</b> &mdash; the exact equivalent (keys &equiv; candies; BFS + bitmask)</li>
+  <li><a href="https://leetcode.com/problems/shortest-path-visiting-all-nodes/" target="_blank" rel="noopener">#847 &middot; Shortest Path Visiting All Nodes</a> &mdash; <b>Hard</b> &mdash; the abstract-graph version (bitmask-DP / BFS)</li>
+  <li><a href="https://leetcode.com/problems/shortest-path-in-a-grid-with-obstacles-elimination/" target="_blank" rel="noopener">#1293 &middot; Shortest Path in a Grid with Obstacles Elimination</a> &mdash; <b>Hard</b> &mdash; same state-augmented BFS (state = remaining budget)</li>
+  <li><a href="https://leetcode.com/problems/unique-paths-iii/" target="_blank" rel="noopener">#980 &middot; Unique Paths III</a> &mdash; <b>Hard</b> &mdash; visit every cell (backtracking) variant</li>
+</ul>
