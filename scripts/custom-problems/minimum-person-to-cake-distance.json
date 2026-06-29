@@ -1,0 +1,17 @@
+{
+  "slug": "custom-minimum-person-to-cake-distance",
+  "frontend_id": "10059",
+  "title": "Minimum Person-to-Cake Distance",
+  "difficulty": "Medium",
+  "topics": ["Breadth-First Search", "Matrix", "Graph"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::matrices::grid",
+    "_prob::grid::nearest-pair-bfs",
+    "pat_topic::bfs::bfs-multi-source",
+    "pat_ds::matrices::bfs::bfs-multi-source",
+    "pat_ds::graph::core::bfs"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given a 2D grid of characters where <code>1</code> is a cake and <code>0</code> is a person, compute the <strong>minimum Manhattan distance</strong> between any person cell and any cake cell: <code>|r1 - r2| + |c1 - c2|</code>.</p>\n  <p>If the grid has no person or no cake, output <code>-1</code>.</p>\n  <h3>Input</h3>\n  <pre>First line: m n\nNext m lines: n characters each ('0' or '1')</pre>\n  <h3>Output</h3>\n  <p>One integer: the minimum person-to-cake distance.</p>\n  <h3>Constraints</h3>\n  <ul><li>1 ≤ m, n ≤ 2000; each cell is '0' or '1'.</li></ul>\n  <h3>Example</h3>\n  <pre>2 3\n010\n000\n----\n1</pre>\n  <p>The cake at (0,1) and the nearest person at (0,0) or (1,1) are distance 1 apart.</p>\n  <p><em>Multi-source BFS: seed all cakes, flood, stop at the first person. See <strong>Notes</strong>.</em></p>\n</div>"
+}

@@ -10603,5 +10603,19 @@
       "pat_topic::dfs::dfs-template"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10059",
+    "title": "Minimum Person-to-Cake Distance",
+    "difficulty": "Medium",
+    "topics": "Breadth-First Search; Matrix; Graph",
+    "pat_ds": [
+      "pat_ds::matrices::bfs::bfs-multi-source",
+      "pat_ds::graph::core::bfs"
+    ],
+    "pat_topic": [
+      "pat_topic::bfs::bfs-multi-source"
+    ],
+    "pat_group": []
   }
 ]

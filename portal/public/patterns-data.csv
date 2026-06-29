@@ -1734,3 +1734,6 @@ anchor_id,tag
 10058,pat_topic::concurrency::thread-pool-fanout
 10058,pat_topic::dfs::dfs-template
 10058,pat_ds::graph::dfs::dfs-template
+10059,pat_topic::bfs::bfs-multi-source
+10059,pat_ds::matrices::bfs::bfs-multi-source
+10059,pat_ds::graph::core::bfs
