@@ -10504,5 +10504,18 @@
       "pat_topic::dp::tree-reroot"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10053",
+    "title": "Select courses to maximize total credits (at most K)",
+    "difficulty": "Hard",
+    "topics": "Dynamic Programming; Binary Search; Sorting; Array",
+    "pat_ds": [
+      "pat_ds::array::dp::weighted-interval-schedule"
+    ],
+    "pat_topic": [
+      "pat_topic::dp::weighted-interval-schedule"
+    ],
+    "pat_group": []
   }
 ]
