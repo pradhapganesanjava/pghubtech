@@ -1,0 +1,35 @@
+<h2>Approach &mdash; Multi-Source BFS</h2>
+<p>Flood out from <b>every Bathroom at once</b>. Seed a queue with all <code>'B'</code> cells at distance 0, then BFS 4-directionally; the first time a cell is reached is its shortest distance to <i>some</i> bathroom. Finally read the distances off the Desk cells.</p>
+<pre>read grid (m x n)
+dist = [[-1]*n for _ in range(m)]      # default -1 (also the unreachable answer)
+q = deque()
+for each cell (i,j):
+    if grid[i][j] == 'B':
+        dist[i][j] = 0; q.append((i,j))
+while q:
+    i, j = q.popleft()
+    for (ni, nj) in 4-neighbours(i, j):
+        if in-bounds and dist[ni][nj] == -1 and grid[ni][nj] != 'B':
+            dist[ni][nj] = dist[i][j] + 1
+            q.append((ni, nj))
+# emit: dist[i][j] if grid[i][j]=='D' else -1   (unreached D stays -1)</pre>
+<p>One BFS over the whole grid (not one BFS per desk) &mdash; <b>O(m&middot;n)</b> time and space. Walls don't exist here (every non-B/D cell is walkable), so BFS step-distance equals the Manhattan distance.</p>
+
+<h2>What's different from the textbook versions</h2>
+<ul>
+  <li><b>Output only at <code>'D'</code> cells.</b> Standard 01-Matrix / Walls-and-Gates fill EVERY cell; here non-Desk cells are forced to <code>-1</code> &mdash; a post-filter, the BFS itself is unchanged.</li>
+  <li><b><code>-1</code> serves double duty</b> &mdash; it's both the &quot;not a Desk&quot; sentinel and the &quot;Desk can't reach any Bathroom&quot; answer (a Desk simply never dequeued).</li>
+  <li><b>Zero Bathrooms is legal</b> &mdash; the queue starts empty, BFS does nothing, every Desk stays <code>-1</code>.</li>
+  <li><b>&quot;Nearest&quot;, not &quot;all&quot;.</b> This is min-distance to the closest bathroom (one multi-source BFS). Summing distance to EVERY bathroom (#317) instead needs a separate BFS per source.</li>
+  <li><b>&quot;Manhattan&quot; is a red herring</b> &mdash; with no obstacles, 4-dir BFS step count already equals Manhattan distance; you do not compute |dx|+|dy| directly (that would ignore reachability / the &quot;can't reach&quot; case).</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/walls-and-gates/" target="_blank" rel="noopener">#286 &middot; Walls and Gates</a> &mdash; <b>Medium</b> &mdash; nearest gate to each room (direct analog: gates = Bathrooms, rooms = Desks)</li>
+  <li><a href="https://leetcode.com/problems/01-matrix/" target="_blank" rel="noopener">#542 &middot; 01 Matrix</a> &mdash; <b>Medium</b> &mdash; distance from each cell to the nearest 0 (same engine)</li>
+  <li><a href="https://leetcode.com/problems/rotting-oranges/" target="_blank" rel="noopener">#994 &middot; Rotting Oranges</a> &mdash; <b>Medium</b> &mdash; multi-source BFS time-to-fill</li>
+  <li><a href="https://leetcode.com/problems/as-far-from-land-as-possible/" target="_blank" rel="noopener">#1162 &middot; As Far from Land as Possible</a> &mdash; <b>Medium</b> &mdash; max of nearest-land distances</li>
+  <li><a href="https://leetcode.com/problems/map-of-highest-peak/" target="_blank" rel="noopener">#1765 &middot; Map of Highest Peak</a> &mdash; <b>Medium</b> &mdash; heights = distance from nearest water</li>
+  <li><a href="https://leetcode.com/problems/shortest-distance-from-all-buildings/" target="_blank" rel="noopener">#317 &middot; Shortest Distance from All Buildings</a> &mdash; <b>Hard</b> &mdash; the &quot;sum to ALL sources&quot; variant (BFS per source)</li>
+</ul>

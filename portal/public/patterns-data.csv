@@ -1687,3 +1687,8 @@ anchor_id,tag
 10047,pat_group::expression
 10048,pat_group::design
 10048,pat_group::design::transaction-stack
+10049,pat_topic::bfs::bfs-multi-source
+10049,pat_ds::matrices::bfs::bfs-multi-source
+10049,pat_ds::graph::core::bfs
+10049,pat_group::shortest-path
+10049,pat_group::shortest-path::bfs

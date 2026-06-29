@@ -10431,5 +10431,22 @@
       "pat_group::design",
       "pat_group::design::transaction-stack"
     ]
+  },
+  {
+    "id": "10049",
+    "title": "Nearest Bathroom from each Desk",
+    "difficulty": "Medium",
+    "topics": "Breadth-First Search; Matrix; Graph",
+    "pat_ds": [
+      "pat_ds::matrices::bfs::bfs-multi-source",
+      "pat_ds::graph::core::bfs"
+    ],
+    "pat_topic": [
+      "pat_topic::bfs::bfs-multi-source"
+    ],
+    "pat_group": [
+      "pat_group::shortest-path",
+      "pat_group::shortest-path::bfs"
+    ]
   }
 ]
