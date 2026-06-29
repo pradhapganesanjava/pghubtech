@@ -1,0 +1,18 @@
+{
+  "slug": "custom-transactional-kv-store",
+  "frontend_id": "10048",
+  "title": "Transactional Key-Value Store",
+  "difficulty": "Medium",
+  "topics": ["Design", "Hash Table", "Stack", "Concurrency"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_prob::design::transactional-kv",
+    "_prob::design::transaction-stack",
+    "_ds::hash-table::layered-map",
+    "_prob::concurrency::lock-or-cow",
+    "pat_group::design",
+    "pat_group::design::transaction-stack"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Design an in-memory <strong>key-value store</strong> with <code>get(key)</code> and <code>set(key, value)</code>, then extend it with <strong>transactions</strong> and make it <strong>thread-safe</strong>.</p>\n  <h3>Operations</h3>\n  <ul>\n    <li><code>set(key, value)</code> / <code>get(key)</code> — basic store.</li>\n    <li><code>begin()</code> — open a transaction.</li>\n    <li><code>commit()</code> — apply the current transaction's changes.</li>\n    <li><code>rollback()</code> — discard the current transaction's changes.</li>\n  </ul>\n  <p><code>begin</code> and <code>rollback</code> must be <strong>O(1)</strong>. Transactions may nest. Then extend the design to work efficiently in a <strong>multi-threaded</strong> environment.</p>\n  <h3>Example</h3>\n  <pre>set a 1\nget a      -&gt; 1\nbegin\nset a 2\nget a      -&gt; 2\nrollback\nget a      -&gt; 1</pre>\n  <p><em>See <strong>Notes</strong> for the approach (override-layer stack + concurrency) and related problems (Refer).</em></p>\n</div>"
+}

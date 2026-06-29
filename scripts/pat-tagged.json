@@ -10419,5 +10419,17 @@
     "pat_group": [
       "pat_group::expression"
     ]
+  },
+  {
+    "id": "10048",
+    "title": "Transactional Key-Value Store",
+    "difficulty": "Medium",
+    "topics": "Design; Hash Table; Stack; Concurrency",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::transaction-stack"
+    ]
   }
 ]

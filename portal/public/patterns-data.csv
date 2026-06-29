@@ -1685,3 +1685,5 @@ anchor_id,tag
 10047,pat_topic::stack-topic::expression-eval
 10047,pat_ds::string::stack-topic::expression-eval
 10047,pat_group::expression
+10048,pat_group::design
+10048,pat_group::design::transaction-stack
