@@ -1737,3 +1737,4 @@ anchor_id,tag
 10059,pat_topic::bfs::bfs-multi-source
 10059,pat_ds::matrices::bfs::bfs-multi-source
 10059,pat_ds::graph::core::bfs
+10060,pat_ds::array::two-pointers::tp-merge-walk

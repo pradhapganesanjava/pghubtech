@@ -1,0 +1,15 @@
+{
+  "slug": "custom-nearest-cake-on-a-line",
+  "frontend_id": "10060",
+  "title": "Nearest Cake on a Line",
+  "difficulty": "Easy",
+  "topics": ["Two Pointers", "Array"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::array::line",
+    "_prob::array::nearest-1d",
+    "pat_ds::array::two-pointers::tp-merge-walk"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given a binary array <code>A</code> on a line where <code>A[i] = 0</code> is a person at index <code>i</code> and <code>A[i] = 1</code> is a cake, each person eats the <strong>nearest cake</strong> (distance = absolute index difference). It is guaranteed no person is tied between two cakes and no cake between two people, so the assignment is unique.</p>\n  <p>Given <code>A</code> and a person index <code>p</code> (<code>A[p] = 0</code>), output the <strong>index of the cake</strong> that person <code>p</code> eats, or <code>-1</code> if there is no cake.</p>\n  <h3>Input</h3>\n  <pre>n, then a 0/1 string of length n, then p</pre>\n  <h3>Output</h3>\n  <p>One integer: the eaten cake's index, or -1.</p>\n  <h3>Constraints</h3>\n  <ul><li>1 ≤ n ≤ 2·10^5.</li></ul>\n  <h3>Example</h3>\n  <pre>5\n10010\n1\n----\n0</pre>\n  <p>Person at index 1: nearest cake is index 0 (distance 1) vs index 3 (distance 2) &rarr; eats 0.</p>\n  <p><em>1D nearest-target (cf. LC 821); the line companion of #10059. See <strong>Notes</strong>.</em></p>\n</div>"
+}

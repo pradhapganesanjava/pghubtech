@@ -10617,5 +10617,16 @@
       "pat_topic::bfs::bfs-multi-source"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10060",
+    "title": "Nearest Cake on a Line",
+    "difficulty": "Easy",
+    "topics": "Two Pointers; Array",
+    "pat_ds": [
+      "pat_ds::array::two-pointers::tp-merge-walk"
+    ],
+    "pat_topic": [],
+    "pat_group": []
   }
 ]
