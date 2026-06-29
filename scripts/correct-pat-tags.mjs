@@ -100,6 +100,9 @@ const CORRECTIONS = [
   { id: 890, drop: ['pat_topic::hash::freq-counter', 'pat_ds::string::hash::freq-counter'],
     add:  ['pat_ds::string::hash::bijection-map'],
     why: 'Find and Replace Pattern — word matches pattern iff a consistent two-way char<->char map exists (bijection, like 205/290), not frequency counting. Catalog already anchors it under bijection-map.' },
+  { id: 1751, drop: ['pat_topic::dp::knapsack-01', 'pat_ds::array::dp::knapsack-01'],
+    add:  ['pat_topic::dp::weighted-interval-schedule', 'pat_ds::array::dp::weighted-interval-schedule'],
+    why: 'Max Events Attended II — pick <=K non-overlapping weighted intervals to max value; weighted interval scheduling (sort+binary-search predecessor), not classic 0/1 knapsack.' },
 ]
 
 // ── env + auth ──────────────────────────────────────────────────────────

@@ -1295,6 +1295,8 @@ anchor_id,tag
 1231,pat_group::partition::subarray-binary-search
 1235,pat_ds::array::greedy::greedy-end-sorted
 1235,pat_group::scheduling
+1235,pat_topic::dp::weighted-interval-schedule
+1235,pat_ds::array::dp::weighted-interval-schedule
 1236,pat_ds::graph::dfs::dfs-template
 1239,pat_topic::bits::bitmask-enumerate
 1239,pat_ds::string::bits::bitmask-enumerate
@@ -1480,7 +1482,8 @@ anchor_id,tag
 1730,pat_group::shortest-path
 1730,pat_group::shortest-path::bfs
 1732,pat_ds::array::prefix-sum::ps-1d
-1751,pat_ds::array::dp::knapsack-01
+1751,pat_topic::dp::weighted-interval-schedule
+1751,pat_ds::array::dp::weighted-interval-schedule
 1756,pat_ds::linked-list::core::dll-cache-design
 1765,pat_topic::bfs::bfs-multi-source
 1765,pat_ds::matrices::bfs::bfs-multi-source
@@ -1532,6 +1535,8 @@ anchor_id,tag
 2002,pat_group::subsequence
 2007,pat_ds::array::hash::freq-counter
 2008,pat_ds::array::dp::dp-1d-linear
+2008,pat_topic::dp::weighted-interval-schedule
+2008,pat_ds::array::dp::weighted-interval-schedule
 2013,pat_ds::linked-list::core::dll-cache-design
 2017,pat_ds::matrices::prefix-sum::ps-1d
 2018,pat_ds::matrices::core::mat-grid-dfs-bfs
