@@ -1725,3 +1725,9 @@ anchor_id,tag
 10055,pat_ds::string::core::string-match-kmp
 10056,pat_topic::dp::knapsack-unbounded
 10056,pat_ds::array::dp::knapsack-unbounded
+10057,pat_group::design
+10057,pat_group::design::dependency-graph-system
+10057,pat_topic::topo-sort::kahn-bfs
+10057,pat_ds::graph::topo-sort::kahn-bfs
+10057,pat_topic::dfs::dfs-template
+10057,pat_ds::graph::dfs::dfs-template

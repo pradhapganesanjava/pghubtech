@@ -1,0 +1,51 @@
+<h2>Design &mdash; a dependency DAG behind a small API</h2>
+<p>State: an adjacency map (<code>dep &rarr; tasks that depend on it</code>) plus an indegree count per task. Three classic graph routines compose the whole system.</p>
+<pre>class Workflow:
+    def __init__(self):
+        self.adj = {}          # node -> set of successors (dependents)
+        self.indeg = {}        # node -> in-degree
+
+    def add_task(self, t):
+        self.adj.setdefault(t, set()); self.indeg.setdefault(t, 0)
+
+    def add_dependency(self, t, dep):       # t depends on dep  => edge dep -> t
+        if t not in self.adj[dep]:
+            self.adj[dep].add(t); self.indeg[t] += 1
+
+    def order(self):                         # Kahn topological sort
+        indeg = dict(self.indeg)
+        q = deque(t for t in self.adj if indeg[t] == 0)
+        out = []
+        while q:
+            u = q.popleft(); out.append(u)
+            for v in self.adj[u]:
+                indeg[v] -= 1
+                if indeg[v] == 0: q.append(v)
+        return out if len(out) == len(self.adj) else None   # None => CYCLE
+
+    def clone(self):                         # deep copy (Clone Graph #133 style)
+        w = Workflow()
+        for t in self.adj: w.add_task(t)
+        for u in self.adj:
+            for v in self.adj[u]:
+                w.adj[u].add(v); w.indeg[v] += 1
+        return w                              # no references shared with self</pre>
+<ul>
+  <li><b>order()</b> &mdash; Kahn's BFS; if fewer than N tasks are emitted, a <b>cycle</b> exists (no valid order).</li>
+  <li><b>clone()</b> &mdash; recreate every node, then re-link edges via an old&rarr;new mapping, so the copy shares no objects with the original (key point of #133 / #138).</li>
+</ul>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; run <code>order()</code> wave-by-wave (each Kahn layer is an independent batch executable in parallel); guard the shared indegree counters with atomics. Clone's per-node copies are independent.</li>
+  <li><b>Streaming</b> &mdash; tasks/deps arrive online: keep indegrees current on each <code>add_dependency</code>; maintain a live set of indegree-0 tasks so <code>order()</code> / "next runnable" is incremental, not a full rebuild.</li>
+  <li><b>O(1)-space</b> &mdash; cycle detection alone needs only the indegree counters + queue (O(V)); DFS 3-color is the recursive alternative. The graph itself is inherently O(V+E).</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/course-schedule-ii/" target="_blank" rel="noopener">#210 &middot; Course Schedule II</a> &mdash; <b>Medium</b> &mdash; the execution order (Kahn topological sort)</li>
+  <li><a href="https://leetcode.com/problems/course-schedule/" target="_blank" rel="noopener">#207 &middot; Course Schedule</a> &mdash; <b>Medium</b> &mdash; cycle detection (can all tasks finish?)</li>
+  <li><a href="https://leetcode.com/problems/clone-graph/" target="_blank" rel="noopener">#133 &middot; Clone Graph</a> &mdash; <b>Medium</b> &mdash; the deep-copy routine (DFS + old&rarr;new map)</li>
+  <li><a href="https://leetcode.com/problems/alien-dictionary/" target="_blank" rel="noopener">#269 &middot; Alien Dictionary</a> &mdash; <b>Hard</b> &mdash; build a dependency graph then topo-sort it</li>
+</ul>
