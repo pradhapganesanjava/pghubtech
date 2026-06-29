@@ -36,11 +36,28 @@
   <li><b>Commit</b> &mdash; take the write lock and apply the layer atomically. For higher concurrency use <b>optimistic concurrency</b>: record the base versions a transaction read, and on commit re-check them under the lock; abort + retry on conflict.</li>
 </ul>
 
-<h2>Refer</h2>
+<h2>Refer &mdash; related LeetCode problems</h2>
+<p><b>Versioning / snapshots</b> (the commit/rollback idea):</p>
 <ul>
-  <li><a href="https://leetcode.com/problems/time-based-key-value-store/" target="_blank" rel="noopener">#981 &middot; Time Based Key-Value Store</a> &mdash; <b>Medium</b> &mdash; versioned KV (closest to the commit/version idea)</li>
-  <li><a href="https://leetcode.com/problems/snapshot-array/" target="_blank" rel="noopener">#1146 &middot; Snapshot Array</a> &mdash; <b>Medium</b> &mdash; snapshot/versioning; rollback &asymp; discard the latest version</li>
+  <li><a href="https://leetcode.com/problems/time-based-key-value-store/" target="_blank" rel="noopener">#981 &middot; Time Based Key-Value Store</a> &mdash; <b>Medium</b> &mdash; versioned KV; get value at/before a timestamp</li>
+  <li><a href="https://leetcode.com/problems/snapshot-array/" target="_blank" rel="noopener">#1146 &middot; Snapshot Array</a> &mdash; <b>Medium</b> &mdash; snapshot()/get(i, snapId); rollback &asymp; discard the latest version</li>
+</ul>
+<p><b>Base KV / O(1) data-structure design:</b></p>
+<ul>
   <li><a href="https://leetcode.com/problems/design-hashmap/" target="_blank" rel="noopener">#706 &middot; Design HashMap</a> &mdash; <b>Easy</b> &mdash; the base get/set store</li>
-  <li><a href="https://leetcode.com/problems/lfu-cache/" target="_blank" rel="noopener">#460 &middot; LFU Cache</a> &mdash; <b>Hard</b> &mdash; KV store design with an eviction policy (O(1) ops)</li>
-  <li><a href="https://leetcode.com/problems/lru-cache/" target="_blank" rel="noopener">#146 &middot; LRU Cache</a> &mdash; <b>Medium</b> &mdash; O(1) KV design (hash + linked list)</li>
+  <li><a href="https://leetcode.com/problems/lru-cache/" target="_blank" rel="noopener">#146 &middot; LRU Cache</a> &mdash; <b>Medium</b> &mdash; O(1) KV via hash + doubly-linked list</li>
+  <li><a href="https://leetcode.com/problems/lfu-cache/" target="_blank" rel="noopener">#460 &middot; LFU Cache</a> &mdash; <b>Hard</b> &mdash; O(1) KV with frequency eviction</li>
+  <li><a href="https://leetcode.com/problems/all-oone-data-structure/" target="_blank" rel="noopener">#432 &middot; All O`one Data Structure</a> &mdash; <b>Hard</b> &mdash; O(1) inc/dec + min/max key</li>
+</ul>
+<p><b>Scoped / nested state</b> (same override-layer / scope-stack shape):</p>
+<ul>
+  <li><a href="https://leetcode.com/problems/design-in-memory-file-system/" target="_blank" rel="noopener">#588 &middot; Design In-Memory File System</a> &mdash; <b>Hard</b> &mdash; nested mutable state</li>
+  <li><a href="https://leetcode.com/problems/design-file-system/" target="_blank" rel="noopener">#1166 &middot; Design File System</a> &mdash; <b>Medium</b> &mdash; path&rarr;value store</li>
+  <li><a href="https://leetcode.com/problems/parse-lisp-expression/" target="_blank" rel="noopener">#736 &middot; Parse Lisp Expression</a> &mdash; <b>Hard</b> &mdash; environment/scope stack (push scope, resolve outward, pop) &mdash; structural twin of the transaction stack</li>
+</ul>
+<p><b>Concurrency</b> (the multi-threaded extension):</p>
+<ul>
+  <li><a href="https://leetcode.com/problems/design-bounded-blocking-queue/" target="_blank" rel="noopener">#1188 &middot; Design Bounded Blocking Queue</a> &mdash; <b>Medium</b> &mdash; lock/condition-based thread-safe structure</li>
+  <li><a href="https://leetcode.com/problems/print-in-order/" target="_blank" rel="noopener">#1114 &middot; Print in Order</a> &mdash; <b>Easy</b> &mdash; ordering threads with locks/semaphores</li>
+  <li><a href="https://leetcode.com/problems/the-dining-philosophers/" target="_blank" rel="noopener">#1226 &middot; The Dining Philosophers</a> &mdash; <b>Medium</b> &mdash; lock-ordering to avoid deadlock</li>
 </ul>
