@@ -738,5 +738,9 @@
   "10048": [
     "pat_group::design",
     "pat_group::design::transaction-stack"
+  ],
+  "10049": [
+    "pat_group::shortest-path",
+    "pat_group::shortest-path::bfs"
   ]
 }

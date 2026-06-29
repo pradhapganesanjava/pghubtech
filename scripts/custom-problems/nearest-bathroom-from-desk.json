@@ -1,0 +1,19 @@
+{
+  "slug": "custom-nearest-bathroom-from-desk",
+  "frontend_id": "10049",
+  "title": "Nearest Bathroom from each Desk",
+  "difficulty": "Medium",
+  "topics": ["Breadth-First Search", "Matrix", "Graph"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_prob::bfs::multi-source",
+    "_ds::matrices::grid",
+    "pat_topic::bfs::bfs-multi-source",
+    "pat_ds::matrices::bfs::bfs-multi-source",
+    "pat_ds::graph::core::bfs",
+    "pat_group::shortest-path",
+    "pat_group::shortest-path::bfs"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given a 2D grid of characters where <code>'B'</code> = Bathroom, <code>'D'</code> = Desk, and any other char (<code>'.'</code>) = walkable empty space, compute the shortest 4-directional distance from each Desk to its nearest Bathroom.</p>\n  <p>Return a 2D integer array <code>dist</code> of the same shape:</p>\n  <ul>\n    <li><code>dist[i][j]</code> = shortest distance to any Bathroom when <code>grid[i][j] == 'D'</code>;</li>\n    <li><code>-1</code> everywhere else;</li>\n    <li><code>-1</code> for a Desk that cannot reach any Bathroom.</li>\n  </ul>\n  <h3>Example</h3>\n  <pre>3 4\n..B.\n.D..\n...D\n----\n-1 -1 -1 -1\n-1  2 -1 -1\n-1 -1 -1  3</pre>\n  <p>Constraints: 1 &le; m, n &le; 1000; at least one <code>'D'</code>; number of <code>'B'</code> may be 0.</p>\n  <p><em>See <strong>Notes</strong> for the approach, how it differs from the textbook versions, and related problems (Refer).</em></p>\n</div>"
+}
