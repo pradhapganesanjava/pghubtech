@@ -10571,5 +10571,23 @@
       "pat_topic::dp::knapsack-unbounded"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10057",
+    "title": "Design a Workflow System",
+    "difficulty": "Medium",
+    "topics": "Graph; Topological Sort; Design; Depth-First Search",
+    "pat_ds": [
+      "pat_ds::graph::topo-sort::kahn-bfs",
+      "pat_ds::graph::dfs::dfs-template"
+    ],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs",
+      "pat_topic::dfs::dfs-template"
+    ],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::dependency-graph-system"
+    ]
   }
 ]

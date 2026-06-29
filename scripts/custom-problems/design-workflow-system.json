@@ -1,0 +1,20 @@
+{
+  "slug": "custom-design-workflow-system",
+  "frontend_id": "10057",
+  "title": "Design a Workflow System",
+  "difficulty": "Medium",
+  "topics": ["Graph", "Topological Sort", "Design", "Depth-First Search"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::graph::dag",
+    "_prob::design::workflow-system",
+    "pat_group::design",
+    "pat_group::design::dependency-graph-system",
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs",
+    "pat_topic::dfs::dfs-template",
+    "pat_ds::graph::dfs::dfs-template"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Design a workflow system over tasks and dependencies. Support:</p>\n  <ul>\n    <li><strong>Add a task.</strong></li>\n    <li><strong>Add a dependency</strong> between tasks (task1 depends on task2).</li>\n    <li><strong>Output the execution order</strong> of tasks (a valid topological order).</li>\n    <li><strong>Deep copy</strong> the workflow.</li>\n    <li>Handle <strong>cyclic dependencies</strong> (report when no valid order exists).</li>\n  </ul>\n  <h3>Input</h3>\n  <p>First line: integer <code>T</code> (number of operations). Each subsequent line:</p>\n  <ul>\n    <li><code>1 task_name</code> — add a task (names are unique)</li>\n    <li><code>2 task1 task2</code> — add dependency (task1 depends on task2)</li>\n    <li><code>3</code> — output execution order</li>\n    <li><code>4</code> — deep copy the workflow</li>\n  </ul>\n  <h3>Output</h3>\n  <p>For each <code>3</code>, the execution order (or a cycle indicator); for each <code>4</code>, a deep-copy marker/identifier.</p>\n  <h3>Example</h3>\n  <pre>6\n1 A\n1 B\n2 B A      # B depends on A\n3          -> A B\n4          -> copy#1\n3          -> A B</pre>\n  <p><em>Composite design: topological order (Kahn) + cycle detection + graph deep copy (#133-style). See <strong>Notes</strong>.</em></p>\n</div>"
+}

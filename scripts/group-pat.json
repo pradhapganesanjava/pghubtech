@@ -742,5 +742,9 @@
   "10049": [
     "pat_group::shortest-path",
     "pat_group::shortest-path::bfs"
+  ],
+  "10057": [
+    "pat_group::design",
+    "pat_group::design::dependency-graph-system"
   ]
 }
