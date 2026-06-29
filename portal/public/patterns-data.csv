@@ -1723,3 +1723,5 @@ anchor_id,tag
 10054,pat_ds::graph::core::bfs
 10055,pat_ds::string::core::rolling-hash
 10055,pat_ds::string::core::string-match-kmp
+10056,pat_topic::dp::knapsack-unbounded
+10056,pat_ds::array::dp::knapsack-unbounded

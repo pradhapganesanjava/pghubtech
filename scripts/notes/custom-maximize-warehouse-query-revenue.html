@@ -1,0 +1,31 @@
+<h2>Approach &mdash; unbounded knapsack (max value within a budget)</h2>
+<p>Time is the capacity (k minutes), each query type is a reusable item with weight <code>time[i]</code> and value <code>revenue[i]</code>. Maximize value with repetition allowed.</p>
+<pre>dp = [0] * (k + 1)            # dp[t] = max revenue in <= t minutes
+choice = [-1] * (k + 1)       # which type we took to reach dp[t] (for reconstruction)
+for t in range(1, k + 1):
+    for i in range(n):
+        if time[i] <= t and dp[t - time[i]] + revenue[i] > dp[t]:
+            dp[t] = dp[t - time[i]] + revenue[i]
+            choice[t] = i
+# reconstruct the selected query types
+t, picks = k, []
+while t > 0 and choice[t] != -1:
+    picks.append(choice[t]); t -= time[choice[t]]
+return dp[k], picks            # max revenue + which types</pre>
+<p><b>O(n&middot;k)</b> time, O(k) space. The <code>choice[]</code> array recovers <i>which</i> query type(s) were run. This is the <b>max-value</b> twin of Coin Change (#322) &mdash; same loop order (capacity outer, items inner) lets each type repeat.</p>
+<p><em>Variants:</em> if each type may run <b>at most once</b>, it's 0/1 knapsack (iterate capacity <b>descending</b> &mdash; #416/#494). If you must pick exactly ONE type and run it the whole k minutes, it degenerates to <code>max over i of floor(k/time[i]) &middot; revenue[i]</code> &mdash; no DP.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; for a fixed <code>t</code>, the max over the n query types is a parallel reduction; or shard the capacity range across threads with care at boundaries. The dp is sequential in <code>t</code>, so pipeline by capacity blocks.</li>
+  <li><b>Streaming</b> &mdash; query types are added over time: dp is monotone in the item set, so on a new type <code>i</code> just relax <code>dp[t] = max(dp[t], dp[t-time[i]] + rev[i])</code> for <code>t</code> ascending &mdash; an incremental O(k) update, no full rebuild.</li>
+  <li><b>O(1)-space</b> &mdash; the dp is already a single O(k) array (rolling); revenue-only (no reconstruction) needs just that array. The choice[] adds O(k) only if you must report the types.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/coin-change/" target="_blank" rel="noopener">#322 &middot; Coin Change</a> &mdash; <b>Medium</b> &mdash; unbounded knapsack (min coins) &mdash; same DP, min instead of max</li>
+  <li><a href="https://leetcode.com/problems/coin-change-ii/" target="_blank" rel="noopener">#518 &middot; Coin Change II</a> &mdash; <b>Medium</b> &mdash; count combinations (unbounded)</li>
+  <li><a href="https://leetcode.com/problems/combination-sum-iv/" target="_blank" rel="noopener">#377 &middot; Combination Sum IV</a> &mdash; <b>Medium</b> &mdash; ordered counts (unbounded)</li>
+  <li><a href="https://leetcode.com/problems/partition-equal-subset-sum/" target="_blank" rel="noopener">#416 &middot; Partition Equal Subset Sum</a> &mdash; <b>Medium</b> &mdash; the 0/1 knapsack contrast (each item once)</li>
+</ul>

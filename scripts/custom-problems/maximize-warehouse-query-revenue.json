@@ -1,0 +1,16 @@
+{
+  "slug": "custom-maximize-warehouse-query-revenue",
+  "frontend_id": "10056",
+  "title": "Maximize Warehouse Query Revenue in k Minutes",
+  "difficulty": "Medium",
+  "topics": ["Dynamic Programming", "Array"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::array::dp",
+    "_prob::dp::knapsack-max-value",
+    "pat_topic::dp::knapsack-unbounded",
+    "pat_ds::array::dp::knapsack-unbounded"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You run a virtual warehouse with <code>n</code> types of queries. Query type <code>i</code> takes <code>time[i]</code> minutes to run and earns <code>revenue[i]</code>. You have a budget of <code>k</code> minutes and may run query types <strong>repeatedly</strong> (a type can be chosen any number of times). Choose queries to <strong>maximize total revenue</strong> within <code>k</code> minutes.</p>\n  <h3>Output</h3>\n  <p>The maximum achievable revenue, and the query type(s) selected to achieve it.</p>\n  <h3>Example</h3>\n  <pre>time    = [2, 3, 4]     # minutes per query type\nrevenue = [3, 5, 6]     # earnings per query type\nk = 6\n----\nmax revenue = 10   (run query type 1 twice: 3+3 = 6 min, 5+5 = $10)</pre>\n  <p>Better than 3&times;type0 (=$9) or type0+type2 (=$9).</p>\n  <h3>Constraints</h3>\n  <ul><li>1 ≤ n; 1 ≤ k. Times and revenues are positive.</li></ul>\n  <p><em>This is an <strong>unbounded knapsack</strong> (max value within a budget, items reusable). See <strong>Notes</strong> for the DP, choice reconstruction, the trio, and references.</em></p>\n</div>"
+}
