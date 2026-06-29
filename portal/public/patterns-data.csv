@@ -1711,3 +1711,5 @@ anchor_id,tag
 10052,pat_ds::tree::core::post-order-depth
 10052,pat_topic::dp::tree-reroot
 10052,pat_ds::tree::dp::tree-reroot
+10053,pat_topic::dp::weighted-interval-schedule
+10053,pat_ds::array::dp::weighted-interval-schedule

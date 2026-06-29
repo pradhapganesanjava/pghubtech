@@ -1,0 +1,29 @@
+<h2>Approach &mdash; weighted interval scheduling with a K cap</h2>
+<p>Weights mean greedy-by-count fails (a single high-credit course can beat two cheap non-overlapping ones), so DP. Sort courses by end time; for each course binary-search its latest non-overlapping predecessor.</p>
+<pre>order = sorted(range(n), key=lambda i: end[i])
+ends  = [end[i] for i in order]
+# dp[i][k] = max credits using order[:i], choosing at most k courses
+dp = [[0] * (K + 1) for _ in range(n + 1)]
+for i in range(1, n + 1):
+    s, e, cr = start[order[i-1]], end[order[i-1]], credit[order[i-1]]
+    p = bisect_right(ends, s, 0, i - 1) - 1   # last course ending <= start; -1 -> 0 base
+    p = p + 1                                  # map to dp row (1-indexed, 0 = none)
+    for k in range(1, K + 1):
+        dp[i][k] = max(dp[i-1][k], cr + dp[p][k-1])
+return dp[n][K]</pre>
+<p><b>O(n log n + n·K)</b> time, O(n·K) space (rollable). Use <code>start[i] &lt; end[j]</code> overlap rules consistently (inclusive vs exclusive endpoints) per the problem statement.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; the per-course binary searches for predecessors are independent (precompute <code>p(i)</code> in parallel). The DP itself is sequential in <code>i</code>, but each row's K columns are independent and can be vectorized/threaded.</li>
+  <li><b>Streaming</b> &mdash; courses arrive sorted by end time online: keep the dp rows and, on each new course, binary-search its predecessor and extend the dp by one row in O(K log n) &mdash; no recompute.</li>
+  <li><b>O(1)-space (reduced)</b> &mdash; the predecessor jump needs the full dp table, but you can keep only the K-column rows you still reference; without the K cap (1235) it collapses to a single O(n) dp array.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/maximum-number-of-events-that-can-be-attended-ii/" target="_blank" rel="noopener">#1751 &middot; Maximum Number of Events That Can Be Attended II</a> &mdash; <b>Hard</b> &mdash; the exact equivalent (at most K weighted non-overlapping events)</li>
+  <li><a href="https://leetcode.com/problems/maximum-profit-in-job-scheduling/" target="_blank" rel="noopener">#1235 &middot; Maximum Profit in Job Scheduling</a> &mdash; <b>Hard</b> &mdash; same WIS, no K cap</li>
+  <li><a href="https://leetcode.com/problems/maximum-earnings-from-taxi/" target="_blank" rel="noopener">#2008 &middot; Maximum Earnings From Taxi</a> &mdash; <b>Medium</b> &mdash; weighted-interval DP along a line</li>
+  <li><a href="https://leetcode.com/problems/course-schedule-iii/" target="_blank" rel="noopener">#630 &middot; Course Schedule III</a> &mdash; <b>Hard</b> &mdash; max COUNT of courses by deadline (greedy + heap) &mdash; contrast</li>
+</ul>
