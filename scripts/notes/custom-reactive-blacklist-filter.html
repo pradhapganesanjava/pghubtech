@@ -1,0 +1,40 @@
+<h2>Design &mdash; two sets + emit on visibility flip</h2>
+<p>Keep a <code>seen</code> set (values that have arrived) and a <code>blocked</code> set (the blacklist). A value is <b>visible</b> iff it has been seen and is not blocked. The whole trick is to <b>emit only when an already-seen value actually flips visibility</b> &mdash; never for unseen values or no-op updates.</p>
+<pre>class Filter:
+    def __init__(self):
+        self.seen = set()
+        self.blocked = set()
+
+    def _visible(self, v):
+        return v in self.seen and v not in self.blocked
+
+    def processInput(self, v):
+        was = self._visible(v)
+        self.seen.add(v)
+        if self._visible(v) and not was:
+            emit(True, v)                 # newly visible
+
+    def processFilter(self, show, v):     # show=True => make visible (unblock)
+        was = self._visible(v)
+        if show: self.blocked.discard(v)
+        else:    self.blocked.add(v)
+        now = self._visible(v)
+        if now != was:                    # only a REAL transition emits
+            emit(now, v)</pre>
+<p>All operations are <b>O(1)</b> (hash-set membership). The basic (no-flag) version is the same minus the <code>show</code> argument: <code>processInput</code> emits if not blocked; <code>processFilter</code> emits a seen value's transition.</p>
+<p><b>Why guard on <code>was != now</code>:</b> blocking an already-blocked value, or unblocking a value that was never seen, changes nothing observable &mdash; emitting there would be a spurious event.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; concurrent <code>processInput</code> / <code>processFilter</code>: guard <code>seen</code> + <code>blocked</code> with a lock (or concurrent sets) and make the read-modify-emit atomic per value, so two threads can't both emit the same flip. Shard by value hash to reduce contention.</li>
+  <li><b>Streaming</b> &mdash; this IS the streaming model: O(1) per event, state is just the two sets; emits happen inline as transitions occur.</li>
+  <li><b>O(1)-space (per op)</b> &mdash; each op is O(1); total state is O(distinct values) (unavoidable &mdash; you must remember what's been seen and what's blocked).</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/event-emitter/" target="_blank" rel="noopener">#2694 &middot; Event Emitter</a> &mdash; <b>Medium</b> &mdash; subscribe / emit reactive dispatch (the observer-pubsub micro)</li>
+  <li><a href="https://leetcode.com/problems/design-hashset/" target="_blank" rel="noopener">#705 &middot; Design HashSet</a> &mdash; <b>Easy</b> &mdash; the membership-set building block</li>
+  <li><a href="https://leetcode.com/problems/random-pick-with-blacklist/" target="_blank" rel="noopener">#710 &middot; Random Pick with Blacklist</a> &mdash; <b>Hard</b> &mdash; maintaining a dynamic blacklist</li>
+  <li><a href="https://leetcode.com/problems/contains-duplicate/" target="_blank" rel="noopener">#217 &middot; Contains Duplicate</a> &mdash; <b>Easy</b> &mdash; the seen-set membership idea</li>
+</ul>

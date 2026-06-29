@@ -746,5 +746,9 @@
   "10057": [
     "pat_group::design",
     "pat_group::design::dependency-graph-system"
+  ],
+  "10061": [
+    "pat_group::design",
+    "pat_group::design::reactive-filter-emit"
   ]
 }
