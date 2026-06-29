@@ -10467,5 +10467,19 @@
       "pat_topic::topo-sort::kahn-bfs"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10051",
+    "title": "Delete nodes in a rooted tree to maximize remaining max depth",
+    "difficulty": "Easy",
+    "topics": "Tree; Depth-First Search; Breadth-First Search",
+    "pat_ds": [
+      "pat_ds::tree::dfs::dfs-tree-orders",
+      "pat_ds::tree::core::post-order-depth"
+    ],
+    "pat_topic": [
+      "pat_topic::dfs::dfs-tree-orders"
+    ],
+    "pat_group": []
   }
 ]

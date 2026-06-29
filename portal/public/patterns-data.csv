@@ -1699,3 +1699,6 @@ anchor_id,tag
 10050,pat_topic::topo-sort::kahn-bfs
 10050,pat_ds::graph::topo-sort::kahn-bfs
 10050,pat_ds::graph::core::ancestor-reachability
+10051,pat_topic::dfs::dfs-tree-orders
+10051,pat_ds::tree::dfs::dfs-tree-orders
+10051,pat_ds::tree::core::post-order-depth
