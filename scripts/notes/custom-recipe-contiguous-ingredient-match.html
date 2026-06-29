@@ -1,0 +1,32 @@
+<h2>Approaches</h2>
+<h3>1) Prefix / rolling hash &mdash; O(n + &Sigma;m)</h3>
+<p>Precompute a polynomial prefix hash of the ingredient list so any window's fingerprint is O(1). For each recipe, hash it once and compare against the matching-length windows (Rabin-Karp); verify on a hash hit to avoid collisions. (Enumerating all contiguous subsequences and bucketing them is the O(n²) brute force; the prefix hash makes each query cheap.)</p>
+<pre># text = ingredient list, queries = recipes
+H = prefix_hash(text); P = pow_table(B)
+def window_hash(l, r):                 # hash of text[l..r] in O(1)
+    return (H[r+1] - H[l] * P[r-l+1]) % MOD
+def matches(recipe):
+    m = len(recipe); rh = hash(recipe)
+    return any(window_hash(i, i+m-1) == rh and text[i:i+m] == recipe
+               for i in range(len(text) - m + 1))</pre>
+
+<h3>2) Follow-up 1 &mdash; O(1) extra space (two-pointer / sliding window)</h3>
+<p>For each recipe of length m, slide a window over the list and compare element by element; reset on mismatch. O(n·m) time but only O(1) extra space (no hash tables) &mdash; this is the naive strStr scan.</p>
+
+<h3>3) Follow-up 2 &mdash; streaming (state machine)</h3>
+<p>When ingredients arrive as a large stream, build a matching automaton and feed the stream through it in one pass: <b>KMP</b> failure-function automaton per recipe, or &mdash; for many recipes at once &mdash; <b>Aho-Corasick</b> (a trie of all recipes + failure links), which matches every recipe in O(stream + total recipe length + #matches).</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; recipes are independent: shard them across threads (each runs its own KMP/Rabin-Karp over the shared read-only list), or build one Aho-Corasick automaton and split the stream into chunks with overlap = max recipe length.</li>
+  <li><b>Streaming</b> &mdash; Aho-Corasick / KMP automaton consumes the ingredient stream online; emit a recipe the instant its accept state is hit (see Follow-up 2).</li>
+  <li><b>O(1)-space</b> &mdash; the two-pointer scan (Follow-up 1) uses O(1) beyond the inputs; rolling hash trades O(1) space for O(n) speed.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/string-matching-in-an-array/" target="_blank" rel="noopener">#1408 &middot; String Matching in an Array</a> &mdash; <b>Easy</b> &mdash; multiple patterns vs a text (this problem's shape)</li>
+  <li><a href="https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/" target="_blank" rel="noopener">#28 &middot; First Occurrence (strStr)</a> &mdash; <b>Easy</b> &mdash; single-pattern substring search (KMP / Rabin-Karp)</li>
+  <li><a href="https://leetcode.com/problems/repeated-dna-sequences/" target="_blank" rel="noopener">#187 &middot; Repeated DNA Sequences</a> &mdash; <b>Medium</b> &mdash; fixed-length rolling-hash fingerprints</li>
+  <li><a href="https://leetcode.com/problems/longest-duplicate-substring/" target="_blank" rel="noopener">#1044 &middot; Longest Duplicate Substring</a> &mdash; <b>Hard</b> &mdash; rolling hash + binary search</li>
+</ul>

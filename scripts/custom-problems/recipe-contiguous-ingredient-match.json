@@ -1,0 +1,16 @@
+{
+  "slug": "custom-recipe-contiguous-ingredient-match",
+  "frontend_id": "10055",
+  "title": "Recipe Matching from a Contiguous Ingredient Run",
+  "difficulty": "Medium",
+  "topics": ["String", "Hash Function", "Rolling Hash", "Two Pointers", "String Matching"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::string::sequence",
+    "_prob::string::substring-match-multi",
+    "pat_ds::string::core::rolling-hash",
+    "pat_ds::string::core::string-match-kmp"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are given an ordered list of ingredients and several recipes, where each recipe is a sequence of ingredients. For <strong>each recipe</strong>, determine whether it can be formed by a <strong>contiguous run</strong> of the ingredient list &mdash; i.e. whether the recipe appears as a <strong>contiguous substring</strong> of the ingredient sequence.</p>\n  <h3>Output</h3>\n  <p>For each recipe, output whether it is a contiguous subsequence of the ingredient list (true/false).</p>\n  <h3>Approaches</h3>\n  <ul>\n    <li><strong>Prefix / rolling hash</strong> &mdash; fingerprint the ingredient list so any window compares in O(1); match each recipe by hash (verify on hit).</li>\n    <li><strong>Follow-up 1 (O(1) extra space)</strong> &mdash; two-pointer / sliding-window scan comparing element by element.</li>\n    <li><strong>Follow-up 2 (streaming, large volume)</strong> &mdash; feed ingredients through a state machine (KMP per recipe, or Aho-Corasick for all recipes at once) and match on the fly.</li>\n  </ul>\n  <h3>Example</h3>\n  <pre>ingredients = [A, B, C, D, E]\nrecipes:\n  [B, C, D]  -> true   (contiguous run)\n  [A, C]     -> false  (A,C not contiguous)\n  [D, E]     -> true</pre>\n  <p><em>This is multi-pattern substring matching (equivalent to LC 1408 / 28). See <strong>Notes</strong> for all three approaches, the trio, and references.</em></p>\n</div>"
+}
