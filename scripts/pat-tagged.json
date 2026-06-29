@@ -10558,5 +10558,18 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "10056",
+    "title": "Maximize Warehouse Query Revenue in k Minutes",
+    "difficulty": "Medium",
+    "topics": "Dynamic Programming; Array",
+    "pat_ds": [
+      "pat_ds::array::dp::knapsack-unbounded"
+    ],
+    "pat_topic": [
+      "pat_topic::dp::knapsack-unbounded"
+    ],
+    "pat_group": []
   }
 ]
