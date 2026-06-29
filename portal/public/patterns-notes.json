@@ -860,6 +860,9 @@
   "running-boundary": {
     "1268": "Search Suggestions System (sort solution). Sort products; carry a single `left` index across the growing prefixes. For each prefix, advance left while products[left] doesn't match, then take up to 3. left never resets — prefixes only tighten, so the match-block start only moves right — giving O(n) amortized over all prefixes, no per-prefix binary search. The trie-autocomplete tag is the other approach."
   },
+  "greedy-bounded-prune": {
+    "10006": "Compute height of tree with deleted nodes; minimize deletions (Part 2). Post-order carry kept-height up; when a node would push height above K, cut that subtree (count a deletion) and send 0 upward. Greedy: cut as high as still valid. O(n). Part 1 (just the height) is the dfs-tree-orders / tree-dp post-order."
+  },
 
   "greedy-end-sorted": {
     "435":  "Non-overlapping Intervals. Sort by END; keep first; greedily take next with start ≥ cur.end; answer = n − kept.",
