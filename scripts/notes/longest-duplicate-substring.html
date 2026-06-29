@@ -1,0 +1,39 @@
+<h2>Approach &mdash; rolling hash + binary search on length</h2>
+<p>"Longest" + a feasibility test that's monotone in length &rArr; <b>binary-search the length L</b>. For a fixed L, ask "does some length-L substring repeat?" using a <b>rolling hash</b> (Rabin-Karp): hash every length-L window in O(1) per slide and drop them into a set; a hash collision (verified) means a duplicate of length L exists.</p>
+<pre>def longestDupSubstring(s):
+    n = len(s); B, MOD = 131, (1 << 61) - 1
+    def has_dup(L):
+        if L == 0: return 0
+        seen = {}
+        h = 0; BL = pow(B, L, MOD)
+        for i, ch in enumerate(s):
+            h = (h * B + ord(ch)) % MOD
+            if i >= L: h = (h - ord(s[i-L]) * BL) % MOD
+            if i >= L - 1:
+                if h in seen and s[seen[h]:seen[h]+L] == s[i-L+1:i+1]:
+                    return i - L + 1          # start index of a repeat
+                seen.setdefault(h, i - L + 1)
+        return -1
+    lo, hi, ans = 1, n - 1, ""
+    while lo <= hi:
+        L = (lo + hi) // 2
+        idx = has_dup(L)
+        if idx != -1: ans = s[idx:idx+L]; lo = L + 1   # try longer
+        else: hi = L - 1
+    return ans</pre>
+<p><b>O(n log n)</b> average (n per length × log n lengths). Verify on hash hit to dodge collisions; double-hashing makes false positives negligible.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; the per-length feasibility checks are independent; probe several candidate lengths in parallel (or shard the window scan for one L across threads, merging seen-sets).</li>
+  <li><b>Streaming</b> &mdash; characters arrive online: maintain rolling hashes for the lengths of interest and a seen-map; report a duplicate the moment a window hash repeats (KMP/automaton if matching against a fixed pattern instead).</li>
+  <li><b>O(1)-space (per check)</b> &mdash; the seen-set is O(n); the alternative deterministic route is a <b>suffix automaton / suffix array + LCP</b> giving O(n) without hashing, at the cost of more machinery.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/repeated-dna-sequences/" target="_blank" rel="noopener">#187 &middot; Repeated DNA Sequences</a> &mdash; <b>Medium</b> &mdash; fixed-length rolling hash / seen-set</li>
+  <li><a href="https://leetcode.com/problems/longest-repeating-substring/" target="_blank" rel="noopener">#1062 &middot; Longest Repeating Substring</a> &mdash; <b>Medium</b> &mdash; same binary-search-on-length, DP or hashing</li>
+  <li><a href="https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/" target="_blank" rel="noopener">#28 &middot; First Occurrence (strStr)</a> &mdash; <b>Easy</b> &mdash; single-pattern substring search (Rabin-Karp / KMP)</li>
+  <li><a href="https://leetcode.com/problems/string-matching-in-an-array/" target="_blank" rel="noopener">#1408 &middot; String Matching in an Array</a> &mdash; <b>Easy</b> &mdash; multi-pattern substring containment</li>
+</ul>

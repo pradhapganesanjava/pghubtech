@@ -396,6 +396,13 @@
     "1408": "String Matching in Array. KMP each pair, or just .contains() — KMP overkill for tiny strings."
   },
 
+  "rolling-hash": {
+    "1044": "Longest Duplicate Substring. Binary-search the length L; for each L roll a hash over all length-L windows into a set — a matching (verified) hash means L is feasible. O(n log n).",
+    "187":  "Repeated DNA Sequences. Fixed length 10 — rolling hash (or direct seen-set) to flag substrings seen more than once.",
+    "28":   "strStr via Rabin-Karp: hash the pattern, roll over the text, verify on hash match. O(n+m) average — the hashing alternative to KMP.",
+    "1408": "String Matching in an Array. Hash each word and test substring containment via rolling hash (KMP is the deterministic alternative)."
+  },
+
   "slow-fast-middle": {
     "876": "Middle of LL. slow=head, fast=head; while fast && fast.next: slow=slow.next, fast=fast.next.next. On even, returns the SECOND middle.",
     "234": "Palindrome LL — find middle first, then reverse second half, then compare.",

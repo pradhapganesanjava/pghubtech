@@ -330,7 +330,8 @@
     "difficulty": "Easy",
     "topics": "Two Pointers; String; String Matching",
     "pat_ds": [
-      "pat_ds::string::core::string-match-kmp"
+      "pat_ds::string::core::string-match-kmp",
+      "pat_ds::string::core::rolling-hash"
     ],
     "pat_topic": [],
     "pat_group": [
@@ -2036,7 +2037,8 @@
     "topics": "Hash Table; String; Bit Manipulation; Sliding Window; Rolling Hash; Hash Function",
     "pat_ds": [
       "pat_ds::string::bits::bitmask-enumerate",
-      "pat_ds::string::hash::seen-set"
+      "pat_ds::string::hash::seen-set",
+      "pat_ds::string::core::rolling-hash"
     ],
     "pat_topic": [
       "pat_topic::bits::bitmask-enumerate"
@@ -7169,6 +7171,20 @@
     ]
   },
   {
+    "id": "1044",
+    "title": "Longest Duplicate Substring",
+    "difficulty": "Hard",
+    "topics": "String; Binary Search; Sliding Window; Rolling Hash; Suffix Array; Hash Function",
+    "pat_ds": [
+      "pat_ds::string::core::rolling-hash",
+      "pat_ds::string::binary-search::bs-on-answer"
+    ],
+    "pat_topic": [
+      "pat_topic::binary-search::bs-on-answer"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "1047",
     "title": "Remove All Adjacent Duplicates In String",
     "difficulty": "Easy",
@@ -8398,7 +8414,8 @@
     "difficulty": "Easy",
     "topics": "Array; String; String Matching",
     "pat_ds": [
-      "pat_ds::string::core::string-match-kmp"
+      "pat_ds::string::core::string-match-kmp",
+      "pat_ds::string::core::rolling-hash"
     ],
     "pat_topic": [],
     "pat_group": [
