@@ -1731,3 +1731,6 @@ anchor_id,tag
 10057,pat_ds::graph::topo-sort::kahn-bfs
 10057,pat_topic::dfs::dfs-template
 10057,pat_ds::graph::dfs::dfs-template
+10058,pat_topic::concurrency::thread-pool-fanout
+10058,pat_topic::dfs::dfs-template
+10058,pat_ds::graph::dfs::dfs-template

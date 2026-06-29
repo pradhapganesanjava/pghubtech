@@ -1,0 +1,17 @@
+{
+  "slug": "custom-count-cluster-nodes-async",
+  "frontend_id": "10058",
+  "title": "Count Cluster Nodes via Async Messages",
+  "difficulty": "Medium",
+  "topics": ["Graph", "Concurrency", "Breadth-First Search", "Depth-First Search"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::graph::cluster",
+    "_prob::concurrency::distributed-traversal",
+    "pat_topic::concurrency::thread-pool-fanout",
+    "pat_topic::dfs::dfs-template",
+    "pat_ds::graph::dfs::dfs-template"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given the <code>root_node</code> of a cluster, count the number of nodes in the cluster using only <code>sendAsyncMessage()</code> (ask a node for its neighbors) and <code>receiveMessage()</code> (collect replies). Nodes are reached by message-passing &mdash; you traverse outward from the root.</p>\n  <h3>Follow-ups</h3>\n  <ul>\n    <li>Return the <strong>structure</strong> of the cluster (the adjacency / topology) instead of just the count.</li>\n    <li>If messages may <strong>fail and be retried</strong>, how do you keep the result correct?</li>\n  </ul>\n  <h3>Input / Output</h3>\n  <p>Input: <code>root_node</code>. Output: the number of nodes reachable in the cluster.</p>\n  <h3>Test Cases</h3>\n  <pre>tree with 3 nodes   -> 3\nsingle node         -> 1\nchain of 5 nodes    -> 5</pre>\n  <p><em>This is concurrent graph traversal with dedup (cf. LC 1242 / 1236). See <strong>Notes</strong> for traversal, retry-idempotency, the structure follow-up, and the trio.</em></p>\n</div>"
+}
