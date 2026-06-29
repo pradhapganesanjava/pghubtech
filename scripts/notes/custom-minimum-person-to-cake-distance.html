@@ -1,0 +1,42 @@
+<h2>Approach &mdash; multi-source BFS (stop at the first opposite cell)</h2>
+<p>Since the grid has no walls, BFS step-count equals Manhattan distance. Seed the queue with <b>every cake</b> at distance 0 and flood 4-directionally; the <b>first person</b> dequeued gives the global minimum &mdash; no per-cell distances needed.</p>
+<pre>read grid (m x n)
+cakes  = [(r,c) for cell == '1']
+persons_exist = any cell == '0'
+if not cakes or not persons_exist: return -1
+
+dist = [[-1]*n for _ in range(m)]
+q = deque()
+for (r,c) in cakes: dist[r][c] = 0; q.append((r,c))
+while q:
+    r, c = q.popleft()
+    for nr, nc in 4-neighbours(r, c):
+        if in-bounds and dist[nr][nc] == -1:
+            if grid[nr][nc] == '0':      # first person reached
+                return dist[r][c] + 1
+            dist[nr][nc] = dist[r][c] + 1
+            q.append((nr, nc))
+return -1</pre>
+<p><b>O(m·n)</b> time and space (each cell enqueued once). A brute-force person&times;cake pair check would be O((m·n)&sup2;) &mdash; far too slow for m,n &le; 2000.</p>
+
+<h2>Variants &amp; contrast</h2>
+<ul>
+  <li><b>This</b> &mdash; single global minimum over all person&harr;cake pairs (stop at the first opposite cell).</li>
+  <li><b>#10049 / #542</b> &mdash; fill <i>every</i> cell with its nearest-source distance (don't early-stop).</li>
+  <li><b>#10016</b> &mdash; the bundled cake/person round this cleanly standalone-izes.</li>
+</ul>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; level-synchronous BFS: expand each distance layer's frontier in parallel, dedup into the next; the early-stop becomes "stop the round the first person appears."</li>
+  <li><b>Streaming</b> &mdash; cells/cakes arrive online: maintain the BFS layers and re-expand only from newly added sources; report the running minimum.</li>
+  <li><b>O(1)-space</b> &mdash; the dist grid is O(m·n) (needed to mark visited). Reusing the input grid in place (overwrite with a visited marker) avoids a second array.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/01-matrix/" target="_blank" rel="noopener">#542 &middot; 01 Matrix</a> &mdash; <b>Medium</b> &mdash; per-cell nearest-source distance (same engine, no early stop)</li>
+  <li><a href="https://leetcode.com/problems/walls-and-gates/" target="_blank" rel="noopener">#286 &middot; Walls and Gates</a> &mdash; <b>Medium</b> &mdash; nearest gate to each room</li>
+  <li><a href="https://leetcode.com/problems/rotting-oranges/" target="_blank" rel="noopener">#994 &middot; Rotting Oranges</a> &mdash; <b>Medium</b> &mdash; multi-source BFS time-to-fill</li>
+  <li><a href="https://leetcode.com/problems/as-far-from-land-as-possible/" target="_blank" rel="noopener">#1162 &middot; As Far from Land as Possible</a> &mdash; <b>Medium</b> &mdash; max of nearest-land distances</li>
+</ul>
