@@ -1,0 +1,20 @@
+{
+  "slug": "custom-compute-height-of-tree-with-deleted-nodes-minimize-deletions",
+  "frontend_id": "10006",
+  "title": "Compute height of tree with deleted nodes; minimize deletions",
+  "difficulty": "Hard",
+  "topics": ["Tree", "Depth-First Search", "Greedy", "Dynamic Programming"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::tree::n-ary",
+    "_prob::tree::skip-deleted",
+    "_prob::tree::min-deletions-bounded-height",
+    "pat_ds::tree::dp::tree-dp",
+    "pat_topic::dfs::dfs-tree-orders",
+    "pat_ds::tree::dfs::dfs-tree-orders",
+    "pat_topic::greedy::greedy-bounded-prune",
+    "pat_ds::tree::greedy::greedy-bounded-prune"
+  ],
+  "leetcode_url": "https://prachub.com/interview-questions/compute-height-of-tree-with-deleted-nodes-minimize-deletions",
+  "description_html": "<div>\n  <p>You are given a rooted tree (not necessarily binary) with <code>n</code> nodes labeled <code>1..n</code>, described by parent-child edges, and a boolean array <code>deleted[i]</code> indicating whether node <code>i</code> is in a &quot;deleted state&quot;.</p>\n  <p>When computing height you must <strong>skip deleted nodes</strong>:</p>\n  <ul>\n    <li>A deleted node does not contribute to the height.</li>\n    <li>Its subtree still exists; traversing downward you may conceptually &quot;pass through&quot; deleted nodes to their children.</li>\n  </ul>\n  <p>The tree height is the maximum length (in number of nodes) of a path from the root to any reachable <strong>non-deleted</strong> node after skipping deleted nodes. If no non-deleted node is reachable, the height is 0.</p>\n  <h3>Part 1</h3>\n  <p>Return the maximum height of the tree after skipping deleted nodes.</p>\n  <h3>Part 2 (follow-up)</h3>\n  <p>You may additionally mark more nodes deleted. After skipping deleted nodes, the resulting height must be at most <code>K</code>. Return the minimum number of additional deletions required.</p>\n  <h3>Constraints</h3>\n  <ul><li>1 &le; n &le; 2&middot;10^5</li><li>1 &le; K &le; n</li></ul>\n  <h3>Example</h3>\n  <pre>Input\n4 3\n1 2\n1 3\n3 4\n0 1 0 0\nOutput\n3</pre>\n  <p>Node 2 is deleted; the longest skip-deleted root path is 1 &rarr; 3 &rarr; 4 = 3 nodes.</p>\n  <p><em>Original source: <a href=\"https://prachub.com/interview-questions/compute-height-of-tree-with-deleted-nodes-minimize-deletions\" target=\"_blank\" rel=\"noopener\">prachub</a>. See <strong>Notes</strong> for solutions, the follow-up trio, and references.</em></p>\n</div>"
+}
