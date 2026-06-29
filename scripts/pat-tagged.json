@@ -10589,5 +10589,19 @@
       "pat_group::design",
       "pat_group::design::dependency-graph-system"
     ]
+  },
+  {
+    "id": "10058",
+    "title": "Count Cluster Nodes via Async Messages",
+    "difficulty": "Medium",
+    "topics": "Graph; Concurrency; Breadth-First Search; Depth-First Search",
+    "pat_ds": [
+      "pat_ds::graph::dfs::dfs-template"
+    ],
+    "pat_topic": [
+      "pat_topic::concurrency::thread-pool-fanout",
+      "pat_topic::dfs::dfs-template"
+    ],
+    "pat_group": []
   }
 ]

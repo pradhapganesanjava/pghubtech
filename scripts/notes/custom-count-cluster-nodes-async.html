@@ -1,0 +1,40 @@
+<h2>Approach &mdash; traverse the cluster, dedup by node id</h2>
+<p>A cluster is a graph (cycles possible), so the count is "number of reachable nodes from root" via BFS/DFS &mdash; with a <b>visited set</b> so each node is counted once. Each step <code>sendAsyncMessage(node)</code> asks for its neighbors; <code>receiveMessage()</code> delivers them.</p>
+<pre>def count(root):
+    seen = {id(root)}
+    frontier = [root]
+    while frontier:
+        for node in frontier:
+            sendAsyncMessage(node)          # ask each for neighbors
+        nxt = []
+        for _ in range(len(frontier)):
+            for nb in receiveMessage():     # neighbors reported back
+                if id(nb) not in seen:
+                    seen.add(id(nb)); nxt.append(nb)
+        frontier = nxt
+    return len(seen)</pre>
+
+<h3>Follow-up 1 &mdash; return the structure, not the count</h3>
+<p>Instead of a counter, record <code>adj[node] = [neighbors]</code> as replies arrive &mdash; that adjacency map IS the cluster topology. Recreating nodes + relinking via an old&rarr;new map is exactly <b>Clone Graph (#133)</b>.</p>
+
+<h3>Follow-up 2 &mdash; messages fail / are retried &rarr; stay correct</h3>
+<ul>
+  <li><b>Idempotency</b> &mdash; key the <code>seen</code> set by a stable node id, so a re-delivered or duplicate reply is a no-op; counting is set-insertion, never <code>+1</code> per message. Retried messages cannot double-count.</li>
+  <li><b>At-least-once + dedup</b> &mdash; pair each <code>sendAsyncMessage</code> with a timeout; resend on no reply. Because receive is idempotent, at-least-once delivery is safe.</li>
+  <li><b>Completion</b> &mdash; track outstanding (sent-but-unacked) messages; the traversal is done when the frontier is empty AND no message is in flight.</li>
+</ul>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; a worker pool drains a queue of nodes, sends async probes, and folds replies into a <b>concurrent</b> visited set (lock / sharded set) &mdash; exactly LC 1242 Web Crawler Multithreaded. Stop when the queue is empty and all workers idle.</li>
+  <li><b>Streaming</b> &mdash; nodes/edges discovered incrementally: keep the visited set live and emit the running count as new nodes are deduped in.</li>
+  <li><b>O(1)-space</b> &mdash; the visited set is inherently O(V) (needed for correctness over cycles + retries). If the cluster is a guaranteed acyclic tree with no retries, a pure recursive count is O(height) extra.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/web-crawler-multithreaded/" target="_blank" rel="noopener">#1242 &middot; Web Crawler Multithreaded</a> &mdash; <b>Medium</b> &mdash; concurrent graph traversal from a root with a shared visited set</li>
+  <li><a href="https://leetcode.com/problems/web-crawler/" target="_blank" rel="noopener">#1236 &middot; Web Crawler</a> &mdash; <b>Medium</b> &mdash; the single-threaded traversal</li>
+  <li><a href="https://leetcode.com/problems/clone-graph/" target="_blank" rel="noopener">#133 &middot; Clone Graph</a> &mdash; <b>Medium</b> &mdash; the "return the structure" follow-up</li>
+  <li><a href="https://leetcode.com/problems/clone-n-ary-tree/" target="_blank" rel="noopener">#1490 &middot; Clone N-ary Tree</a> &mdash; <b>Medium</b> &mdash; tree-shaped structure copy</li>
+</ul>
