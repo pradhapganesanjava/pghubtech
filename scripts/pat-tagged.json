@@ -10489,5 +10489,20 @@
       "pat_topic::dfs::dfs-tree-orders"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10052",
+    "title": "Height after removing a subtree",
+    "difficulty": "Medium",
+    "topics": "Tree; Depth-First Search; Dynamic Programming",
+    "pat_ds": [
+      "pat_ds::tree::dp::tree-dp",
+      "pat_ds::tree::core::post-order-depth",
+      "pat_ds::tree::dp::tree-reroot"
+    ],
+    "pat_topic": [
+      "pat_topic::dp::tree-reroot"
+    ],
+    "pat_group": []
   }
 ]

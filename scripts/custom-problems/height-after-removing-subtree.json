@@ -1,0 +1,19 @@
+{
+  "slug": "custom-height-after-removing-subtree",
+  "frontend_id": "10052",
+  "title": "Height after removing a subtree",
+  "difficulty": "Medium",
+  "topics": ["Tree", "Depth-First Search", "Dynamic Programming"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::tree::rooted",
+    "_prob::tree::remove-subtree",
+    "_prob::tree::reroot",
+    "pat_ds::tree::dp::tree-dp",
+    "pat_ds::tree::core::post-order-depth",
+    "pat_topic::dp::tree-reroot",
+    "pat_ds::tree::dp::tree-reroot"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are given a rooted tree with <code>n</code> nodes (root = node 1), described by parent-child edges. <strong>Removing a node deletes that node together with its entire subtree</strong> (all of its descendants). Given a node <code>v</code> to remove, return the <strong>height</strong> (max number of edges from the root to any remaining node) of the tree that remains.</p>\n  <p><strong>Follow-up:</strong> answer the query for <em>every</em> node <code>v</code> efficiently (i.e. for each <code>v</code>, the height after removing subtree(v)).</p>\n  <h3>Input</h3>\n  <pre>n\nn-1 lines: edges  u v\nv            # node to remove (with its subtree)</pre>\n  <h3>Output</h3>\n  <p>One integer: the height of the remaining tree (0 if only the root remains; the root itself cannot be removed in the single-query form).</p>\n  <h3>Constraints</h3>\n  <ul><li>1 ≤ n ≤ 2·10^5.</li></ul>\n  <h3>Example</h3>\n  <pre>5\n1 2\n1 3\n3 4\n4 5\n4            # remove node 4 and its subtree {4,5}\n----\n1</pre>\n  <p>Remaining nodes {1, 2, 3}; deepest remaining path 1 &rarr; 3 (or 1 &rarr; 2) = 1 edge.</p>\n  <p><em>See <strong>Notes</strong> for the single-removal and all-removals (re-rooting / Euler-range) approaches, the trio, and references.</em></p>\n</div>"
+}

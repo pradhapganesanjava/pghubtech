@@ -1,0 +1,47 @@
+<h2>Approaches</h2>
+<h3>1) Single removal &mdash; O(n)</h3>
+<p>One DFS from the root that <b>skips the removed subtree</b>; take the max depth of everything else.</p>
+<pre>def height_without(removed):
+    best = 0
+    def dfs(u, parent, d):
+        nonlocal best
+        if u == removed: return        # prune the whole subtree
+        best = max(best, d)
+        for w in adj[u]:
+            if w != parent: dfs(w, u, d + 1)
+    dfs(root, 0, 0)
+    return best</pre>
+
+<h3>2) All removals (every v) &mdash; O(n)</h3>
+<p>Compute <code>depth[]</code> with a DFS and lay nodes out in <b>Euler (entry) order</b>. Each subtree is then a <b>contiguous range</b> <code>[tin[v], tout[v]]</code>, so the height after removing subtree(v) is just the max depth <b>outside</b> that range &mdash; a prefix/suffix max.</p>
+<pre>dfs sets depth[u], tin[u], tout[u], and order[]   # Euler entry order
+pre[i] = max(depth[order[0..i]])     # prefix max of depth
+suf[i] = max(depth[order[i..]])      # suffix max of depth
+def ans(v):
+    l, r = tin[v], tout[v]
+    return max(pre[l-1] if l > 0 else -1,
+               suf[r+1] if r+1 < n else -1)</pre>
+<p>The general "<i>answer for every node as root</i>" version instead uses the classic <b>re-rooting</b> two-pass: a post-order down-pass for each node's subtree height, then a pre-order up-pass that hands each child the parent's best height <i>excluding that child</i> (keep the top-2 child depths so the exclusion is O(1)).</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; the down-pass over disjoint subtrees is independent: fork-join per child, max-combine. The Euler prefix/suffix maxes are parallel scans.</li>
+  <li><b>Streaming</b> &mdash; removal/restore queries arrive online: maintain a multiset (or segment tree) of depths keyed by Euler position; removing subtree(v) = exclude one contiguous range &rarr; range-max query in O(log n) per query.</li>
+  <li><b>O(1)-space</b> &mdash; for a single removal, iterative DFS with a parent pointer skips the subtree in O(1) extra (no recursion). The all-v arrays are inherently O(n) (one answer per node).</li>
+</ul>
+
+<h2>Contrast &mdash; the tree-deletion family (different semantics)</h2>
+<ul>
+  <li><b>This (#10052)</b> &mdash; remove a node deletes its <b>entire subtree</b>; height of the rest.</li>
+  <li><b>#10006</b> &mdash; a deleted node is <b>skipped</b> (children pass through); minimize deletions to bound height &le; K.</li>
+  <li><b>#10051</b> &mdash; delete but keep root + connectivity; <i>maximize</i> depth (reduces to height).</li>
+  <li><b>#10007</b> &mdash; height after deletions; enumerate valid delete sets.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/delete-nodes-and-return-forest/" target="_blank" rel="noopener">#1110 &middot; Delete Nodes And Return Forest</a> &mdash; <b>Medium</b> &mdash; the node/subtree-removal mechanic</li>
+  <li><a href="https://leetcode.com/problems/diameter-of-binary-tree/" target="_blank" rel="noopener">#543 &middot; Diameter of Binary Tree</a> &mdash; <b>Medium</b> &mdash; the top-2-children depth combine</li>
+  <li><a href="https://leetcode.com/problems/tree-diameter/" target="_blank" rel="noopener">#1245 &middot; Tree Diameter</a> &mdash; <b>Medium</b> &mdash; n-ary height/longest-path post-order</li>
+  <li><a href="https://leetcode.com/problems/sum-of-distances-in-tree/" target="_blank" rel="noopener">#834 &middot; Sum of Distances in Tree</a> &mdash; <b>Hard</b> &mdash; the canonical re-rooting (down + up pass)</li>
+</ul>
