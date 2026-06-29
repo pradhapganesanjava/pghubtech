@@ -1,0 +1,18 @@
+{
+  "slug": "custom-delete-nodes-maximize-depth",
+  "frontend_id": "10051",
+  "title": "Delete nodes in a rooted tree to maximize remaining max depth",
+  "difficulty": "Easy",
+  "topics": ["Tree", "Depth-First Search", "Breadth-First Search"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::tree::rooted",
+    "_prob::tree::max-depth",
+    "_prob::trap::reduces-to-height",
+    "pat_topic::dfs::dfs-tree-orders",
+    "pat_ds::tree::dfs::dfs-tree-orders",
+    "pat_ds::tree::core::post-order-depth"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are given an undirected tree with <code>n</code> nodes rooted at node <code>1</code>. You may delete any number of nodes (possibly none). Deleting a node removes all its incident edges. After deletions, the remaining nodes must still contain the root <code>1</code> and the remaining graph must stay connected (i.e. still a rooted tree).</p>\n  <p>Output the maximum possible <strong>maximum depth</strong> &mdash; the maximum number of edges from the root to any remaining node &mdash; achievable after such deletions.</p>\n  <h3>Input</h3>\n  <pre>n\nn-1 lines: edges  u v</pre>\n  <h3>Output</h3>\n  <p>One integer: the maximum achievable depth.</p>\n  <h3>Constraints</h3>\n  <ul><li>1 ≤ n ≤ 2·10^5. You must keep the root and maintain connectivity.</li></ul>\n  <h3>Example</h3>\n  <pre>5\n1 2\n1 3\n3 4\n4 5\n----\n3</pre>\n  <p>(Longest root path 1 &rarr; 3 &rarr; 4 &rarr; 5 = 3 edges.)</p>\n  <p><em>See <strong>Notes</strong> &mdash; this is a reduce-to-height trap.</em></p>\n</div>"
+}

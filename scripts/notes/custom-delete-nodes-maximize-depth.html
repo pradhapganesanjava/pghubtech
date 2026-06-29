@@ -1,0 +1,36 @@
+<h2>Key insight &mdash; it reduces to the tree's height</h2>
+<p>Because you must keep the root and stay connected, any kept node drags its <b>entire</b> root-to-node path along with it. To maximize the deepest kept node, just keep one <b>deepest root&rarr;leaf chain</b> and delete everything else &mdash; that's still a valid rooted tree. Deletions can only <i>remove</i> nodes, never <i>lengthen</i> a path, so:</p>
+<blockquote><b>answer = the tree's height</b> (max edges from root to any leaf). The "delete any number of nodes" clause is a red herring for this objective.</blockquote>
+
+<h2>Solution</h2>
+<p>One DFS (or BFS) from the root; return the maximum edge-distance.</p>
+<pre>def max_depth(u, parent):
+    best = 0
+    for w in adj[u]:
+        if w != parent:
+            best = max(best, 1 + max_depth(w, u))
+    return best
+return max_depth(1, 0)        # O(n) time, O(h) stack</pre>
+<p>O(n). For n = 2·10^5 prefer iterative DFS / BFS levels to avoid recursion-limit blowups.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; subtree depths are independent: parallel DFS over the root's children (fork-join / <code>concurrent.futures</code>), max-combine the results. No shared mutation.</li>
+  <li><b>Streaming</b> &mdash; edges arrive online (each adds a leaf to an existing node): keep <code>depth[node]</code>; a new edge <code>u&rarr;v</code> sets <code>depth[v] = depth[u] + 1</code> and updates a running global max in O(1) &mdash; no re-traversal.</li>
+  <li><b>O(1)-space</b> &mdash; BFS by levels and count levels: O(1) extra beyond the frontier queue (and no recursion). Height = (#levels − 1).</li>
+</ul>
+
+<h2>Contrast with the deletion problems where deletions DO matter</h2>
+<ul>
+  <li><b>This</b> &mdash; <i>maximize</i> depth &rArr; deletions irrelevant &rArr; just the height.</li>
+  <li><b>#10006</b> &mdash; <i>minimize</i> deletions to <b>bound</b> height &le; K (deletions are the crux; greedy bottom-up prune).</li>
+  <li><b>#10007</b> &mdash; height after deletions; enumerate valid delete sets.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/maximum-depth-of-n-ary-tree/" target="_blank" rel="noopener">#559 &middot; Maximum Depth of N-ary Tree</a> &mdash; <b>Easy</b> &mdash; this problem's actual shape (general rooted tree)</li>
+  <li><a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/" target="_blank" rel="noopener">#104 &middot; Maximum Depth of Binary Tree</a> &mdash; <b>Easy</b> &mdash; the base post-order/BFS depth</li>
+  <li><a href="https://leetcode.com/problems/diameter-of-binary-tree/" target="_blank" rel="noopener">#543 &middot; Diameter of Binary Tree</a> &mdash; <b>Medium</b> &mdash; the longest-path-in-tree cousin</li>
+  <li><a href="https://leetcode.com/problems/minimum-depth-of-binary-tree/" target="_blank" rel="noopener">#111 &middot; Minimum Depth of Binary Tree</a> &mdash; <b>Easy</b> &mdash; the min counterpart (BFS short-circuits)</li>
+</ul>
