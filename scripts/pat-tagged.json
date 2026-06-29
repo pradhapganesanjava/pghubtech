@@ -7858,9 +7858,12 @@
     "difficulty": "Hard",
     "topics": "Array; Binary Search; Dynamic Programming; Sorting",
     "pat_ds": [
-      "pat_ds::array::greedy::greedy-end-sorted"
+      "pat_ds::array::greedy::greedy-end-sorted",
+      "pat_ds::array::dp::weighted-interval-schedule"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::weighted-interval-schedule"
+    ],
     "pat_group": [
       "pat_group::scheduling"
     ]
@@ -9113,9 +9116,11 @@
     "difficulty": "Hard",
     "topics": "Array; Binary Search; Dynamic Programming; Sorting",
     "pat_ds": [
-      "pat_ds::array::dp::knapsack-01"
+      "pat_ds::array::dp::weighted-interval-schedule"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::weighted-interval-schedule"
+    ],
     "pat_group": []
   },
   {
@@ -9431,9 +9436,12 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Binary Search; Dynamic Programming; Sorting",
     "pat_ds": [
-      "pat_ds::array::dp::dp-1d-linear"
+      "pat_ds::array::dp::dp-1d-linear",
+      "pat_ds::array::dp::weighted-interval-schedule"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::weighted-interval-schedule"
+    ],
     "pat_group": []
   },
   {

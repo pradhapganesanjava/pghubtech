@@ -680,6 +680,11 @@
     "95":   "Unique BSTs II. Recursive build returning all subtree lists.",
     "87":   "Scramble String. Split + recurse on (matching pair OR swapped pair); memoize."
   },
+  "weighted-interval-schedule": {
+    "1235": "Max Profit Job Scheduling. Sort by end; dp[i] = max(dp[i-1], profit + dp[last job ending <= start]) via binary search. Weighted ⇒ greedy fails, DP. O(n log n).",
+    "1751": "Max Events Attended II (at most K). dp[i][k] = max(skip, value + dp[next][k-1]); binary-search the next non-overlapping event. O(n log n · K). (Was mis-filed under knapsack-01.)",
+    "2008": "Maximum Earnings From Taxi. Weighted-interval DP along the route; dp[end] = max(dp[end-1], dp[start] + earnings)."
+  },
 
   "dp-linear-partition": {
     "410": "Split Array Largest Sum (DP form). dp[p][i] = min over cut j of max(dp[p-1][j], sum(nums[j:i])). O(k·n²) with prefix sums — slower than binary-search-on-answer (O(n log sum)) but generalizes to arbitrary per-segment aggregates. 2nd dimension is the piece count.",
