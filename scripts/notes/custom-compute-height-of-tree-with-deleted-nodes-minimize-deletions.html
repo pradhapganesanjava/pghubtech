@@ -1,0 +1,46 @@
+<h2>Solution</h2>
+<h3>Part 1 &mdash; height skipping deleted nodes</h3>
+<p>Post-order DFS. A deleted node contributes 0 but still passes its children's heights upward (you "pass through" it). The height is the max number of non-deleted nodes on a root&rarr;node path.</p>
+<pre>def height(u):                 # longest skip-deleted path under u
+    best = 0
+    for c in children[u]:
+        best = max(best, height(c))
+    return best + (0 if deleted[u] else 1)
+
+return height(root)            # 0 if no non-deleted node is reachable</pre>
+<p>O(n) time, O(h) recursion.</p>
+
+<h3>Part 2 &mdash; fewest extra deletions so height &le; K</h3>
+<p>Greedy bottom-up (the <code>greedy-bounded-prune</code> pattern): carry each subtree's kept-height up; the moment a node would push a kept path above K, delete that node (cut), count it, and send 0 upward. Cutting as high as still-valid removes the most depth per deletion.</p>
+<pre>cuts = 0
+def dfs(u):                    # kept-height of subtree at u, after cuts
+    nonlocal cuts
+    h = 0
+    for c in children[u]:
+        h = max(h, dfs(c))
+    h += 0 if deleted[u] else 1
+    if h > K:                  # would exceed the bound -> delete u
+        cuts += 1
+        return 0               # u (and its level) no longer counts upward
+    return h
+dfs(root)
+return cuts</pre>
+<p>O(n). (Already-deleted nodes are free; we only spend deletions to honor the bound.)</p>
+
+<h2>Follow-up trio &mdash; drill on every high-frequency problem</h2>
+<p><em>Template: have a <b>multi-threaded</b>, a <b>streaming</b>, and an <b>O(1)-space</b> version ready for any hot problem.</em> For this one:</p>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; subtree results are independent, so fan the children out: <code>concurrent.futures.ThreadPoolExecutor</code> (or a fork-join pool / Java <code>ExecutorService</code>) computes each child's height in parallel; combine at the parent. The only shared state is the cut counter &mdash; make it atomic (<code>threading.Lock</code> / Java <code>ReentrantLock</code> or <code>AtomicInteger</code>), or have each call <b>return</b> its cut count and sum. (CPU-bound + GIL &rarr; use processes in Python; real parallelism in Java.)</li>
+  <li><b>Streaming</b> &mdash; edges (or deletion toggles) arrive online. Keep each node's current best-child-height; on a new edge or a <code>deleted</code> flip, propagate the height delta up the ancestor chain (a small state-machine update) and keep a running global max &mdash; no full re-DFS per event.</li>
+  <li><b>O(1)-space</b> &mdash; recursion is O(h) stack (and n = 2e5 risks a recursion-limit blowup). With a parent array, process nodes in <b>leaves-first / reverse-topological order</b> and fold each child's height into a single <code>height[]</code> array &mdash; O(n) time, O(1) extra beyond the output. Equivalent: iterative explicit-stack DFS.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/" target="_blank" rel="noopener">#104 &middot; Maximum Depth of Binary Tree</a> &mdash; <b>Easy</b> &mdash; the base post-order height</li>
+  <li><a href="https://leetcode.com/problems/maximum-depth-of-n-ary-tree/" target="_blank" rel="noopener">#559 &middot; Maximum Depth of N-ary Tree</a> &mdash; <b>Easy</b> &mdash; n-ary height (this problem's shape, minus deletions)</li>
+  <li><a href="https://leetcode.com/problems/diameter-of-binary-tree/" target="_blank" rel="noopener">#543 &middot; Diameter of Binary Tree</a> &mdash; <b>Medium</b> &mdash; post-order combine of child heights</li>
+  <li><a href="https://leetcode.com/problems/tree-diameter/" target="_blank" rel="noopener">#1245 &middot; Tree Diameter</a> &mdash; <b>Medium</b> &mdash; n-ary diameter via post-order</li>
+  <li><a href="https://leetcode.com/problems/minimum-height-trees/" target="_blank" rel="noopener">#310 &middot; Minimum Height Trees</a> &mdash; <b>Medium</b> &mdash; bound/minimize height (leaf-peeling)</li>
+  <li><a href="https://leetcode.com/problems/number-of-nodes-in-the-sub-tree-with-the-same-label/" target="_blank" rel="noopener">#1519 &middot; Nodes in Subtree With Same Label</a> &mdash; <b>Medium</b> &mdash; subtree-aggregate post-order DP</li>
+</ul>
