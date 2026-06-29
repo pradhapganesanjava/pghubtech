@@ -10453,5 +10453,19 @@
       "pat_group::shortest-path",
       "pat_group::shortest-path::bfs"
     ]
+  },
+  {
+    "id": "10050",
+    "title": "Propagate Allow/Disallow Labels on a DAG",
+    "difficulty": "Medium",
+    "topics": "Graph; Topological Sort; Bit Manipulation",
+    "pat_ds": [
+      "pat_ds::graph::topo-sort::kahn-bfs",
+      "pat_ds::graph::core::ancestor-reachability"
+    ],
+    "pat_topic": [
+      "pat_topic::topo-sort::kahn-bfs"
+    ],
+    "pat_group": []
   }
 ]

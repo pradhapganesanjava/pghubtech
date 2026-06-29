@@ -1,0 +1,35 @@
+<h2>Approach &mdash; topological-order bitmask propagation</h2>
+<p>The alphabet is fixed at 26, so each letter set is one 26-bit integer; unions are bitwise OR. Push each node's accumulated masks to its successors in topological order.</p>
+<pre>indeg, adj from edges
+allow[v]    = bitmask of Allow(v)        # seed with own letters
+disallow[v] = bitmask of Disallow(v)
+A = allow[:]   ; D = disallow[:]          # accumulators
+
+q = deque(v for v in V if indeg[v] == 0)  # Kahn (graph is a DAG)
+while q:
+    u = q.popleft()
+    for w in adj[u]:
+        A[w] |= A[u]                       # ancestors' allows flow down
+        D[w] |= D[u]                       # ancestors' disallows flow down
+        indeg[w] -= 1
+        if indeg[w] == 0: q.append(w)
+
+for v in V:
+    eff = A[v] & ~D[v]                     # allow minus disallow
+    print(letters(eff) sorted  or  '-')</pre>
+<p><b>O(V + E)</b> time (one bitwise OR per edge), O(V) for the masks. Because we process in topo order, by the time a node is dequeued its A/D already include <i>all</i> ancestors. Disallow wins ties (the final <code>&amp; ~D</code>).</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; process Kahn <b>wave by wave</b> (a level is a barrier); within a wave, fan the nodes out across threads. Successor masks are written by multiple sources, so OR into them under a lock / use atomic OR, or accumulate per-source then merge. (Java <code>ExecutorService</code> + <code>AtomicLong</code> masks; Python: process pool, GIL-bound otherwise.)</li>
+  <li><b>Streaming</b> &mdash; edges or label changes arrive online. On a new edge <code>u→v</code> or an updated <code>allow/disallow</code>, OR the delta forward to all descendants (BFS from the changed node) and recompute their <code>Effective</code> &mdash; no full re-propagation.</li>
+  <li><b>O(1)-space</b> &mdash; the masks are already O(1) <i>per node</i> (one int each); working space beyond the A/D arrays + topo queue is O(1). Output is inherently O(n) sets. Iterative Kahn avoids recursion entirely.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/" target="_blank" rel="noopener">#2192 &middot; All Ancestors of a Node in a DAG</a> &mdash; <b>Medium</b> &mdash; direct analog: propagate ancestor SETS in topo order (here: ids; this problem: letter masks)</li>
+  <li><a href="https://leetcode.com/problems/course-schedule-iv/" target="_blank" rel="noopener">#1462 &middot; Course Schedule IV</a> &mdash; <b>Medium</b> &mdash; transitive reachability closure (is u an ancestor of v)</li>
+  <li><a href="https://leetcode.com/problems/loud-and-rich/" target="_blank" rel="noopener">#851 &middot; Loud and Rich</a> &mdash; <b>Medium</b> &mdash; propagate a best-ancestor value over a DAG (DFS-memo)</li>
+  <li><a href="https://leetcode.com/problems/course-schedule-ii/" target="_blank" rel="noopener">#210 &middot; Course Schedule II</a> &mdash; <b>Medium</b> &mdash; the base Kahn topological order</li>
+</ul>
