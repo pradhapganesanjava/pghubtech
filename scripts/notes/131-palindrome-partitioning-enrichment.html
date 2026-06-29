@@ -1,0 +1,42 @@
+<!-- Enrichment APPENDED to #131's existing (Anki-imported) Drive note
+     palindrome-partitioning.html (id 16wJhkZ8NbjJOIgR9tIZ03qs794bjXBna).
+     Not a full note — this fragment was injected before </body> via a
+     direct drive.files.update, preserving the original card. Kept here for
+     reproducibility. -->
+<hr>
+<h2>&#128208; Pattern notes &mdash; Palindrome Partitioning (131)</h2>
+<h3>Backtracking (partition-on-string)</h3>
+<p>At each index, try every prefix that is a palindrome, recurse on the rest, then undo. Output size is exponential, so this is the intended approach (n &le; 16).</p>
+<pre>res = []
+def backtrack(start, path):
+    if start == len(s):
+        res.append(path[:]); return
+    for end in range(start + 1, len(s) + 1):
+        if isPal[start][end - 1]:
+            path.append(s[start:end])
+            backtrack(end, path)
+            path.pop()
+backtrack(0, [])
+return res</pre>
+<h3>isPal DP precompute (O(1) palindrome checks)</h3>
+<p>Precompute <code>isPal[i][j]</code> once so each prefix check in the backtracking is O(1) instead of O(len).</p>
+<pre>n = len(s)
+isPal = [[False] * n for _ in range(n)]
+for i in range(n - 1, -1, -1):
+    isPal[i][i] = True
+    for j in range(i + 1, n):
+        isPal[i][j] = s[i] == s[j] and (j - i &lt; 2 or isPal[i + 1][j - 1])</pre>
+<p>Build O(n&sup2;); backtracking explores O(2&#8319;) partitions, each appended in O(n).</p>
+<h3>Follow-up trio</h3>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; the search is a tree branching on the first palindrome prefix; fan those top-level branches across threads (each explores an independent set of partitions), then concatenate the per-branch result lists. Shared <code>isPal</code> is read-only.</li>
+  <li><b>Streaming</b> &mdash; characters arrive online: keep the DFS frontier of in-progress partitions and, on each new char, extend any partition whose pending suffix just became a palindrome &mdash; emit when a partition consumes the whole prefix.</li>
+  <li><b>O(1)-space</b> &mdash; enumeration is output-bound (exponentially many partitions), so O(1) extra isn't meaningful here. The optimal-space cousin is <b>#132 Palindrome Partitioning II</b> (min cuts) solved with O(n) DP, or a count-only pass that never materializes the lists.</li>
+</ul>
+<h3>Refer</h3>
+<ul>
+  <li><a href="https://leetcode.com/problems/palindrome-partitioning-ii/" target="_blank" rel="noopener">#132 &middot; Palindrome Partitioning II</a> &mdash; <b>Hard</b> &mdash; minimum cuts (DP, not enumeration)</li>
+  <li><a href="https://leetcode.com/problems/restore-ip-addresses/" target="_blank" rel="noopener">#93 &middot; Restore IP Addresses</a> &mdash; <b>Medium</b> &mdash; same partition-on-string backtracking</li>
+  <li><a href="https://leetcode.com/problems/word-break-ii/" target="_blank" rel="noopener">#140 &middot; Word Break II</a> &mdash; <b>Hard</b> &mdash; partition into dictionary words</li>
+  <li><a href="https://leetcode.com/problems/longest-palindromic-substring/" target="_blank" rel="noopener">#5 &middot; Longest Palindromic Substring</a> &mdash; <b>Medium</b> &mdash; the isPal / expand-around-center engine</li>
+</ul>
