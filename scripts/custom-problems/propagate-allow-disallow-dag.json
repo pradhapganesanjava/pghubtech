@@ -1,0 +1,18 @@
+{
+  "slug": "custom-propagate-allow-disallow-dag",
+  "frontend_id": "10050",
+  "title": "Propagate Allow/Disallow Labels on a DAG",
+  "difficulty": "Medium",
+  "topics": ["Graph", "Topological Sort", "Bit Manipulation"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::graph::dag",
+    "_prob::graph::ancestor-aggregate",
+    "_prob::bits::set-mask",
+    "pat_topic::topo-sort::kahn-bfs",
+    "pat_ds::graph::topo-sort::kahn-bfs",
+    "pat_ds::graph::core::ancestor-reachability"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>You are given a directed acyclic graph <code>G(V, E)</code>. Each node <code>v</code> has two sets of lowercase letters: <code>Allow(v)</code> and <code>Disallow(v)</code>. Constraints are <strong>transitive</strong> along paths: if there is a path from <code>u</code> to <code>v</code>, then <code>u</code>'s allow/disallow affect <code>v</code>.</p>\n  <p>For each node <code>v</code>, accumulate over all ancestors <code>x</code> of <code>v</code> (including <code>v</code> itself):</p>\n  <ul>\n    <li><code>A(v) = ⋃ Allow(x)</code></li>\n    <li><code>D(v) = ⋃ Disallow(x)</code></li>\n  </ul>\n  <p>The effective allowed set is <code>Effective(v) = A(v) \\ D(v)</code> (a letter disallowed by ANY ancestor is excluded, even if some ancestor allowed it).</p>\n  <h3>Input</h3>\n  <ul>\n    <li>First line: <code>n m</code> (#nodes, #edges).</li>\n    <li>Next <code>n</code> lines: <code>allow_i disallow_i</code> (lowercase a–z; <code>-</code> means empty).</li>\n    <li>Next <code>m</code> lines: <code>u v</code> meaning <code>u → v</code> (1-indexed), guaranteed acyclic.</li>\n  </ul>\n  <h3>Output</h3>\n  <p><code>n</code> lines; line <code>i</code> is <code>Effective(i)</code> in sorted order, or <code>-</code> if empty.</p>\n  <h3>Constraints</h3>\n  <ul><li>1 ≤ n ≤ 2·10^5, 0 ≤ m ≤ 2·10^5; alphabet fixed at 26.</li></ul>\n  <h3>Example</h3>\n  <pre>3 2\na -\n- b\nc -\n1 2\n2 3\n----\na\na\nac</pre>\n  <p><em>See <strong>Notes</strong> for the approach (topological-order bitmask propagation), the follow-up trio, and related problems.</em></p>\n</div>"
+}
