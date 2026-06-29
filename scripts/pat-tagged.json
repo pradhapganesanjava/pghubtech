@@ -5673,6 +5673,19 @@
     ]
   },
   {
+    "id": "715",
+    "title": "Range Module",
+    "difficulty": "Hard",
+    "topics": "Design; Segment Tree; Ordered Set",
+    "pat_ds": [
+      "pat_ds::array::core::ordered-interval-merge"
+    ],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design"
+    ]
+  },
+  {
     "id": "716",
     "title": "Max Stack",
     "difficulty": "Hard",
@@ -7752,6 +7765,18 @@
       "pat_topic::union-find::uf-with-size"
     ],
     "pat_group": []
+  },
+  {
+    "id": "1206",
+    "title": "Design Skiplist",
+    "difficulty": "Hard",
+    "topics": "Linked List; Design",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::self-ordered-structure"
+    ]
   },
   {
     "id": "1207",
@@ -10643,6 +10668,20 @@
     "pat_group": [
       "pat_group::design",
       "pat_group::design::reactive-filter-emit"
+    ]
+  },
+  {
+    "id": "10062",
+    "title": "Timestamped Record Store with Range Query",
+    "difficulty": "Medium",
+    "topics": "Design; Binary Search Tree; Binary Search",
+    "pat_ds": [
+      "pat_ds::bst::core::bst-insert-delete"
+    ],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::self-ordered-structure"
     ]
   }
 ]

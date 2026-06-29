@@ -536,6 +536,10 @@
     "pat_group::shortest-path",
     "pat_group::shortest-path::bfs"
   ],
+  "1206": [
+    "pat_group::design",
+    "pat_group::design::self-ordered-structure"
+  ],
   "1214": [
     "pat_group::sum"
   ],
@@ -750,5 +754,9 @@
   "10061": [
     "pat_group::design",
     "pat_group::design::reactive-filter-emit"
+  ],
+  "10062": [
+    "pat_group::design",
+    "pat_group::design::self-ordered-structure"
   ]
 }

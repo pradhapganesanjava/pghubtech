@@ -1,0 +1,17 @@
+{
+  "slug": "custom-timestamped-record-store",
+  "frontend_id": "10062",
+  "title": "Timestamped Record Store with Range Query",
+  "difficulty": "Medium",
+  "topics": ["Design", "Binary Search Tree", "Binary Search"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::bst::ordered",
+    "_prob::design::timestamp-range-store",
+    "pat_group::design",
+    "pat_group::design::self-ordered-structure",
+    "pat_ds::bst::core::bst-insert-delete"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Implement a record storage system where each record has <strong>content</strong> and a <strong>timestamp</strong>. Support:</p>\n  <ul>\n    <li><code>add(content, timestamp)</code></li>\n    <li><code>remove(timestamp)</code></li>\n    <li><code>search(timestamp)</code> — the record(s) at an exact timestamp</li>\n    <li><code>search(timestamp1, timestamp2)</code> — all records with timestamp in <code>[t1, t2]</code></li>\n  </ul>\n  <p><strong>You may not use a built-in ordered container (e.g. TreeMap)</strong> &mdash; implement the ordered index yourself.</p>\n  <h3>Example</h3>\n  <pre>add(\"a\", 1); add(\"b\", 5); add(\"c\", 3)\nsearch(3)        -> \"c\"\nsearch(1, 4)     -> [\"a\", \"c\"]      # timestamps 1 and 3\nremove(3); search(1, 4) -> [\"a\"]</pre>\n  <p><em>Roll your own ordered structure (BST / skip list / sorted array). See <strong>Notes</strong>.</em></p>\n</div>"
+}

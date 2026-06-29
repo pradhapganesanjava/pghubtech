@@ -1,0 +1,40 @@
+<h2>Approach &mdash; roll your own ordered index</h2>
+<p>TreeMap is banned, so implement the ordered structure. Three viable choices, trading insert cost against simplicity:</p>
+<table>
+  <tr><th>Structure</th><th>add / remove</th><th>search(t)</th><th>search(t1,t2)</th></tr>
+  <tr><td>Balanced BST / Skip list</td><td>O(log n)</td><td>O(log n)</td><td>O(log n + k)</td></tr>
+  <tr><td>Sorted array + binary search</td><td>O(n) (shift)</td><td>O(log n)</td><td>O(log n + k)</td></tr>
+  <tr><td>Plain BST</td><td>O(h)</td><td>O(h)</td><td>O(h + k)</td></tr>
+</table>
+
+<h3>BST + bounded in-order range query (the #938 trick)</h3>
+<pre>def search(root, t):                    # point lookup
+    while root:
+        if t == root.key: return root.val
+        root = root.left if t < root.key else root.right
+    return None
+
+def range_query(root, lo, hi, out):     # all keys in [lo, hi]
+    if not root: return
+    if root.key > lo:                    # only go left if keys < root could be >= lo
+        range_query(root.left, lo, hi, out)
+    if lo <= root.key <= hi:
+        out.append((root.key, root.val))
+    if root.key < hi:                    # only go right if keys > root could be <= hi
+        range_query(root.right, lo, hi, out)</pre>
+<p><code>add</code> = BST insert; <code>remove</code> = BST delete (two-child case: replace with in-order successor). Balance (AVL/red-black) or a skip list keeps everything O(log n). The pruning conditions are what keep the range walk at O(log n + k) instead of O(n).</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; reads (search / range) vs writes (add / remove): a <code>ReadWriteLock</code> on the tree (many readers, one writer), or a lock-free skip list (CAS on forward pointers) for high concurrency.</li>
+  <li><b>Streaming</b> &mdash; if timestamps arrive strictly increasing, appends keep a sorted array ordered in O(1) &mdash; no tree needed; range = two binary searches.</li>
+  <li><b>O(1)-space</b> &mdash; structure is inherently O(n); range query uses O(h) recursion (iterate with an explicit stack for O(1) beyond output).</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/design-skiplist/" target="_blank" rel="noopener">#1206 &middot; Design Skiplist</a> &mdash; <b>Hard</b> &mdash; implement an ordered structure (add/erase/search) without a built-in</li>
+  <li><a href="https://leetcode.com/problems/range-module/" target="_blank" rel="noopener">#715 &middot; Range Module</a> &mdash; <b>Hard</b> &mdash; add/remove/query over an ordered interval set</li>
+  <li><a href="https://leetcode.com/problems/range-sum-of-bst/" target="_blank" rel="noopener">#938 &middot; Range Sum of BST</a> &mdash; <b>Easy</b> &mdash; the bounded in-order range walk</li>
+  <li><a href="https://leetcode.com/problems/time-based-key-value-store/" target="_blank" rel="noopener">#981 &middot; Time Based Key-Value Store</a> &mdash; <b>Medium</b> &mdash; timestamp index via sorted array + binary search</li>
+</ul>

@@ -960,6 +960,8 @@ anchor_id,tag
 714,pat_topic::dp::state-machine-dp
 714,pat_ds::array::dp::state-machine-dp
 714,pat_group::buy-sell
+715,pat_ds::array::core::ordered-interval-merge
+715,pat_group::design
 716,pat_ds::stack::core::min-stack-design
 719,pat_topic::binary-search::bs-on-answer-compound
 719,pat_ds::array::binary-search::bs-on-answer-compound
@@ -1280,6 +1282,8 @@ anchor_id,tag
 1198,pat_ds::matrices::hash::freq-counter
 1202,pat_topic::union-find::uf-with-size
 1202,pat_ds::string::union-find::uf-with-size
+1206,pat_group::design
+1206,pat_group::design::self-ordered-structure
 1207,pat_ds::array::hash::freq-counter
 1209,pat_topic::stack-topic::parens-rewrite
 1209,pat_ds::string::stack-topic::parens-rewrite
@@ -1742,3 +1746,6 @@ anchor_id,tag
 10061,pat_group::design::reactive-filter-emit
 10061,pat_topic::hash::seen-set
 10061,pat_ds::array::hash::seen-set
+10062,pat_group::design
+10062,pat_group::design::self-ordered-structure
+10062,pat_ds::bst::core::bst-insert-delete
