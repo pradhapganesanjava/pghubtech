@@ -1,0 +1,19 @@
+{
+  "slug": "custom-compute-total-time-to-finish-all-courses",
+  "frontend_id": "10019",
+  "title": "Compute total time to finish all courses (per-task duration)",
+  "difficulty": "Medium",
+  "topics": ["Graph", "Topological Sort", "Dynamic Programming", "Breadth-First Search"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::graph::dag",
+    "_prob::graph::critical-path",
+    "pat_topic::topo-sort::dag-critical-path",
+    "pat_ds::graph::topo-sort::dag-critical-path",
+    "pat_ds::graph::core::dag-longest-path",
+    "pat_group::longest-path",
+    "pat_group::longest-path::lp-dag"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given a list of courses, each with prerequisite dependencies and a required time. Courses can run in parallel (in batches). Compute the shortest total time to finish <strong>all</strong> courses, assuming there are no cyclic dependencies.</p>\n  <h3>Input</h3>\n  <ul>\n    <li>A 2D array describing the schedule &mdash; each element gives a course's prerequisite dependencies (a batch of courses that must precede it).</li>\n    <li>A 1D array <code>time[]</code> giving each course's duration.</li>\n  </ul>\n  <h3>Output</h3>\n  <p>The shortest time to complete all courses. A course may start only once all of its prerequisites have finished; courses with no pending prerequisites run concurrently. If the dependencies contain a cycle, completion is impossible.</p>\n  <h3>Semantics of &quot;batch&quot; (clarify with the interviewer)</h3>\n  <ul>\n    <li><strong>Per-course start (critical path)</strong> &mdash; each course begins the instant its own prerequisites finish. <code>finish[v] = time[v] + max(finish[prereqs])</code>; answer = <code>max(finish)</code>. (Same as LC 2050 Parallel Courses III.)</li>\n    <li><strong>Barrier batches</strong> &mdash; every course in the current batch must finish before the next batch starts. answer = &Sigma; over batches of <code>max(time in batch)</code>. (Same shape as LC 1136 Parallel Courses, weighted.)</li>\n  </ul>\n  <h3>Example (critical path)</h3>\n  <pre>prerequisites = [[1, 0]]   # course 1 depends on course 0\ntime          = [3, 2]     # course 0 takes 3, course 1 takes 2\nresult        = 5          # 0 finishes at t=3, then 1 finishes at 3+2 = 5</pre>\n  <p><em>Cycle detection: run Kahn's algorithm &mdash; if fewer than n courses are dequeued, a cycle exists (impossible).</em></p>\n</div>"
+}

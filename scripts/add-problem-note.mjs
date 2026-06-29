@@ -36,8 +36,9 @@ const flag = (name) => { const i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 
 const SLUG     = ARGS.find(a => !a.startsWith('--') && a !== flag('--note') && a !== flag('--desc-json'))
 const NOTE_F   = flag('--note')
 const DESC_J   = flag('--desc-json')
-if (!SLUG || !NOTE_F) {
-  console.error('Usage: node scripts/add-problem-note.mjs <slug> --note body.html [--desc-json prob.json] [--write]')
+if (!SLUG || (!NOTE_F && !DESC_J)) {
+  console.error('Usage: node scripts/add-problem-note.mjs <slug> [--note body.html] [--desc-json prob.json] [--write]')
+  console.error('  (at least one of --note / --desc-json required)')
   process.exit(1)
 }
 
@@ -115,39 +116,38 @@ async function main() {
   const rowNum = idx + 2
   const existingId = ((await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range: `${TAB}!K${rowNum}` })).data.values?.[0]?.[0] || '').trim()
 
-  const body = await readFile(NOTE_F, 'utf8')
-  const wrapped = wrapNoteHtml(body.trim())
+  const wrapped = NOTE_F ? wrapNoteHtml((await readFile(NOTE_F, 'utf8')).trim()) : null
   let desc = null
   if (DESC_J) desc = JSON.parse(await readFile(DESC_J, 'utf8')).description_html ?? null
 
   console.log(`\n  Problem slug: ${SLUG}  (row ${rowNum})`)
-  console.log(`  Note body: ${NOTE_F} (${body.length} chars) → ${existingId ? 'UPDATE ' + existingId : 'CREATE <slug>.html'}`)
+  if (NOTE_F) console.log(`  Note body: ${NOTE_F} → ${existingId ? 'UPDATE ' + existingId : 'CREATE <slug>.html'}`)
   if (desc != null) console.log(`  Description (col J): rewrite from ${DESC_J} (${desc.length} chars)`)
   if (!DO_WRITE) { console.log('\n  [dry-run] pass --write to apply.\n'); return }
 
-  // Upload / update the note Drive file.
-  let driveId = existingId
-  if (driveId) {
-    await drive.files.update({ fileId: driveId, media: { mimeType: 'text/html', body: wrapped } })
-  } else {
-    driveId = (await drive.files.create({
-      requestBody: { name: `${SLUG}.html` },
-      media: { mimeType: 'text/html', body: wrapped },
-      fields: 'id',
-    })).data.id
+  // Upload / update the note Drive file (only when --note given) + write K/L.
+  if (NOTE_F) {
+    let driveId = existingId
+    if (driveId) {
+      await drive.files.update({ fileId: driveId, media: { mimeType: 'text/html', body: wrapped } })
+    } else {
+      driveId = (await drive.files.create({
+        requestBody: { name: `${SLUG}.html` },
+        media: { mimeType: 'text/html', body: wrapped },
+        fields: 'id',
+      })).data.id
+    }
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId, range: `${TAB}!K${rowNum}:L${rowNum}`, valueInputOption: 'RAW',
+      requestBody: { values: [[driveId, '1']] },
+    })
   }
-
-  // Write K (notes_drive_id) + L (has_notes), and optionally J (description).
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: sheetId, range: `${TAB}!K${rowNum}:L${rowNum}`, valueInputOption: 'RAW',
-    requestBody: { values: [[driveId, '1']] },
-  })
   if (desc != null) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId, range: `${TAB}!J${rowNum}`, valueInputOption: 'RAW',
       requestBody: { values: [[desc]] },
     })
   }
-  console.log(`\n  ✓ Note ${existingId ? 'updated' : 'created'} (${driveId}); K/L set${desc != null ? '; description rewritten' : ''}.\n`)
+  console.log(`\n  ✓ ${NOTE_F ? 'Note set; ' : ''}${desc != null ? 'description rewritten' : ''}.\n`)
 }
 main().catch(e => { console.error(e.message); process.exit(1) })
