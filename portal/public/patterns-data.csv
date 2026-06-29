@@ -1707,3 +1707,7 @@ anchor_id,tag
 10051,pat_topic::dfs::dfs-tree-orders
 10051,pat_ds::tree::dfs::dfs-tree-orders
 10051,pat_ds::tree::core::post-order-depth
+10052,pat_ds::tree::dp::tree-dp
+10052,pat_ds::tree::core::post-order-depth
+10052,pat_topic::dp::tree-reroot
+10052,pat_ds::tree::dp::tree-reroot

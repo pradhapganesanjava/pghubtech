@@ -717,6 +717,10 @@
     "1372": "Longest Zigzag Path. Per node return (longestGoingLeft, longestGoingRight)."
   },
 
+  "tree-reroot": {
+    "10052": "Height after removing a subtree. Fixed root: an Euler tour makes each subtree a contiguous range [tin,tout], so removing subtree(v) leaves height = max depth OUTSIDE that range (prefix/suffix max of depth over Euler order) — all v in O(n). Single removal is just one DFS skipping the subtree. The general 'every node as root' variant uses the down-pass + up-pass re-rooting with top-2 children."
+  },
+
   "permutation": {
     "46":  "Permutations. used[]; backtrack picking unused.",
     "47":  "Permutations II (dupes). Sort + skip a[j] if a[j]==a[j-1] AND !used[j-1] (depth-skip).",
