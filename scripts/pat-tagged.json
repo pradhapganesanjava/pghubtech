@@ -10546,5 +10546,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "10055",
+    "title": "Recipe Matching from a Contiguous Ingredient Run",
+    "difficulty": "Medium",
+    "topics": "String; Hash Function; Rolling Hash; Two Pointers; String Matching",
+    "pat_ds": [
+      "pat_ds::string::core::rolling-hash",
+      "pat_ds::string::core::string-match-kmp"
+    ],
+    "pat_topic": [],
+    "pat_group": []
   }
 ]
