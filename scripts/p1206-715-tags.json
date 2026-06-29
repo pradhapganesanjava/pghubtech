@@ -1,0 +1,4 @@
+{
+  "1206": ["pat_group::design", "pat_group::design::self-ordered-structure"],
+  "715":  ["pat_ds::array::core::ordered-interval-merge", "pat_group::design"]
+}
