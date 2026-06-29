@@ -57,6 +57,7 @@ anchor_id,tag
 27,pat_ds::array::core::in-place-read-write
 28,pat_ds::string::core::string-match-kmp
 28,pat_group::pattern-matching
+28,pat_ds::string::core::rolling-hash
 30,pat_ds::string::core::minimum-window
 30,pat_group::word-process
 31,pat_ds::array::backtrack::next-permutation-algo
@@ -357,6 +358,7 @@ anchor_id,tag
 187,pat_topic::bits::bitmask-enumerate
 187,pat_ds::string::bits::bitmask-enumerate
 187,pat_ds::string::hash::seen-set
+187,pat_ds::string::core::rolling-hash
 188,pat_topic::dp::state-machine-dp
 188,pat_ds::array::dp::state-machine-dp
 188,pat_group::buy-sell
@@ -1198,6 +1200,9 @@ anchor_id,tag
 1029,pat_topic::greedy::exchange-argument
 1029,pat_ds::array::greedy::exchange-argument
 1029,pat_group::scheduling
+1044,pat_ds::string::core::rolling-hash
+1044,pat_topic::binary-search::bs-on-answer
+1044,pat_ds::string::binary-search::bs-on-answer
 1047,pat_topic::stack-topic::parens-rewrite
 1047,pat_ds::string::stack-topic::parens-rewrite
 1048,pat_ds::array::dp::dp-lis
@@ -1389,6 +1394,7 @@ anchor_id,tag
 1396,pat_ds::linked-list::core::dll-cache-design
 1408,pat_ds::string::core::string-match-kmp
 1408,pat_group::pattern-matching
+1408,pat_ds::string::core::rolling-hash
 1423,pat_topic::sliding-window::sw-fixed
 1423,pat_ds::array::sliding-window::sw-fixed
 1426,pat_ds::array::hash::seen-set
