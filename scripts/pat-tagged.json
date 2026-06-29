@@ -10137,9 +10137,14 @@
     "difficulty": "Hard",
     "topics": "Tree; Depth-First Search; Greedy; Dynamic Programming",
     "pat_ds": [
-      "pat_ds::tree::dp::tree-dp"
+      "pat_ds::tree::dp::tree-dp",
+      "pat_ds::tree::dfs::dfs-tree-orders",
+      "pat_ds::tree::greedy::greedy-bounded-prune"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dfs::dfs-tree-orders",
+      "pat_topic::greedy::greedy-bounded-prune"
+    ],
     "pat_group": []
   },
   {

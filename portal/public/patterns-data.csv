@@ -1640,6 +1640,10 @@ anchor_id,tag
 10004,pat_ds::graph::topo-sort::kahn-bfs
 10005,pat_ds::graph::bfs::bfs-shortest-unweighted
 10006,pat_ds::tree::dp::tree-dp
+10006,pat_topic::dfs::dfs-tree-orders
+10006,pat_ds::tree::dfs::dfs-tree-orders
+10006,pat_topic::greedy::greedy-bounded-prune
+10006,pat_ds::tree::greedy::greedy-bounded-prune
 10007,pat_ds::tree::backtrack::subset-combination
 10008,pat_group::simulation
 10008,pat_group::simulation::board-validate

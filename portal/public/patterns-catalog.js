@@ -734,6 +734,12 @@ window.PG_PATTERNS = [
         cost: 'O(n log n) sort + O(n + Σqueries) sweep — the boundary advances at most n times total, not per query.',
         contrast: 'vs running-extreme (carries a running VALUE — min/max) — this carries a running INDEX/boundary. vs bs-textbook lower_bound (O(log n) PER query) — same block-start, but amortized to O(1) each by exploiting monotone queries. vs tp-converging (two ends inward) — a single same-direction forward boundary.',
         anchors: [1268] },
+      { id: 'greedy-bounded-prune', name: 'Greedy Bottom-Up Prune to a Bound',
+        when: 'Minimum deletions / cuts so a tree (or path) satisfies a depth / length / size bound.',
+        how: 'Post-order: carry the relevant measure (e.g. kept-height) up from the leaves; the moment a node would violate the bound, CUT that subtree link, count it, and contribute nothing upward. Cutting as high as still-valid removes the most violations per cut.',
+        cost: 'O(n).',
+        contrast: 'The greedy framing of a bound-constrained tree DP (height ≤ K). vs running-extreme (scalar scan) — this prunes a TREE bottom-up. Pairs with dfs::dfs-tree-orders (post-order) for the traversal.',
+        anchors: [10006] },
     ],
   },
 
