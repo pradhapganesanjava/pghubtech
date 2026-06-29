@@ -10628,5 +10628,21 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "10061",
+    "title": "Reactive Blacklist Filter Stream",
+    "difficulty": "Medium",
+    "topics": "Design; Hash Table; Data Stream",
+    "pat_ds": [
+      "pat_ds::array::hash::seen-set"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::seen-set"
+    ],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::reactive-filter-emit"
+    ]
   }
 ]
