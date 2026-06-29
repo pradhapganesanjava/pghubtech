@@ -10517,5 +10517,17 @@
       "pat_topic::dp::weighted-interval-schedule"
     ],
     "pat_group": []
+  },
+  {
+    "id": "10054",
+    "title": "Robot Collecting Candies on a Grid",
+    "difficulty": "Hard",
+    "topics": "Breadth-First Search; Matrix; Bitmask; Graph",
+    "pat_ds": [
+      "pat_ds::matrices::bfs::bfs-state-augmented",
+      "pat_ds::graph::core::bfs"
+    ],
+    "pat_topic": [],
+    "pat_group": []
   }
 ]

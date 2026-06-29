@@ -1713,3 +1713,5 @@ anchor_id,tag
 10052,pat_ds::tree::dp::tree-reroot
 10053,pat_topic::dp::weighted-interval-schedule
 10053,pat_ds::array::dp::weighted-interval-schedule
+10054,pat_ds::matrices::bfs::bfs-state-augmented
+10054,pat_ds::graph::core::bfs
