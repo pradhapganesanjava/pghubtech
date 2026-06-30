@@ -1,0 +1,36 @@
+<h2>Approach</h2>
+<h3>1) Prefix filter (set of deleted paths)</h3>
+<p>A path survives iff it is neither a deleted path nor a <b>descendant</b> of one. Put the delete list in a set; for each path, check itself and every ancestor prefix against the set.</p>
+<pre>deleted = set(to_delete)
+def keep(p):
+    parts = p.split('/')
+    for k in range(1, len(parts) + 1):        # every ancestor prefix incl. p
+        if '/'.join(parts[:k]) in deleted:    # p == d  OR  p sits under d/...
+            return False
+    return True
+return [p for p in paths if keep(p)]</pre>
+<p>O(total path segments). A cheaper membership test: descendant iff <code>p == d</code> or <code>p.startswith(d + \"/\")</code> for some deleted <code>d</code> &mdash; the trailing <code>/</code> avoids matching <code>\"California/San Franciscoland\"</code>.</p>
+
+<h3>2) Trie prune (the trie-basic route)</h3>
+<p>Insert every path as a chain of level-nodes into a trie. For each delete, navigate to that node and detach it from its parent &mdash; the whole subtree (all descendants) disappears in one cut. Then collect the surviving root-to-node paths. Better when deletes are many or you query repeatedly.</p>
+
+<h2>Edge cases</h2>
+<ul>
+  <li><b>Prefix collision:</b> <code>\"California/San Franciscoland\"</code> must NOT be removed by deleting <code>\"California/San Francisco\"</code> &mdash; compare on full segments (or <code>startswith(d + \"/\")</code>), not raw string prefix.</li>
+  <li><b>Delete order / overlap:</b> deleting an ancestor subsumes its descendants; redundant deletes are harmless with the set approach.</li>
+  <li>A deleted path not present in the input is a no-op.</li>
+</ul>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; the per-path <code>keep()</code> checks are independent (shared read-only deleted-set), so partition the path list across threads.</li>
+  <li><b>Streaming</b> &mdash; paths/deletes arrive online: maintain the trie; an <code>add</code> inserts a chain, a <code>delete</code> detaches a subtree &mdash; both O(depth), no full rescan.</li>
+  <li><b>O(1)-space</b> &mdash; the set-filter uses O(#deletes) beyond the output; the trie is O(total segments) but enables O(depth) deletes.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/remove-sub-folders-from-the-filesystem/" target="_blank" rel="noopener">#1233 &middot; Remove Sub-Folders from the Filesystem</a> &mdash; <b>Medium</b> &mdash; drop folders covered by a parent (same prefix-pruning)</li>
+  <li><a href="https://leetcode.com/problems/design-in-memory-file-system/" target="_blank" rel="noopener">#588 &middot; Design In-Memory File System</a> &mdash; <b>Hard</b> &mdash; trie over a path hierarchy</li>
+  <li><a href="https://leetcode.com/problems/implement-trie-prefix-tree/" target="_blank" rel="noopener">#208 &middot; Implement Trie</a> &mdash; <b>Medium</b> &mdash; the trie-basic building block</li>
+</ul>

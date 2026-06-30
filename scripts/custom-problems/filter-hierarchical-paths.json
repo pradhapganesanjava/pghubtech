@@ -1,0 +1,11 @@
+{
+  "slug": "custom-filter-hierarchical-paths-after-deletions",
+  "frontend_id": "10020",
+  "title": "Filter hierarchical paths after deletions",
+  "difficulty": "Medium",
+  "topics": ["Trie", "String", "Hash Table"],
+  "companies": ["Snowflake"],
+  "tags": ["_ds::trie::core", "_prob::trie::path-prune", "pat_ds::trie::core::trie-basic"],
+  "leetcode_url": "https://prachub.com/coding-questions/filter-hierarchical-paths-after-deletions",
+  "description_html": "<div>\n  <p>You are given:</p>\n  <ul>\n    <li>An array of strings representing <strong>hierarchical paths</strong>, e.g. <code>[\"California\", \"California/San Francisco\", \"California/San Francisco/7th Street\"]</code>.</li>\n    <li>A second array of strings representing <strong>paths to delete</strong>, e.g. <code>[\"California/San Francisco\"]</code>.</li>\n  </ul>\n  <p>Each string is a path in a hierarchy, with levels separated by <code>/</code>. When a path is deleted, that path <strong>and all of its descendant paths</strong> are removed. Return the remaining paths.</p>\n  <h3>Example</h3>\n  <pre>paths     = [\"California\", \"California/San Francisco\", \"California/San Francisco/7th Street\"]\ndelete    = [\"California/San Francisco\"]\n----\noutput    = [\"California\"]</pre>\n  <p>Deleting <code>California/San Francisco</code> also removes its descendant <code>California/San Francisco/7th Street</code>; <code>California</code> survives.</p>\n  <p><em>Prefix-based pruning over a path hierarchy (cf. LC 1233 Remove Sub-Folders). See <strong>Notes</strong>.</em></p>\n</div>"
+}
