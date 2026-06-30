@@ -1,0 +1,49 @@
+<h2>Part 1 &mdash; global shortest gap (single scan)</h2>
+<p>Walk left&rarr;right once, remembering the index of the most recent person and most recent cake. Each time you see one, the candidate gap to the last-seen opposite type on its left is <code>|i - last| - 1</code>; track the minimum. Comparing every adjacent person&harr;cake pair in one pass captures the global minimum.</p>
+<pre>def closest_gap(a):
+    last_person = last_cake = -1     # last seen indices (-1 = none yet)
+    best = INF
+    for i, v in enumerate(a):
+        if v == 1:                   # person
+            last_person = i
+            if last_cake >= 0: best = min(best, i - last_cake - 1)
+        elif v == 2:                 # cake
+            last_cake = i
+            if last_person >= 0: best = min(best, i - last_person - 1)
+    return best if best < INF else -1</pre>
+<p><b>O(n)</b> time, O(1) space. The <code>- 1</code> converts index distance into the "empty spots between" gap (adjacent &rarr; 0).</p>
+
+<h2>Follow-up &mdash; which cake does person p eat</h2>
+<p>From person <code>p</code>, scan left and right for the nearest cake (a <code>2</code>); return the closer index (ties not required). This is exactly <b>#10060 Nearest Cake on a Line</b>.</p>
+<pre>def nearest_cake(a, p):
+    L = R = -1
+    for i in range(p, -1, -1):
+        if a[i] == 2: L = i; break
+    for j in range(p, len(a)):
+        if a[j] == 2: R = j; break
+    if L < 0 and R < 0: return -1
+    if L < 0: return R
+    if R < 0: return L
+    return L if (p - L) <= (R - p) else R</pre>
+<p>For many person queries, a two-pass (nearest-cake-to-left, nearest-cake-to-right) answers all in O(n) total &mdash; the #821 pattern.</p>
+
+<h2>Relation</h2>
+<ul>
+  <li><b>#10059</b> &mdash; the 2D grid version (global min via multi-source BFS).</li>
+  <li><b>#10060</b> &mdash; the per-person 1D version (= this follow-up).</li>
+  <li>Distinction here: 3 symbols (0/1/2) and the <b>gap distance</b> <code>|i-j|-1</code> instead of index difference.</li>
+</ul>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; Part 1 is a reduction (per-segment min gap, merged at boundaries); the two directional passes of the follow-up are independent.</li>
+  <li><b>Streaming</b> &mdash; values arrive online: keep last-person / last-cake indices and update the running min gap in O(1) per element.</li>
+  <li><b>O(1)-space</b> &mdash; Part 1 already O(1); the all-persons follow-up needs O(n) for the two nearest-cake arrays.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/shortest-distance-to-a-character/" target="_blank" rel="noopener">#821 &middot; Shortest Distance to a Character</a> &mdash; <b>Easy</b> &mdash; 1D nearest occurrence, two-pass</li>
+  <li><a href="https://leetcode.com/problems/maximize-distance-to-closest-person/" target="_blank" rel="noopener">#849 &middot; Maximize Distance to Closest Person</a> &mdash; <b>Medium</b> &mdash; gaps between occupied seats on a line</li>
+  <li><a href="https://leetcode.com/problems/01-matrix/" target="_blank" rel="noopener">#542 &middot; 01 Matrix</a> &mdash; <b>Medium</b> &mdash; the 2D nearest-source generalization</li>
+</ul>
