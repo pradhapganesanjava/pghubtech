@@ -1751,3 +1751,7 @@ anchor_id,tag
 10062,pat_ds::bst::core::bst-insert-delete
 10063,pat_group::simulation
 10063,pat_group::simulation::board-validate
+10064,pat_group::design
+10064,pat_group::design::soft-delete-tree
+10064,pat_topic::dfs::dfs-tree-orders
+10064,pat_ds::tree::dfs::dfs-tree-orders

@@ -1,0 +1,33 @@
+<h2>Design</h2>
+<p>An n-ary tree with insertion-ordered children and a per-node active flag. Soft delete = flip the flag; never remove the node, so its subtree stays reachable.</p>
+<pre>children = defaultdict(list)            # parentId -> child ids, insertion order
+active   = defaultdict(lambda: True)
+
+def addChild(p, c):  children[p].append(c)      # append => oldest..newest. O(1)
+def markInactive(e): active[e] = False           # tombstone, keep in tree. O(1)
+
+def getActiveOrder():
+    out = []
+    def dfs(e):
+        if active[e]:                            # gate EMISSION on active...
+            out.append(e)
+        for c in children[e]:                    # ...but ALWAYS recurse children
+            dfs(c)
+    dfs(ROOT)
+    return out                                   # pre-order, oldest..newest</pre>
+<p><b>The whole trick:</b> the <code>active</code> check guards whether you <i>output</i> the node, <b>not</b> whether you recurse. An inactive parent is skipped from the list but its active descendants still appear (in hierarchy order). <code>addChild</code>/<code>markInactive</code> O(1); <code>getActiveOrder</code> O(n).</p>
+<p>Children are kept in a list and appended, so insertion order = visit order for free. (If entities can also be re-activated, <code>markActive</code> just flips the flag back &mdash; no structural change.)</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; disjoint subtrees are independent: parallel DFS over the root's children, concatenating per-subtree ordered lists. <code>markInactive</code> vs <code>getActiveOrder</code> need a read/write lock (or a snapshot of the active flags) so a traversal sees a consistent view.</li>
+  <li><b>Streaming</b> &mdash; <code>addChild</code>/<code>markInactive</code> arrive online; the structure is already incremental. For frequent <code>getActiveOrder</code> calls, cache the order and invalidate only the affected subtree on change.</li>
+  <li><b>O(1)-space</b> &mdash; traversal is O(height) recursion (iterative explicit stack to avoid it); the output is inherently O(active count). The tree itself is O(n).</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/n-ary-tree-preorder-traversal/" target="_blank" rel="noopener">#589 &middot; N-ary Tree Preorder Traversal</a> &mdash; <b>Easy</b> &mdash; the visit-node-then-children-in-order core</li>
+  <li><a href="https://leetcode.com/problems/clone-n-ary-tree/" target="_blank" rel="noopener">#1490 &middot; Clone N-ary Tree</a> &mdash; <b>Medium</b> &mdash; n-ary structure handling</li>
+  <li><a href="https://leetcode.com/problems/delete-nodes-and-return-forest/" target="_blank" rel="noopener">#1110 &middot; Delete Nodes And Return Forest</a> &mdash; <b>Medium</b> &mdash; node removal while preserving the rest (contrast: hard delete vs this soft delete)</li>
+</ul>
