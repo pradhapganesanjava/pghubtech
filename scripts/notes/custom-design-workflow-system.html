@@ -35,6 +35,23 @@
   <li><b>clone()</b> &mdash; recreate every node, then re-link edges via an old&rarr;new mapping, so the copy shares no objects with the original (key point of #133 / #138).</li>
 </ul>
 
+<h3>Per-task execution order (DFS post-order)</h3>
+<p>When the ask is "print the order for a <b>specific</b> task" (e.g. Task A &rarr; <code>C B A</code>), don't run a global Kahn sort &mdash; do a <b>post-order DFS</b> from that task: recurse into each dependency first, then append the task itself. The result is a topological order rooted at the task, and a 3-color marking detects cycles in the same pass.</p>
+<pre>WHITE, GRAY, BLACK = 0, 1, 2          # unseen / in-progress / done
+
+def exec_order(task, deps):            # deps[t] = tasks that t depends on
+    color = defaultdict(int); out = []
+    def dfs(t):
+        color[t] = GRAY
+        for dep in deps[t]:
+            if color[dep] == GRAY: raise CycleError   # back-edge => cycle
+            if color[dep] == WHITE: dfs(dep)
+        color[t] = BLACK
+        out.append(t)                  # task printed AFTER its dependencies
+    dfs(task)
+    return out                          # exec_order(A) -> [C, B, A]</pre>
+<p>The GRAY (in-progress) mark is the key: hitting a GRAY node means a back-edge, i.e. a cycle. This is the recursive single-root counterpart to the global Kahn order above &mdash; same topological guarantee, and it doubles as Part 4's cycle check.</p>
+
 <h2>Follow-up trio</h2>
 <ul>
   <li><b>Multi-threaded</b> &mdash; run <code>order()</code> wave-by-wave (each Kahn layer is an independent batch executable in parallel); guard the shared indegree counters with atomics. Clone's per-node copies are independent.</li>
