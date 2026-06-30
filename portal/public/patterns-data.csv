@@ -1749,3 +1749,5 @@ anchor_id,tag
 10062,pat_group::design
 10062,pat_group::design::self-ordered-structure
 10062,pat_ds::bst::core::bst-insert-delete
+10063,pat_group::simulation
+10063,pat_group::simulation::board-validate

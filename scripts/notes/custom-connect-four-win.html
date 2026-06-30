@@ -1,0 +1,31 @@
+<h2>Approach &mdash; scan 4 axes from the last move</h2>
+<p>Only the <b>just-placed</b> piece can complete a line, so there's no need to rescan the whole board. From <code>(r, c)</code> for player <code>P</code>, check each of the four axes; for each, count consecutive <code>P</code> cells in <b>both</b> directions and add 1 for the move itself.</p>
+<pre>def result(board, r, c, P):
+    m, n = len(board), len(board[0])
+    def walk(dr, dc):
+        cnt, i, j = 0, r + dr, c + dc
+        while 0 <= i < m and 0 <= j < n and board[i][j] == P:
+            cnt += 1; i += dr; j += dc
+        return cnt
+    for dr, dc in ((0,1), (1,0), (1,1), (1,-1)):   # H, V, diag, anti-diag
+        if 1 + walk(dr, dc) + walk(-dr, -dc) >= 4:
+            return f"{P} wins"
+    return "draw" if all(board[i][j] != '.' for i in range(m) for j in range(n)) else "ongoing"</pre>
+<p><b>O(1)</b> per move for a fixed target length (4 axes &times; 2 directions &times; &le;3 steps); O(k) for a general k-in-a-row. Each axis pairs a direction with its opposite so a piece in the <i>middle</i> of a run is still detected.</p>
+
+<h3>If gravity applies (real Connect Four)</h3>
+<p>A move drops to the lowest empty cell of a column: <code>r = </code> the lowest empty row in column <code>c</code>. The win check is identical once you know the landing cell.</p>
+
+<h2>Follow-up trio</h2>
+<ul>
+  <li><b>Multi-threaded</b> &mdash; the 4 axis checks are independent and can run in parallel (trivial fan-out), short-circuiting on the first win. For many concurrent games, shard by board id.</li>
+  <li><b>Streaming</b> &mdash; moves arrive as a sequence: keep the board and run the O(1) last-move check per move &mdash; never a full-board rescan. (Optionally cache per-cell run-lengths in each direction to update incrementally.)</li>
+  <li><b>O(1)-space</b> &mdash; the scan uses O(1) beyond the board; the draw check is O(mn) but can be replaced by a running filled-count incremented per move.</li>
+</ul>
+
+<h2>Refer &mdash; related LeetCode problems</h2>
+<ul>
+  <li><a href="https://leetcode.com/problems/check-if-move-is-legal/" target="_blank" rel="noopener">#1958 &middot; Check if Move is Legal</a> &mdash; <b>Medium</b> &mdash; directional line-scan from a placed piece (Othello; 8 directions)</li>
+  <li><a href="https://leetcode.com/problems/design-tic-tac-toe/" target="_blank" rel="noopener">#348 &middot; Design Tic-Tac-Toe</a> &mdash; <b>Medium</b> &mdash; move-based win check with per-line counters</li>
+  <li><a href="https://leetcode.com/problems/valid-tic-tac-toe-state/" target="_blank" rel="noopener">#794 &middot; Valid Tic-Tac-Toe State</a> &mdash; <b>Medium</b> &mdash; board-state validation</li>
+</ul>
