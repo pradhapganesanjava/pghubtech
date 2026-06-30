@@ -10711,5 +10711,16 @@
       "pat_group::design",
       "pat_group::design::soft-delete-tree"
     ]
+  },
+  {
+    "id": "10065",
+    "title": "Closest Person-to-Cake Gap on a Line",
+    "difficulty": "Easy",
+    "topics": "Two Pointers; Array",
+    "pat_ds": [
+      "pat_ds::array::two-pointers::tp-merge-walk"
+    ],
+    "pat_topic": [],
+    "pat_group": []
   }
 ]

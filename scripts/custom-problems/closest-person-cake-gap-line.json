@@ -1,0 +1,15 @@
+{
+  "slug": "custom-closest-person-cake-gap-line",
+  "frontend_id": "10065",
+  "title": "Closest Person-to-Cake Gap on a Line",
+  "difficulty": "Easy",
+  "topics": ["Two Pointers", "Array"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::array::line",
+    "_prob::array::nearest-1d-gap",
+    "pat_ds::array::two-pointers::tp-merge-walk"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given an array where <code>0</code> = empty spot, <code>1</code> = person, <code>2</code> = cake. The distance between a person and a cake is the <strong>number of empty spots between them</strong> &mdash; i.e. <code>|i - j| - 1</code>, not the index difference.</p>\n  <p>Return the <strong>shortest distance</strong> between any person and any cake.</p>\n  <h3>Examples</h3>\n  <pre>[1, 0, 2] -> 1     # gap of 1 empty spot\n[1, 1, 2] -> 0     # adjacent, 0 empty between</pre>\n  <h3>Follow-up</h3>\n  <p>Each person goes for the closest cake. Given a person's index, return which <strong>cake index</strong> they end up eating. (No need to handle conflicts or ties.)</p>\n  <p><em>1D person/cake nearest &mdash; the line companion of #10059 / #10060. See <strong>Notes</strong>.</em></p>\n</div>"
+}
