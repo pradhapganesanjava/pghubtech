@@ -14,6 +14,15 @@
         frontier = nxt
     return len(seen)</pre>
 
+<h3>Tree fast-path (guaranteed acyclic)</h3>
+<p>If the topology is a <b>tree</b> (N-ary, no cycles), no visited set is needed for correctness &mdash; the count is a clean fan-out recursion: ask each node for its children, await the replies, and sum.</p>
+<pre>def count(node):
+    sendAsyncMessage(node)                 # request this node's children
+    children = receiveMessage()            # its direct children
+    return 1 + sum(count(c) for c in children)   # 1 (self) + subtree counts
+# concurrently: fan the children out in parallel and sum the replies</pre>
+<p>Structure is the same minus the dedup: <code>count = 1 + &Sigma; count(child)</code>. <b>Retries still need idempotency</b> though &mdash; a re-delivered reply must not be summed twice, so dedup by node/request id (or make each parent count its children exactly once). The visited-set is only droppable for the <i>cycle</i> concern, not the <i>retry</i> concern.</p>
+
 <h3>Follow-up 1 &mdash; return the structure, not the count</h3>
 <p>Instead of a counter, record <code>adj[node] = [neighbors]</code> as replies arrive &mdash; that adjacency map IS the cluster topology. Recreating nodes + relinking via an old&rarr;new map is exactly <b>Clone Graph (#133)</b>.</p>
 
