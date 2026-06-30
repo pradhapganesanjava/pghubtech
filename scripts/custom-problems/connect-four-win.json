@@ -1,0 +1,16 @@
+{
+  "slug": "custom-connect-four-win",
+  "frontend_id": "10063",
+  "title": "Connect Four Win Detection",
+  "difficulty": "Medium",
+  "topics": ["Array", "Matrix", "Simulation"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::matrices::grid",
+    "_prob::game::connect-four-win",
+    "pat_group::simulation",
+    "pat_group::simulation::board-validate"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Given an <code>m x n</code> board with some pieces already placed, the coordinates of the <strong>current move</strong>, and the player who made it (<code>\"a\"</code> or <code>\"b\"</code>), determine the result: that player <strong>wins</strong> if the move completes <strong>4 consecutive pieces</strong> horizontally, vertically, or diagonally; otherwise the game is <strong>ongoing</strong> (or a draw if the board is full).</p>\n  <h3>Input</h3>\n  <ul><li>the board, the move <code>(r, c)</code>, and the player name.</li></ul>\n  <h3>Output</h3>\n  <p>The result of this move: win / draw / ongoing.</p>\n  <h3>Example</h3>\n  <pre>board row r:  . a a a a .     # player 'a' just placed the 4th 'a'\nmove = (r, c) of the new 'a'\n----\n\"a wins\"   (4 consecutive horizontally)</pre>\n  <p><em>Only the last move can complete a line &mdash; scan the 4 axes from (r,c). See <strong>Notes</strong>.</em></p>\n</div>"
+}

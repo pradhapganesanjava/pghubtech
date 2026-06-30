@@ -10683,5 +10683,17 @@
       "pat_group::design",
       "pat_group::design::self-ordered-structure"
     ]
+  },
+  {
+    "id": "10063",
+    "title": "Connect Four Win Detection",
+    "difficulty": "Medium",
+    "topics": "Array; Matrix; Simulation",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation",
+      "pat_group::simulation::board-validate"
+    ]
   }
 ]
