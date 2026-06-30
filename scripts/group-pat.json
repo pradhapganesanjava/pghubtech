@@ -762,5 +762,9 @@
   "10063": [
     "pat_group::simulation",
     "pat_group::simulation::board-validate"
+  ],
+  "10064": [
+    "pat_group::design",
+    "pat_group::design::soft-delete-tree"
   ]
 }

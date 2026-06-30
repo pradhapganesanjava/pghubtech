@@ -10695,5 +10695,21 @@
       "pat_group::simulation",
       "pat_group::simulation::board-validate"
     ]
+  },
+  {
+    "id": "10064",
+    "title": "Active-Order Hierarchy with Soft Delete",
+    "difficulty": "Medium",
+    "topics": "Design; Tree; Depth-First Search",
+    "pat_ds": [
+      "pat_ds::tree::dfs::dfs-tree-orders"
+    ],
+    "pat_topic": [
+      "pat_topic::dfs::dfs-tree-orders"
+    ],
+    "pat_group": [
+      "pat_group::design",
+      "pat_group::design::soft-delete-tree"
+    ]
   }
 ]

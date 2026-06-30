@@ -1,0 +1,18 @@
+{
+  "slug": "custom-active-order-soft-delete-hierarchy",
+  "frontend_id": "10064",
+  "title": "Active-Order Hierarchy with Soft Delete",
+  "difficulty": "Medium",
+  "topics": ["Design", "Tree", "Depth-First Search"],
+  "companies": ["Snowflake"],
+  "tags": [
+    "_ds::tree::n-ary",
+    "_prob::design::soft-delete-hierarchy",
+    "pat_group::design",
+    "pat_group::design::soft-delete-tree",
+    "pat_topic::dfs::dfs-tree-orders",
+    "pat_ds::tree::dfs::dfs-tree-orders"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Manage a hierarchy of entities with one root. Each entity may have children, ordered by the time they were added (earlier children first). Entities can become <strong>inactive</strong>, but stay in the hierarchy because their children may still be active.</p>\n  <p>Implement:</p>\n  <ul>\n    <li><code>addChild(parentId, childId)</code></li>\n    <li><code>markInactive(entityId)</code></li>\n    <li><code>getActiveOrder()</code> &mdash; all <strong>active</strong> entities in hierarchy order: start at the root, visit an entity before its children, visit children oldest&rarr;newest, and <strong>skip inactive entities themselves but still traverse their children</strong>.</li>\n  </ul>\n  <h3>Example</h3>\n  <pre>addChild(root, A); addChild(root, B); addChild(B, C); addChild(B, D)\nmarkInactive(B)\ngetActiveOrder() -> [root, A, C, D]   # B skipped, its children C,D still listed</pre>\n  <p><em>Pre-order traversal where the active check gates EMISSION, not recursion. See <strong>Notes</strong>.</em></p>\n</div>"
+}
