@@ -912,6 +912,12 @@ window.PG_PATTERNS = [
         cost: 'O(n + ops).',
         contrast: 'Inverse of prefix sum — adds at range borders, integrates once.',
         anchors: [370, 1109, 1854, 1893] },
+      { id: 'partition-pivot', name: 'Prefix/Suffix Split-Point Sweep',
+        when: 'Minimize a cost that splits at a pivot j: everything left plays one role, everything right the opposite (open/closed, keep-a/keep-b, 0s/1s).',
+        how: 'Cost(j) = f(prefix[0,j)) + g(suffix[j,n)). Seed from j=0 (whole string on one side), sweep j left→right updating both sides incrementally in O(1); track min cost + earliest j.',
+        cost: 'O(n) time, O(1) space (running counters) — no need to materialize prefix/suffix arrays.',
+        contrast: 'vs ps-1d (static range QUERIES, no optimization) — this OPTIMIZES over the split. vs running-extreme (one running value, no two-sided split) — this balances a prefix cost against a suffix cost. The greedy running-counter form is the space-optimized version of two prefix arrays.',
+        anchors: [2483, 1653, 926] },
     ],
   },
 

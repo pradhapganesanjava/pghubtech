@@ -1134,6 +1134,10 @@ anchor_id,tag
 923,pat_ds::array::two-pointers::tp-k-sum
 923,pat_group::sum
 924,pat_ds::graph::union-find::uf-with-size
+926,pat_ds::string::prefix-sum::partition-pivot
+926,pat_topic::prefix-sum::partition-pivot
+926,pat_group::partition
+926,pat_topic::greedy::running-extreme
 930,pat_topic::sliding-window::sw-at-most-k
 930,pat_ds::array::sliding-window::sw-at-most-k
 930,pat_group::sum
@@ -1467,6 +1471,10 @@ anchor_id,tag
 1647,pat_group::min-change
 1648,pat_ds::array::binary-search::bs-on-answer
 1650,pat_ds::tree::core::lca-dfs
+1653,pat_ds::string::prefix-sum::partition-pivot
+1653,pat_topic::prefix-sum::partition-pivot
+1653,pat_group::partition
+1653,pat_topic::greedy::running-extreme
 1657,pat_ds::string::hash::freq-counter
 1668,pat_ds::string::dp::dp-1d-linear
 1671,pat_ds::array::dp::dp-lis
@@ -1615,6 +1623,10 @@ anchor_id,tag
 2461,pat_group::sum
 2462,pat_ds::array::heap::top-k
 2477,pat_ds::tree::dp::tree-dp
+2483,pat_ds::string::prefix-sum::partition-pivot
+2483,pat_topic::prefix-sum::partition-pivot
+2483,pat_group::partition
+2483,pat_topic::greedy::running-extreme
 2492,pat_ds::graph::union-find::uf-with-size
 2517,pat_topic::binary-search::bs-on-answer-compound
 2517,pat_ds::array::binary-search::bs-on-answer-compound
