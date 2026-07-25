@@ -4097,6 +4097,13 @@ body.resizing-h * {
 .doc-detail-hd > span {
   cursor: pointer;
 }
+/* Title must ellipsize BEFORE the centered timer (which is absolutely centered
+   at left:50%). Cap it to the left half minus the timer's half-width + a gap so
+   it never runs under the timer at any window size. */
+.doc-detail-title {
+  min-width: 0;
+  max-width: calc(50% - 48px);
+}
 
 /* Per-problem study timer — centered in the doc-detail-hd header.
    pointer-events:none so the header's double-click (snap divider) still fires

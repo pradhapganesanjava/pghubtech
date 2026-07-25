@@ -3,12 +3,7 @@ import type { AnkiNote, AnkiTemplate, AnkiField } from '../adapters/ankiRepo'
 import { saveAnkiNote } from '../adapters/ankiRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
 import { GAuth } from '../lib/gauth'
-import {
-  getOrCreateImageFolder,
-  inferFilename,
-  uploadImageBlob,
-  uploadInlineImages,
-} from '../lib/driveImages'
+import { inlineImagesToDataUri, blobToDataUri } from '../lib/driveImages'
 import { resolveDriveImagesInHtml as resolveDriveImages } from '../lib/drive'
 import { sanitizeHtml } from '../lib/sanitize'
 import RichEditor from './RichEditor'
@@ -241,35 +236,29 @@ export default function NoteDetailPanel({
     t => !editTags.includes(t) && (!draftTag || t.toLowerCase().includes(draftTag.toLowerCase()))
   ).slice(0, 10)
 
-  async function handlePasteImage(blob: Blob): Promise<string> {
-    const token = GAuth.getToken()
-    if (!token) throw new Error('not signed in')
-    const folderId = await getOrCreateImageFolder(token)
-    const driveUrl = await uploadImageBlob(token, folderId, blob, inferFilename(blob))
-    // Local blob URL for immediate display; map it back to the Drive URL so
-    // the saved HTML references Drive (not a transient blob: URL).
-    const blobUrl  = URL.createObjectURL(blob)
-    blobUrlsRef.current.push(blobUrl)
-    blobToDriveRef.current.set(blobUrl, driveUrl)
-    return blobUrl
+  // Inline pasted images as self-contained data: URIs so the saved HTML loads
+  // without the portal's OAuth token (e.g. when copied into Anki). The
+  // blobToDrive map is still populated by resolveDriveImages for images that
+  // already live on Drive from before this change.
+  function handlePasteImage(blob: Blob): Promise<string> {
+    return blobToDataUri(blob)
   }
 
   // Prep field HTML for the sheet:
-  //   1. Rewrite known blob: URLs back to Drive URLs (paste & resolve maps).
-  //   2. Upload any leftover data:/blob: images; throw on failure so we never
-  //      silently store an unloadable URL.
+  //   1. Rewrite resolved blob: URLs back to their pre-existing Drive URLs
+  //      (images that were already Drive-hosted before the inline-image change).
+  //   2. Inline any leftover blob: images as data: URIs; throw on failure so we
+  //      never silently store an unloadable URL.
   //   3. Sanitise — strips event-handler attrs / javascript: hrefs / scripts
   //      so untrusted content already in the sheet (e.g. migrated Anki decks)
   //      gets cleaned on first save.
   async function normalizeFieldsForSave(
     fields: Record<string, string>,
   ): Promise<Record<string, string>> {
-    const token = GAuth.getToken()
-    if (!token) throw new Error('not signed in')
     const out: Record<string, string> = {}
     for (const [k, v] of Object.entries(fields)) {
       let html = blobUrlsToDrive(v, blobToDriveRef.current)
-      html = await uploadInlineImages(html, token)
+      html = await inlineImagesToDataUri(html)
       html = sanitizeHtml(html)
       out[k] = html
     }

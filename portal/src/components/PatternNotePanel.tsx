@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import RichEditor from './RichEditor'
 import { sanitizeHtml } from '../lib/sanitize'
 import { fetchDriveFile, resolveDriveImagesInHtml } from '../lib/drive'
-import { getOrCreateImageFolder, uploadImageBlob, inferFilename, uploadInlineImages } from '../lib/driveImages'
+import { inlineImagesToDataUri, blobToDataUri } from '../lib/driveImages'
 import { GAuth } from '../lib/gauth'
 import { getPatternNote, savePatternNote, deletePatternNote } from '../adapters/patternNotesRepo'
 
@@ -86,25 +86,20 @@ export default function PatternNotePanel({ open, noteKey, title, onClose, onSave
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, noteKey])
 
-  async function handlePasteImage(blob: Blob): Promise<string> {
-    const token = GAuth.getToken()
-    if (!token) throw new Error('not signed in')
-    const folderId = await getOrCreateImageFolder(token)
-    const driveUrl = await uploadImageBlob(token, folderId, blob, inferFilename(blob))
-    const blobUrl  = URL.createObjectURL(blob)
-    blobUrlsRef.current.push(blobUrl)
-    blobToDriveRef.current.set(blobUrl, driveUrl)
-    return blobUrl
+  // Inline pasted images as self-contained data: URIs so the saved note loads
+  // without the portal's OAuth token (e.g. when copied into Anki). The
+  // blobToDrive map still handles images already Drive-hosted before this change.
+  function handlePasteImage(blob: Blob): Promise<string> {
+    return blobToDataUri(blob)
   }
 
   async function save() {
     if (busy) return
     setBusy(true); setErr('')
     try {
-      const token = GAuth.getToken()
-      if (!token) throw new Error('Not signed in — sign in to the portal first.')
+      if (!GAuth.getToken()) throw new Error('Not signed in — sign in to the portal first.')
       let html = blobUrlsToDrive(editorHtml, blobToDriveRef.current)
-      html = await uploadInlineImages(html, token)
+      html = await inlineImagesToDataUri(html)
       html = sanitizeHtml(html)
       await savePatternNote(noteKey, title, html)
       setViewHtml(sanitizeHtml(editorHtml))   // editor's blob: urls stay valid this session
