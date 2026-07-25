@@ -8,10 +8,7 @@ import { appendAnkiNote } from '../adapters/ankiRepo'
 import { generateAnkiNoteForTemplate } from '../lib/ankiNoteGen'
 import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
-import { GAuth } from '../lib/gauth'
-import {
-  uploadInlineImages, uploadImageBlob, inferFilename, getOrCreateImageFolder,
-} from '../lib/driveImages'
+import { inlineImagesToDataUri, blobToDataUri } from '../lib/driveImages'
 import RichEditor from './RichEditor'
 import { useToast } from './Toast'
 
@@ -224,14 +221,12 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
     t => !tags.includes(t) && (!draftTag || t.toLowerCase().includes(draftTag.toLowerCase()))
   ).slice(0, 10)
 
-  // Upload a pasted-image blob to Drive and return the Drive URL — used by
-  // RichEditor's onPasteImage so the inserted <img> never carries a giant
-  // base64 data: URL (which would bloat the cell past Sheets' 50k limit).
-  async function pasteImageToDrive(blob: Blob): Promise<string> {
-    const token = GAuth.getToken()
-    if (!token) throw new Error('Not signed in — sign in first')
-    const folderId = await getOrCreateImageFolder(token)
-    return uploadImageBlob(token, folderId, blob, inferFilename(blob))
+  // Inline a pasted-image blob as a self-contained data: URI — used by
+  // RichEditor's onPasteImage. The image travels inside the field HTML so it
+  // loads without the portal's OAuth token (e.g. when copied into Anki).
+  // Oversized cells are offloaded to Drive by driveFields.ts on save.
+  function pasteImageInline(blob: Blob): Promise<string> {
+    return blobToDataUri(blob)
   }
 
   async function handleSave() {
@@ -239,31 +234,21 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
     if (!deck.trim())       { setError('Enter a deck name.'); return }
     setSaving(true); setError('')
     try {
-      // Pre-flight #1: sweep any blob:/data:image/ URLs that slipped past
-      // the paste handler (e.g. user pasted HTML from another tab) and
-      // upload them to Drive in place. Without this they'd either explode
-      // the cell size (data:) or break on reload (blob:).
-      const token = GAuth.getToken()
-      let processedFields = fields
-      if (token) {
-        const next: Record<string, string> = { ...fields }
-        let touched = false
-        for (const f of selectedTemplate.fields) {
-          const v = next[f.key]
-          if (!v) continue
-          if (!(f.type === 'html' || f.isFront || f.isBack)) continue
-          if (!/<img[^>]+src="(?:data:image\/|blob:)/i.test(v)) continue
-          next[f.key] = await uploadInlineImages(v, token)
-          touched = true
-        }
-        if (touched) {
-          processedFields = next
-          // Reflect the upload in the open modal so the user sees the
-          // Drive-hosted URLs (helps if the next pre-flight check below
-          // still flags an oversized field — they can edit knowingly).
-          setFields(next)
-        }
+      // Pre-flight: inline any transient blob: image URLs that slipped past
+      // the paste handler (e.g. user pasted HTML from another tab) so we never
+      // store a blob: src that breaks on reload. data:image srcs are already
+      // self-contained; oversized cells are offloaded to Drive on save.
+      const processedFields: Record<string, string> = { ...fields }
+      let touched = false
+      for (const f of selectedTemplate.fields) {
+        const v = processedFields[f.key]
+        if (!v) continue
+        if (!(f.type === 'html' || f.isFront || f.isBack)) continue
+        if (!/<img[^>]+src="blob:/i.test(v)) continue
+        processedFields[f.key] = await inlineImagesToDataUri(v)
+        touched = true
       }
+      if (touched) setFields(processedFields)   // reflect inlined images in the open modal
 
       // Oversized fields (> Sheets' 50k-per-cell cap) are no longer rejected
       // here — appendAnkiNote offloads them to Drive and stores a pointer, so
@@ -366,7 +351,7 @@ export default function AddNoteModal({ open, onClose, templates, existingDecks, 
               value={fields[f.key] ?? ''}
               onChange={v => setFields(prev => ({ ...prev, [f.key]: v }))}
               disabled={saving}
-              onPasteImage={pasteImageToDrive}
+              onPasteImage={pasteImageInline}
             />
           ))}
 

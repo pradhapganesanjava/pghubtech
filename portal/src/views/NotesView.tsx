@@ -4,8 +4,7 @@ import {
   renameNote, updateNode,
 } from '../adapters/notesRepo'
 import type { Note, NoteNode } from '../adapters/notesRepo'
-import { GAuth } from '../lib/gauth'
-import { getOrCreateFolder, uploadFileToDrive } from '../lib/drive'
+import { blobToDataUri } from '../lib/driveImages'
 import PageBlocksEditor, {
   parseBlocks, renderBlocksAsHtml, serializeBlocks,
 } from '../components/PageBlocksEditor'
@@ -14,7 +13,6 @@ import { sanitizeHtml } from '../lib/sanitize'
 import { useToast } from '../components/Toast'
 
 type SidebarMode = 'notes' | 'recent'
-const NOTES_IMG_FOLDER = 'PGHubTechImages'
 
 // Inline trash SVG so CSS `color` actually paints it.
 function TrashIcon({ size = 13 }: { size?: number }) {
@@ -307,15 +305,11 @@ export default function NotesView() {
     } finally { setBusy(false) }
   }
 
-  // ── Image paste in the editor → upload to PGHubTechImages ───────────────
-  async function onPasteImage(blob: Blob): Promise<string> {
-    const token = GAuth.getToken()
-    if (!token) throw new Error('Not signed in')
-    const folder = await getOrCreateFolder(token, NOTES_IMG_FOLDER)
-    const ext   = (blob.type.split('/')[1] || 'png').replace('+xml', '')
-    const fname = `note_${Date.now().toString(36)}.${ext}`
-    const { url } = await uploadFileToDrive(token, folder, blob, fname, 'image/png')
-    return url
+  // ── Image paste in the editor → inline as a self-contained data: URI ─────
+  // Stored in the note HTML directly (no Drive round-trip) so the image loads
+  // without the portal's OAuth token — e.g. when the note is copied into Anki.
+  function onPasteImage(blob: Blob): Promise<string> {
+    return blobToDataUri(blob)
   }
 
   // Three search axes — combined with AND when more than one is active:

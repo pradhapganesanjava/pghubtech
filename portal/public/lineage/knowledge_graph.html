@@ -387,6 +387,19 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .bc-sep         { color:var(--bdr); font-size:10px; }
 .la-trail       { display:flex; align-items:center; gap:3px; padding:5px 10px; overflow-x:auto; white-space:nowrap; border-bottom:1px solid var(--bdr); background:rgba(255,255,255,.02); font-size:12px; scrollbar-width:thin; }
 .la-trail::-webkit-scrollbar { height:6px; }
+/* 🧭 Path — dropdown in the topbar row (replaces the full-width trail bar) */
+.la-path-dd     { position:relative; display:inline-flex; }
+.la-path-ct     { display:inline-block; min-width:15px; padding:0 4px; border-radius:8px; background:var(--pr); color:#fff; font-size:10px; line-height:15px; text-align:center; margin-left:4px; }
+.la-path-menu   { position:absolute; top:100%; left:0; margin-top:5px; min-width:210px; max-width:360px; max-height:60vh; overflow-y:auto; background:var(--sur2); border:1px solid var(--bdr); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.35); padding:4px; z-index:1000; display:none; }
+.la-path-menu.open { display:block; }
+.la-path-item   { display:flex; align-items:center; gap:7px; padding:6px 9px; border-radius:5px; cursor:pointer; font-size:12px; color:var(--mt); white-space:nowrap; }
+.la-path-item:hover { background:rgba(59,130,246,.10); color:var(--tx); }
+.la-path-current { color:var(--tx); font-weight:600; cursor:default; }
+.la-path-here   { margin-left:auto; font-size:10px; color:var(--pr); }
+/* Collapsible Topics/Tags chip block in Similar mode */
+.la-jump-groups.collapsed { display:none; }
+.la-jump-toggle { margin-left:auto; font-size:11px; font-weight:600; color:var(--mt); cursor:pointer; padding:2px 8px; border-radius:5px; border:1px solid var(--bdr); user-select:none; flex:none; }
+.la-jump-toggle:hover { color:var(--tx); background:rgba(255,255,255,.06); }
 .tr-label       { color:var(--mt); font-size:11px; font-weight:600; margin-right:4px; flex:none; }
 .tr-item        { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:4px; cursor:pointer; color:var(--mt); flex:none; transition:all .12s; }
 .tr-item:hover  { color:var(--tx); background:rgba(255,255,255,.06); }
@@ -413,6 +426,7 @@ tr:hover td { background:rgba(255,255,255,.02); }
 .pd-body      { overflow-y:auto; padding:0 14px 12px; flex:1; }
 .pd-row       { display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid rgba(51,65,85,.4); font-size:12px; cursor:pointer; border-radius:4px; }
 .pd-row:hover { background:rgba(59,130,246,.08); }
+.pd-row-center { background:rgba(99,102,241,.10); border-left:2px solid var(--pr); }
 .pd-name      { font-weight:600; flex:1; }
 .pd-via       { font-size:10px; color:var(--mt); font-family:monospace; }
 .pd-eye       { flex-shrink:0; font-size:13px; opacity:.45; cursor:pointer; transition:opacity .12s, transform .12s; line-height:1; }
@@ -1583,6 +1597,9 @@ function resizeGraphView() {
   _graphResizeRaf = requestAnimationFrame(() => {
     _graphResizeRaf = 0;
     try { if (typeof GR !== 'undefined' && GR.cid && document.getElementById(GR.cid)) GR.resize(); } catch (_) {}
+    // Similar-mode graph is SVG (not GR) — re-fit it to the now-current stage
+    // size so the drawer opening/closing or a window resize reflows it too.
+    try { if (document.getElementById('sim-graph') && typeof simFit === 'function') simFit(); } catch (_) {}
   });
 }
 window.addEventListener('resize', resizeGraphView);
@@ -2042,7 +2059,20 @@ function updateProblemsDrawer(nodeId, opts = {}) {
 
   let problems;
   if (ent.concept_type === 'ALGORITHM') {
-    problems = [{ algo: ent, topicId: null }];
+    problems = [{ algo: ent, topicId: null, _center: true }];
+    // In Lineage+Algorithms "Similar" mode, also list the ranked neighbors so
+    // each one can be quick-peeked (👁) / opened straight from the drawer —
+    // same quick-view affordance as the centered problem, without recentering.
+    if (typeof curView !== 'undefined' && curView === 'lineage-algo'
+        && typeof laMode === 'function' && laMode() === 'similar'
+        && typeof computeSimilarity === 'function') {
+      simState.scoreMode = laState.scoreMode;          // keep weights in sync
+      let ranked = computeSimilarity(ent.id)
+        .filter(r => !r.algo.difficulty || laState.diffFilter[r.algo.difficulty]);
+      const lvl = SIM_LEVELS[laState.level];
+      if (lvl?.range) ranked = ranked.slice(lvl.range[0], lvl.range[1]);
+      ranked.forEach(r => problems.push({ algo: r.algo, topicId: null, _score: r.total }));
+    }
   } else {
     problems = Counts.allAlgosIn(nodeId);
   }
@@ -2052,21 +2082,29 @@ function updateProblemsDrawer(nodeId, opts = {}) {
   problems.forEach(({algo}) => { if (algo.difficulty) byDiff[algo.difficulty]++; });
   const shown = _pdDiff ? problems.filter(({algo}) => algo.difficulty === _pdDiff) : problems;
 
-  count.innerHTML = `<b style="color:var(--tx)">${ent.name}</b> — <b style="color:#60a5fa">${problems.length}</b> total${_pdDiff?` · ${shown.length} ${_pdDiff}`:''}`;
+  const nbrCount = problems.filter(p => !p._center).length;
+  const showsNbrs = ent.concept_type === 'ALGORITHM' && nbrCount > 0;
+  count.innerHTML = showsNbrs
+    ? `<b style="color:var(--tx)">${ent.name}</b> + <b style="color:#60a5fa">${nbrCount}</b> neighbor${nbrCount===1?'':'s'}${_pdDiff?` · ${shown.length} ${_pdDiff}`:''}`
+    : `<b style="color:var(--tx)">${ent.name}</b> — <b style="color:#60a5fa">${problems.length}</b> total${_pdDiff?` · ${shown.length} ${_pdDiff}`:''}`;
 
   if (tabs) {
     tabs.innerHTML = DIFFICULTY.map(d => `<span class="pd-tab ${_pdDiff===d?'active':''}" onclick="event.stopPropagation();setPDDiff('${d}')">${d} ${byDiff[d]}</span>`).join('')
       + (_pdDiff ? `<span class="pd-tab" onclick="event.stopPropagation();setPDDiff('')">All</span>` : '');
   }
 
-  body.innerHTML = shown.length ? shown.slice(0, 250).map(({algo, topicId}) => {
+  body.innerHTML = shown.length ? shown.slice(0, 250).map(({algo, topicId, _center, _score}) => {
     const via = topicId ? Store.getEntity(topicId)?.name : '';
-    return `<div class="pd-row" onclick="showProblemModal('${algo.id}')" ondblclick="zoomTo('${algo.id}', linState.depth)" title="Click to open in AdsHub · Double-click to zoom into this problem">
+    const tail = _center
+      ? `<span class="pd-via" style="color:var(--pr);font-weight:600">◎ center</span>`
+      : (_score != null ? `<span class="pd-via" title="Similarity score — shared tag/topic depth + difficulty">★ ${_score.toFixed(1)}</span>` : '');
+    return `<div class="pd-row${_center?' pd-row-center':''}" onclick="showProblemModal('${algo.id}')" ondblclick="zoomTo('${algo.id}', linState.depth)" title="Click to open in AdsHub · Double-click to zoom into this problem">
       <span class="pd-eye" onclick="event.stopPropagation();peekProblem('${algo.id}')" title="Quick peek — preview here without leaving">👁</span>
       <span class="pd-name">${algo.name}</span>
       ${algo.difficulty?`<span class="badge b-${algo.difficulty.toLowerCase()}" style="font-size:10px">${algo.difficulty}</span>`:''}
       ${algo.source?`<span style="color:var(--mt);font-size:11px">#${algo.source}</span>`:''}
       ${via && via !== ent.name ? `<span class="pd-via">via ${via}</span>` : ''}
+      ${tail}
     </div>`;
   }).join('') + (shown.length > 250 ? `<div class="pd-empty">+${shown.length-250} more — narrow with difficulty filter</div>` : '')
     : '<div class="pd-empty">No problems found for this filter</div>';
@@ -3512,12 +3550,17 @@ const SIM_LEVELS = {
   'all': { range: null,      label: 'All neighbors' }
 };
 
-// Scoring weight presets — pick one to change what "close" means
+// Scoring weight presets — pick one to change what "close" means.
+// `diff` is only a same-difficulty TIEBREAKER (kept small) — a shared deep
+// micro-pattern/tag must always outrank "same difficulty + a generic topic
+// like Array", otherwise unrelated problems (e.g. #2406 interval grouping)
+// surface as close neighbors of #139. The 'difficulty' preset is the one
+// exception where difficulty is meant to dominate.
 const SIM_SCORE_MODES = {
-  balanced:   { topic: 1.0, tag: 1.5, diff: 5,  label: 'Balanced (default)' },
-  topic:      { topic: 3.0, tag: 0.5, diff: 2,  label: 'Topic match focus' },
-  tag:        { topic: 0.5, tag: 3.0, diff: 2,  label: 'Tag (custom) focus' },
-  difficulty: { topic: 0.5, tag: 0.5, diff:10, label: 'Difficulty focus' },
+  balanced:   { topic: 1.0, tag: 1.5, diff: 1,   label: 'Balanced (default)' },
+  topic:      { topic: 3.0, tag: 0.5, diff: 0.5, label: 'Topic match focus' },
+  tag:        { topic: 0.5, tag: 3.0, diff: 0.5, label: 'Tag (custom) focus' },
+  difficulty: { topic: 0.5, tag: 0.5, diff:10,   label: 'Difficulty focus' },
 };
 
 // Get all topic IDs an algorithm directly associates to
@@ -3560,7 +3603,10 @@ function computeSimilarity(selectedId) {
       if (a.id === selectedId) return;
       const myT_depth = _topicDepth(myT);
       const myT_id    = myT;
-      const isTagPath = (myT_id || '').startsWith('tp__');     // user tag (starts with _)
+      // Custom user tags score under `tag` weight: the legacy underscore vocab
+      // (tp__ds…) AND the current pat_* micro-patterns (tp_pat_…). Everything
+      // else is a generic LC topic (Array, String, DP…) → `topic` weight.
+      const isTagPath = (myT_id || '').startsWith('tp__') || (myT_id || '').startsWith('tp_pat_');
       const c = candidates.get(a.id) || { algo: a, topicDepth: 0, tagDepth: 0, sharedTopics: [] };
       if (isTagPath) c.tagDepth   = Math.max(c.tagDepth,   myT_depth + 1);
       else            c.topicDepth = Math.max(c.topicDepth, myT_depth + 1);
@@ -3915,6 +3961,7 @@ function simDrawGraph(selected, ranked) {
   _simView.applyTx = applyTx;
   _simView.positioned = positioned;
   _simView.W = W; _simView.H = H;
+  _simView.cx = cx; _simView.cy = cy;   // actual hub position (for fit bounds)
 
   // Auto-fit on initial layout render
   setTimeout(() => simFit(), 0);
@@ -3934,22 +3981,33 @@ function simResetView() {
 function simFit() {
   const pos = _simView.positioned || [];
   if (!pos.length) return;
+  // Measure the LIVE container — the stage shrinks when the Problems drawer
+  // opens or the window resizes, so the W/H captured at draw time is stale.
+  const ct = document.getElementById('sim-graph');
+  const W = (ct && ct.clientWidth)  || _simView.W || 800;
+  const H = (ct && ct.clientHeight) || _simView.H || 600;
+  // Keep the SVG viewport in step with the container so nothing is clipped and
+  // the fit centers on the actually-visible area.
+  const svg = ct && ct.querySelector('svg');
+  if (svg) { svg.setAttribute('width', W); svg.setAttribute('height', H); }
+  _simView.W = W; _simView.H = H;
+
   let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
   pos.forEach(p => {
     if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
     minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
     maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
   });
-  // Include center
-  const cx = _simView.W/2, cy = _simView.H/2;
+  // Include the hub (center) node at its actual laid-out position.
+  const cx = _simView.cx ?? (W/2), cy = _simView.cy ?? (H/2);
   minX = Math.min(minX, cx); maxX = Math.max(maxX, cx);
   minY = Math.min(minY, cy); maxY = Math.max(maxY, cy);
   const w = (maxX - minX) || 1, h = (maxY - minY) || 1;
   const pad = 80;
-  const scale = Math.min((_simView.W - 2*pad) / w, (_simView.H - 2*pad) / h, 2);
+  const scale = Math.min((W - 2*pad) / w, (H - 2*pad) / h, 2);
   _simView.tx.s = Math.max(0.2, scale);
-  _simView.tx.x = _simView.W/2 - (minX + w/2) * _simView.tx.s;
-  _simView.tx.y = _simView.H/2 - (minY + h/2) * _simView.tx.s;
+  _simView.tx.x = W/2 - (minX + w/2) * _simView.tx.s;
+  _simView.tx.y = H/2 - (minY + h/2) * _simView.tx.s;
   _simView.applyTx?.();
 }
 
@@ -4243,13 +4301,15 @@ function simShowTip(cand) {
   const tagContrib   = (cand.tagDepth   * w.tag).toFixed(1);
   const diffContrib  = cand.sameDiff ? w.diff : 0;
 
-  // Split shared things into LC Topics (id starts with "tp_" but NOT "tp__")
-  // vs user Tags (id starts with "tp__" — the double underscore from "_ds", "_sols", etc.)
+  // Split shared things into LC Topics vs user Tags. User tags = legacy
+  // underscore vocab (tp__ from "_ds"/"_sols") + current pat_* micro-patterns
+  // (tp_pat_…) — same rule as scoring / the header split / the peek modal.
+  const _isUserTag = id => id.startsWith('tp__') || id.startsWith('tp_pat_');
   const shared = (cand.sharedTopics || [])
     .map(id => ({ id, ent: Store.getEntity(id) }))
     .filter(x => x.ent);
-  const lcTopics = shared.filter(x => !x.id.startsWith('tp__'));
-  const userTags = shared.filter(x =>  x.id.startsWith('tp__'));
+  const lcTopics = shared.filter(x => !_isUserTag(x.id));
+  const userTags = shared.filter(x =>  _isUserTag(x.id));
 
   const renderChips = (arr, max, color, bg) => {
     const head = arr.slice(0, max).map(x =>
@@ -4420,6 +4480,10 @@ function renderLineageAlgo() {
     <button class="la-back" onclick="laBack()" title="${lastName ? 'Back to ' + lastName : 'Back to atlas'}">← Back</button>
     <button class="la-back" onclick="laState.history=[];laState.rootId='';renderLineageAlgo()" title="Atlas">⌂</button>
     <span class="la-mode">${modeLbl}</span>
+    <span class="la-path-dd" id="la-path-dd" style="display:none">
+      <button class="la-ctrl-toggle" id="la-path-btn" onclick="toggleLaPath(event)" title="Navigation path — click to retrace">🧭 Path</button>
+      <div class="la-path-menu" id="la-path-menu"></div>
+    </span>
     <button class="la-ctrl-toggle" onclick="toggleLaCtrl()" title="Show/hide controls">⮜ Controls</button>
     <span class="la-topbar-title">Lineage + Algorithms</span>`;
   const taEl = document.getElementById('topbar-actions');
@@ -4431,12 +4495,10 @@ function renderLineageAlgo() {
       <div class="root-results" id="root-results"></div>
     </div>`;
 
-  // Shell: visit trail → controls + body (stage + drawer)
+  // Shell: controls + body (stage + drawer). The visit path now lives as a
+  // dropdown (🧭 Path) in the topbar instead of a full-width bar here.
   document.getElementById('content').innerHTML = `
     <div class="la-wrap">
-      <!-- Visit trail — the actual path of problems/topics navigated (history → current) -->
-      <div class="la-trail" id="la-trail"></div>
-
       <div class="la-main">
         <!-- Controls panel — sections adapt to current mode -->
         <div class="la-ctrl" id="la-ctrl-panel">${laRenderControls(mode)}</div>
@@ -4486,6 +4548,17 @@ function renderLineageAlgo() {
   }
   // Drawer stays collapsed by default in Lineage Algo — user clicks header to expand
   updateProblemsDrawer(ent.concept_type === 'ALGORITHM' ? ent.id : laState.rootId, { noAutoOpen: true });
+}
+
+// Collapse/expand the Similar-mode Topics/Tags chip block (gives the graph room).
+function toggleLaJump() {
+  const g = document.getElementById('la-jump-groups');
+  const t = document.getElementById('la-jump-toggle');
+  if (!g) return;
+  const collapsed = g.classList.toggle('collapsed');
+  localStorage.setItem('kg_la_sim_collapsed', collapsed ? '1' : '0');
+  if (t) t.textContent = `${collapsed ? '▸' : '▾'} Topics/Tags`;
+  if (typeof resizeGraphView === 'function') { resizeGraphView(); setTimeout(resizeGraphView, 60); }
 }
 
 // Toggle the Lineage Algo controls panel
@@ -4647,23 +4720,31 @@ function laRenderBreadcrumb(ent) {
 // Similar-Problems), so you never lose where you started from. Each crumb
 // jumps back to that point and trims the trail after it.
 function laRenderTrail() {
-  const ct = document.getElementById('la-trail');
-  if (!ct) return;
+  // Path now renders into the topbar dropdown (🧭 Path) rather than a bar.
+  const dd   = document.getElementById('la-path-dd');
+  const btn  = document.getElementById('la-path-btn');
+  const menu = document.getElementById('la-path-menu');
+  if (!dd || !menu) return;
   const ids = [...laState.history, laState.rootId].filter(Boolean);
-  if (ids.length <= 1) { ct.innerHTML = ''; ct.style.display = 'none'; return; }  // nothing to retrace yet
-  ct.style.display = '';
+  if (ids.length <= 1) { dd.style.display = 'none'; menu.classList.remove('open'); return; }  // nothing to retrace yet
+  dd.style.display = '';
+  if (btn) btn.innerHTML = `🧭 Path <span class="la-path-ct">${ids.length}</span>`;
   const ICON = { ALGORITHM: 'λ', TOPIC: '⊞', DOMAIN: '◈' };
-  ct.innerHTML = '<span class="tr-label">🧭 Path</span>' + ids.map((id, i) => {
+  menu.innerHTML = ids.map((id, i) => {
     const e      = Store.getEntity(id);
     const name   = (e ? e.name : id).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const isLast = i === ids.length - 1;
     const icon   = e ? (ICON[e.concept_type] || '•') : '•';
-    return `<span class="tr-item ${isLast ? 'tr-current' : ''}" title="${isLast ? 'Current' : 'Jump back to'} ${name.replace(/"/g, '&quot;')}" onclick="laTrailGoTo(${i})">
-      <span class="tr-ic">${icon}</span><span class="tr-name">${name}</span>
-    </span>${!isLast ? '<span class="bc-sep">›</span>' : ''}`;
+    return `<div class="la-path-item ${isLast ? 'la-path-current' : ''}" title="${isLast ? 'Current' : 'Jump back to'} ${name.replace(/"/g, '&quot;')}" onclick="${isLast ? 'closeLaPath()' : `laTrailGoTo(${i})`}">
+      <span class="tr-ic">${icon}</span><span class="tr-name">${name}</span>${isLast ? '<span class="la-path-here">● here</span>' : ''}
+    </div>`;
   }).join('');
-  ct.scrollLeft = ct.scrollWidth;   // keep the current (right-most) crumb in view
 }
+
+function toggleLaPath(ev) { if (ev) ev.stopPropagation(); document.getElementById('la-path-menu')?.classList.toggle('open'); }
+function closeLaPath() { document.getElementById('la-path-menu')?.classList.remove('open'); }
+// Click-away closes the path dropdown.
+document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('#la-path-dd')) closeLaPath(); });
 
 function laTrailGoTo(i) {
   const ids = [...laState.history, laState.rootId].filter(Boolean);
@@ -4801,13 +4882,19 @@ function laRenderSimilarMode(ent, stage) {
   simState.scoreMode = laState.scoreMode;
   simState.level     = laState.level;
   simState.diffFilter = laState.diffFilter;
+  // Topics/Tags chip block is collapsible — collapsed by default; remember the
+  // user's choice (only an explicit expand, stored as '0', keeps it open).
+  const simCollapsed = localStorage.getItem('kg_la_sim_collapsed') !== '0';
 
-  // Split associated nodes into LC Topics vs user Tags
+  // Split associated nodes into LC Topics vs user Tags. User tags = legacy
+  // underscore vocab (tp__…) + current pat_* micro-patterns (tp_pat_…), matching
+  // the scoring classification in computeSimilarity and the peek modal.
+  const isUserTag = t => (t.id || '').startsWith('tp__') || (t.id || '').startsWith('tp_pat_');
   const assocAll = Store.relations
     .filter(r => r.from_id === ent.id && r.rel_type === 'ASSOCIATES')
     .map(r => Store.getEntity(r.to_id)).filter(Boolean);
-  const lcTopics  = assocAll.filter(t => !(t.id || '').startsWith('tp__'));
-  const userTags  = assocAll.filter(t =>  (t.id || '').startsWith('tp__'));
+  const lcTopics  = assocAll.filter(t => !isUserTag(t));
+  const userTags  = assocAll.filter(isUserTag);
 
   const renderJumpChips = (arr, color, bg) =>
     arr.slice(0, 10).map(t =>
@@ -4830,8 +4917,10 @@ function laRenderSimilarMode(ent, stage) {
               onclick="laState.diffFilter['${d}']=!laState.diffFilter['${d}'];renderLineageAlgo()"
               title="Toggle ${d}">${d}</span>`).join('')}
         </div>
+        <span class="la-jump-toggle" id="la-jump-toggle" onclick="toggleLaJump()"
+          title="Show/hide the topic & tag chips to give the graph more room">${simCollapsed?'▸':'▾'} Topics/Tags</span>
       </div>
-      <div class="la-jump-groups">
+      <div class="la-jump-groups${simCollapsed?' collapsed':''}" id="la-jump-groups">
         ${lcTopics.length ? `
           <div class="la-jump-grp">
             <span class="la-jump-lbl la-jump-lbl-t">📚 Topics ${lcTopics.length}</span>

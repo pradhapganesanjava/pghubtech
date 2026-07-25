@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
 import { fetchDriveFile, resolveDriveImagesInHtml } from '../lib/drive'
 import {
-  getOrCreateImageFolder, uploadImageBlob, inferFilename, uploadInlineImages,
+  getOrCreateImageFolder, uploadImageBlob, inlineImagesToDataUri, blobToDataUri,
 } from '../lib/driveImages'
 import { sanitizeHtml } from '../lib/sanitize'
 import { loadFilters, saveFilters } from '../lib/persistedFilters'
@@ -478,15 +478,12 @@ export default function AdsHubView() {
     }
   }
 
-  async function handlePasteImage(blob: Blob): Promise<string> {
-    const token = GAuth.getToken()
-    if (!token) throw new Error('not signed in')
-    const folderId = await getOrCreateImageFolder(token)
-    const driveUrl = await uploadImageBlob(token, folderId, blob, inferFilename(blob))
-    const blobUrl  = URL.createObjectURL(blob)
-    blobUrlsRef.current.push(blobUrl)
-    blobToDriveRef.current.set(blobUrl, driveUrl)
-    return blobUrl
+  // Inline pasted images as self-contained data: URIs so the saved note loads
+  // without the portal's OAuth token (e.g. when copied into Anki). Handwriting
+  // page PNGs still go to Drive (see handleSaveNote); the blobToDrive map still
+  // handles images already Drive-hosted before this change.
+  function handlePasteImage(blob: Blob): Promise<string> {
+    return blobToDataUri(blob)
   }
 
   async function handleSaveNote() {
@@ -540,7 +537,7 @@ export default function AdsHubView() {
       }
 
       let html = blobUrlsToDrive(editorHtml, blobToDriveRef.current)
-      html = await uploadInlineImages(html, token)   // upload any leftover data:/blob: images
+      html = await inlineImagesToDataUri(html)        // inline any leftover blob: images as data: URIs
       html = sanitizeHtml(html)
       html = expandHtmlEmbeds(html)                  // raw HTML sections, preserved verbatim
       const finalBody = prevHw ? `${html}\n${prevHw}` : html
@@ -1659,7 +1656,7 @@ export default function AdsHubView() {
                 onDoubleClick={() => setListRatio(r => r <= 18 ? 40 : 15)}
                 title="Double-click to widen / restore the detail pane"
               >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="doc-detail-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {selected.frontendId && <>#{selected.frontendId} · </>}{selected.title}
                 </span>
                 <span
