@@ -112,6 +112,12 @@
   "140": [
     "pat_group::word-process"
   ],
+  "141": [
+    "pat_group::detect-cycle"
+  ],
+  "142": [
+    "pat_group::detect-cycle"
+  ],
   "150": [
     "pat_group::expression"
   ],
@@ -131,13 +137,15 @@
     "pat_group::pattern-matching"
   ],
   "207": [
-    "pat_group::scheduling"
+    "pat_group::scheduling",
+    "pat_group::detect-cycle"
   ],
   "209": [
     "pat_group::sum"
   ],
   "210": [
-    "pat_group::scheduling"
+    "pat_group::scheduling",
+    "pat_group::detect-cycle"
   ],
   "211": [
     "pat_group::word-process",
@@ -188,6 +196,9 @@
   ],
   "259": [
     "pat_group::sum"
+  ],
+  "261": [
+    "pat_group::detect-cycle"
   ],
   "266": [
     "pat_group::palindrome"
@@ -317,6 +328,9 @@
   "439": [
     "pat_group::expression"
   ],
+  "457": [
+    "pat_group::detect-cycle"
+  ],
   "459": [
     "pat_group::pattern-matching"
   ],
@@ -353,6 +367,9 @@
   "560": [
     "pat_group::sum"
   ],
+  "565": [
+    "pat_group::detect-cycle"
+  ],
   "583": [
     "pat_group::subsequence"
   ],
@@ -383,6 +400,12 @@
   ],
   "680": [
     "pat_group::palindrome"
+  ],
+  "684": [
+    "pat_group::detect-cycle"
+  ],
+  "685": [
+    "pat_group::detect-cycle"
   ],
   "686": [
     "pat_group::pattern-matching"
@@ -452,6 +475,9 @@
   ],
   "796": [
     "pat_group::pattern-matching"
+  ],
+  "802": [
+    "pat_group::detect-cycle"
   ],
   "809": [
     "pat_group::word-process"

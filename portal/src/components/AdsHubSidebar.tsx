@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { buildTrie, TreeNode } from './DocTagTree'
+import Point2RemTree from './Point2RemTree'
 import type { LCProblem, LCList } from '../adapters/adsRepo'
+import type { P2RItem } from '../adapters/point2remRepo'
 
-type SideTab = 'tags' | 'companies' | 'mylist'
+type SideTab = 'tags' | 'companies' | 'mylist' | 'point2rem'
 
 interface Props {
   problems:          LCProblem[]
@@ -19,6 +21,14 @@ interface Props {
   onDeleteList:      (name: string) => void
   onCreateList:      () => void
   onManageList:      (name: string) => void
+  // Point2Rem — notes grouped by tag; selecting one opens the detail pane
+  p2rItems:          P2RItem[]
+  p2rLoading:        boolean
+  p2rError:          string
+  p2rSelectedId:     string | null
+  onSelectP2R:       (item: P2RItem) => void
+  onCreateP2R:       () => void
+  onRefreshP2R:      () => void
   // Panel chrome
   collapsed:         boolean
   onCollapse:        () => void
@@ -27,10 +37,13 @@ interface Props {
 export default function AdsHubSidebar({
   problems, selectedTags, onToggleTag, selectedCompanies, onToggleCompany,
   lists, selectedList, onSelectList, onDeleteList, onCreateList, onManageList,
+  p2rItems, p2rLoading, p2rError, p2rSelectedId, onSelectP2R, onCreateP2R, onRefreshP2R,
   collapsed, onCollapse,
 }: Props) {
   const [tab, setTab]       = useState<SideTab>('tags')
   const [search, setSearch] = useState('')
+  // Point2Rem grouping shape — hierarchical :: tree, or flat per-tag groups.
+  const [p2rMode, setP2rMode] = useState<'tree' | 'flat'>('tree')
   const searchLower = search.toLowerCase()
 
   const trie = useMemo(() => buildTrie(problems.map(p => p.tags)), [problems])
@@ -56,20 +69,47 @@ export default function AdsHubSidebar({
         <div className={`left-tab${tab === 'tags' ? ' active' : ''}`} onClick={() => setTab('tags')}>Tags</div>
         <div className={`left-tab${tab === 'companies' ? ' active' : ''}`} onClick={() => setTab('companies')}>Companies</div>
         <div className={`left-tab${tab === 'mylist' ? ' active' : ''}`} onClick={() => setTab('mylist')}>MyList</div>
+        <div className={`left-tab${tab === 'point2rem' ? ' active' : ''}`} onClick={() => setTab('point2rem')} title="Points to remember — notes grouped by tag">Point2Rem</div>
+        {tab === 'point2rem' && (
+          <div className="view-mode-toggle">
+            <button
+              className={`vm-btn${p2rMode === 'tree' ? ' active' : ''}`}
+              title="Hierarchical tree"
+              onClick={() => setP2rMode('tree')}
+            >⊞</button>
+            <button
+              className={`vm-btn${p2rMode === 'flat' ? ' active' : ''}`}
+              title="Flat groups"
+              onClick={() => setP2rMode('flat')}
+            >≡</button>
+          </div>
+        )}
         <button className="panel-toggle-btn" onClick={onCollapse} title="Collapse">◂</button>
       </div>
 
-      {/* Search (all tabs) + New-list button on MyList */}
+      {/* Search (all tabs) + New-list button on MyList / reload on Point2Rem */}
       <div style={{ padding: '8px 8px 0', display: 'flex', gap: 6 }}>
         <input
           className="col-search"
           style={{ flex: 1 }}
-          placeholder={tab === 'tags' ? 'Search tags…' : tab === 'companies' ? 'Search companies…' : 'Search lists…'}
+          placeholder={
+            tab === 'tags' ? 'Search tags…' :
+            tab === 'companies' ? 'Search companies…' :
+            tab === 'mylist' ? 'Search lists…' : 'Search points, tags, #id…'
+          }
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
         {tab === 'mylist' && (
           <button className="rf-btn-save" style={{ whiteSpace: 'nowrap' }} onClick={onCreateList} title="Create a new list">＋ New</button>
+        )}
+        {tab === 'point2rem' && (
+          <>
+            <button className="rf-btn-save" style={{ whiteSpace: 'nowrap' }} onClick={onCreateP2R} title="Write a new point">＋ New</button>
+            <button className="rf-btn-cancel" onClick={onRefreshP2R} disabled={p2rLoading} title="Reload from the sheet">
+              {p2rLoading ? '…' : '↻'}
+            </button>
+          </>
         )}
       </div>
 
@@ -144,6 +184,19 @@ export default function AdsHubSidebar({
           </div>
         )
       })()}
+
+      {/* ── Point2Rem ────────────────────────────────────────── */}
+      {tab === 'point2rem' && (
+        <Point2RemTree
+          items={p2rItems}
+          selectedId={p2rSelectedId}
+          onSelect={onSelectP2R}
+          searchLower={searchLower}
+          mode={p2rMode}
+          loading={p2rLoading}
+          error={p2rError}
+        />
+      )}
     </>
   )
 }
