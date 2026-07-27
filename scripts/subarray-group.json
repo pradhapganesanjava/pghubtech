@@ -1,0 +1,542 @@
+{
+ "53": [
+  "pat_group::subarray"
+ ],
+ "152": [
+  "pat_group::subarray"
+ ],
+ "209": [
+  "pat_group::subarray"
+ ],
+ "220": [
+  "pat_group::subarray"
+ ],
+ "239": [
+  "pat_group::subarray"
+ ],
+ "325": [
+  "pat_group::subarray"
+ ],
+ "410": [
+  "pat_group::subarray"
+ ],
+ "487": [
+  "pat_group::subarray"
+ ],
+ "523": [
+  "pat_group::subarray"
+ ],
+ "525": [
+  "pat_group::subarray"
+ ],
+ "560": [
+  "pat_group::subarray"
+ ],
+ "581": [
+  "pat_group::subarray"
+ ],
+ "643": [
+  "pat_group::subarray"
+ ],
+ "644": [
+  "pat_group::subarray"
+ ],
+ "689": [
+  "pat_group::subarray"
+ ],
+ "713": [
+  "pat_group::subarray"
+ ],
+ "718": [
+  "pat_group::subarray"
+ ],
+ "795": [
+  "pat_group::subarray"
+ ],
+ "862": [
+  "pat_group::subarray"
+ ],
+ "898": [
+  "pat_group::subarray"
+ ],
+ "904": [
+  "pat_group::subarray"
+ ],
+ "907": [
+  "pat_group::subarray"
+ ],
+ "918": [
+  "pat_group::subarray"
+ ],
+ "930": [
+  "pat_group::subarray"
+ ],
+ "974": [
+  "pat_group::subarray"
+ ],
+ "978": [
+  "pat_group::subarray"
+ ],
+ "992": [
+  "pat_group::subarray"
+ ],
+ "1004": [
+  "pat_group::subarray"
+ ],
+ "1011": [
+  "pat_group::subarray"
+ ],
+ "1031": [
+  "pat_group::subarray"
+ ],
+ "1063": [
+  "pat_group::subarray"
+ ],
+ "1157": [
+  "pat_group::subarray"
+ ],
+ "1186": [
+  "pat_group::subarray"
+ ],
+ "1231": [
+  "pat_group::subarray"
+ ],
+ "1248": [
+  "pat_group::subarray"
+ ],
+ "1310": [
+  "pat_group::subarray"
+ ],
+ "1330": [
+  "pat_group::subarray"
+ ],
+ "1335": [
+  "pat_group::subarray"
+ ],
+ "1343": [
+  "pat_group::subarray"
+ ],
+ "1423": [
+  "pat_group::subarray"
+ ],
+ "1438": [
+  "pat_group::subarray"
+ ],
+ "1460": [
+  "pat_group::subarray"
+ ],
+ "1477": [
+  "pat_group::subarray"
+ ],
+ "1493": [
+  "pat_group::subarray"
+ ],
+ "1508": [
+  "pat_group::subarray"
+ ],
+ "1524": [
+  "pat_group::subarray"
+ ],
+ "1526": [
+  "pat_group::subarray"
+ ],
+ "1546": [
+  "pat_group::subarray"
+ ],
+ "1567": [
+  "pat_group::subarray"
+ ],
+ "1574": [
+  "pat_group::subarray"
+ ],
+ "1588": [
+  "pat_group::subarray"
+ ],
+ "1630": [
+  "pat_group::subarray"
+ ],
+ "1708": [
+  "pat_group::subarray"
+ ],
+ "1712": [
+  "pat_group::subarray"
+ ],
+ "1746": [
+  "pat_group::subarray"
+ ],
+ "1749": [
+  "pat_group::subarray"
+ ],
+ "1764": [
+  "pat_group::subarray"
+ ],
+ "1793": [
+  "pat_group::subarray"
+ ],
+ "1800": [
+  "pat_group::subarray"
+ ],
+ "1852": [
+  "pat_group::subarray"
+ ],
+ "1856": [
+  "pat_group::subarray"
+ ],
+ "1918": [
+  "pat_group::subarray"
+ ],
+ "1950": [
+  "pat_group::subarray"
+ ],
+ "2031": [
+  "pat_group::subarray"
+ ],
+ "2036": [
+  "pat_group::subarray"
+ ],
+ "2090": [
+  "pat_group::subarray"
+ ],
+ "2104": [
+  "pat_group::subarray"
+ ],
+ "2261": [
+  "pat_group::subarray"
+ ],
+ "2302": [
+  "pat_group::subarray"
+ ],
+ "2334": [
+  "pat_group::subarray"
+ ],
+ "2348": [
+  "pat_group::subarray"
+ ],
+ "2393": [
+  "pat_group::subarray"
+ ],
+ "2395": [
+  "pat_group::subarray"
+ ],
+ "2398": [
+  "pat_group::subarray"
+ ],
+ "2401": [
+  "pat_group::subarray"
+ ],
+ "2411": [
+  "pat_group::subarray"
+ ],
+ "2419": [
+  "pat_group::subarray"
+ ],
+ "2436": [
+  "pat_group::subarray"
+ ],
+ "2444": [
+  "pat_group::subarray"
+ ],
+ "2447": [
+  "pat_group::subarray"
+ ],
+ "2461": [
+  "pat_group::subarray"
+ ],
+ "2464": [
+  "pat_group::subarray"
+ ],
+ "2470": [
+  "pat_group::subarray"
+ ],
+ "2488": [
+  "pat_group::subarray"
+ ],
+ "2495": [
+  "pat_group::subarray"
+ ],
+ "2524": [
+  "pat_group::subarray"
+ ],
+ "2537": [
+  "pat_group::subarray"
+ ],
+ "2588": [
+  "pat_group::subarray"
+ ],
+ "2607": [
+  "pat_group::subarray"
+ ],
+ "2653": [
+  "pat_group::subarray"
+ ],
+ "2750": [
+  "pat_group::subarray"
+ ],
+ "2760": [
+  "pat_group::subarray"
+ ],
+ "2762": [
+  "pat_group::subarray"
+ ],
+ "2763": [
+  "pat_group::subarray"
+ ],
+ "2765": [
+  "pat_group::subarray"
+ ],
+ "2771": [
+  "pat_group::subarray"
+ ],
+ "2799": [
+  "pat_group::subarray"
+ ],
+ "2831": [
+  "pat_group::subarray"
+ ],
+ "2841": [
+  "pat_group::subarray"
+ ],
+ "2845": [
+  "pat_group::subarray"
+ ],
+ "2863": [
+  "pat_group::subarray"
+ ],
+ "2871": [
+  "pat_group::subarray"
+ ],
+ "2875": [
+  "pat_group::subarray"
+ ],
+ "2913": [
+  "pat_group::subarray"
+ ],
+ "2916": [
+  "pat_group::subarray"
+ ],
+ "2941": [
+  "pat_group::subarray"
+ ],
+ "2958": [
+  "pat_group::subarray"
+ ],
+ "2962": [
+  "pat_group::subarray"
+ ],
+ "2970": [
+  "pat_group::subarray"
+ ],
+ "2972": [
+  "pat_group::subarray"
+ ],
+ "3010": [
+  "pat_group::subarray"
+ ],
+ "3013": [
+  "pat_group::subarray"
+ ],
+ "3026": [
+  "pat_group::subarray"
+ ],
+ "3034": [
+  "pat_group::subarray"
+ ],
+ "3036": [
+  "pat_group::subarray"
+ ],
+ "3077": [
+  "pat_group::subarray"
+ ],
+ "3095": [
+  "pat_group::subarray"
+ ],
+ "3097": [
+  "pat_group::subarray"
+ ],
+ "3101": [
+  "pat_group::subarray"
+ ],
+ "3105": [
+  "pat_group::subarray"
+ ],
+ "3113": [
+  "pat_group::subarray"
+ ],
+ "3171": [
+  "pat_group::subarray"
+ ],
+ "3196": [
+  "pat_group::subarray"
+ ],
+ "3209": [
+  "pat_group::subarray"
+ ],
+ "3254": [
+  "pat_group::subarray"
+ ],
+ "3255": [
+  "pat_group::subarray"
+ ],
+ "3277": [
+  "pat_group::subarray"
+ ],
+ "3284": [
+  "pat_group::subarray"
+ ],
+ "3318": [
+  "pat_group::subarray"
+ ],
+ "3321": [
+  "pat_group::subarray"
+ ],
+ "3349": [
+  "pat_group::subarray"
+ ],
+ "3350": [
+  "pat_group::subarray"
+ ],
+ "3364": [
+  "pat_group::subarray"
+ ],
+ "3381": [
+  "pat_group::subarray"
+ ],
+ "3392": [
+  "pat_group::subarray"
+ ],
+ "3410": [
+  "pat_group::subarray"
+ ],
+ "3411": [
+  "pat_group::subarray"
+ ],
+ "3420": [
+  "pat_group::subarray"
+ ],
+ "3422": [
+  "pat_group::subarray"
+ ],
+ "3427": [
+  "pat_group::subarray"
+ ],
+ "3430": [
+  "pat_group::subarray"
+ ],
+ "3434": [
+  "pat_group::subarray"
+ ],
+ "3473": [
+  "pat_group::subarray"
+ ],
+ "3480": [
+  "pat_group::subarray"
+ ],
+ "3487": [
+  "pat_group::subarray"
+ ],
+ "3500": [
+  "pat_group::subarray"
+ ],
+ "3505": [
+  "pat_group::subarray"
+ ],
+ "3526": [
+  "pat_group::subarray"
+ ],
+ "3555": [
+  "pat_group::subarray"
+ ],
+ "3574": [
+  "pat_group::subarray"
+ ],
+ "3589": [
+  "pat_group::subarray"
+ ],
+ "3632": [
+  "pat_group::subarray"
+ ],
+ "3641": [
+  "pat_group::subarray"
+ ],
+ "3672": [
+  "pat_group::subarray"
+ ],
+ "3676": [
+  "pat_group::subarray"
+ ],
+ "3689": [
+  "pat_group::subarray"
+ ],
+ "3691": [
+  "pat_group::subarray"
+ ],
+ "3708": [
+  "pat_group::subarray"
+ ],
+ "3719": [
+  "pat_group::subarray"
+ ],
+ "3721": [
+  "pat_group::subarray"
+ ],
+ "3728": [
+  "pat_group::subarray"
+ ],
+ "3729": [
+  "pat_group::subarray"
+ ],
+ "3737": [
+  "pat_group::subarray"
+ ],
+ "3738": [
+  "pat_group::subarray"
+ ],
+ "3739": [
+  "pat_group::subarray"
+ ],
+ "3748": [
+  "pat_group::subarray"
+ ],
+ "3755": [
+  "pat_group::subarray"
+ ],
+ "3762": [
+  "pat_group::subarray"
+ ],
+ "3768": [
+  "pat_group::subarray"
+ ],
+ "3795": [
+  "pat_group::subarray"
+ ],
+ "3804": [
+  "pat_group::subarray"
+ ],
+ "3828": [
+  "pat_group::subarray"
+ ],
+ "3830": [
+  "pat_group::subarray"
+ ],
+ "3835": [
+  "pat_group::subarray"
+ ],
+ "3845": [
+  "pat_group::subarray"
+ ],
+ "3859": [
+  "pat_group::subarray"
+ ],
+ "3865": [
+  "pat_group::subarray"
+ ],
+ "3874": [
+  "pat_group::subarray"
+ ],
+ "3878": [
+  "pat_group::subarray"
+ ],
+ "3911": [
+  "pat_group::subarray"
+ ]
+}

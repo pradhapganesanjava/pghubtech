@@ -2,10 +2,12 @@
 /**
  * scripts/build-group-combos.mjs
  * ─────────────────────────────────────────────────────────────────────────────
- * Read-only. From scripts/pat-tagged.json + scripts/group-pat.json, enumerate
- * every (group × DS) and (group × Topic) combination with the actual problems
- * in it. Prints a human-readable digest (for authoring summaries) and writes
- * scripts/group-combos.json — the grounding set for patterns-group-notes.json.
+ * Read-only. Group membership is taken from the LIVE pat_group tags in
+ * scripts/pat-tagged.json (unioned with the curated scripts/group-pat.json),
+ * then every (group × DS) and (group × Topic) combination is enumerated with
+ * the actual problems in it. Prints a human-readable digest (for authoring
+ * summaries) and writes scripts/group-combos.json — the grounding set for
+ * patterns-group-notes.json.
  *
  *   node scripts/build-group-combos.mjs
  */
@@ -26,14 +28,22 @@ async function main() {
   const gp     = JSON.parse(await readFile(join(__dir, 'group-pat.json'), 'utf8'))
   const byId   = new Map(tagged.map(p => [String(p.id), p]))
 
-  // group -> [problem]
+  // group -> [problem].  Membership comes from each problem's LIVE pat_group
+  // tags in pat-tagged.json (so ANY group on the sheet — curated, algorithmic
+  // like `subarray`, or added ad-hoc — flows in with no drift), unioned with
+  // the curated group-pat.json as a safety net for anything not yet dumped.
   const groups = {}
+  const addTo  = (g, p) => {
+    if (!g) return
+    const arr = (groups[g] = groups[g] || [])
+    if (!arr.some(x => String(x.id) === String(p.id))) arr.push(p)
+  }
+  for (const p of tagged) {
+    for (const t of (p.pat_group || [])) addTo(t.split('::')[1], p)
+  }
   for (const [id, tags] of Object.entries(gp)) {
     const p = byId.get(String(id)); if (!p) continue
-    for (const t of tags) {
-      const g = t.split('::')[1]
-      ;(groups[g] = groups[g] || []).push(p)
-    }
+    for (const t of tags) addTo(t.split('::')[1], p)
   }
 
   const out = {}   // group -> { ds:{dsId:[{id,title}]}, topic:{...} }

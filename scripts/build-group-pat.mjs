@@ -54,6 +54,11 @@ const GROUPS = {
   // word-process, subsequence).
   'subset-selection': [39, 40, 78, 90, 216, 416, 494, 698, 1125, 1239, 1255, 2542],
   scheduling:     [207, 210, 252, 253, 621, 1029, 1229, 1235, 1335, 1462, 2127, 2365, 2402],
+  // Detect Cycle: determine whether a structure contains a cycle (and act on
+  // it). Graph directed (topo/3-color): 207, 210, 685, 802; graph undirected
+  // (union-find / DFS-parent): 261, 684; linked-list Floyd: 141, 142; array/
+  // permutation cycle: 457, 565. 261/684 also validate a graph AS a tree.
+  'detect-cycle': [141, 142, 207, 210, 261, 457, 565, 684, 685, 802],
   // Online / streaming: maintain a running statistic over an unbounded
   // arriving sequence without rescanning (two-heap median, bounded heap,
   // moving window, ordered-interval merge).

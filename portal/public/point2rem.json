@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "updated": "2026-07-27",
+  "_readme": [
+    "Point2Rem — 'points to remember'. Free-form notes carrying ::-hierarchical",
+    "tags and optional links to existing AdsHub problems. Rendered by the",
+    "AdsHub sidebar's Point2Rem tab (grouped by tag, tree or flat); selecting an",
+    "item opens it in the right-hand detail pane.",
+    "",
+    "THIS FILE IS ONLY A SEED. The live notes are rows in the 'Point2Rem' tab of",
+    "the Google Sheet, created + edited from the portal (＋ New / ✎ / 🗑). This",
+    "file is copied into that tab once, when the tab is first created; editing it",
+    "afterwards changes nothing for a sheet that already exists.",
+    "",
+    "Item fields:",
+    "  id        required, unique, kebab-case — used for selection + deep links",
+    "  title     required, shown in the list and the detail header",
+    "  tags      ::-hierarchical paths; drives the grouping. [] ⇒ 'untagged'",
+    "  content   markdown by default; set format:'html' to write raw HTML",
+    "  format    'md' (default) | 'html'",
+    "  problems  LC frontend ids — rendered as clickable rows that open the",
+    "            problem in AdsHub's detail pane",
+    "  links     [{ label, url }] external references",
+    "  updated   free-form date string, shown in the detail header"
+  ],
+  "items": [
+    {
+      "id": "two-pointer-invariant",
+      "title": "Two pointers: name the invariant before you move one",
+      "tags": ["_ds::array::two-pointer", "_prob::sum::pair"],
+      "problems": ["11", "15", "167"],
+      "updated": "2026-07-27",
+      "content": "Every two-pointer solution is really *one sentence* about what stays true between `lo` and `hi`. Write it down first — the move rule then falls out of it.\n\n- **Sorted pair sum** — invariant: *the answer, if it exists, is inside `[lo, hi]`*. `sum < target` ⇒ `lo++` (no smaller left can help), `sum > target` ⇒ `hi--`.\n- **Container with most water** — invariant: *the taller wall can never be the limiting one for any narrower window*. So always move the **shorter** wall.\n- **3Sum** — sort, fix `i`, then it degenerates to the sorted pair sum. The only real work is de-duplicating `i` and both pointers.\n\nIf you can't state the invariant in one line, you're pattern-matching, not solving."
+    },
+    {
+      "id": "sliding-window-shrink-rule",
+      "title": "Sliding window: the shrink condition is the whole problem",
+      "tags": ["_ds::array::sliding-window", "_prob::substring::longest"],
+      "problems": ["3", "76", "424"],
+      "updated": "2026-07-27",
+      "content": "The expand step is always the same (`right++`, update counts). All the variation lives in **when you shrink**:\n\n| Question shape | Shrink while… | Record answer |\n| --- | --- | --- |\n| Longest valid window | window is **invalid** | after shrinking |\n| Shortest valid window | window is **valid** | before shrinking |\n| Exactly K distinct | `atMost(K) - atMost(K-1)` | — |\n\nThe \"exactly K\" trick is worth memorising: almost nobody writes a correct direct version under time pressure, and the `atMost` decomposition is three lines of reuse."
+    },
+    {
+      "id": "bfs-vs-dfs-grid",
+      "title": "Grid traversal: pick BFS or DFS by what the answer measures",
+      "tags": ["_ds::matrix::grid", "_ds::graph::traversal", "_prob::path::shortest"],
+      "problems": ["200", "542", "994", "417"],
+      "updated": "2026-07-27",
+      "content": "- Answer is a **count / area / connectivity** ⇒ DFS is fine (and shorter).\n- Answer is a **distance or a number of steps** ⇒ BFS, because the first time you touch a cell is already the shortest way there.\n- Several sources spread at once (rotting oranges, nearest-zero) ⇒ **multi-source BFS**: push *all* sources into the queue before the first pop. This is the single highest-leverage grid trick — it turns an O(n²) per-source loop into one sweep.\n- Reachability *from* the border inward (Pacific/Atlantic) ⇒ invert the question and flood **from** the edges."
+    },
+    {
+      "id": "dp-state-checklist",
+      "title": "DP: state, transition, base, order — in that order",
+      "tags": ["_prob::dp::framing", "_ds::array::dp"],
+      "problems": ["322", "300", "1143"],
+      "updated": "2026-07-27",
+      "content": "Before writing a single loop, answer four questions on paper:\n\n1. **State** — what does `dp[i]` (or `dp[i][j]`) *mean* in English? If the sentence needs an \"and also\", the state is under-specified.\n2. **Transition** — which earlier states can reach it, and at what cost?\n3. **Base case** — the smallest state whose value you know without computing.\n4. **Order** — an iteration order in which every dependency is already filled.\n\nMost \"my DP is off by one\" bugs are really a step-1 problem: `dp[i]` meaning *\"using the first i items\"* vs *\"ending exactly at i\"* leads to two different answers, and mixing them mid-solution is the classic failure."
+    },
+    {
+      "id": "heap-when-k-matters",
+      "title": "Heaps: keep the heap the size of the answer, not the input",
+      "tags": ["_ds::heap", "_prob::top-k"],
+      "problems": ["215", "347", "23"],
+      "updated": "2026-07-27",
+      "content": "For \"top K of N\", the reflex is a max-heap of all N. The better move is a **min-heap capped at K**: push, and pop when `size > K`. O(N log K) time, O(K) space, and the heap root is the answer boundary at every moment.\n\nMirror rule: for \"K largest\" use a **min**-heap; for \"K smallest\" use a **max**-heap. Getting this backwards is the most common heap bug, and it fails silently on small inputs."
+    },
+    {
+      "id": "clarify-before-code",
+      "title": "Interview: five clarifying questions that always pay",
+      "tags": ["_meta::interview::process"],
+      "updated": "2026-07-27",
+      "content": "Cheap to ask, expensive to assume:\n\n1. Input size — decides whether O(n²) is acceptable or disqualifying.\n2. Value range / negatives — kills or enables counting-sort, prefix sums, two pointers on a sorted array.\n3. Duplicates — changes the de-dup work and sometimes the whole return type.\n4. Return shape — the value, the indices, or the count? These are three different solutions.\n5. Mutability of the input — permission to sort in place is often the entire optimisation.\n\nAsking these takes ninety seconds and routinely saves ten minutes of rewriting."
+    },
+    {
+      "id": "valid-tree-connected-and-acyclic",
+      "title": "A valid tree is more than “no cycle”",
+      "tags": ["_ds::graph::undirected", "_ds::tree", "_prob::graph::valid-tree"],
+      "problems": ["261", "323", "1971"],
+      "updated": "2026-07-27",
+      "content": "For `n` nodes:\n\n```\nvalid tree  ⇔  connected  AND  no cycle\n            ⇔  connected  AND  exactly n - 1 edges\n```\n\nSo either **detect a cycle and check there's one component**, or take the `n - 1` edges shortcut.\n\nThe edge-count line is the cheap guard: with fewer than `n - 1` edges it can't be connected, with more it must contain a cycle. Check `edges.length === n - 1` first, then a single traversal from node `0` only has to prove it reaches all `n` nodes — no separate cycle check needed.\n\nThe half-answer to avoid: \"no cycle ⇒ tree\". A forest of two acyclic components passes that test and is not a tree."
+    },
+    {
+      "id": "undirected-cycle-parent-rule",
+      "title": "Undirected cycle ≠ “neighbour already seen” — it's the parent",
+      "tags": ["_ds::graph::undirected", "_ds::graph::traversal", "_prob::graph::cycle-detect"],
+      "problems": ["261", "684", "685"],
+      "updated": "2026-07-27",
+      "content": "In an undirected edge `{u, v}`, going `u → v` puts `u` in `v`'s neighbour list, already visited. That is **not** a cycle — it's the edge you arrived on.\n\n```\nvisited neighbour == parent  → OK (the edge you came on)\nvisited neighbour != parent  → cycle\n```\n\nSame rule for BFS and DFS: carry the parent alongside each node (`stack.push([next, node])` / `queue.push([next, node])`) and skip only that one.\n\nTwo traps the parent check alone doesn't cover:\n\n- **Parallel edges** — `{u, v}` listed twice is a genuine cycle, but the second copy looks exactly like the parent. Track visited *edges* if the input allows duplicates.\n- **Self-loops** — `{u, u}` is a cycle; the parent test happily lets it through.\n\nIn a directed graph none of this applies: there, a cycle means the neighbour is on the current recursion stack, not merely visited."
+    }
+  ]
+}

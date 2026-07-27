@@ -4744,3 +4744,51 @@ body.resizing-h * {
 .rf-embed-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 
 
+
+/* ── Point2Rem (AdsHub sidebar tab + detail page) ───────────────────────── */
+/* Note rows in the sidebar tree / flat groups. Sits between a tag row and a
+   list row visually: indented, tinted when open. */
+.p2r-item-row {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  background: transparent; border: none; color: var(--text2); padding: 5px 8px;
+  cursor: pointer; font-size: 12.5px; border-radius: 6px; text-align: left; line-height: 1.35;
+}
+.p2r-item-row:hover { background: var(--bg3); color: var(--text); }
+.p2r-item-row.active { background: rgba(var(--primary-rgb), .14); color: var(--primary); font-weight: 600; }
+.p2r-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Flat mode: one group per full tag path */
+.p2r-group { margin-bottom: 6px; }
+.p2r-group-hd {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 8px 3px; font-size: 12px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg); z-index: 1;
+}
+
+/* Detail page */
+.p2r-body { padding-right: 8px; }
+.p2r-updated {
+  align-self: center; font-size: 11px; color: var(--text3);
+  white-space: nowrap; margin-right: 2px;
+}
+.p2r-links { margin-top: 14px; border-top: 1px solid var(--border); }
+.p2r-ref-list { list-style: none; margin: 0; padding: 0; }
+.p2r-ref-list li { padding: 4px 0; font-size: 13px; }
+.p2r-ref-list a { color: var(--primary); text-decoration: none; }
+.p2r-ref-list a:hover { text-decoration: underline; }
+
+/* Point2Rem editor form */
+.p2r-form { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.p2r-form label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--text2);
+}
+.p2r-form label .rf-input,
+.p2r-form label .rf-textarea { text-transform: none; letter-spacing: normal; font-weight: 400; }
+.p2r-form .rf-textarea { width: 100%; resize: vertical; }
+.p2r-form .adshub-html-editor { min-height: 34vh; }
+.p2r-form .adshub-editor-preview { min-height: 34vh; }
+.p2r-hint { text-transform: none; letter-spacing: normal; font-weight: 400; color: var(--text3); font-size: 11px; }
+.p2r-hint.over { color: var(--danger); font-weight: 600; }
+.p2r-form-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

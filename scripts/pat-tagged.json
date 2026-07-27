@@ -637,7 +637,9 @@
     "pat_topic": [
       "pat_topic::greedy::running-extreme"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "54",
@@ -656,9 +658,12 @@
     "difficulty": "Medium",
     "topics": "Array; Dynamic Programming; Greedy",
     "pat_ds": [
-      "pat_ds::array::greedy::running-extreme"
+      "pat_ds::array::greedy::running-extreme",
+      "pat_ds::array::dp::augmented-state-reachability"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::dp::augmented-state-reachability"
+    ],
     "pat_group": []
   },
   {
@@ -1660,10 +1665,12 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; String; Dynamic Programming; Trie; Memoization",
     "pat_ds": [
-      "pat_ds::string::dp::dp-lis"
+      "pat_ds::string::dp::dp-lis",
+      "pat_ds::array::dp::augmented-state-reachability"
     ],
     "pat_topic": [
-      "pat_topic::dp::dp-lis"
+      "pat_topic::dp::dp-lis",
+      "pat_topic::dp::augmented-state-reachability"
     ],
     "pat_group": [
       "pat_group::word-process"
@@ -1696,7 +1703,9 @@
     "pat_topic": [
       "pat_topic::two-pointers::tp-fast-slow"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "142",
@@ -1710,7 +1719,9 @@
     "pat_topic": [
       "pat_topic::two-pointers::tp-fast-slow"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "143",
@@ -1826,7 +1837,9 @@
     "pat_topic": [
       "pat_topic::greedy::running-extreme"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "153",
@@ -2223,7 +2236,8 @@
       "pat_topic::topo-sort::kahn-bfs"
     ],
     "pat_group": [
-      "pat_group::scheduling"
+      "pat_group::scheduling",
+      "pat_group::detect-cycle"
     ]
   },
   {
@@ -2249,7 +2263,8 @@
       "pat_topic::sliding-window::sw-shrink-violation"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -2265,7 +2280,8 @@
       "pat_topic::topo-sort::kahn-bfs"
     ],
     "pat_group": [
-      "pat_group::scheduling"
+      "pat_group::scheduling",
+      "pat_group::detect-cycle"
     ]
   },
   {
@@ -2391,7 +2407,9 @@
       "pat_ds::array::sliding-window::sw-fixed"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "221",
@@ -2589,7 +2607,9 @@
     "pat_topic": [
       "pat_topic::deque-topic::monotonic-deque"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "240",
@@ -2814,12 +2834,15 @@
     "difficulty": "Medium",
     "topics": "Depth-First Search; Breadth-First Search; Union-Find; Graph Theory",
     "pat_ds": [
-      "pat_ds::graph::union-find::uf-basic"
+      "pat_ds::graph::union-find::uf-basic",
+      "pat_ds::graph::core::cc-dfs-uf"
     ],
     "pat_topic": [
       "pat_topic::union-find::uf-basic"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "264",
@@ -2829,7 +2852,9 @@
     "pat_ds": [
       "pat_ds::array::dp::dp-1d-linear"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::heap::k-way-merge"
+    ],
     "pat_group": []
   },
   {
@@ -3405,6 +3430,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "325",
+    "title": "Maximum Size Subarray Sum Equals k",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "327",
@@ -4155,7 +4191,8 @@
     "pat_group": [
       "pat_group::partition",
       "pat_group::partition::subarray-binary-search",
-      "pat_group::partition::partition-dp"
+      "pat_group::partition::partition-dp",
+      "pat_group::subarray"
     ]
   },
   {
@@ -4215,10 +4252,14 @@
     "difficulty": "Medium",
     "topics": "Array; Depth-First Search; Breadth-First Search; Matrix",
     "pat_ds": [
-      "pat_ds::matrices::dfs::dfs-template"
+      "pat_ds::matrices::core::mat-grid-dfs-bfs",
+      "pat_ds::matrices::dfs::dfs-grid-flood",
+      "pat_ds::matrices::bfs::bfs-multi-source",
+      "pat_ds::graph::core::bfs"
     ],
     "pat_topic": [
-      "pat_topic::dfs::dfs-template"
+      "pat_topic::dfs::dfs-grid-flood",
+      "pat_topic::bfs::bfs-multi-source"
     ],
     "pat_group": []
   },
@@ -4519,6 +4560,21 @@
     "pat_group": []
   },
   {
+    "id": "457",
+    "title": "Circular Array Loop",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Two Pointers",
+    "pat_ds": [
+      "pat_ds::array::two-pointers::tp-fast-slow"
+    ],
+    "pat_topic": [
+      "pat_topic::two-pointers::tp-fast-slow"
+    ],
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
+  },
+  {
     "id": "459",
     "title": "Repeated Substring Pattern",
     "difficulty": "Easy",
@@ -4629,7 +4685,9 @@
       "pat_ds::array::sliding-window::sw-shrink-violation"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "489",
@@ -4815,7 +4873,8 @@
       "pat_topic::prefix-sum::ps-hashmap"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -4830,7 +4889,9 @@
     "pat_topic": [
       "pat_topic::prefix-sum::ps-hashmap"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "526",
@@ -5005,7 +5066,8 @@
       "pat_topic::prefix-sum::ps-hashmap"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -5018,6 +5080,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "565",
+    "title": "Array Nesting",
+    "difficulty": "Medium",
+    "topics": "Array; Depth-First Search",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "567",
@@ -5056,7 +5129,9 @@
       "pat_ds::array::stack-topic::monotonic-stack"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "582",
@@ -5259,7 +5334,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-fixed"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "644",
@@ -5270,7 +5347,9 @@
       "pat_ds::array::binary-search::bs-on-answer"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "646",
@@ -5460,7 +5539,9 @@
     "pat_topic": [
       "pat_topic::union-find::uf-basic"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "685",
@@ -5473,7 +5554,9 @@
     "pat_topic": [
       "pat_topic::union-find::uf-basic"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "686",
@@ -5501,6 +5584,17 @@
     "pat_group": [
       "pat_group::longest-path",
       "pat_group::longest-path::lp-tree"
+    ]
+  },
+  {
+    "id": "689",
+    "title": "Maximum Sum of 3 Non-Overlapping Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Sliding Window; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
     ]
   },
   {
@@ -5658,6 +5752,17 @@
     "pat_group": []
   },
   {
+    "id": "713",
+    "title": "Subarray Product Less Than K",
+    "difficulty": "Medium",
+    "topics": "Array; Binary Search; Sliding Window; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "714",
     "title": "Best Time to Buy and Sell Stock with Transaction Fee",
     "difficulty": "Medium",
@@ -5695,6 +5800,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "718",
+    "title": "Maximum Length of Repeated Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Binary Search; Dynamic Programming; Sliding Window; Rolling Hash; Hash Function",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "719",
@@ -6185,6 +6301,17 @@
     ]
   },
   {
+    "id": "795",
+    "title": "Number of Subarrays with Bounded Maximum",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "796",
     "title": "Rotate String",
     "difficulty": "Easy",
@@ -6211,7 +6338,9 @@
     "pat_topic": [
       "pat_topic::topo-sort::dfs-cycle-detect"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::detect-cycle"
+    ]
   },
   {
     "id": "803",
@@ -6452,7 +6581,8 @@
       "pat_topic::deque-topic::monotonic-deque"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -6614,6 +6744,17 @@
     "pat_group": []
   },
   {
+    "id": "898",
+    "title": "Bitwise ORs of Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming; Bit Manipulation",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "901",
     "title": "Online Stock Span",
     "difficulty": "Medium",
@@ -6636,7 +6777,9 @@
       "pat_ds::array::sliding-window::sw-distinct-count"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "907",
@@ -6650,7 +6793,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::monotonic-stack-2pass"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "909",
@@ -6706,7 +6851,8 @@
       "pat_topic::deque-topic::deque-window-constraint"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -6761,6 +6907,22 @@
     "pat_group": []
   },
   {
+    "id": "926",
+    "title": "Flip String to Monotone Increasing",
+    "difficulty": "Medium",
+    "topics": "String; Dynamic Programming",
+    "pat_ds": [
+      "pat_ds::string::prefix-sum::partition-pivot"
+    ],
+    "pat_topic": [
+      "pat_topic::prefix-sum::partition-pivot",
+      "pat_topic::greedy::running-extreme"
+    ],
+    "pat_group": [
+      "pat_group::partition"
+    ]
+  },
+  {
     "id": "930",
     "title": "Binary Subarrays With Sum",
     "difficulty": "Medium",
@@ -6772,7 +6934,8 @@
       "pat_topic::sliding-window::sw-at-most-k"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -6975,7 +7138,8 @@
       "pat_topic::prefix-sum::ps-hashmap"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -6988,6 +7152,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "978",
+    "title": "Longest Turbulent Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "980",
@@ -7072,7 +7247,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-at-most-k"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "994",
@@ -7100,7 +7277,9 @@
       "pat_ds::array::sliding-window::sw-distinct-count"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1006",
@@ -7128,7 +7307,8 @@
     ],
     "pat_group": [
       "pat_group::partition",
-      "pat_group::partition::subarray-binary-search"
+      "pat_group::partition::subarray-binary-search",
+      "pat_group::subarray"
     ]
   },
   {
@@ -7181,6 +7361,17 @@
     ],
     "pat_group": [
       "pat_group::scheduling"
+    ]
+  },
+  {
+    "id": "1031",
+    "title": "Maximum Sum of Two Non-Overlapping Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
     ]
   },
   {
@@ -7304,6 +7495,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1063",
+    "title": "Number of Valid Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1071",
@@ -7636,6 +7838,17 @@
     "pat_group": []
   },
   {
+    "id": "1157",
+    "title": "Online Majority Element In Subarray",
+    "difficulty": "Hard",
+    "topics": "Array; Binary Search; Design; Binary Indexed Tree; Segment Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1161",
     "title": "Maximum Level Sum of a Binary Tree",
     "difficulty": "Medium",
@@ -7708,6 +7921,17 @@
       "pat_topic::math::sum-formulas"
     ],
     "pat_group": []
+  },
+  {
+    "id": "1186",
+    "title": "Maximum Subarray Sum with One Deletion",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1188",
@@ -7890,7 +8114,8 @@
     ],
     "pat_group": [
       "pat_group::partition",
-      "pat_group::partition::subarray-binary-search"
+      "pat_group::partition::subarray-binary-search",
+      "pat_group::subarray"
     ]
   },
   {
@@ -7990,7 +8215,9 @@
       "pat_topic::sliding-window::sw-at-most-k",
       "pat_topic::prefix-sum::ps-hashmap"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1249",
@@ -8171,6 +8398,30 @@
     "pat_group": []
   },
   {
+    "id": "1306",
+    "title": "Jump Game III",
+    "difficulty": "Medium",
+    "topics": "Array; Depth-First Search; Breadth-First Search",
+    "pat_ds": [
+      "pat_ds::array::dp::augmented-state-reachability"
+    ],
+    "pat_topic": [
+      "pat_topic::dp::augmented-state-reachability"
+    ],
+    "pat_group": []
+  },
+  {
+    "id": "1310",
+    "title": "XOR Queries of a Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Bit Manipulation; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1312",
     "title": "Minimum Insertion Steps to Make a String Palindrome",
     "difficulty": "Hard",
@@ -8230,7 +8481,9 @@
     "pat_topic": [
       "pat_topic::math::contribution-sign-cases"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1334",
@@ -8260,7 +8513,8 @@
     "pat_group": [
       "pat_group::scheduling",
       "pat_group::partition",
-      "pat_group::partition::partition-dp"
+      "pat_group::partition::partition-dp",
+      "pat_group::subarray"
     ]
   },
   {
@@ -8284,6 +8538,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1343",
+    "title": "Number of Sub-arrays of Size K and Average Greater than or Equal to Threshold",
+    "difficulty": "Medium",
+    "topics": "Array; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1351",
@@ -8458,7 +8723,9 @@
     "pat_topic": [
       "pat_topic::sliding-window::sw-fixed"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1426",
@@ -8526,7 +8793,9 @@
     "pat_topic": [
       "pat_topic::deque-topic::monotonic-deque"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1441",
@@ -8612,6 +8881,17 @@
     ]
   },
   {
+    "id": "1460",
+    "title": "Make Two Arrays Equal by Reversing Subarrays",
+    "difficulty": "Easy",
+    "topics": "Array; Hash Table; Sorting",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1462",
     "title": "Course Schedule IV",
     "difficulty": "Medium",
@@ -8667,6 +8947,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1477",
+    "title": "Find Two Non-overlapping Sub-arrays Each With Target Sum",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Binary Search; Dynamic Programming; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1480",
@@ -8747,7 +9038,9 @@
       "pat_ds::array::sliding-window::sw-shrink-violation"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1494",
@@ -8785,6 +9078,17 @@
     "pat_group": []
   },
   {
+    "id": "1508",
+    "title": "Range Sum of Sorted Subarray Sums",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers; Binary Search; Sorting; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1522",
     "title": "Diameter of N-Ary Tree",
     "difficulty": "Medium",
@@ -8797,6 +9101,28 @@
     "pat_group": [
       "pat_group::longest-path",
       "pat_group::longest-path::lp-tree"
+    ]
+  },
+  {
+    "id": "1524",
+    "title": "Number of Sub-arrays With Odd Sum",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Dynamic Programming; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "1526",
+    "title": "Minimum Number of Increments on Subarrays to Form a Target Array",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Stack; Greedy; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
     ]
   },
   {
@@ -8846,6 +9172,17 @@
     ]
   },
   {
+    "id": "1546",
+    "title": "Maximum Number of Non-Overlapping Subarrays With Sum Equals Target",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Greedy; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1547",
     "title": "Minimum Cost to Cut a Stick",
     "difficulty": "Hard",
@@ -8867,7 +9204,9 @@
       "pat_ds::array::core::kadane"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1568",
@@ -8881,6 +9220,17 @@
     "pat_group": []
   },
   {
+    "id": "1574",
+    "title": "Shortest Subarray to be Removed to Make Array Sorted",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers; Binary Search; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1584",
     "title": "Min Cost to Connect All Points",
     "difficulty": "Medium",
@@ -8890,6 +9240,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1588",
+    "title": "Sum of All Odd Length Subarrays",
+    "difficulty": "Easy",
+    "topics": "Array; Math; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1610",
@@ -8914,6 +9275,17 @@
       "pat_topic::math::fast-power"
     ],
     "pat_group": []
+  },
+  {
+    "id": "1630",
+    "title": "Arithmetic Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sorting",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1631",
@@ -8999,6 +9371,22 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1653",
+    "title": "Minimum Deletions to Make String Balanced",
+    "difficulty": "Medium",
+    "topics": "String; Dynamic Programming; Stack",
+    "pat_ds": [
+      "pat_ds::string::prefix-sum::partition-pivot"
+    ],
+    "pat_topic": [
+      "pat_topic::prefix-sum::partition-pivot",
+      "pat_topic::greedy::running-extreme"
+    ],
+    "pat_group": [
+      "pat_group::partition"
+    ]
   },
   {
     "id": "1657",
@@ -9103,6 +9491,28 @@
     "pat_group": []
   },
   {
+    "id": "1708",
+    "title": "Largest Subarray Length K",
+    "difficulty": "Easy",
+    "topics": "Array; Greedy",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "1712",
+    "title": "Ways to Split Array Into Three Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers; Binary Search; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1717",
     "title": "Maximum Score From Removing Substrings",
     "difficulty": "Medium",
@@ -9153,6 +9563,28 @@
     "pat_group": []
   },
   {
+    "id": "1746",
+    "title": "Maximum Subarray Sum After One Operation",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "1749",
+    "title": "Maximum Absolute Sum of Any Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1751",
     "title": "Maximum Number of Events That Can Be Attended II",
     "difficulty": "Hard",
@@ -9175,6 +9607,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1764",
+    "title": "Form Array by Concatenating Subarrays of Another Array",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers; Greedy; String Matching",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1765",
@@ -9214,6 +9657,28 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1793",
+    "title": "Maximum Score of a Good Subarray",
+    "difficulty": "Hard",
+    "topics": "Array; Two Pointers; Binary Search; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "1800",
+    "title": "Maximum Ascending Subarray Sum",
+    "difficulty": "Easy",
+    "topics": "Array",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1803",
@@ -9268,6 +9733,17 @@
     "pat_group": []
   },
   {
+    "id": "1852",
+    "title": "Distinct Numbers in Each Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "1854",
     "title": "Maximum Population Year",
     "difficulty": "Easy",
@@ -9292,7 +9768,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::monotonic-stack-2pass"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1857",
@@ -9312,6 +9790,19 @@
       "pat_group::longest-path",
       "pat_group::longest-path::lp-dag"
     ]
+  },
+  {
+    "id": "1871",
+    "title": "Jump Game VII",
+    "difficulty": "Medium",
+    "topics": "String; Dynamic Programming; Sliding Window; Prefix Sum",
+    "pat_ds": [
+      "pat_ds::array::dp::augmented-state-reachability"
+    ],
+    "pat_topic": [
+      "pat_topic::dp::augmented-state-reachability"
+    ],
+    "pat_group": []
   },
   {
     "id": "1882",
@@ -9351,6 +9842,17 @@
       "pat_topic::binary-search::bs-on-answer-compound"
     ],
     "pat_group": []
+  },
+  {
+    "id": "1918",
+    "title": "Kth Smallest Subarray Sum",
+    "difficulty": "Medium",
+    "topics": "Array; Binary Search; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1926",
@@ -9397,6 +9899,17 @@
       "pat_topic::heap::event-driven-scheduling"
     ],
     "pat_group": []
+  },
+  {
+    "id": "1950",
+    "title": "Maximum of Minimum Values in All Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "1958",
@@ -9522,6 +10035,28 @@
     ]
   },
   {
+    "id": "2031",
+    "title": "Count Subarrays With More Ones Than Zeros",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Binary Search; Divide and Conquer; Binary Indexed Tree; Segment Tree; Merge Sort; Ordered Set",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2036",
+    "title": "Maximum Alternating Subarray Sum",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2050",
     "title": "Parallel Courses III",
     "difficulty": "Hard",
@@ -9563,6 +10098,17 @@
       "pat_topic::union-find::uf-weighted"
     ],
     "pat_group": []
+  },
+  {
+    "id": "2090",
+    "title": "K Radius Subarray Averages",
+    "difficulty": "Medium",
+    "topics": "Array; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2092",
@@ -9624,7 +10170,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::monotonic-stack-2pass"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2127",
@@ -9703,6 +10251,17 @@
     "pat_group": []
   },
   {
+    "id": "2261",
+    "title": "K Divisible Elements Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Trie; Rolling Hash; Hash Function; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2266",
     "title": "Count Number of Texts",
     "difficulty": "Medium",
@@ -9753,6 +10312,17 @@
     "pat_group": []
   },
   {
+    "id": "2302",
+    "title": "Count Subarrays With Score Less Than K",
+    "difficulty": "Hard",
+    "topics": "Array; Binary Search; Sliding Window; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2303",
     "title": "Calculate Amount Paid in Taxes",
     "difficulty": "Easy",
@@ -9776,7 +10346,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::monotonic-stack-2pass"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2336",
@@ -9788,6 +10360,17 @@
     "pat_group": [
       "pat_group::design",
       "pat_group::design::ordered-aggregate"
+    ]
+  },
+  {
+    "id": "2348",
+    "title": "Number of Zero-Filled Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Math",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
     ]
   },
   {
@@ -9826,6 +10409,28 @@
     "pat_group": []
   },
   {
+    "id": "2393",
+    "title": "Count Strictly Increasing Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2395",
+    "title": "Find Subarrays With Equal Sum",
+    "difficulty": "Easy",
+    "topics": "Array; Hash Table",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2398",
     "title": "Maximum Number of Robots Within Budget",
     "difficulty": "Hard",
@@ -9834,7 +10439,20 @@
       "pat_ds::array::deque-topic::monotonic-deque"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2401",
+    "title": "Longest Nice Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Bit Manipulation; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2402",
@@ -9861,6 +10479,39 @@
     "pat_group": []
   },
   {
+    "id": "2411",
+    "title": "Smallest Subarrays With Maximum Bitwise OR",
+    "difficulty": "Medium",
+    "topics": "Array; Binary Search; Bit Manipulation; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2419",
+    "title": "Longest Subarray With Maximum Bitwise AND",
+    "difficulty": "Medium",
+    "topics": "Array; Bit Manipulation; Brainteaser",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2436",
+    "title": "Minimum Split Into Subarrays With GCD Greater Than One",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Dynamic Programming; Greedy; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2439",
     "title": "Minimize Maximum of Array",
     "difficulty": "Medium",
@@ -9870,6 +10521,28 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "2444",
+    "title": "Count Subarrays With Fixed Bounds",
+    "difficulty": "Hard",
+    "topics": "Array; Queue; Sliding Window; Monotonic Queue",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2447",
+    "title": "Number of Subarrays With GCD Equal to K",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2449",
@@ -9896,7 +10569,8 @@
       "pat_topic::sliding-window::sw-fixed"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::subarray"
     ]
   },
   {
@@ -9911,6 +10585,28 @@
     "pat_group": []
   },
   {
+    "id": "2464",
+    "title": "Minimum Subarrays in a Valid Split",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Dynamic Programming; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2470",
+    "title": "Number of Subarrays With LCM Equal to K",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2477",
     "title": "Minimum Fuel Cost to Report to the Capital",
     "difficulty": "Medium",
@@ -9920,6 +10616,33 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "2483",
+    "title": "Minimum Penalty for a Shop",
+    "difficulty": "Medium",
+    "topics": "String; Prefix Sum",
+    "pat_ds": [
+      "pat_ds::string::prefix-sum::partition-pivot"
+    ],
+    "pat_topic": [
+      "pat_topic::prefix-sum::partition-pivot",
+      "pat_topic::greedy::running-extreme"
+    ],
+    "pat_group": [
+      "pat_group::partition"
+    ]
+  },
+  {
+    "id": "2488",
+    "title": "Count Subarrays With Median K",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2492",
@@ -9933,6 +10656,17 @@
     "pat_group": []
   },
   {
+    "id": "2495",
+    "title": "Number of Subarrays Having Even Product",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2517",
     "title": "Maximum Tastiness of Candy Basket",
     "difficulty": "Medium",
@@ -9944,6 +10678,28 @@
       "pat_topic::binary-search::bs-on-answer-compound"
     ],
     "pat_group": []
+  },
+  {
+    "id": "2524",
+    "title": "Maximum Frequency Score of a Subarray",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Math; Stack; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2537",
+    "title": "Count the Number of Good Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2542",
@@ -9971,6 +10727,28 @@
       "pat_topic::prefix-sum::ps-1d"
     ],
     "pat_group": []
+  },
+  {
+    "id": "2588",
+    "title": "Count the Number of Beautiful Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Bit Manipulation; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2607",
+    "title": "Make K-Subarray Sums Equal",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Greedy; Sorting; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "2611",
@@ -10014,6 +10792,17 @@
     ]
   },
   {
+    "id": "2653",
+    "title": "Sliding Subarray Beauty",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2659",
     "title": "Make Array Empty",
     "difficulty": "Hard",
@@ -10037,6 +10826,28 @@
     ]
   },
   {
+    "id": "2750",
+    "title": "Ways to Split Array Into Good Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2760",
+    "title": "Longest Even Odd Subarray With Threshold",
+    "difficulty": "Easy",
+    "topics": "Array; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "2761",
     "title": "Prime Pairs With Target Sum",
     "difficulty": "Medium",
@@ -10049,6 +10860,61 @@
     ],
     "pat_group": [
       "pat_group::sum"
+    ]
+  },
+  {
+    "id": "2762",
+    "title": "Continuous Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Queue; Sliding Window; Heap (Priority Queue); Ordered Set; Monotonic Queue",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2763",
+    "title": "Sum of Imbalance Numbers of All Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2765",
+    "title": "Longest Alternating Subarray",
+    "difficulty": "Easy",
+    "topics": "Array; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2771",
+    "title": "Longest Non-decreasing Subarray From Two Arrays",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2799",
+    "title": "Count Complete Subarrays in an Array",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
     ]
   },
   {
@@ -10066,6 +10932,39 @@
     "pat_group": [
       "pat_group::shortest-path",
       "pat_group::shortest-path::dijkstra"
+    ]
+  },
+  {
+    "id": "2831",
+    "title": "Find the Longest Equal Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Binary Search; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2841",
+    "title": "Maximum Sum of Almost Unique Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2845",
+    "title": "Count of Interesting Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
     ]
   },
   {
@@ -10091,6 +10990,237 @@
     "pat_group": []
   },
   {
+    "id": "2863",
+    "title": "Maximum Length of Semi-Decreasing Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Stack; Sorting; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2871",
+    "title": "Split Array Into Maximum Number of Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Greedy; Bit Manipulation",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2875",
+    "title": "Minimum Size Subarray in Infinite Array",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2913",
+    "title": "Subarrays Distinct Element Sum of Squares I",
+    "difficulty": "Easy",
+    "topics": "Array; Hash Table",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2916",
+    "title": "Subarrays Distinct Element Sum of Squares II",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Binary Indexed Tree; Segment Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2941",
+    "title": "Maximum GCD-Sum of a Subarray",
+    "difficulty": "Hard",
+    "topics": "Array; Math; Binary Search; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2958",
+    "title": "Length of Longest Subarray With at Most K Frequency",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2962",
+    "title": "Count Subarrays Where Max Element Appears at Least K Times",
+    "difficulty": "Medium",
+    "topics": "Array; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2970",
+    "title": "Count the Number of Incremovable Subarrays I",
+    "difficulty": "Easy",
+    "topics": "Array; Two Pointers; Binary Search; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2972",
+    "title": "Count the Number of Incremovable Subarrays II",
+    "difficulty": "Hard",
+    "topics": "Array; Two Pointers; Binary Search",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3010",
+    "title": "Divide an Array Into Subarrays With Minimum Cost I",
+    "difficulty": "Easy",
+    "topics": "Array; Sorting; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3013",
+    "title": "Divide an Array Into Subarrays With Minimum Cost II",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Sliding Window; Heap (Priority Queue)",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3026",
+    "title": "Maximum Good Subarray Sum",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3034",
+    "title": "Number of Subarrays That Match a Pattern I",
+    "difficulty": "Medium",
+    "topics": "Array; Rolling Hash; String Matching; Hash Function",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3036",
+    "title": "Number of Subarrays That Match a Pattern II",
+    "difficulty": "Hard",
+    "topics": "Array; Rolling Hash; String Matching; Hash Function",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3077",
+    "title": "Maximum Strength of K Disjoint Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3095",
+    "title": "Shortest Subarray With OR at Least K I",
+    "difficulty": "Easy",
+    "topics": "Array; Bit Manipulation; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3097",
+    "title": "Shortest Subarray With OR at Least K II",
+    "difficulty": "Medium",
+    "topics": "Array; Bit Manipulation; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3101",
+    "title": "Count Alternating Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Math",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3105",
+    "title": "Longest Strictly Increasing or Strictly Decreasing Subarray",
+    "difficulty": "Easy",
+    "topics": "Array",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3113",
+    "title": "Find the Number of Subarrays Where Boundary Elements Are Maximum",
+    "difficulty": "Hard",
+    "topics": "Array; Binary Search; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "3161",
     "title": "Block Placement Queries",
     "difficulty": "Hard",
@@ -10100,6 +11230,160 @@
       "pat_topic::range-struct::segment-tree"
     ],
     "pat_group": []
+  },
+  {
+    "id": "3171",
+    "title": "Find Subarray With Bitwise OR Closest to K",
+    "difficulty": "Hard",
+    "topics": "Array; Binary Search; Bit Manipulation; Segment Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3196",
+    "title": "Maximize Total Cost of Alternating Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3209",
+    "title": "Number of Subarrays With AND Value of K",
+    "difficulty": "Hard",
+    "topics": "Array; Binary Search; Bit Manipulation; Segment Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3254",
+    "title": "Find the Power of K-Size Subarrays I",
+    "difficulty": "Medium",
+    "topics": "Array; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3255",
+    "title": "Find the Power of K-Size Subarrays II",
+    "difficulty": "Medium",
+    "topics": "Array; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3277",
+    "title": "Maximum XOR Score Subarray Queries",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3284",
+    "title": "Sum of Consecutive Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3318",
+    "title": "Find X-Sum of All K-Long Subarrays I",
+    "difficulty": "Easy",
+    "topics": "Array; Hash Table; Sliding Window; Heap (Priority Queue)",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3321",
+    "title": "Find X-Sum of All K-Long Subarrays II",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Sliding Window; Heap (Priority Queue)",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3349",
+    "title": "Adjacent Increasing Subarrays Detection I",
+    "difficulty": "Easy",
+    "topics": "Array",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3350",
+    "title": "Adjacent Increasing Subarrays Detection II",
+    "difficulty": "Medium",
+    "topics": "Array; Binary Search",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3364",
+    "title": "Minimum Positive Sum Subarray",
+    "difficulty": "Easy",
+    "topics": "Array; Sliding Window; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3381",
+    "title": "Maximum Subarray Sum With Length Divisible by K",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3392",
+    "title": "Count Subarrays of Length Three With a Condition",
+    "difficulty": "Easy",
+    "topics": "Array",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "3408",
@@ -10113,6 +11397,204 @@
     "pat_group": []
   },
   {
+    "id": "3410",
+    "title": "Maximize Subarray Sum After Removing All Occurrences of One Element",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Segment Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3411",
+    "title": "Maximum Subarray With Equal Products",
+    "difficulty": "Easy",
+    "topics": "Array; Math; Sliding Window; Enumeration; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3420",
+    "title": "Count Non-Decreasing Subarrays After K Operations",
+    "difficulty": "Hard",
+    "topics": "Array; Stack; Segment Tree; Queue; Sliding Window; Monotonic Stack; Monotonic Queue",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3422",
+    "title": "Minimum Operations to Make Subarray Elements Equal",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Math; Sliding Window; Heap (Priority Queue)",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3427",
+    "title": "Sum of Variable Length Subarrays",
+    "difficulty": "Easy",
+    "topics": "Array; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3430",
+    "title": "Maximum and Minimum Sums of at Most Size K Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Math; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3434",
+    "title": "Maximum Frequency After Subarray Operation",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Dynamic Programming; Greedy; Enumeration; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3473",
+    "title": "Sum of K Subarrays With Length at Least M",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3480",
+    "title": "Maximize Subarrays After Removing One Conflicting Pair",
+    "difficulty": "Hard",
+    "topics": "Array; Segment Tree; Enumeration; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3487",
+    "title": "Maximum Unique Subarray Sum After Deletion",
+    "difficulty": "Easy",
+    "topics": "Array; Hash Table; Greedy",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3500",
+    "title": "Minimum Cost to Divide Array Into Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3505",
+    "title": "Minimum Operations to Make Elements Within K Subarrays Equal",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Math; Dynamic Programming; Sliding Window; Heap (Priority Queue)",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3526",
+    "title": "Range XOR Queries with Subarray Reversals",
+    "difficulty": "Hard",
+    "topics": "Array; Tree; Binary Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3555",
+    "title": "Smallest Subarray to Sort in Every Sliding Window",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers; Stack; Greedy; Sorting; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3574",
+    "title": "Maximize Subarray GCD Score",
+    "difficulty": "Hard",
+    "topics": "Array; Math; Enumeration; Number Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3589",
+    "title": "Count Prime-Gap Balanced Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Queue; Sliding Window; Number Theory; Monotonic Queue",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3632",
+    "title": "Subarrays with XOR at Least K",
+    "difficulty": "Hard",
+    "topics": "Array; Bit Manipulation; Trie; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3641",
+    "title": "Longest Semi-Repeating Subarray",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
     "id": "3667",
     "title": "Sort Array By Absolute Value",
     "difficulty": "Easy",
@@ -10122,6 +11604,303 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "3672",
+    "title": "Sum of Weighted Modes in Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window; Counting; Ordered Set",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3676",
+    "title": "Count Bowl Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Stack; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3689",
+    "title": "Maximum Total Subarray Value I",
+    "difficulty": "Medium",
+    "topics": "Array; Greedy",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3691",
+    "title": "Maximum Total Subarray Value II",
+    "difficulty": "Hard",
+    "topics": "Array; Greedy; Segment Tree; Heap (Priority Queue)",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3708",
+    "title": "Longest Fibonacci Subarray",
+    "difficulty": "Medium",
+    "topics": "Array",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3719",
+    "title": "Longest Balanced Subarray I",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3721",
+    "title": "Longest Balanced Subarray II",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3728",
+    "title": "Stable Subarrays With Equal Boundary and Interior Sum",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3729",
+    "title": "Count Distinct Subarrays Divisible by K in Sorted Array",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3737",
+    "title": "Count Subarrays With Majority Element I",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Merge Sort; Counting; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3738",
+    "title": "Longest Non-Decreasing Subarray After Replacing at Most One Element",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3739",
+    "title": "Count Subarrays With Majority Element II",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Merge Sort; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3748",
+    "title": "Count Stable Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Binary Search; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3755",
+    "title": "Find Maximum Balanced XOR Subarray Length",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Bit Manipulation; Prefix Sum",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3762",
+    "title": "Minimum Operations to Equalize Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Math; Binary Search; Segment Tree",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3768",
+    "title": "Minimum Inversion Count in Subarrays of Fixed Length",
+    "difficulty": "Hard",
+    "topics": "Array; Segment Tree; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3795",
+    "title": "Minimum Subarray Length With Distinct Sum At Least K",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Sliding Window",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3804",
+    "title": "Number of Centered Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3828",
+    "title": "Final Element After Subarray Deletions",
+    "difficulty": "Medium",
+    "topics": "Array; Math; Brainteaser; Game Theory",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3830",
+    "title": "Longest Alternating Subarray After Removing At Most One Element",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Enumeration",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3835",
+    "title": "Count Subarrays With Cost Less Than or Equal to K",
+    "difficulty": "Medium",
+    "topics": "Array; Queue; Monotonic Queue",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3845",
+    "title": "Maximum Subarray XOR with Bounded Range",
+    "difficulty": "Hard",
+    "topics": "Array; Bit Manipulation; Trie; Queue; Sliding Window; Prefix Sum; Monotonic Queue",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3859",
+    "title": "Count Subarrays With K Distinct Integers",
+    "difficulty": "Hard",
+    "topics": "Array; Hash Table; Sliding Window; Counting",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3865",
+    "title": "Reverse K Subarrays",
+    "difficulty": "Medium",
+    "topics": "Array; Two Pointers",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3874",
+    "title": "Valid Subarrays With Exactly One Peak",
+    "difficulty": "Medium",
+    "topics": "Array; Math",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3878",
+    "title": "Count Good Subarrays",
+    "difficulty": "Hard",
+    "topics": "Array; Stack; Bit Manipulation; Monotonic Stack",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "3911",
+    "title": "K-th Smallest Remaining Even Integer in Subarray Queries",
+    "difficulty": "Hard",
+    "topics": "",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::subarray"
+    ]
   },
   {
     "id": "10000",

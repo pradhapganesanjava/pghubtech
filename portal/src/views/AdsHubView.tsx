@@ -24,7 +24,12 @@ import {
   loadLists, getCachedLists, addToList, removeFromList, renameList,
 } from '../adapters/adsRepo'
 import type { LCProblem, LCList } from '../adapters/adsRepo'
+import {
+  loadPoint2Rem, getCachedPoint2Rem, savePoint2Rem, deletePoint2Rem, emptyP2RItem,
+} from '../adapters/point2remRepo'
+import type { P2RItem } from '../adapters/point2remRepo'
 import AdsHubSidebar from '../components/AdsHubSidebar'
+import Point2RemDetail from '../components/Point2RemDetail'
 import AdsLineage from '../components/AdsLineage'
 import CodePanel from '../components/CodePanel'
 import HandwritingPad from '../components/HandwritingPad'
@@ -282,6 +287,73 @@ export default function AdsHubView() {
   const [lists, setLists]                  = useState<LCList[]>(getCachedLists() ?? [])
   const [selectedList, setSelectedList]    = useState<string | null>(_persisted.list)
 
+  // ── Point2Rem (sidebar tab) ─────────────────────────────────────────────
+  // Notes from the "Point2Rem" sheet tab, grouped by tag in the sidebar. The
+  // selected note takes over the right-hand detail pane (mutually exclusive
+  // with a selected problem — see the effect below) and is editable there.
+  const p2rCached = getCachedPoint2Rem()
+  const [p2rItems, setP2rItems]     = useState<P2RItem[]>(p2rCached ?? [])
+  const [p2rLoading, setP2rLoading] = useState(p2rCached == null)
+  const [p2rError, setP2rError]     = useState('')
+  const [p2rSel, setP2rSel]         = useState<P2RItem | null>(null)
+  const [p2rEditing, setP2rEditing] = useState(false)
+
+  async function fetchP2R(force = false) {
+    setP2rLoading(true); setP2rError('')
+    try {
+      const items = await loadPoint2Rem(force)
+      setP2rItems(items)
+      // Keep the open note in sync with the reloaded file (or drop it if the
+      // note was removed there).
+      setP2rSel(cur => cur ? items.find(i => i.id === cur.id) ?? null : null)
+    } catch (e) {
+      setP2rError((e as Error).message)
+    } finally {
+      setP2rLoading(false)
+    }
+  }
+  useEffect(() => {
+    if (p2rCached != null) return   // module cache — use the tab's ↻ to reload
+    void fetchP2R()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A problem and a Point2Rem note share the one detail pane, so opening
+  // either dismisses the other.
+  useEffect(() => { if (selected) setP2rSel(null) }, [selected?.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+  function openP2R(item: P2RItem) {
+    setSelected(null)
+    setP2rEditing(false)
+    setP2rSel(cur => cur?.id === item.id ? null : item)
+  }
+  // ＋ New — open a blank note straight in edit mode.
+  function newP2R() {
+    setSelected(null)
+    setP2rEditing(true)
+    setP2rSel(emptyP2RItem())
+  }
+  async function handleSaveP2R(draft: P2RItem) {
+    const saved = await savePoint2Rem(draft)     // throws → the panel shows the error
+    setP2rItems(getCachedPoint2Rem() ?? [])
+    setP2rSel(saved)
+    setP2rEditing(false)
+    toast('Point saved', 'success')
+  }
+  async function handleDeleteP2R(id: string) {
+    await deletePoint2Rem(id)
+    setP2rItems(getCachedPoint2Rem() ?? [])
+    setP2rSel(null)
+    toast('Point deleted', 'success')
+  }
+  // Tag suggestions in the editor come from the points themselves — Point2Rem
+  // tags are their own vocabulary, not the problems' lineage tags.
+  const p2rKnownTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const i of p2rItems) for (const t of i.tags) set.add(t)
+    return [...set].sort()
+  }, [p2rItems])
+  // True when EITHER pane occupant is open — drives the split sizing below.
+  const detailOpen = !!selected || !!p2rSel
+
   // Persist all filter state — Clear All triggers this too via state resets.
   useEffect(() => {
     saveFilters<AdsHubFilters>(ADSHUB_FILTERS_KEY, {
@@ -401,7 +473,7 @@ export default function AdsHubView() {
   // (Same effect as double-clicking the dividers; the user can still drag.)
   // When a problem opens: Browse/Patterns narrow the list to 15%; Lineage
   // keeps the graph dominant (55%) so the detail acts as a side panel.
-  useEffect(() => { setListRatio(selected ? (adsMode === 'lineage' ? 55 : 15) : 40) }, [selected?.slug, adsMode])
+  useEffect(() => { setListRatio(detailOpen ? (adsMode === 'lineage' ? 55 : 15) : 40) }, [selected?.slug, p2rSel?.id, adsMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Per-problem study timer (mm:ss). Resets when the selection changes.
   // Visual escalation: orange + bold at 10 min, red at 15 min, blinking at 20+.
@@ -1040,7 +1112,7 @@ export default function AdsHubView() {
 
   // Collapse the add-to-list menu + reset expand when selection clears.
   useEffect(() => { setListMenuOpen(false); setNewListName('') }, [selected?.slug])
-  useEffect(() => { if (!selected) setViewerExpanded(false) }, [selected])
+  useEffect(() => { if (!detailOpen) setViewerExpanded(false) }, [detailOpen])
 
   const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns'
 
@@ -1358,6 +1430,13 @@ export default function AdsHubView() {
           onDeleteList={deleteList}
           onCreateList={openCreateList}
           onManageList={openManageList}
+          p2rItems={p2rItems}
+          p2rLoading={p2rLoading}
+          p2rError={p2rError}
+          p2rSelectedId={p2rSel?.id ?? null}
+          onSelectP2R={openP2R}
+          onCreateP2R={newP2R}
+          onRefreshP2R={() => void fetchP2R(true)}
           collapsed={sidebarHidden}
           onCollapse={() => { if (viewerExpanded) setViewerExpanded(false); else setLeftColl(c => !c) }}
         />
@@ -1540,7 +1619,7 @@ export default function AdsHubView() {
           <div
             className="browse-col-cards"
             style={{
-              ...(selected ? { flex: `0 0 ${listRatio}%` } : {}),
+              ...(detailOpen ? { flex: `0 0 ${listRatio}%` } : {}),
               // Patterns/Lineage: make the column a flex container so the
               // <iframe flex:1> can fill remaining vertical space, and
               // drop the column's own overflow:auto (iframe scrolls).
@@ -1635,7 +1714,7 @@ export default function AdsHubView() {
           )}
 
           {/* List/detail draggable divider — only when both panes show */}
-          {selected && !viewerExpanded && (
+          {detailOpen && !viewerExpanded && (
             <div
               className="qa-divider"
               onPointerDown={startListDrag}
@@ -1647,7 +1726,26 @@ export default function AdsHubView() {
             />
           )}
 
-          {/* Detail pane */}
+          {/* Detail pane — a Point2Rem note when one is open, otherwise the
+              selected problem (the two are mutually exclusive). */}
+          {p2rSel && !selected && (
+            <Point2RemDetail
+              // Re-key per note so the editor's draft state resets cleanly
+              // between notes (and between "new" and a saved note).
+              key={p2rSel.id || '__new__'}
+              item={p2rSel}
+              problems={problems}
+              knownTags={p2rKnownTags}
+              startEditing={p2rEditing}
+              onOpenProblem={p => { setP2rSel(null); setSelected(p) }}
+              onSave={handleSaveP2R}
+              onDelete={handleDeleteP2R}
+              onClose={() => { setP2rSel(null); setP2rEditing(false) }}
+              expanded={viewerExpanded}
+              onToggleExpand={() => setViewerExpanded(v => !v)}
+              onHeaderDoubleClick={() => setListRatio(r => r <= 18 ? 40 : 15)}
+            />
+          )}
           {selected && (
             <div className="browse-col-detail has-selection" style={{ flex: 1 }}>
               <div

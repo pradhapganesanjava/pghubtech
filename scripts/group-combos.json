@@ -477,6 +477,120 @@
       ]
     }
   },
+  "pattern-matching": {
+    "ds": {
+      "string": [
+        {
+          "id": "10",
+          "title": "Regular Expression Matching"
+        },
+        {
+          "id": "28",
+          "title": "Find the Index of the First Occurrence in a String"
+        },
+        {
+          "id": "44",
+          "title": "Wildcard Matching"
+        },
+        {
+          "id": "205",
+          "title": "Isomorphic Strings"
+        },
+        {
+          "id": "214",
+          "title": "Shortest Palindrome"
+        },
+        {
+          "id": "290",
+          "title": "Word Pattern"
+        },
+        {
+          "id": "291",
+          "title": "Word Pattern II"
+        },
+        {
+          "id": "459",
+          "title": "Repeated Substring Pattern"
+        },
+        {
+          "id": "686",
+          "title": "Repeated String Match"
+        },
+        {
+          "id": "796",
+          "title": "Rotate String"
+        },
+        {
+          "id": "890",
+          "title": "Find and Replace Pattern"
+        },
+        {
+          "id": "1023",
+          "title": "Camelcase Matching"
+        },
+        {
+          "id": "1392",
+          "title": "Longest Happy Prefix"
+        },
+        {
+          "id": "1408",
+          "title": "String Matching in an Array"
+        }
+      ],
+      "trie": [
+        {
+          "id": "211",
+          "title": "Design Add and Search Words Data Structure"
+        },
+        {
+          "id": "676",
+          "title": "Implement Magic Dictionary"
+        },
+        {
+          "id": "745",
+          "title": "Prefix and Suffix Search"
+        }
+      ]
+    },
+    "topic": {
+      "dp": [
+        {
+          "id": "10",
+          "title": "Regular Expression Matching"
+        },
+        {
+          "id": "44",
+          "title": "Wildcard Matching"
+        }
+      ],
+      "hash": [
+        {
+          "id": "205",
+          "title": "Isomorphic Strings"
+        },
+        {
+          "id": "290",
+          "title": "Word Pattern"
+        },
+        {
+          "id": "890",
+          "title": "Find and Replace Pattern"
+        }
+      ],
+      "backtrack": [
+        {
+          "id": "291",
+          "title": "Word Pattern II"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "1023",
+          "title": "Camelcase Matching"
+        }
+      ]
+    }
+  },
   "parenthesis": {
     "ds": {
       "string": [
@@ -615,6 +729,10 @@
         {
           "id": "1255",
           "title": "Maximum Score Words Formed by Letters"
+        },
+        {
+          "id": "1268",
+          "title": "Search Suggestions System"
         }
       ],
       "matrices": [
@@ -638,6 +756,10 @@
         }
       ],
       "array": [
+        {
+          "id": "139",
+          "title": "Word Break"
+        },
         {
           "id": "151",
           "title": "Reverse Words in a String"
@@ -707,6 +829,10 @@
         {
           "id": "648",
           "title": "Replace Words"
+        },
+        {
+          "id": "1268",
+          "title": "Search Suggestions System"
         }
       ],
       "bfs": [
@@ -714,12 +840,6 @@
           "id": "126",
           "title": "Word Ladder II"
         },
-        {
-          "id": "127",
-          "title": "Word Ladder"
-        }
-      ],
-      "shortest-path": [
         {
           "id": "127",
           "title": "Word Ladder"
@@ -767,12 +887,6 @@
           "title": "Most Common Word"
         }
       ],
-      "simulation": [
-        {
-          "id": "422",
-          "title": "Valid Word Square"
-        }
-      ],
       "heap": [
         {
           "id": "692",
@@ -789,12 +903,164 @@
         {
           "id": "758",
           "title": "Bold Words in String"
+        },
+        {
+          "id": "1268",
+          "title": "Search Suggestions System"
         }
       ],
       "bits": [
         {
           "id": "1255",
           "title": "Maximum Score Words Formed by Letters"
+        }
+      ]
+    }
+  },
+  "subset-selection": {
+    "ds": {
+      "array": [
+        {
+          "id": "39",
+          "title": "Combination Sum"
+        },
+        {
+          "id": "40",
+          "title": "Combination Sum II"
+        },
+        {
+          "id": "78",
+          "title": "Subsets"
+        },
+        {
+          "id": "90",
+          "title": "Subsets II"
+        },
+        {
+          "id": "216",
+          "title": "Combination Sum III"
+        },
+        {
+          "id": "416",
+          "title": "Partition Equal Subset Sum"
+        },
+        {
+          "id": "494",
+          "title": "Target Sum"
+        },
+        {
+          "id": "698",
+          "title": "Partition to K Equal Sum Subsets"
+        },
+        {
+          "id": "1125",
+          "title": "Smallest Sufficient Team"
+        },
+        {
+          "id": "1239",
+          "title": "Maximum Length of a Concatenated String with Unique Characters"
+        },
+        {
+          "id": "2542",
+          "title": "Maximum Subsequence Score"
+        }
+      ],
+      "string": [
+        {
+          "id": "1239",
+          "title": "Maximum Length of a Concatenated String with Unique Characters"
+        },
+        {
+          "id": "1255",
+          "title": "Maximum Score Words Formed by Letters"
+        }
+      ]
+    },
+    "topic": {
+      "backtrack": [
+        {
+          "id": "39",
+          "title": "Combination Sum"
+        },
+        {
+          "id": "40",
+          "title": "Combination Sum II"
+        },
+        {
+          "id": "78",
+          "title": "Subsets"
+        },
+        {
+          "id": "90",
+          "title": "Subsets II"
+        },
+        {
+          "id": "216",
+          "title": "Combination Sum III"
+        },
+        {
+          "id": "1239",
+          "title": "Maximum Length of a Concatenated String with Unique Characters"
+        }
+      ],
+      "dfs": [
+        {
+          "id": "39",
+          "title": "Combination Sum"
+        },
+        {
+          "id": "78",
+          "title": "Subsets"
+        }
+      ],
+      "bits": [
+        {
+          "id": "78",
+          "title": "Subsets"
+        },
+        {
+          "id": "90",
+          "title": "Subsets II"
+        },
+        {
+          "id": "1239",
+          "title": "Maximum Length of a Concatenated String with Unique Characters"
+        },
+        {
+          "id": "1255",
+          "title": "Maximum Score Words Formed by Letters"
+        }
+      ],
+      "dp": [
+        {
+          "id": "416",
+          "title": "Partition Equal Subset Sum"
+        },
+        {
+          "id": "494",
+          "title": "Target Sum"
+        },
+        {
+          "id": "698",
+          "title": "Partition to K Equal Sum Subsets"
+        },
+        {
+          "id": "1125",
+          "title": "Smallest Sufficient Team"
+        },
+        {
+          "id": "1239",
+          "title": "Maximum Length of a Concatenated String with Unique Characters"
+        },
+        {
+          "id": "1255",
+          "title": "Maximum Score Words Formed by Letters"
+        }
+      ],
+      "heap": [
+        {
+          "id": "2542",
+          "title": "Maximum Subsequence Score"
         }
       ]
     }
@@ -845,6 +1111,324 @@
       ]
     }
   },
+  "subarray": {
+    "ds": {
+      "array": [
+        {
+          "id": "53",
+          "title": "Maximum Subarray"
+        },
+        {
+          "id": "152",
+          "title": "Maximum Product Subarray"
+        },
+        {
+          "id": "209",
+          "title": "Minimum Size Subarray Sum"
+        },
+        {
+          "id": "220",
+          "title": "Contains Duplicate III"
+        },
+        {
+          "id": "239",
+          "title": "Sliding Window Maximum"
+        },
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "487",
+          "title": "Max Consecutive Ones II"
+        },
+        {
+          "id": "523",
+          "title": "Continuous Subarray Sum"
+        },
+        {
+          "id": "525",
+          "title": "Contiguous Array"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "581",
+          "title": "Shortest Unsorted Continuous Subarray"
+        },
+        {
+          "id": "643",
+          "title": "Maximum Average Subarray I"
+        },
+        {
+          "id": "644",
+          "title": "Maximum Average Subarray II"
+        },
+        {
+          "id": "862",
+          "title": "Shortest Subarray with Sum at Least K"
+        },
+        {
+          "id": "904",
+          "title": "Fruit Into Baskets"
+        },
+        {
+          "id": "907",
+          "title": "Sum of Subarray Minimums"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        },
+        {
+          "id": "930",
+          "title": "Binary Subarrays With Sum"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "992",
+          "title": "Subarrays with K Different Integers"
+        },
+        {
+          "id": "1004",
+          "title": "Max Consecutive Ones III"
+        },
+        {
+          "id": "1011",
+          "title": "Capacity To Ship Packages Within D Days"
+        },
+        {
+          "id": "1231",
+          "title": "Divide Chocolate"
+        },
+        {
+          "id": "1248",
+          "title": "Count Number of Nice Subarrays"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        },
+        {
+          "id": "1423",
+          "title": "Maximum Points You Can Obtain from Cards"
+        },
+        {
+          "id": "1438",
+          "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit"
+        },
+        {
+          "id": "1493",
+          "title": "Longest Subarray of 1's After Deleting One Element"
+        },
+        {
+          "id": "1567",
+          "title": "Maximum Length of Subarray With Positive Product"
+        },
+        {
+          "id": "1856",
+          "title": "Maximum Subarray Min-Product"
+        },
+        {
+          "id": "2104",
+          "title": "Sum of Subarray Ranges"
+        },
+        {
+          "id": "2334",
+          "title": "Subarray With Elements Greater Than Varying Threshold"
+        },
+        {
+          "id": "2398",
+          "title": "Maximum Number of Robots Within Budget"
+        },
+        {
+          "id": "2461",
+          "title": "Maximum Sum of Distinct Subarrays With Length K"
+        }
+      ]
+    },
+    "topic": {
+      "greedy": [
+        {
+          "id": "53",
+          "title": "Maximum Subarray"
+        },
+        {
+          "id": "152",
+          "title": "Maximum Product Subarray"
+        }
+      ],
+      "sliding-window": [
+        {
+          "id": "209",
+          "title": "Minimum Size Subarray Sum"
+        },
+        {
+          "id": "220",
+          "title": "Contains Duplicate III"
+        },
+        {
+          "id": "487",
+          "title": "Max Consecutive Ones II"
+        },
+        {
+          "id": "643",
+          "title": "Maximum Average Subarray I"
+        },
+        {
+          "id": "904",
+          "title": "Fruit Into Baskets"
+        },
+        {
+          "id": "930",
+          "title": "Binary Subarrays With Sum"
+        },
+        {
+          "id": "992",
+          "title": "Subarrays with K Different Integers"
+        },
+        {
+          "id": "1004",
+          "title": "Max Consecutive Ones III"
+        },
+        {
+          "id": "1248",
+          "title": "Count Number of Nice Subarrays"
+        },
+        {
+          "id": "1423",
+          "title": "Maximum Points You Can Obtain from Cards"
+        },
+        {
+          "id": "1493",
+          "title": "Longest Subarray of 1's After Deleting One Element"
+        },
+        {
+          "id": "2461",
+          "title": "Maximum Sum of Distinct Subarrays With Length K"
+        }
+      ],
+      "deque-topic": [
+        {
+          "id": "239",
+          "title": "Sliding Window Maximum"
+        },
+        {
+          "id": "862",
+          "title": "Shortest Subarray with Sum at Least K"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        },
+        {
+          "id": "1438",
+          "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit"
+        },
+        {
+          "id": "2398",
+          "title": "Maximum Number of Robots Within Budget"
+        }
+      ],
+      "binary-search": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "644",
+          "title": "Maximum Average Subarray II"
+        },
+        {
+          "id": "1011",
+          "title": "Capacity To Ship Packages Within D Days"
+        },
+        {
+          "id": "1231",
+          "title": "Divide Chocolate"
+        }
+      ],
+      "dp": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        }
+      ],
+      "prefix-sum": [
+        {
+          "id": "523",
+          "title": "Continuous Subarray Sum"
+        },
+        {
+          "id": "525",
+          "title": "Contiguous Array"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "1248",
+          "title": "Count Number of Nice Subarrays"
+        }
+      ],
+      "hash": [
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        }
+      ],
+      "stack-topic": [
+        {
+          "id": "581",
+          "title": "Shortest Unsorted Continuous Subarray"
+        },
+        {
+          "id": "907",
+          "title": "Sum of Subarray Minimums"
+        },
+        {
+          "id": "1856",
+          "title": "Maximum Subarray Min-Product"
+        },
+        {
+          "id": "2104",
+          "title": "Sum of Subarray Ranges"
+        },
+        {
+          "id": "2334",
+          "title": "Subarray With Elements Greater Than Varying Threshold"
+        }
+      ],
+      "math": [
+        {
+          "id": "1330",
+          "title": "Reverse Subarray To Maximize Array Value"
+        }
+      ]
+    }
+  },
+  "simulation": {
+    "ds": {},
+    "topic": {}
+  },
   "subsequence": {
     "ds": {
       "string": [
@@ -857,6 +1441,10 @@
           "title": "Is Subsequence"
         },
         {
+          "id": "583",
+          "title": "Delete Operation for Two Strings"
+        },
+        {
           "id": "727",
           "title": "Minimum Window Subsequence"
         },
@@ -867,6 +1455,10 @@
         {
           "id": "1143",
           "title": "Longest Common Subsequence"
+        },
+        {
+          "id": "1312",
+          "title": "Minimum Insertion Steps to Make a String Palindrome"
         },
         {
           "id": "2002",
@@ -883,6 +1475,10 @@
           "title": "Increasing Triplet Subsequence"
         },
         {
+          "id": "354",
+          "title": "Russian Doll Envelopes"
+        },
+        {
           "id": "376",
           "title": "Wiggle Subsequence"
         },
@@ -891,20 +1487,28 @@
           "title": "Non-decreasing Subsequences"
         },
         {
+          "id": "646",
+          "title": "Maximum Length of Pair Chain"
+        },
+        {
           "id": "673",
           "title": "Number of Longest Increasing Subsequence"
+        },
+        {
+          "id": "1048",
+          "title": "Longest String Chain"
         },
         {
           "id": "1218",
           "title": "Longest Arithmetic Subsequence of Given Difference"
         },
         {
-          "id": "2542",
-          "title": "Maximum Subsequence Score"
+          "id": "1671",
+          "title": "Minimum Number of Removals to Make Mountain Array"
         },
         {
-          "id": "10021",
-          "title": "Check if each recipe is a contiguous subsequence"
+          "id": "2542",
+          "title": "Maximum Subsequence Score"
         }
       ]
     },
@@ -919,12 +1523,20 @@
           "title": "Longest Increasing Subsequence"
         },
         {
+          "id": "354",
+          "title": "Russian Doll Envelopes"
+        },
+        {
           "id": "376",
           "title": "Wiggle Subsequence"
         },
         {
           "id": "491",
           "title": "Non-decreasing Subsequences"
+        },
+        {
+          "id": "583",
+          "title": "Delete Operation for Two Strings"
         },
         {
           "id": "673",
@@ -935,14 +1547,26 @@
           "title": "Minimum Window Subsequence"
         },
         {
+          "id": "1048",
+          "title": "Longest String Chain"
+        },
+        {
           "id": "1143",
           "title": "Longest Common Subsequence"
+        },
+        {
+          "id": "1671",
+          "title": "Minimum Number of Removals to Make Mountain Array"
         }
       ],
       "greedy": [
         {
           "id": "334",
           "title": "Increasing Triplet Subsequence"
+        },
+        {
+          "id": "646",
+          "title": "Maximum Length of Pair Chain"
         }
       ],
       "two-pointers": [
@@ -953,10 +1577,6 @@
         {
           "id": "792",
           "title": "Number of Matching Subsequences"
-        },
-        {
-          "id": "10021",
-          "title": "Check if each recipe is a contiguous subsequence"
         }
       ],
       "backtrack": [
@@ -1053,6 +1673,526 @@
       ]
     }
   },
+  "longest-path": {
+    "ds": {
+      "tree": [
+        {
+          "id": "124",
+          "title": "Binary Tree Maximum Path Sum"
+        },
+        {
+          "id": "543",
+          "title": "Diameter of Binary Tree"
+        },
+        {
+          "id": "687",
+          "title": "Longest Univalue Path"
+        },
+        {
+          "id": "1245",
+          "title": "Tree Diameter"
+        },
+        {
+          "id": "1372",
+          "title": "Longest ZigZag Path in a Binary Tree"
+        },
+        {
+          "id": "1522",
+          "title": "Diameter of N-Ary Tree"
+        }
+      ],
+      "graph": [
+        {
+          "id": "329",
+          "title": "Longest Increasing Path in a Matrix"
+        },
+        {
+          "id": "1857",
+          "title": "Largest Color Value in a Directed Graph"
+        },
+        {
+          "id": "2050",
+          "title": "Parallel Courses III"
+        },
+        {
+          "id": "2127",
+          "title": "Maximum Employees to Be Invited to a Meeting"
+        },
+        {
+          "id": "10019",
+          "title": "Compute total time to finish all courses (per-task duration)"
+        },
+        {
+          "id": "10045",
+          "title": "Course Completion Time"
+        }
+      ],
+      "matrices": [
+        {
+          "id": "329",
+          "title": "Longest Increasing Path in a Matrix"
+        }
+      ]
+    },
+    "topic": {
+      "dp": [
+        {
+          "id": "124",
+          "title": "Binary Tree Maximum Path Sum"
+        },
+        {
+          "id": "543",
+          "title": "Diameter of Binary Tree"
+        },
+        {
+          "id": "1372",
+          "title": "Longest ZigZag Path in a Binary Tree"
+        },
+        {
+          "id": "1522",
+          "title": "Diameter of N-Ary Tree"
+        }
+      ],
+      "dfs": [
+        {
+          "id": "124",
+          "title": "Binary Tree Maximum Path Sum"
+        },
+        {
+          "id": "329",
+          "title": "Longest Increasing Path in a Matrix"
+        },
+        {
+          "id": "543",
+          "title": "Diameter of Binary Tree"
+        }
+      ],
+      "topo-sort": [
+        {
+          "id": "329",
+          "title": "Longest Increasing Path in a Matrix"
+        },
+        {
+          "id": "1857",
+          "title": "Largest Color Value in a Directed Graph"
+        },
+        {
+          "id": "2050",
+          "title": "Parallel Courses III"
+        },
+        {
+          "id": "2127",
+          "title": "Maximum Employees to Be Invited to a Meeting"
+        },
+        {
+          "id": "10019",
+          "title": "Compute total time to finish all courses (per-task duration)"
+        },
+        {
+          "id": "10045",
+          "title": "Course Completion Time"
+        }
+      ]
+    }
+  },
+  "shortest-path": {
+    "ds": {
+      "string": [
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        },
+        {
+          "id": "433",
+          "title": "Minimum Genetic Mutation"
+        },
+        {
+          "id": "752",
+          "title": "Open the Lock"
+        }
+      ],
+      "graph": [
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        },
+        {
+          "id": "286",
+          "title": "Walls and Gates"
+        },
+        {
+          "id": "317",
+          "title": "Shortest Distance from All Buildings"
+        },
+        {
+          "id": "433",
+          "title": "Minimum Genetic Mutation"
+        },
+        {
+          "id": "499",
+          "title": "The Maze III"
+        },
+        {
+          "id": "505",
+          "title": "The Maze II"
+        },
+        {
+          "id": "542",
+          "title": "01 Matrix"
+        },
+        {
+          "id": "743",
+          "title": "Network Delay Time"
+        },
+        {
+          "id": "752",
+          "title": "Open the Lock"
+        },
+        {
+          "id": "778",
+          "title": "Swim in Rising Water"
+        },
+        {
+          "id": "787",
+          "title": "Cheapest Flights Within K Stops"
+        },
+        {
+          "id": "815",
+          "title": "Bus Routes"
+        },
+        {
+          "id": "909",
+          "title": "Snakes and Ladders"
+        },
+        {
+          "id": "934",
+          "title": "Shortest Bridge"
+        },
+        {
+          "id": "994",
+          "title": "Rotting Oranges"
+        },
+        {
+          "id": "1091",
+          "title": "Shortest Path in Binary Matrix"
+        },
+        {
+          "id": "1162",
+          "title": "As Far from Land as Possible"
+        },
+        {
+          "id": "1334",
+          "title": "Find the City With the Smallest Number of Neighbors at a Threshold Distance"
+        },
+        {
+          "id": "1368",
+          "title": "Minimum Cost to Make at Least One Valid Path in a Grid"
+        },
+        {
+          "id": "1631",
+          "title": "Path With Minimum Effort"
+        },
+        {
+          "id": "1730",
+          "title": "Shortest Path to Get Food"
+        },
+        {
+          "id": "1765",
+          "title": "Map of Highest Peak"
+        },
+        {
+          "id": "2290",
+          "title": "Minimum Obstacle Removal to Reach Corner"
+        },
+        {
+          "id": "2642",
+          "title": "Design Graph With Shortest Path Calculator"
+        },
+        {
+          "id": "2812",
+          "title": "Find the Safest Path in a Grid"
+        },
+        {
+          "id": "10049",
+          "title": "Nearest Bathroom from each Desk"
+        }
+      ],
+      "matrices": [
+        {
+          "id": "286",
+          "title": "Walls and Gates"
+        },
+        {
+          "id": "317",
+          "title": "Shortest Distance from All Buildings"
+        },
+        {
+          "id": "499",
+          "title": "The Maze III"
+        },
+        {
+          "id": "505",
+          "title": "The Maze II"
+        },
+        {
+          "id": "542",
+          "title": "01 Matrix"
+        },
+        {
+          "id": "778",
+          "title": "Swim in Rising Water"
+        },
+        {
+          "id": "909",
+          "title": "Snakes and Ladders"
+        },
+        {
+          "id": "934",
+          "title": "Shortest Bridge"
+        },
+        {
+          "id": "994",
+          "title": "Rotting Oranges"
+        },
+        {
+          "id": "1091",
+          "title": "Shortest Path in Binary Matrix"
+        },
+        {
+          "id": "1162",
+          "title": "As Far from Land as Possible"
+        },
+        {
+          "id": "1631",
+          "title": "Path With Minimum Effort"
+        },
+        {
+          "id": "1730",
+          "title": "Shortest Path to Get Food"
+        },
+        {
+          "id": "1765",
+          "title": "Map of Highest Peak"
+        },
+        {
+          "id": "2812",
+          "title": "Find the Safest Path in a Grid"
+        },
+        {
+          "id": "10049",
+          "title": "Nearest Bathroom from each Desk"
+        }
+      ],
+      "array": [
+        {
+          "id": "752",
+          "title": "Open the Lock"
+        }
+      ]
+    },
+    "topic": {
+      "bfs": [
+        {
+          "id": "127",
+          "title": "Word Ladder"
+        },
+        {
+          "id": "286",
+          "title": "Walls and Gates"
+        },
+        {
+          "id": "317",
+          "title": "Shortest Distance from All Buildings"
+        },
+        {
+          "id": "433",
+          "title": "Minimum Genetic Mutation"
+        },
+        {
+          "id": "542",
+          "title": "01 Matrix"
+        },
+        {
+          "id": "752",
+          "title": "Open the Lock"
+        },
+        {
+          "id": "815",
+          "title": "Bus Routes"
+        },
+        {
+          "id": "909",
+          "title": "Snakes and Ladders"
+        },
+        {
+          "id": "934",
+          "title": "Shortest Bridge"
+        },
+        {
+          "id": "994",
+          "title": "Rotting Oranges"
+        },
+        {
+          "id": "1091",
+          "title": "Shortest Path in Binary Matrix"
+        },
+        {
+          "id": "1162",
+          "title": "As Far from Land as Possible"
+        },
+        {
+          "id": "1368",
+          "title": "Minimum Cost to Make at Least One Valid Path in a Grid"
+        },
+        {
+          "id": "1730",
+          "title": "Shortest Path to Get Food"
+        },
+        {
+          "id": "1765",
+          "title": "Map of Highest Peak"
+        },
+        {
+          "id": "2290",
+          "title": "Minimum Obstacle Removal to Reach Corner"
+        },
+        {
+          "id": "10049",
+          "title": "Nearest Bathroom from each Desk"
+        }
+      ],
+      "heap": [
+        {
+          "id": "499",
+          "title": "The Maze III"
+        },
+        {
+          "id": "505",
+          "title": "The Maze II"
+        },
+        {
+          "id": "743",
+          "title": "Network Delay Time"
+        },
+        {
+          "id": "778",
+          "title": "Swim in Rising Water"
+        },
+        {
+          "id": "787",
+          "title": "Cheapest Flights Within K Stops"
+        },
+        {
+          "id": "1631",
+          "title": "Path With Minimum Effort"
+        },
+        {
+          "id": "2642",
+          "title": "Design Graph With Shortest Path Calculator"
+        },
+        {
+          "id": "2812",
+          "title": "Find the Safest Path in a Grid"
+        }
+      ],
+      "dp": [
+        {
+          "id": "542",
+          "title": "01 Matrix"
+        }
+      ]
+    }
+  },
+  "detect-cycle": {
+    "ds": {
+      "linked-list": [
+        {
+          "id": "141",
+          "title": "Linked List Cycle"
+        },
+        {
+          "id": "142",
+          "title": "Linked List Cycle II"
+        }
+      ],
+      "graph": [
+        {
+          "id": "207",
+          "title": "Course Schedule"
+        },
+        {
+          "id": "210",
+          "title": "Course Schedule II"
+        },
+        {
+          "id": "261",
+          "title": "Graph Valid Tree"
+        },
+        {
+          "id": "684",
+          "title": "Redundant Connection"
+        },
+        {
+          "id": "685",
+          "title": "Redundant Connection II"
+        },
+        {
+          "id": "802",
+          "title": "Find Eventual Safe States"
+        }
+      ],
+      "array": [
+        {
+          "id": "457",
+          "title": "Circular Array Loop"
+        }
+      ]
+    },
+    "topic": {
+      "two-pointers": [
+        {
+          "id": "141",
+          "title": "Linked List Cycle"
+        },
+        {
+          "id": "142",
+          "title": "Linked List Cycle II"
+        },
+        {
+          "id": "457",
+          "title": "Circular Array Loop"
+        }
+      ],
+      "topo-sort": [
+        {
+          "id": "207",
+          "title": "Course Schedule"
+        },
+        {
+          "id": "210",
+          "title": "Course Schedule II"
+        },
+        {
+          "id": "802",
+          "title": "Find Eventual Safe States"
+        }
+      ],
+      "union-find": [
+        {
+          "id": "261",
+          "title": "Graph Valid Tree"
+        },
+        {
+          "id": "684",
+          "title": "Redundant Connection"
+        },
+        {
+          "id": "685",
+          "title": "Redundant Connection II"
+        }
+      ]
+    }
+  },
   "expression": {
     "ds": {
       "array": [
@@ -1105,6 +2245,10 @@
         {
           "id": "10018",
           "title": "Evaluate arithmetic expression with variables"
+        },
+        {
+          "id": "10047",
+          "title": "Document Store with Boolean Predicate Search"
         }
       ]
     },
@@ -1149,6 +2293,10 @@
         {
           "id": "10018",
           "title": "Evaluate arithmetic expression with variables"
+        },
+        {
+          "id": "10047",
+          "title": "Document Store with Boolean Predicate Search"
         }
       ],
       "backtrack": [
@@ -1223,6 +2371,20 @@
       ]
     },
     "topic": {
+      "topo-sort": [
+        {
+          "id": "207",
+          "title": "Course Schedule"
+        },
+        {
+          "id": "210",
+          "title": "Course Schedule II"
+        },
+        {
+          "id": "2127",
+          "title": "Maximum Employees to Be Invited to a Meeting"
+        }
+      ],
       "greedy": [
         {
           "id": "252",
@@ -1265,6 +2427,10 @@
       ],
       "dp": [
         {
+          "id": "1235",
+          "title": "Maximum Profit in Job Scheduling"
+        },
+        {
           "id": "1335",
           "title": "Minimum Difficulty of a Job Schedule"
         }
@@ -1276,5 +2442,263 @@
         }
       ]
     }
+  },
+  "design": {
+    "ds": {
+      "array": [
+        {
+          "id": "352",
+          "title": "Data Stream as Disjoint Intervals"
+        },
+        {
+          "id": "715",
+          "title": "Range Module"
+        },
+        {
+          "id": "10061",
+          "title": "Reactive Blacklist Filter Stream"
+        }
+      ],
+      "graph": [
+        {
+          "id": "10057",
+          "title": "Design a Workflow System"
+        }
+      ],
+      "bst": [
+        {
+          "id": "10062",
+          "title": "Timestamped Record Store with Range Query"
+        }
+      ],
+      "tree": [
+        {
+          "id": "10064",
+          "title": "Active-Order Hierarchy with Soft Delete"
+        }
+      ]
+    },
+    "topic": {
+      "topo-sort": [
+        {
+          "id": "10057",
+          "title": "Design a Workflow System"
+        }
+      ],
+      "dfs": [
+        {
+          "id": "10057",
+          "title": "Design a Workflow System"
+        },
+        {
+          "id": "10064",
+          "title": "Active-Order Hierarchy with Soft Delete"
+        }
+      ],
+      "hash": [
+        {
+          "id": "10061",
+          "title": "Reactive Blacklist Filter Stream"
+        }
+      ]
+    }
+  },
+  "stream": {
+    "ds": {
+      "array": [
+        {
+          "id": "295",
+          "title": "Find Median from Data Stream"
+        },
+        {
+          "id": "352",
+          "title": "Data Stream as Disjoint Intervals"
+        },
+        {
+          "id": "480",
+          "title": "Sliding Window Median"
+        },
+        {
+          "id": "703",
+          "title": "Kth Largest Element in a Stream"
+        }
+      ],
+      "queue": [
+        {
+          "id": "346",
+          "title": "Moving Average from Data Stream"
+        }
+      ]
+    },
+    "topic": {
+      "heap": [
+        {
+          "id": "295",
+          "title": "Find Median from Data Stream"
+        },
+        {
+          "id": "480",
+          "title": "Sliding Window Median"
+        },
+        {
+          "id": "703",
+          "title": "Kth Largest Element in a Stream"
+        }
+      ]
+    }
+  },
+  "partition": {
+    "ds": {
+      "array": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "1011",
+          "title": "Capacity To Ship Packages Within D Days"
+        },
+        {
+          "id": "1231",
+          "title": "Divide Chocolate"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        }
+      ],
+      "string": [
+        {
+          "id": "926",
+          "title": "Flip String to Monotone Increasing"
+        },
+        {
+          "id": "1653",
+          "title": "Minimum Deletions to Make String Balanced"
+        },
+        {
+          "id": "2483",
+          "title": "Minimum Penalty for a Shop"
+        }
+      ]
+    },
+    "topic": {
+      "binary-search": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "1011",
+          "title": "Capacity To Ship Packages Within D Days"
+        },
+        {
+          "id": "1231",
+          "title": "Divide Chocolate"
+        }
+      ],
+      "dp": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        }
+      ],
+      "prefix-sum": [
+        {
+          "id": "926",
+          "title": "Flip String to Monotone Increasing"
+        },
+        {
+          "id": "1653",
+          "title": "Minimum Deletions to Make String Balanced"
+        },
+        {
+          "id": "2483",
+          "title": "Minimum Penalty for a Shop"
+        }
+      ],
+      "greedy": [
+        {
+          "id": "926",
+          "title": "Flip String to Monotone Increasing"
+        },
+        {
+          "id": "1653",
+          "title": "Minimum Deletions to Make String Balanced"
+        },
+        {
+          "id": "2483",
+          "title": "Minimum Penalty for a Shop"
+        }
+      ]
+    }
+  },
+  "min-change": {
+    "ds": {
+      "array": [
+        {
+          "id": "435",
+          "title": "Non-overlapping Intervals"
+        },
+        {
+          "id": "945",
+          "title": "Minimum Increment to Make Array Unique"
+        },
+        {
+          "id": "1671",
+          "title": "Minimum Number of Removals to Make Mountain Array"
+        },
+        {
+          "id": "2449",
+          "title": "Minimum Number of Operations to Make Arrays Similar"
+        }
+      ],
+      "string": [
+        {
+          "id": "1647",
+          "title": "Minimum Deletions to Make Character Frequencies Unique"
+        }
+      ]
+    },
+    "topic": {
+      "interval": [
+        {
+          "id": "435",
+          "title": "Non-overlapping Intervals"
+        }
+      ],
+      "greedy": [
+        {
+          "id": "435",
+          "title": "Non-overlapping Intervals"
+        },
+        {
+          "id": "945",
+          "title": "Minimum Increment to Make Array Unique"
+        },
+        {
+          "id": "1647",
+          "title": "Minimum Deletions to Make Character Frequencies Unique"
+        },
+        {
+          "id": "2449",
+          "title": "Minimum Number of Operations to Make Arrays Similar"
+        }
+      ],
+      "dp": [
+        {
+          "id": "1671",
+          "title": "Minimum Number of Removals to Make Mountain Array"
+        }
+      ]
+    }
+  },
+  "interactive": {
+    "ds": {},
+    "topic": {}
   }
 }
