@@ -32,10 +32,17 @@
     "difficulty": "Medium",
     "topics": "Hash Table; String; Sliding Window",
     "pat_ds": [
-      "pat_ds::string::sliding-window::sw-distinct-count"
+      "pat_ds::string::sliding-window::sw-distinct-count",
+      "pat_ds::string::hash::freq-counter"
     ],
-    "pat_topic": [],
-    "pat_group": []
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "4",
@@ -113,7 +120,10 @@
       "pat_ds::array::two-pointers::tp-area-greedy"
     ],
     "pat_topic": [],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "12",
@@ -273,10 +283,12 @@
     "topics": "Linked List; Divide and Conquer; Heap (Priority Queue); Merge Sort",
     "pat_ds": [
       "pat_ds::linked-list::core::dummy-head-merge",
-      "pat_ds::linked-list::heap::k-way-merge"
+      "pat_ds::linked-list::heap::k-way-merge",
+      "pat_ds::linked-list::divide-conquer::dc-k-way-merge"
     ],
     "pat_topic": [
-      "pat_topic::heap::k-way-merge"
+      "pat_topic::heap::k-way-merge",
+      "pat_topic::divide-conquer::dc-k-way-merge"
     ],
     "pat_group": []
   },
@@ -632,13 +644,16 @@
     "topics": "Array; Divide and Conquer; Dynamic Programming",
     "pat_ds": [
       "pat_ds::array::core::kadane",
-      "pat_ds::array::greedy::running-extreme"
+      "pat_ds::array::greedy::running-extreme",
+      "pat_ds::array::divide-conquer::dc-split-combine"
     ],
     "pat_topic": [
-      "pat_topic::greedy::running-extreme"
+      "pat_topic::greedy::running-extreme",
+      "pat_topic::divide-conquer::dc-split-combine"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -1254,9 +1269,12 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Divide and Conquer; Tree; Binary Tree",
     "pat_ds": [
-      "pat_ds::tree::core::construct-from-traversals"
+      "pat_ds::tree::core::construct-from-traversals",
+      "pat_ds::tree::divide-conquer::dc-tree-build"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-tree-build"
+    ],
     "pat_group": []
   },
   {
@@ -1265,9 +1283,12 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Divide and Conquer; Tree; Binary Tree",
     "pat_ds": [
-      "pat_ds::tree::core::construct-from-traversals"
+      "pat_ds::tree::core::construct-from-traversals",
+      "pat_ds::tree::divide-conquer::dc-tree-build"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-tree-build"
+    ],
     "pat_group": []
   },
   {
@@ -1276,9 +1297,12 @@
     "difficulty": "Easy",
     "topics": "Array; Divide and Conquer; Tree; Binary Search Tree; Binary Tree",
     "pat_ds": [
-      "pat_ds::tree::dfs::dfs-template"
+      "pat_ds::tree::dfs::dfs-template",
+      "pat_ds::bst::divide-conquer::dc-tree-build"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-tree-build"
+    ],
     "pat_group": []
   },
   {
@@ -1781,9 +1805,12 @@
     "difficulty": "Medium",
     "topics": "Linked List; Two Pointers; Divide and Conquer; Sorting; Merge Sort",
     "pat_ds": [
-      "pat_ds::linked-list::sorting::merge-sort-counting"
+      "pat_ds::linked-list::sorting::merge-sort-counting",
+      "pat_ds::linked-list::divide-conquer::dc-k-way-merge"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-k-way-merge"
+    ],
     "pat_group": []
   },
   {
@@ -1895,10 +1922,17 @@
     "difficulty": "Medium",
     "topics": "Hash Table; String; Sliding Window",
     "pat_ds": [
-      "pat_ds::string::sliding-window::sw-distinct-count"
+      "pat_ds::string::sliding-window::sw-distinct-count",
+      "pat_ds::string::hash::freq-counter"
     ],
-    "pat_topic": [],
-    "pat_group": []
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "160",
@@ -1971,10 +2005,12 @@
     "difficulty": "Easy",
     "topics": "Array; Hash Table; Divide and Conquer; Sorting; Counting",
     "pat_ds": [
-      "pat_ds::array::hash::freq-counter"
+      "pat_ds::array::hash::freq-counter",
+      "pat_ds::array::divide-conquer::dc-split-combine"
     ],
     "pat_topic": [
-      "pat_topic::hash::freq-counter"
+      "pat_topic::hash::freq-counter",
+      "pat_topic::divide-conquer::dc-split-combine"
     ],
     "pat_group": []
   },
@@ -2264,7 +2300,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -2348,11 +2385,13 @@
     "topics": "Array; Divide and Conquer; Sorting; Heap (Priority Queue); Quickselect",
     "pat_ds": [
       "pat_ds::array::heap::top-k",
-      "pat_ds::array::sorting::quickselect"
+      "pat_ds::array::sorting::quickselect",
+      "pat_ds::array::divide-conquer::dc-quickselect"
     ],
     "pat_topic": [
       "pat_topic::heap::top-k",
-      "pat_topic::sorting::quickselect"
+      "pat_topic::sorting::quickselect",
+      "pat_topic::divide-conquer::dc-quickselect"
     ],
     "pat_group": []
   },
@@ -2408,7 +2447,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -2608,7 +2648,8 @@
       "pat_topic::deque-topic::monotonic-deque"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -2617,9 +2658,12 @@
     "difficulty": "Medium",
     "topics": "Array; Binary Search; Divide and Conquer; Matrix",
     "pat_ds": [
-      "pat_ds::matrices::binary-search::bs-textbook"
+      "pat_ds::matrices::binary-search::bs-textbook",
+      "pat_ds::matrices::divide-conquer::dc-split-combine"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-split-combine"
+    ],
     "pat_group": []
   },
   {
@@ -3356,10 +3400,12 @@
     "difficulty": "Hard",
     "topics": "Array; Binary Search; Divide and Conquer; Binary Indexed Tree; Segment Tree; Merge Sort; Ordered Set",
     "pat_ds": [
-      "pat_ds::array::sorting::merge-sort-counting"
+      "pat_ds::array::sorting::merge-sort-counting",
+      "pat_ds::array::divide-conquer::dc-merge-count"
     ],
     "pat_topic": [
-      "pat_topic::sorting::merge-sort-counting"
+      "pat_topic::sorting::merge-sort-counting",
+      "pat_topic::divide-conquer::dc-merge-count"
     ],
     "pat_group": []
   },
@@ -3426,9 +3472,12 @@
     "difficulty": "Medium",
     "topics": "Array; Divide and Conquer; Greedy; Sorting; Quickselect",
     "pat_ds": [
-      "pat_ds::array::sorting::sort-then-twoptr"
+      "pat_ds::array::sorting::sort-then-twoptr",
+      "pat_ds::array::divide-conquer::dc-quickselect"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-quickselect"
+    ],
     "pat_group": []
   },
   {
@@ -3448,10 +3497,12 @@
     "difficulty": "Hard",
     "topics": "Array; Binary Search; Divide and Conquer; Binary Indexed Tree; Segment Tree; Merge Sort; Ordered Set",
     "pat_ds": [
-      "pat_ds::array::sorting::merge-sort-counting"
+      "pat_ds::array::sorting::merge-sort-counting",
+      "pat_ds::array::divide-conquer::dc-merge-count"
     ],
     "pat_topic": [
-      "pat_topic::sorting::merge-sort-counting"
+      "pat_topic::sorting::merge-sort-counting",
+      "pat_topic::divide-conquer::dc-merge-count"
     ],
     "pat_group": [
       "pat_group::sum"
@@ -3584,10 +3635,17 @@
     "difficulty": "Medium",
     "topics": "Hash Table; String; Sliding Window",
     "pat_ds": [
-      "pat_ds::string::sliding-window::sw-distinct-count"
+      "pat_ds::string::sliding-window::sw-distinct-count",
+      "pat_ds::string::hash::freq-counter"
     ],
-    "pat_topic": [],
-    "pat_group": []
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "341",
@@ -3671,11 +3729,13 @@
     "topics": "Array; Hash Table; Divide and Conquer; Sorting; Heap (Priority Queue); Bucket Sort; Counting; Quickselect",
     "pat_ds": [
       "pat_ds::array::heap::top-k",
-      "pat_ds::array::sorting::bucket-sort-freq"
+      "pat_ds::array::sorting::bucket-sort-freq",
+      "pat_ds::array::divide-conquer::dc-quickselect"
     ],
     "pat_topic": [
       "pat_topic::heap::top-k",
-      "pat_topic::sorting::bucket-sort-freq"
+      "pat_topic::sorting::bucket-sort-freq",
+      "pat_topic::divide-conquer::dc-quickselect"
     ],
     "pat_group": []
   },
@@ -4070,10 +4130,20 @@
     "difficulty": "Medium",
     "topics": "Hash Table; String; Divide and Conquer; Sliding Window",
     "pat_ds": [
-      "pat_ds::string::sliding-window::sw-at-most-k"
+      "pat_ds::string::sliding-window::sw-at-most-k",
+      "pat_ds::string::hash::freq-counter",
+      "pat_ds::string::divide-conquer::dc-split-combine"
     ],
-    "pat_topic": [],
-    "pat_group": []
+    "pat_topic": [
+      "pat_topic::hash::freq-counter",
+      "pat_topic::divide-conquer::dc-split-combine"
+    ],
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::divide-conquer",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "399",
@@ -4317,9 +4387,12 @@
     "difficulty": "Medium",
     "topics": "Array; Divide and Conquer; Tree; Matrix",
     "pat_ds": [
-      "pat_ds::tree::dfs::dfs-template"
+      "pat_ds::tree::dfs::dfs-template",
+      "pat_ds::tree::divide-conquer::dc-tree-build"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-tree-build"
+    ],
     "pat_group": []
   },
   {
@@ -4686,7 +4759,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -4733,10 +4807,12 @@
     "difficulty": "Hard",
     "topics": "Array; Binary Search; Divide and Conquer; Binary Indexed Tree; Segment Tree; Merge Sort; Ordered Set",
     "pat_ds": [
-      "pat_ds::array::sorting::merge-sort-counting"
+      "pat_ds::array::sorting::merge-sort-counting",
+      "pat_ds::array::divide-conquer::dc-merge-count"
     ],
     "pat_topic": [
-      "pat_topic::sorting::merge-sort-counting"
+      "pat_topic::sorting::merge-sort-counting",
+      "pat_topic::divide-conquer::dc-merge-count"
     ],
     "pat_group": []
   },
@@ -5130,7 +5206,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -5335,7 +5412,8 @@
       "pat_topic::sliding-window::sw-fixed"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -5594,7 +5672,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -5759,7 +5838,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -5809,7 +5889,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -6308,7 +6389,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -6582,7 +6664,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -6714,9 +6797,12 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Divide and Conquer; Tree; Binary Tree",
     "pat_ds": [
-      "pat_ds::tree::core::construct-from-traversals"
+      "pat_ds::tree::core::construct-from-traversals",
+      "pat_ds::tree::divide-conquer::dc-tree-build"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-tree-build"
+    ],
     "pat_group": []
   },
   {
@@ -6774,11 +6860,16 @@
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Sliding Window",
     "pat_ds": [
-      "pat_ds::array::sliding-window::sw-distinct-count"
+      "pat_ds::array::sliding-window::sw-distinct-count",
+      "pat_ds::array::hash::freq-counter"
     ],
-    "pat_topic": [],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -6844,15 +6935,18 @@
     "pat_ds": [
       "pat_ds::array::core::kadane",
       "pat_ds::array::deque-topic::monotonic-deque",
-      "pat_ds::array::deque-topic::deque-window-constraint"
+      "pat_ds::array::deque-topic::deque-window-constraint",
+      "pat_ds::array::divide-conquer::dc-split-combine"
     ],
     "pat_topic": [
       "pat_topic::deque-topic::monotonic-deque",
-      "pat_topic::deque-topic::deque-window-constraint"
+      "pat_topic::deque-topic::deque-window-constraint",
+      "pat_topic::divide-conquer::dc-split-combine"
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -6935,7 +7029,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -7115,11 +7210,13 @@
     "topics": "Array; Math; Divide and Conquer; Geometry; Sorting; Heap (Priority Queue); Quickselect",
     "pat_ds": [
       "pat_ds::array::heap::top-k",
-      "pat_ds::array::sorting::quickselect"
+      "pat_ds::array::sorting::quickselect",
+      "pat_ds::array::divide-conquer::dc-quickselect"
     ],
     "pat_topic": [
       "pat_topic::heap::top-k",
-      "pat_topic::sorting::quickselect"
+      "pat_topic::sorting::quickselect",
+      "pat_topic::divide-conquer::dc-quickselect"
     ],
     "pat_group": []
   },
@@ -7161,7 +7258,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -7242,13 +7340,17 @@
     "difficulty": "Hard",
     "topics": "Array; Hash Table; Sliding Window; Counting",
     "pat_ds": [
-      "pat_ds::array::sliding-window::sw-at-most-k"
+      "pat_ds::array::sliding-window::sw-at-most-k",
+      "pat_ds::array::hash::freq-counter"
     ],
     "pat_topic": [
-      "pat_topic::sliding-window::sw-at-most-k"
+      "pat_topic::sliding-window::sw-at-most-k",
+      "pat_topic::hash::freq-counter"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -7278,7 +7380,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -7371,7 +7474,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -7579,10 +7683,17 @@
     "difficulty": "Medium",
     "topics": "Hash Table; String; Sliding Window",
     "pat_ds": [
-      "pat_ds::string::sliding-window::sw-distinct-count"
+      "pat_ds::string::sliding-window::sw-distinct-count",
+      "pat_ds::string::hash::freq-counter"
     ],
-    "pat_topic": [],
-    "pat_group": []
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "1101",
@@ -8216,7 +8327,8 @@
       "pat_topic::prefix-sum::ps-hashmap"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -8547,7 +8659,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -8724,7 +8837,8 @@
       "pat_topic::sliding-window::sw-fixed"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -8794,7 +8908,8 @@
       "pat_topic::deque-topic::monotonic-deque"
     ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -8956,7 +9071,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9039,7 +9155,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9085,7 +9202,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9227,7 +9345,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9509,7 +9628,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9616,7 +9736,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9666,7 +9787,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9740,7 +9862,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9851,7 +9974,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -9953,10 +10077,12 @@
     "difficulty": "Medium",
     "topics": "Array; String; Divide and Conquer; Sorting; Heap (Priority Queue); Quickselect",
     "pat_ds": [
-      "pat_ds::string::sorting::quickselect"
+      "pat_ds::string::sorting::quickselect",
+      "pat_ds::array::divide-conquer::dc-quickselect"
     ],
     "pat_topic": [
-      "pat_topic::sorting::quickselect"
+      "pat_topic::sorting::quickselect",
+      "pat_topic::divide-conquer::dc-quickselect"
     ],
     "pat_group": []
   },
@@ -10039,10 +10165,15 @@
     "title": "Count Subarrays With More Ones Than Zeros",
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Binary Search; Divide and Conquer; Binary Indexed Tree; Segment Tree; Merge Sort; Ordered Set",
-    "pat_ds": [],
-    "pat_topic": [],
+    "pat_ds": [
+      "pat_ds::array::divide-conquer::dc-merge-count"
+    ],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-merge-count"
+    ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -10081,10 +10212,17 @@
     "difficulty": "Easy",
     "topics": "Hash Table; String",
     "pat_ds": [
-      "pat_ds::string::sliding-window::sw-distinct-count"
+      "pat_ds::string::sliding-window::sw-distinct-count",
+      "pat_ds::string::hash::freq-counter"
     ],
-    "pat_topic": [],
-    "pat_group": []
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::subarray",
+      "pat_group::subarray::map",
+      "pat_group::subarray::two-pointer"
+    ]
   },
   {
     "id": "2076",
@@ -10107,7 +10245,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10319,7 +10458,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10440,7 +10580,8 @@
     ],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10451,7 +10592,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10486,7 +10628,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10530,7 +10673,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10570,7 +10714,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10687,7 +10832,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10698,7 +10844,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10799,7 +10946,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10844,7 +10992,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10870,7 +11019,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10914,7 +11064,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10942,7 +11093,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -10953,7 +11105,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11019,7 +11172,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11063,7 +11217,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11074,7 +11229,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11085,7 +11241,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11096,7 +11253,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11118,7 +11276,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11173,7 +11332,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11184,7 +11344,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11272,7 +11433,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11283,7 +11445,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11305,7 +11468,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11316,7 +11480,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11327,7 +11492,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11360,7 +11526,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11415,7 +11582,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11426,7 +11594,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11437,7 +11606,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11525,7 +11695,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11547,7 +11718,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11569,7 +11741,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11591,7 +11764,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11613,7 +11787,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11665,10 +11840,15 @@
     "title": "Longest Balanced Subarray I",
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Prefix Sum",
-    "pat_ds": [],
-    "pat_topic": [],
+    "pat_ds": [
+      "pat_ds::array::divide-conquer::dc-split-combine"
+    ],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-split-combine"
+    ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -11676,10 +11856,15 @@
     "title": "Longest Balanced Subarray II",
     "difficulty": "Hard",
     "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Prefix Sum",
-    "pat_ds": [],
-    "pat_topic": [],
+    "pat_ds": [
+      "pat_ds::array::divide-conquer::dc-split-combine"
+    ],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-split-combine"
+    ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -11709,10 +11894,15 @@
     "title": "Count Subarrays With Majority Element I",
     "difficulty": "Medium",
     "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Merge Sort; Counting; Prefix Sum",
-    "pat_ds": [],
-    "pat_topic": [],
+    "pat_ds": [
+      "pat_ds::array::divide-conquer::dc-merge-count"
+    ],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-merge-count"
+    ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -11731,10 +11921,15 @@
     "title": "Count Subarrays With Majority Element II",
     "difficulty": "Hard",
     "topics": "Array; Hash Table; Divide and Conquer; Segment Tree; Merge Sort; Prefix Sum",
-    "pat_ds": [],
-    "pat_topic": [],
+    "pat_ds": [
+      "pat_ds::array::divide-conquer::dc-merge-count"
+    ],
+    "pat_topic": [
+      "pat_topic::divide-conquer::dc-merge-count"
+    ],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::divide-conquer"
     ]
   },
   {
@@ -11778,7 +11973,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11789,7 +11985,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11844,7 +12041,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11855,7 +12053,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -11866,7 +12065,8 @@
     "pat_ds": [],
     "pat_topic": [],
     "pat_group": [
-      "pat_group::subarray"
+      "pat_group::subarray",
+      "pat_group::subarray::two-pointer"
     ]
   },
   {
@@ -12500,6 +12700,45 @@
       "pat_ds::array::two-pointers::tp-merge-walk"
     ],
     "pat_topic": [],
+    "pat_group": []
+  },
+  {
+    "id": "10066",
+    "title": "Top View of Binary Tree",
+    "difficulty": "Medium",
+    "topics": "Tree; Breadth-First Search; Hash Table; Binary Tree",
+    "pat_ds": [
+      "pat_ds::tree::bfs::bfs-position-tracked"
+    ],
+    "pat_topic": [
+      "pat_topic::bfs::bfs-position-tracked"
+    ],
+    "pat_group": []
+  },
+  {
+    "id": "10067",
+    "title": "Left View of Binary Tree",
+    "difficulty": "Easy",
+    "topics": "Tree; Breadth-First Search; Depth-First Search; Binary Tree",
+    "pat_ds": [
+      "pat_ds::tree::bfs::bfs-level-order"
+    ],
+    "pat_topic": [
+      "pat_topic::bfs::bfs-level-order"
+    ],
+    "pat_group": []
+  },
+  {
+    "id": "10068",
+    "title": "Next Smaller Element",
+    "difficulty": "Medium",
+    "topics": "Array; Stack; Monotonic Stack",
+    "pat_ds": [
+      "pat_ds::array::stack-topic::monotonic-stack"
+    ],
+    "pat_topic": [
+      "pat_topic::stack-topic::monotonic-stack"
+    ],
     "pat_group": []
   }
 ]

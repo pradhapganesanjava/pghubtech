@@ -29,6 +29,16 @@ const __dir      = dirname(fileURLToPath(import.meta.url))
 const CREDS_PATH = join(__dir, 'credentials.json')
 const TOKEN_PATH = join(__dir, '.token.json')
 const DO_WRITE   = process.argv.includes('--write')
+// --only 3,340  → restrict the batch to these LC ids. IMPORTANT: several older
+// BATCH entries below are STALE — migrate-topics-to-groups.mjs has since moved
+// shortest-path/longest-path/interactive/design/simulation out of pat_topic::
+// and pat_ds::<ds>::<topic>:: into the pat_group:: axis. Re-running the whole
+// batch unscoped would re-add those dropped tags and silently revert that
+// migration on ~35 rows. Always dry-run first, and prefer --only for new work.
+const ONLY = (() => {
+  const i = process.argv.indexOf('--only')
+  return i > -1 ? new Set(process.argv[i + 1].split(',').map(s => s.trim())) : null
+})()
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 const TAB    = 'LCProblems'
 const COL_ID   = 1   // B
@@ -50,7 +60,8 @@ const BATCH = {
   114: ['pat_ds::tree::dfs::dfs-tree-orders'],                       // Flatten BT to LL
   128: ['pat_ds::array::hash::seen-set'],                            // Longest Consecutive
   138: ['pat_ds::linked-list::hash::seen-set'],                      // Copy List Random Ptr
-  148: ['pat_ds::linked-list::sorting::merge-sort-counting'],        // Sort List
+  148: ['pat_ds::linked-list::sorting::merge-sort-counting',
+        'pat_topic::divide-conquer::dc-k-way-merge', 'pat_ds::linked-list::divide-conquer::dc-k-way-merge'],        // Sort List
   238: ['pat_ds::array::prefix-sum::ps-1d'],                         // Product Except Self
   581: ['pat_ds::array::stack-topic::monotonic-stack'],              // Shortest Unsorted Subarr
   617: ['pat_ds::tree::dfs::dfs-template'],                          // Merge Two BTs
@@ -62,7 +73,9 @@ const BATCH = {
   309: ['pat_ds::array::dp::state-machine-dp'],                      // Stock Cooldown
   416: ['pat_ds::array::dp::knapsack-01'],                            // Partition Equal Subset
   287: ['pat_ds::array::two-pointers::tp-fast-slow'],                // Find Duplicate
-  11:  ['pat_ds::array::two-pointers::tp-converging'],               // Container With Water
+  // 11 was keyed twice in this literal (here and in batch 4); the later key
+  // silently won, so this tp-converging entry never applied. Consolidated onto
+  // the batch-4 entry — tp-area-greedy is the more specific micro anyway.
 
   // ── Batch 2 (this turn — Top 100 Liked, ~50 new anchors) ─────────────
   // Linked-list family
@@ -116,7 +129,8 @@ const BATCH = {
   // Matrices
   36:  ['pat_ds::matrices::hash::seen-set'],                          // Valid Sudoku
   74:  ['pat_ds::matrices::binary-search::bs-textbook'],              // Search 2D Matrix
-  240: ['pat_ds::matrices::binary-search::bs-textbook'],              // Search 2D Matrix II
+  240: ['pat_ds::matrices::binary-search::bs-textbook',
+        'pat_topic::divide-conquer::dc-split-combine', 'pat_ds::matrices::divide-conquer::dc-split-combine'],              // Search 2D Matrix II
 
   // String — sliding window / two-pointers / parsing
   301: ['pat_ds::string::backtrack::partition-on-string'],           // Remove Invalid Parens
@@ -170,7 +184,13 @@ const BATCH = {
   299: ['pat_ds::string::hash::freq-counter'],                      // Bulls and Cows
   336: ['pat_ds::string::trie-topic::trie-grid-dfs'],               // Palindrome Pairs (trie of reversed)
   392: ['pat_ds::string::two-pointers::tp-merge-walk'],             // Is Subsequence
-  395: ['pat_ds::string::sliding-window::sw-at-most-k'],            // Longest Substring K Repeating
+  // 395 is dual-engine: the map-backed window AND the split-on-rare-char
+  // recursion both solve it, so it sits in both subarray sub-groups.
+  395: ['pat_ds::string::sliding-window::sw-at-most-k',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_group::subarray::divide-conquer',
+        'pat_ds::string::hash::freq-counter', 'pat_topic::hash::freq-counter',
+        'pat_topic::divide-conquer::dc-split-combine', 'pat_ds::string::divide-conquer::dc-split-combine'], // Longest Substring K Repeating
   409: ['pat_ds::string::hash::freq-counter'],                      // Longest Palindrome
   415: ['pat_ds::string::two-pointers::tp-converging'],             // Add Strings (both-end carry walk)
   67:  ['pat_ds::string::two-pointers::tp-converging'],             // Add Binary
@@ -180,7 +200,8 @@ const BATCH = {
   264: ['pat_ds::array::dp::dp-1d-linear'],                          // Ugly Number II (3-pointer DP)
   274: ['pat_ds::array::sorting::bucket-sort-freq'],                 // H-Index
   275: ['pat_ds::array::binary-search::bs-textbook'],                // H-Index II
-  324: ['pat_ds::array::sorting::sort-then-twoptr'],                 // Wiggle Sort II
+  324: ['pat_ds::array::sorting::sort-then-twoptr',
+        'pat_topic::divide-conquer::dc-quickselect', 'pat_ds::array::divide-conquer::dc-quickselect'],                 // Wiggle Sort II
   334: ['pat_ds::array::greedy::running-extreme'],                  // Increasing Triplet
   350: ['pat_ds::array::hash::freq-counter'],                       // Intersection 2 Arrays II
   354: ['pat_ds::array::dp::dp-1d-linear'],                          // Russian Doll Envelopes
@@ -232,7 +253,8 @@ const BATCH = {
   1099:['pat_ds::array::two-pointers::tp-k-sum'],                    // Two Sum Less Than K
 
   // tp-area-greedy (NEW sub-micro — max-area / trap, advance-shorter-side)
-  11:  ['pat_ds::array::two-pointers::tp-area-greedy'],              // Container With Most Water
+  11:  ['pat_ds::array::two-pointers::tp-area-greedy',
+        'pat_group::subarray', 'pat_group::subarray::two-pointer'],  // Container With Most Water
   42:  ['pat_ds::array::two-pointers::tp-area-greedy'],              // Trapping Rain Water
   407: ['pat_ds::matrices::two-pointers::tp-area-greedy'],           // Trapping Rain Water II (3D)
 
@@ -310,10 +332,26 @@ const BATCH = {
   1727:['pat_ds::matrices::dp::dp-2d-square'],                       // Largest Submatrix With Rearrangements (related shape)
 
   // sw-distinct-count (NEW) — freq-map + distinct-counter family
-  3:   ['pat_ds::string::sliding-window::sw-distinct-count'],        // Longest Substring Without Repeating
-  159: ['pat_ds::string::sliding-window::sw-distinct-count'],        // Longest Substring With At Most 2 Distinct
-  340: ['pat_ds::string::sliding-window::sw-distinct-count'],        // Longest Substring With At Most K Distinct
-  904: ['pat_ds::array::sliding-window::sw-distinct-count'],         // Fruit Into Baskets (≤ 2 distinct)
+  // NOTE: the map-backed-window family (3, 159, 340, 395, 904, 992, 1100,
+  // 2062) carries THREE things, all merged into these existing entries because
+  // duplicate object keys would silently overwrite each other in this literal:
+  //   1. its sliding-window micro (the technique)
+  //   2. pat_group::subarray + pat_group::subarray::map (the family)
+  //   3. hash::freq-counter (the map is the TOOL — this is what makes them
+  //      show up on the Map topic page and in the subarray×Map combo panel,
+  //      the same way 560/974 carry hash::complement-lookup next to prefix-sum)
+  3:   ['pat_ds::string::sliding-window::sw-distinct-count',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::string::hash::freq-counter', 'pat_topic::hash::freq-counter'], // Longest Substring Without Repeating
+  159: ['pat_ds::string::sliding-window::sw-distinct-count',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::string::hash::freq-counter', 'pat_topic::hash::freq-counter'], // Longest Substring With At Most 2 Distinct
+  340: ['pat_ds::string::sliding-window::sw-distinct-count',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::string::hash::freq-counter', 'pat_topic::hash::freq-counter'], // Longest Substring With At Most K Distinct
+  904: ['pat_ds::array::sliding-window::sw-distinct-count',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::array::hash::freq-counter', 'pat_topic::hash::freq-counter'], // Fruit Into Baskets (≤ 2 distinct)
   // 1004 was tagged earlier as sw-shrink-violation; the K-distinct framing
   // also applies (max consecutive ones III is essentially "at most K zeros").
   // Skip retag — already in BATCH at line above; prune will handle dual.
@@ -447,8 +485,43 @@ const BATCH = {
   // ── Mixed picks from all three lists ──────────────────────────────
   828: ['pat_ds::string::core::in-place-read-write'],                 // Count Unique Chars Substrings (contribution sum)
   907: ['pat_ds::array::stack-topic::monotonic-stack-spans'],         // (dup-safe — Sum Subarray Mins)
-  992: ['pat_ds::array::sliding-window::sw-at-most-k'],               // (dup-safe — Subarrays K Distinct)
+  992: ['pat_ds::array::sliding-window::sw-at-most-k',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::array::hash::freq-counter', 'pat_topic::hash::freq-counter'], // (dup-safe — Subarrays K Distinct)
   1004:['pat_ds::array::sliding-window::sw-distinct-count'],          // (dup-safe — Max Consecutive Ones III)
+  // 1004 / 930 / 1248 deliberately EXCLUDED from subarray::map: their windows
+  // are tracked by a single scalar counter (zeros / ones / odds), not a
+  // per-key map — the exact line the micro definition draws.
+
+  // ── Batch 9 (this turn) — map-backed window, ids not already keyed above ──
+  1100:['pat_ds::string::sliding-window::sw-distinct-count',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::string::hash::freq-counter', 'pat_topic::hash::freq-counter'], // K-Length Substrings No Repeats
+  2062:['pat_ds::string::sliding-window::sw-distinct-count',
+        'pat_group::subarray', 'pat_group::subarray::map',
+        'pat_ds::string::hash::freq-counter', 'pat_topic::hash::freq-counter'], // Count Vowel Substrings
+
+  // ── Batch 10 (this turn) — pat_group::subarray::divide-conquer ───────────
+  // Scope rule: problems ALREADY in pat_group::subarray that also carry
+  // LeetCode's own "Divide and Conquer" topic. 395 is tagged on its entry
+  // above (dual-engine). Two shapes:
+  //   (a) split-at-mid + combine across the boundary  — 53, 918
+  //   (b) merge-sort / segment-tree counting of cross-boundary pairs
+  //       over prefix sums                            — 2031, 3737, 3739, 3719, 3721
+  53:  ['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-split-combine', 'pat_ds::array::divide-conquer::dc-split-combine'],   // Maximum Subarray (canonical: max of left/right/crossing)
+  918: ['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-split-combine', 'pat_ds::array::divide-conquer::dc-split-combine'],   // Max Sum Circular Subarray (53's split, plus the wrap case)
+  2031:['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-merge-count', 'pat_ds::array::divide-conquer::dc-merge-count'],   // Count Subarrays With More Ones Than Zeros (merge-sort count)
+  3737:['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-merge-count', 'pat_ds::array::divide-conquer::dc-merge-count'],   // Count Subarrays With Majority Element I (merge-sort count)
+  3739:['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-merge-count', 'pat_ds::array::divide-conquer::dc-merge-count'],   // Count Subarrays With Majority Element II (merge-sort count)
+  3719:['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-split-combine', 'pat_ds::array::divide-conquer::dc-split-combine'],   // Longest Balanced Subarray I (solve halves + crossing)
+  3721:['pat_group::subarray::divide-conquer',
+        'pat_topic::divide-conquer::dc-split-combine', 'pat_ds::array::divide-conquer::dc-split-combine'],   // Longest Balanced Subarray II (same, harder combine)
   1167:['pat_ds::array::heap::top-k'],                                // Min Cost to Connect Sticks (min-heap repeated)
   1216:['pat_ds::string::dp::dp-2-strings'],                          // Valid Palindrome III (k-edit)
   1283:['pat_ds::array::binary-search::bs-on-answer'],                // Find Smallest Divisor Given Threshold
@@ -519,6 +592,43 @@ const BATCH = {
   1898:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Max Removable Characters (subsequence sim)
   2517:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Max Tastiness of Candy Basket (greedy gap sim)
   2616:['pat_topic::binary-search::bs-on-answer-compound', 'pat_ds::array::binary-search::bs-on-answer-compound'], // Minimize Max Diff of K Pairs (greedy pair sim)
+
+  // ── Batch 11 (this turn) — NEW TOPIC: divide-conquer ─────────────────────
+  // Scope rule: problems carrying LeetCode's own "Divide and Conquer" topic,
+  // assigned to one of the 5 micros. Ids already keyed earlier in this literal
+  // (53, 148, 240, 324, 395, 918, 2031, 3719, 3721, 3737, 3739) carry their
+  // dc tags on those entries instead — duplicate keys would overwrite.
+  // Deliberately NOT tagged: 4 (binary-search partition, not a D&C combine),
+  // 190 / 191 (bit tricks LeetCode files under D&C), 372 (fast exponentiation),
+  // 1756 (a design problem; the D&C tag is noise).
+  169: ['pat_topic::divide-conquer::dc-split-combine',
+        'pat_ds::array::divide-conquer::dc-split-combine'],            // Majority Element (D&C alt to Boyer-Moore)
+  315: ['pat_topic::divide-conquer::dc-merge-count',
+        'pat_ds::array::divide-conquer::dc-merge-count'],              // Count of Smaller Numbers After Self
+  327: ['pat_topic::divide-conquer::dc-merge-count',
+        'pat_ds::array::divide-conquer::dc-merge-count'],              // Count of Range Sum (merge on prefix sums)
+  493: ['pat_topic::divide-conquer::dc-merge-count',
+        'pat_ds::array::divide-conquer::dc-merge-count'],              // Reverse Pairs
+  215: ['pat_topic::divide-conquer::dc-quickselect',
+        'pat_ds::array::divide-conquer::dc-quickselect'],              // Kth Largest Element in an Array
+  347: ['pat_topic::divide-conquer::dc-quickselect',
+        'pat_ds::array::divide-conquer::dc-quickselect'],              // Top K Frequent Elements
+  973: ['pat_topic::divide-conquer::dc-quickselect',
+        'pat_ds::array::divide-conquer::dc-quickselect'],              // K Closest Points to Origin
+  1985:['pat_topic::divide-conquer::dc-quickselect',
+        'pat_ds::array::divide-conquer::dc-quickselect'],              // Kth Largest Integer in the Array
+  105: ['pat_topic::divide-conquer::dc-tree-build',
+        'pat_ds::tree::divide-conquer::dc-tree-build'],                // Construct BT from Preorder + Inorder
+  106: ['pat_topic::divide-conquer::dc-tree-build',
+        'pat_ds::tree::divide-conquer::dc-tree-build'],                // Construct BT from Inorder + Postorder
+  889: ['pat_topic::divide-conquer::dc-tree-build',
+        'pat_ds::tree::divide-conquer::dc-tree-build'],                // Construct BT from Preorder + Postorder
+  427: ['pat_topic::divide-conquer::dc-tree-build',
+        'pat_ds::tree::divide-conquer::dc-tree-build'],                // Construct Quad Tree
+  108: ['pat_topic::divide-conquer::dc-tree-build',
+        'pat_ds::bst::divide-conquer::dc-tree-build'],                 // Convert Sorted Array to BST
+  23:  ['pat_topic::divide-conquer::dc-k-way-merge',
+        'pat_ds::linked-list::divide-conquer::dc-k-way-merge'],        // Merge k Sorted Lists
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
@@ -581,6 +691,7 @@ async function main() {
   let totalAdd   = 0
 
   for (const [lcId, newTags] of Object.entries(BATCH)) {
+    if (ONLY && !ONLY.has(String(lcId))) continue
     const row = byId.get(String(lcId))
     if (!row) { missing.push(lcId); continue }
     const existing = new Set(row.tags.split(/[;\n]+/).map(s => s.trim()).filter(Boolean))
