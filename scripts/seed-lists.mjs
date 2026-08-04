@@ -220,7 +220,7 @@ const LISTS = {
     21, 206,                            // Merge Two Sorted Lists, Reverse Linked List
     300,                                // Longest Increasing Subsequence
     80, 92,                             // Remove Duplicates Sorted Array II, Reverse Linked List II
-    10066, 10067, 10068,                // Custom (no LC number): Top View, Left View, Next Smaller Element
+    10066, 10068,                       // Custom (no LC number): Top View, Next Smaller Element
   ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,

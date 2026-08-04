@@ -2,14 +2,14 @@
 /**
  * scripts/add-classic-gaps-batch.mjs
  * ─────────────────────────────────────────────────────────────────────────────
- * Add three classic interview problems that have NO LeetCode number (GfG-only)
+ * Add classic interview problems that have NO LeetCode number (GfG-only)
  * as custom AdsHub problems (#10066–#10068):
  *
  *   10066  Top View of Binary Tree
- *   10067  Left View of Binary Tree
+ *   10067  Left View of Binary Tree  (removed — see note below)
  *   10068  Next Smaller Element
  *
- * These three kept surfacing as "matched a pattern but has no LCProblems row",
+ * These kept surfacing as "matched a pattern but has no LCProblems row",
  * which made them unaddable to MyLists. Unlike the prachub batch (which used
  * `_ds::`/`_prob::` tags), these carry real `pat_ds::`/`pat_topic::` tags so
  * they slot into the existing pattern tree alongside their LC siblings.
@@ -44,12 +44,10 @@ const PROBLEMS = [
     url: `${GFG}/problems/top-view-of-binary-tree/1`,
     summary: 'Print nodes visible when the tree is viewed from directly above, left to right. BFS carrying a horizontal-distance (column) per node; keep the FIRST node seen per column. Same skeleton as LC 314 / 987 (bfs-position-tracked) — those collect every node per column, this keeps only the first. Bottom View is the identical scan keeping the LAST per column. Must be BFS: a DFS can reach a shallower node later and overwrite a correct entry unless you also track depth.' },
 
-  { id: 10067, slug: 'left-view-of-binary-tree',
-    title: 'Left View of Binary Tree',
-    difficulty: 'Easy', topics: ['Tree', 'Breadth-First Search', 'Depth-First Search', 'Binary Tree'],
-    tags: ['pat_ds::tree::bfs::bfs-level-order', 'pat_topic::bfs::bfs-level-order'],
-    url: `${GFG}/problems/left-view-of-binary-tree/1`,
-    summary: 'Print the first node of every level, top to bottom. Exact mirror of LC 199 (Right Side View): level-order BFS taking index 0 of each level instead of the last. DFS alternative: pre-order visiting LEFT first, recording a node whenever depth === result.length.' },
+  // #10067 Left View of Binary Tree was added here and later REMOVED (sheet row
+  // + Freshworks list + pat tags): it is an exact mirror of LC 199 (Right Side
+  // View) — same level-order BFS, index 0 of each level instead of the last —
+  // so it earned nothing over just solving 199. Don't re-add it.
 
   // NOTE: #10068's description was later rewritten in-sheet with the full GfG
   // statement + examples — see scripts/custom-problems/next-smaller-element.json

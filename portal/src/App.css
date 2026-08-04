@@ -4284,6 +4284,25 @@ body.resizing-h * {
 .adshub-notes-toggle { padding: 4px 0 10px; }
 .adshub-desc { padding-top: 4px; }
 .adshub-desc strong, .adshub-desc b { color: var(--text); }
+/* "Closest LeetCode equivalent" chip, authored into a problem's description
+   HTML (sheet col J) — see scripts/custom-problems/*.json. Green = near-exact
+   match, amber = same pattern but a looser fit; the title attr carries the why,
+   so cursor:help signals "hover me". */
+.desc-eq-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin: 2px 0; padding: 2px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  text-decoration: none; cursor: help;
+  color: var(--success);
+  background: rgba(34, 197, 94, .12);
+  border: 1px solid rgba(34, 197, 94, .35);
+}
+.desc-eq-chip:hover { background: rgba(34, 197, 94, .22); border-color: var(--success); }
+.desc-eq-chip.loose {
+  color: var(--warning);
+  background: rgba(249, 153, 0, .12); border-color: rgba(249, 153, 0, .35);
+}
+.desc-eq-chip.loose:hover { background: rgba(249, 153, 0, .22); border-color: var(--warning); }
 .adshub-companies { margin-top: 14px; }
 .adshub-companies-summary {
   cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;

@@ -2144,7 +2144,5 @@ anchor_id,tag
 10065,pat_ds::array::two-pointers::tp-merge-walk
 10066,pat_ds::tree::bfs::bfs-position-tracked
 10066,pat_topic::bfs::bfs-position-tracked
-10067,pat_ds::tree::bfs::bfs-level-order
-10067,pat_topic::bfs::bfs-level-order
 10068,pat_ds::array::stack-topic::monotonic-stack
 10068,pat_topic::stack-topic::monotonic-stack
