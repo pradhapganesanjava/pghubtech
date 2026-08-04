@@ -6512,6 +6512,22 @@
     "pat_group": []
   },
   {
+    "id": "827",
+    "title": "Making A Large Island",
+    "difficulty": "Hard",
+    "topics": "Array; Depth-First Search; Breadth-First Search; Union-Find; Matrix",
+    "pat_ds": [
+      "pat_ds::graph::core::cc-dfs-uf",
+      "pat_ds::graph::union-find::uf-with-size",
+      "pat_ds::matrices::core::mat-grid-dfs-bfs",
+      "pat_ds::matrices::dfs::dfs-grid-flood"
+    ],
+    "pat_topic": [
+      "pat_topic::dfs::dfs-grid-flood"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "828",
     "title": "Count Unique Characters of All Substrings of a Given String",
     "difficulty": "Hard",
@@ -10861,6 +10877,21 @@
       "pat_group::subsequence",
       "pat_group::subset-selection"
     ]
+  },
+  {
+    "id": "2556",
+    "title": "Disconnect Path in a Binary Matrix by at Most One Flip",
+    "difficulty": "Medium",
+    "topics": "Array; Dynamic Programming; Depth-First Search; Breadth-First Search; Matrix",
+    "pat_ds": [
+      "pat_ds::graph::core::tarjan-bridges",
+      "pat_ds::matrices::core::mat-grid-dfs-bfs",
+      "pat_ds::matrices::dfs::dfs-grid-flood"
+    ],
+    "pat_topic": [
+      "pat_topic::dfs::dfs-grid-flood"
+    ],
+    "pat_group": []
   },
   {
     "id": "2559",
