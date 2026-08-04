@@ -203,6 +203,25 @@ const LISTS = {
     560, 2062,                                        // Prefix Sum (2) — 2062 ≈ "Count Vowels in Substrings"
     48, 54, 73,                                       // Matrices (3)
   ],
+  // Freshworks interview prep (curated 2026-07-29). Caches/design, monotonic
+  // stack, rotated binary search, intervals, tree views/traversals, grid DFS,
+  // linked lists, and the two in-place/reversal array-LL drills.
+  'Freshworks': [
+    146, 460,                           // Design: LRU Cache, LFU Cache
+    496, 503, 739,                      // Next/Previous Smaller Element (monotonic stack)
+    162, 33,                            // Find Peak Element, Search in Rotated Sorted Array
+    3,                                  // Longest Substring Without Repeating Characters
+    56, 252,                            // Merge Intervals, Meeting Rooms I
+    53,                                 // Maximum Subarray (Kadane)
+    199, 314, 987, 545, 543,            // Tree views: Right Side View, Vertical Order I/II, Boundary, Diameter
+    11, 15, 169,                        // Container With Most Water, 3Sum, Majority Element (Boyer-Moore)
+    79,                                 // Word Search (grid DFS)
+    200, 1568,                          // Number of Islands + disconnect variant
+    21, 206,                            // Merge Two Sorted Lists, Reverse Linked List
+    300,                                // Longest Increasing Subsequence
+    80, 92,                             // Remove Duplicates Sorted Array II, Reverse Linked List II
+    10066, 10067, 10068,                // Custom (no LC number): Top View, Left View, Next Smaller Element
+  ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
     125,392,167,11,15,

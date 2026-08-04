@@ -512,6 +512,7 @@ const DS_TOPIC_LINKS = {
 // new pat_group:: tag in the sheet makes the group appear automatically — a
 // group missing here just renders with a default icon.
 const GROUPS = [
+  { id: 'subarray',     icon: '🎞️', name: 'Subarray / Substring', intro: 'Answer a question about a CONTIGUOUS run — longest / shortest / count / best sum. Contiguity is what unlocks the engines: a sliding window when the constraint is monotone under shrinking, prefix sums when it is a range aggregate, a monotonic stack when it is a per-element span, and divide & conquer when a disqualifying element splits the range instead of shrinking it.' },
   { id: 'palindrome',   icon: '🔁', name: 'Palindrome',   intro: 'Symmetry around a center / mirrored reads — check, build, partition, or count palindromic spans.' },
   { id: 'parenthesis',  icon: '🪢', name: 'Parenthesis',  intro: 'Balanced-bracket validity, generation, repair, and scoring — usually a stack or a running open-count.' },
   { id: 'sum',          icon: '➕', name: 'Sum / Target',  intro: 'Find or count elements / subarrays / paths / subsets that reach a target sum — k-sum, subarray-sum, combination-sum, path-sum.' },

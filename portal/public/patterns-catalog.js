@@ -394,8 +394,11 @@ window.PG_PATTERNS = [
     ],
   },
 
-  // ── Hash Table (Topic — usually a tool) ──────────────────────────────
-  { tab: 'topic', id: 'hash', name: 'Hash Table', icon: '🗂️', topicTag: 'Hash Table',
+  // ── Map (Topic — usually a tool) ─────────────────────────────────────
+  // Display name is "Map"; `id` stays 'hash' (every pat_ds::*::hash::* tag
+  // depends on it) and `topicTag` stays 'Hash Table' (matches the LeetCode
+  // topics string for the "Browse all in AdsHub" link).
+  { tab: 'topic', id: 'hash', name: 'Map', icon: '🗂️', topicTag: 'Hash Table',
     intro: 'Sub-Θ(1) lookup/insert. Usually the TOOL inside another pattern (two-sum, prefix-sum, frequency) rather than the headline DS.',
     micros: [
       { id: 'seen-set', name: 'Seen-Set / Has-Visited',
@@ -1305,6 +1308,43 @@ window.PG_PATTERNS = [
         cost: 'O(n log n).',
         contrast: 'Sorting by START can pick an early-start / late-end interval that blocks others; sorting by END frees time earliest (classic activity-selection / exchange argument).',
         anchors: [435] },
+    ],
+  },
+
+  // ── Divide & Conquer (Topic) — split, solve halves, combine ──────────
+  { tab: 'topic', id: 'divide-conquer', name: 'Divide & Conquer', icon: '🪓', topicTag: 'Divide and Conquer',
+    intro: 'Split the input, solve each part independently, then COMBINE. The pattern earns its keep when the combine step is cheaper than re-solving — T(n) = 2T(n/2) + O(combine), so an O(n) combine gives O(n log n). The tell is a problem whose answer is "best of left, best of right, or something crossing the boundary".',
+    micros: [
+      { id: 'dc-split-combine', name: 'Split at Mid + Combine Across the Boundary',
+        when: 'The answer for a range is the best of: entirely left, entirely right, or CROSSING the midpoint — and the crossing case is cheap to compute directly.',
+        how: 'solve(lo, hi): trivial range → return it; else mid = (lo+hi)/2; recurse both halves; compute the crossing answer by expanding outward from mid; return the best of the three. A variant splits on a DISQUALIFYING element rather than the midpoint (395 cuts at every char with frequency < k).',
+        cost: 'O(n log n) with an O(n) combine.',
+        contrast: 'For max-subarray this is the textbook D&C alternative to Kadane — same answer, worse constant, but it generalises to combines Kadane cannot express. When the split is on a disqualifying element, no sliding window exists because the constraint is not monotone under shrinking.',
+        anchors: [53, 918, 395, 169, 240] },
+      { id: 'dc-merge-count', name: 'Merge-Sort Counting (Cross-Boundary Pairs)',
+        when: 'Count PAIRS (i < j) satisfying an order relation — inversions, reverse pairs, range sums, "how many later elements are smaller".',
+        how: 'Merge sort the array (often the PREFIX-SUM array). While merging two sorted halves, every qualifying (left, right) pair is counted in one linear sweep, because both halves are sorted. Recurse, count, merge.',
+        cost: 'O(n log n) time, O(n) scratch.',
+        contrast: 'The BIT / segment-tree solutions to these same problems are equivalent in complexity; merge-sort counting needs no coordinate compression. Note the sort is on prefix sums for range-sum variants, not the raw array.',
+        anchors: [315, 327, 493, 2031, 3737] },
+      { id: 'dc-quickselect', name: 'Quickselect / Partition-Based Selection',
+        when: 'Kth largest / smallest, or "top K" where the K elements need no internal order.',
+        how: 'Lomuto/Hoare partition around a pivot; recurse into ONLY the side containing rank K. Unlike quicksort, one side is discarded each round.',
+        cost: 'O(n) expected, O(n²) worst case; randomise the pivot. Beats the O(n log k) heap when K is large.',
+        contrast: 'Heap top-k keeps K ordered and streams; quickselect needs the whole array in memory but is linear. For Top-K-frequent, bucket sort by frequency is O(n) worst-case and simpler.',
+        anchors: [215, 973, 1985, 324, 347] },
+      { id: 'dc-tree-build', name: 'Recursive Construction from Traversals / Ranges',
+        when: 'Build a tree from traversal orders, from a sorted array, or by recursively subdividing a grid.',
+        how: 'Pick the root from the defining position (preorder[0], postorder[-1], or the range midpoint), locate it to split the remaining elements into left/right sub-ranges (hash the index map to avoid a scan), recurse on each side.',
+        cost: 'O(n) with an index map; O(n²) if you re-scan for the root each level.',
+        contrast: 'This is D&C on the OUTPUT structure rather than the input sequence — the "combine" is simply attaching the two returned subtrees to the root.',
+        anchors: [105, 106, 889, 108, 427] },
+      { id: 'dc-k-way-merge', name: 'Merge Sort / K-Way Merge on Lists',
+        when: 'Sort a linked list in O(n log n) with O(1) auxiliary space, or merge K sorted sequences.',
+        how: 'Split by slow/fast pointer (lists) or pair up sequences; sort each half; merge two sorted runs with a dummy head. K-way: merge pairwise in log K rounds rather than sequentially.',
+        cost: 'O(n log n); pairwise K-way merge is O(N log K) vs O(N·K) sequential.',
+        contrast: 'A min-heap over the K list heads is the alternative for K-way merge — same O(N log K), more space. Merge sort is the only comparison sort that is natural on a linked list (no random access needed).',
+        anchors: [23, 148] },
     ],
   },
 
