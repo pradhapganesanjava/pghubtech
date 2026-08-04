@@ -1171,6 +1171,11 @@ anchor_id,tag
 819,pat_group::word-process
 821,pat_ds::array::two-pointers::tp-merge-walk
 825,pat_ds::array::sorting::bucket-sort-freq
+827,pat_ds::graph::core::cc-dfs-uf
+827,pat_ds::graph::union-find::uf-with-size
+827,pat_ds::matrices::core::mat-grid-dfs-bfs
+827,pat_topic::dfs::dfs-grid-flood
+827,pat_ds::matrices::dfs::dfs-grid-flood
 828,pat_ds::string::core::in-place-read-write
 833,pat_ds::string::greedy::sort-and-sweep
 836,pat_ds::matrices::core::mat-grid-dfs-bfs
@@ -1869,6 +1874,10 @@ anchor_id,tag
 2542,pat_ds::array::heap::top-k
 2542,pat_group::subsequence
 2542,pat_group::subset-selection
+2556,pat_ds::graph::core::tarjan-bridges
+2556,pat_ds::matrices::core::mat-grid-dfs-bfs
+2556,pat_topic::dfs::dfs-grid-flood
+2556,pat_ds::matrices::dfs::dfs-grid-flood
 2559,pat_topic::prefix-sum::ps-1d
 2559,pat_ds::array::prefix-sum::ps-1d
 2588,pat_group::subarray

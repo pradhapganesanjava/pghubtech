@@ -629,6 +629,20 @@ const BATCH = {
         'pat_ds::bst::divide-conquer::dc-tree-build'],                 // Convert Sorted Array to BST
   23:  ['pat_topic::divide-conquer::dc-k-way-merge',
         'pat_ds::linked-list::divide-conquer::dc-k-way-merge'],        // Merge k Sorted Lists
+
+  // ── Batch: connectivity-cut neighbours of 1568 ───────────────────────
+  // 1568 (Min Days to Disconnect Island) sat on tarjan-bridges with only
+  // 1192 for company; these two are its nearest neighbours and were
+  // carrying no pat tags at all.
+  2556:['pat_ds::graph::core::tarjan-bridges',                        // Disconnect Path in a Binary Matrix by
+        'pat_ds::matrices::core::mat-grid-dfs-bfs',                   //   at Most One Flip — the "can ONE cell
+        'pat_topic::dfs::dfs-grid-flood',                             //   disconnect it" cut-vertex question on
+        'pat_ds::matrices::dfs::dfs-grid-flood'],                     //   a grid (2 disjoint paths ⇒ no)
+  827: ['pat_ds::graph::core::cc-dfs-uf',                             // Making A Large Island — the INVERSE of
+        'pat_ds::graph::union-find::uf-with-size',                    //   1568: flip one 0→1 to MERGE islands
+        'pat_ds::matrices::core::mat-grid-dfs-bfs',                   //   rather than one 1→0 to split one.
+        'pat_topic::dfs::dfs-grid-flood',                             //   Component labelling + sizes, same
+        'pat_ds::matrices::dfs::dfs-grid-flood'],                     //   grid-flood substrate
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
