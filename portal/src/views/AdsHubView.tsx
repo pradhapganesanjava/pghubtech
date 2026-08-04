@@ -41,6 +41,7 @@ import { useToast } from '../components/Toast'
 import AudioReader from '../components/AudioReader'
 import { htmlToSpokenText } from '../lib/audioMode'
 import ProblemAIChat from '../components/ProblemAIChat'
+import StudyTimer from '../components/StudyTimer'
 
 type NoteMode = 'hidden' | 'view' | 'edit'
 
@@ -475,15 +476,9 @@ export default function AdsHubView() {
   // keeps the graph dominant (55%) so the detail acts as a side panel.
   useEffect(() => { setListRatio(detailOpen ? (adsMode === 'lineage' ? 55 : 15) : 40) }, [selected?.slug, p2rSel?.id, adsMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Per-problem study timer (mm:ss). Resets when the selection changes.
-  // Visual escalation: orange + bold at 10 min, red at 15 min, blinking at 20+.
-  const [timerSec, setTimerSec] = useState(0)
-  useEffect(() => {
-    setTimerSec(0)
-    if (!selected) return
-    const id = window.setInterval(() => setTimerSec(s => s + 1), 1000)
-    return () => window.clearInterval(id)
-  }, [selected?.slug])
+  // Per-problem study timer lives in <StudyTimer> (keyed by slug) so its 1 Hz
+  // tick doesn't re-render this view — a re-render every second was clearing
+  // the user's text selection while copying the question body.
   useEffect(() => { setCodeRatio(codeCollapsed ? 42 : 75) }, [codeCollapsed])
   const descCodeRef = useRef<HTMLDivElement>(null)
   const dragCodeRef = useRef(false)
@@ -1757,14 +1752,8 @@ export default function AdsHubView() {
                 <span className="doc-detail-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {selected.frontendId && <>#{selected.frontendId} · </>}{selected.title}
                 </span>
-                <span
-                  className={`doc-detail-timer${
-                    timerSec >= 20 * 60 ? ' warn danger blink' :
-                    timerSec >= 15 * 60 ? ' warn danger' :
-                    timerSec >= 10 * 60 ? ' warn' : ''
-                  }`}
-                  title="Time on this problem (resets when you switch)"
-                >{Math.floor(timerSec / 60)}:{String(timerSec % 60).padStart(2, '0')}</span>
+                {/* key={slug} → restarts at 0:00 on each new problem */}
+                <StudyTimer key={selected.slug} />
                 <div style={{ display: 'flex', gap: 6, position: 'relative' }} onDoubleClick={e => e.stopPropagation()}>
                   {/* Notes toggle now lives in the code-panel header (right end). */}
                   {/* ★ Add to list */}
