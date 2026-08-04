@@ -12716,19 +12716,6 @@
     "pat_group": []
   },
   {
-    "id": "10067",
-    "title": "Left View of Binary Tree",
-    "difficulty": "Easy",
-    "topics": "Tree; Breadth-First Search; Depth-First Search; Binary Tree",
-    "pat_ds": [
-      "pat_ds::tree::bfs::bfs-level-order"
-    ],
-    "pat_topic": [
-      "pat_topic::bfs::bfs-level-order"
-    ],
-    "pat_group": []
-  },
-  {
     "id": "10068",
     "title": "Next Smaller Element",
     "difficulty": "Medium",

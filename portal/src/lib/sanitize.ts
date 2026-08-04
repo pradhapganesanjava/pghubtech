@@ -12,6 +12,10 @@ const ALLOWED_URI_REGEXP =
 
 const CONFIG: DOMPurify.Config = {
   ADD_DATA_URI_TAGS: ['img'],
+  // Anchors may opt into target="_blank". DOMPurify drops `target` by default,
+  // but problem descriptions link out to LeetCode / GfG and must not navigate
+  // the SPA away from the user's session. The hook below makes this safe.
+  ADD_ATTR: ['target'],
   ALLOW_UNKNOWN_PROTOCOLS: false,
   ALLOWED_URI_REGEXP,
   // Belt-and-braces: explicitly forbid common XSS sinks even though DOMPurify
@@ -19,6 +23,15 @@ const CONFIG: DOMPurify.Config = {
   FORBID_TAGS:  ['script', 'iframe', 'object', 'embed', 'base', 'form'],
   FORBID_ATTR:  ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onsubmit'],
 }
+
+// Force a safe rel on every new-tab link rather than trusting the author's
+// markup to carry one — an opener-less _blank can't reach window.opener.
+DOMPurify.addHook('afterSanitizeAttributes', node => {
+  const el = node as Element
+  if (el.tagName === 'A' && el.getAttribute('target') === '_blank') {
+    el.setAttribute('rel', 'noopener noreferrer')
+  }
+})
 
 export function sanitizeHtml(html: string | null | undefined): string {
   if (!html) return ''
