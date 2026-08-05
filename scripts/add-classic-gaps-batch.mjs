@@ -37,6 +37,10 @@ const TAB = 'LCProblems'
 const GFG = 'https://www.geeksforgeeks.org'
 
 const PROBLEMS = [
+  // NOTE: #10066's description was later rewritten in-sheet with the full GfG
+  // statement + examples + a closest-LC chip — see
+  // scripts/custom-problems/top-view-of-binary-tree.json (applied via
+  // `add-problem-note.mjs custom-top-view-of-binary-tree --desc-json`).
   { id: 10066, slug: 'top-view-of-binary-tree',
     title: 'Top View of Binary Tree',
     difficulty: 'Medium', topics: ['Tree', 'Breadth-First Search', 'Hash Table', 'Binary Tree'],
