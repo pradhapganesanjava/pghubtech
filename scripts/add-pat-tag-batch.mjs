@@ -643,6 +643,21 @@ const BATCH = {
         'pat_ds::matrices::core::mat-grid-dfs-bfs',                   //   rather than one 1→0 to split one.
         'pat_topic::dfs::dfs-grid-flood',                             //   Component labelling + sizes, same
         'pat_ds::matrices::dfs::dfs-grid-flood'],                     //   grid-flood substrate
+
+  // ── Batch: ScaleAI list — the 5 members that carried no pat tags ──────
+  // Run scoped: --only 846,630,1094,1344,393
+  // 1344 and 393 get GROUP-level tags only; neither has an honest micro in
+  // the catalog yet (see the note in the ScaleAI list commit).
+  846: ['pat_ds::array::hash::freq-counter',                          // Hand of Straights — Counter, then
+        'pat_topic::hash::freq-counter'],                             //   consume k consecutive from the min key
+  630: ['pat_ds::array::greedy::greedy-end-sorted',                   // Course Schedule III — sort by deadline,
+        'pat_group::scheduling'],                                     //   regret-swap the longest course out
+  1094:['pat_topic::prefix-sum::difference-array',                    // Car Pooling — +n at from, −n at to,
+        'pat_ds::array::prefix-sum::difference-array'],               //   integrate once (twin of 1109)
+  1344:['pat_group::simulation'],                                     // Angle Between Hands — closed-form clock
+                                                                      //   arithmetic; spec-following, like 2303
+  393: ['pat_group::simulation'],                                     // UTF-8 Validation — mask/shift byte scan
+                                                                      //   with a continuation counter
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────

@@ -748,6 +748,7 @@ anchor_id,tag
 389,pat_ds::string::bits::xor-cancel
 392,pat_ds::string::two-pointers::tp-merge-walk
 392,pat_group::subsequence
+393,pat_group::simulation
 394,pat_topic::stack-topic::expression-eval
 394,pat_ds::string::stack-topic::expression-eval
 394,pat_topic::stack-topic::decode-string
@@ -977,6 +978,8 @@ anchor_id,tag
 621,pat_group::scheduling
 622,pat_ds::queue::core::queue-from-stacks
 624,pat_ds::array::core::in-place-read-write
+630,pat_ds::array::greedy::greedy-end-sorted
+630,pat_group::scheduling
 632,pat_topic::heap::k-way-merge
 632,pat_ds::array::heap::k-way-merge
 637,pat_ds::tree::bfs::bfs-level-order
@@ -1185,6 +1188,8 @@ anchor_id,tag
 843,pat_ds::string::backtrack::partition-on-string
 843,pat_group::word-process
 844,pat_ds::string::stack-topic::parens-rewrite
+846,pat_ds::array::hash::freq-counter
+846,pat_topic::hash::freq-counter
 847,pat_topic::dp::bitmask-dp
 847,pat_ds::graph::dp::bitmask-dp
 849,pat_ds::array::two-pointers::tp-fast-slow
@@ -1376,6 +1381,8 @@ anchor_id,tag
 1091,pat_ds::graph::core::bfs
 1091,pat_group::shortest-path
 1091,pat_group::shortest-path::bfs
+1094,pat_topic::prefix-sum::difference-array
+1094,pat_ds::array::prefix-sum::difference-array
 1099,pat_ds::array::two-pointers::tp-k-sum
 1099,pat_ds::array::two-pointers::tp-count-pairs
 1099,pat_group::sum
@@ -1539,6 +1546,7 @@ anchor_id,tag
 1338,pat_ds::array::sorting::bucket-sort-freq
 1343,pat_group::subarray
 1343,pat_group::subarray::two-pointer
+1344,pat_group::simulation
 1351,pat_ds::matrices::binary-search::bs-textbook
 1352,pat_ds::queue::core::moving-average-stream
 1353,pat_ds::array::heap::event-driven-scheduling
