@@ -26,7 +26,7 @@ const CREDS_PATH = join(__dir, 'credentials.json')
 const TOKEN_PATH = join(__dir, '.token.json')
 const DO_WRITE   = process.argv.includes('--write')
 const ONLY       = (() => { const i = process.argv.indexOf('--only'); return i > -1 ? process.argv[i + 1] : null })()
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 const TAB_PROBLEMS = 'LCProblems'
 const TAB_LISTS    = 'LCLists'
@@ -221,6 +221,22 @@ const LISTS = {
     300,                                // Longest Increasing Subsequence
     80, 92,                             // Remove Duplicates Sorted Array II, Reverse Linked List II
     10066, 10068,                       // Custom (no LC number): Top View, Next Smaller Element
+  ],
+  // Scale AI HackerRank screen prep (curated 2026-08-15). The round is a long,
+  // dense spec that gains new rules mid-build, so the weight is on simulation /
+  // design and on primitives that must be instant: hash counting, sweep line,
+  // heaps, topo sort, BFS.
+  'ScaleAI': [
+    846, 348,                           // Card & game simulation: Hand of Straights, Design Tic-Tac-Toe
+    621, 1834, 207, 210, 630,           // Task scheduling & prioritisation
+    56, 57, 435, 253, 1094,             // Intervals & sweep line
+    451, 20, 387, 692, 724, 1427,       // Strings / frequency / parsing
+    236, 200, 994, 743, 787,            // Graphs & trees (236 = LCA, the reported N-ary variant)
+    359, 362, 933, 346,                 // Rate limiters & stream windows
+    23, 21, 88,                         // Merging
+    42, 407, 229, 322, 1344,            // Classic array / DP / math
+    146, 981, 341, 393,                 // Design & iterators
+    215, 973, 68, 224, 127, 133, 819, 759,  // Safety net
   ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
