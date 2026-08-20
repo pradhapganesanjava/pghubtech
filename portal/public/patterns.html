@@ -328,6 +328,11 @@
   body.detail-open { overflow: hidden; }
   /* Topic-tab sidebar "Applies to" row — small DS chip, no caret. */
   .tree-applies-row { padding-left: 22px; }
+  /* Micro rows sit one level under their DS/Topic. The bar is only ~210px, so
+     they ellipsize rather than wrap — the title attribute carries the rest. */
+  .tree-micro-row { padding-left: 38px; font-size: 10.5px; color: var(--text3); }
+  .tree-micro-row .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tree-micro-row::before { content: '↳'; margin-right: 5px; opacity: .5; font-size: 9px; }
   /* ── Group By: inline expandable DS/Topic combo cards ─────────────────── */
   /* Master list: each subsection = a clickable card (opens the drawer write-up)
      with its problems listed inline beneath it. */
@@ -1322,6 +1327,21 @@ function renderGroupNav(root, filter) {
           openComboDetail(gid, kind, p.id)
         }
         sub.appendChild(a)
+        // Name the techniques under the dimension, matching the main pane.
+        // "Sorting" alone says nothing; "Quickselect (Kth Element)" is the
+        // part worth navigating to, so it gets its own row.
+        groupComboMicros(gid, kind, p.id).forEach(mi => {
+          const m = document.createElement('a')
+          m.className = 'tree-topic-row tree-micro-row'
+          m.innerHTML = `<span class="lbl">${escHtml(mi.name)}</span>`
+          m.title = mi.name
+          m.onclick = () => {
+            if (isSelectingText()) return
+            if (activeGroupId !== gid) selectGroup(gid)
+            openMicroDetail(mi.micro, mi.parentId)
+          }
+          sub.appendChild(m)
+        })
       })
     }
     addDim('Data structures', inv.ds, 'ds')
