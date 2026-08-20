@@ -1132,6 +1132,28 @@ body.resizing-h * {
   padding: 10px 14px; background: var(--bg2); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
 }
+.browse-toolbar .tb-count { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.browse-toolbar .tb-search { width: 220px; }
+
+/* ─── Toolbar overflow (⋯) — collapses on MOBILE only ──────────────
+   Refresh / difficulty / add / export are grouped in the markup so one
+   trigger can hold them under 768px. Above that the two wrappers are
+   `display: contents`, which erases their boxes and leaves the buttons as
+   flex items of .browse-toolbar — i.e. the desktop row is unchanged. The
+   grouping does move `search` after them in DOM order, so `order` puts it
+   back between the difficulty pill and ＋. */
+.tb-overflow, .tb-overflow-items { display: contents; }
+.tb-overflow-trigger { display: none; }
+@media (min-width: 769px) {
+  .browse-toolbar .adshub-diff-pills     { order: 0; }
+  .browse-toolbar .tb-refresh            { order: 1; }
+  .browse-toolbar .adshub-diff-menu-wrap { order: 2; }
+  .browse-toolbar .tb-search             { order: 3; }
+  .browse-toolbar .tb-add                { order: 4; }
+  .browse-toolbar .tb-export             { order: 5; }
+  .browse-toolbar .tb-count              { order: 6; }
+  .browse-toolbar .applied-filter-chips  { order: 7; }
+}
 /* Cards + detail split */
 .browse-cards-split {
   flex: 1; min-height: 0; min-width: 0;
@@ -2129,8 +2151,60 @@ body.resizing-h * {
   .doc-list-item { padding: 9px 10px; }
 
   /* Browse toolbar wraps and search input fills the row. */
-  .browse-toolbar { padding: 8px 12px; gap: 6px; }
+  .browse-toolbar { padding: 8px 12px; gap: 6px; row-gap: 8px; align-items: center; }
   .browse-toolbar > .col-search { width: 100% !important; flex: 1; }
+
+  /* ── Toolbar overflow (⋯) ──────────────────────────────────────────
+     Row 1 becomes: [mode pills] [☰ Filters] [⋯] [n / total]; row 2 is the
+     search box; row 3 (only when filters are on) is the chip strip. Before
+     this, refresh / difficulty / ＋ / ⬇ each wrapped independently and left
+     ragged half-filled rows. */
+  .tb-overflow { display: inline-flex; position: relative; }
+  .tb-overflow-trigger {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 32px; padding: 0 10px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text2); font-size: 17px; line-height: 1;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .tb-overflow-trigger.has-active {
+    background: rgba(var(--primary-rgb), .14);
+    border-color: var(--primary); color: var(--primary);
+  }
+  /* Panel. Collapsed by default; .open is toggled from AdsHubView. */
+  .tb-overflow-items {
+    display: none;
+    /* Anchored LEFT: the ⋯ sits at the start of its row, so a right-anchored
+       panel would grow off the left edge of the screen. */
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+    flex-direction: column; align-items: stretch; gap: 6px;
+    min-width: 190px; padding: 8px;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  }
+  .tb-overflow-items.open { display: flex; }
+  /* Icon-only buttons get a readable label inside the panel. */
+  /* display:flex is required — these are plain buttons, so justify-content
+     would otherwise be inert and the labels would centre. */
+  .tb-overflow-items > button {
+    display: flex; align-items: center; justify-content: flex-start; gap: 7px;
+    width: 100%; height: 34px; text-align: left;
+  }
+  .tb-overflow-items .tb-refresh::after { content: ' Refresh'; font-size: 13px; }
+  .tb-overflow-items .tb-add::after     { content: ' Add problem'; font-size: 13px; }
+  .tb-overflow-items .tb-export::after  { content: ' Export CSV'; font-size: 13px; }
+  /* The difficulty control is itself a dropdown — let it fill the panel row
+     and open as a normal block beneath its trigger rather than floating. */
+  .tb-overflow-items .adshub-diff-menu-wrap { width: 100%; }
+  .tb-overflow-items .adshub-diff-menu-wrap > button { width: 100%; justify-content: space-between; }
+  .tb-overflow-items .adshub-diff-menu { position: static; margin-top: 6px; min-width: 0; width: 100%; }
+
+  /* Lineage / Patterns modes hold only refresh, so skip the ⋯ entirely and
+     leave that button inline exactly as before. */
+  .tb-overflow--single, .tb-overflow--single .tb-overflow-items { display: contents; }
+
+  /* Chips take their own full row instead of trailing the count. */
+  .browse-toolbar .applied-filter-chips { flex-basis: 100%; align-items: center; }
 
   /* Anki card / review pane padding. */
   .col-main-scroll { padding: 12px 8px; }
