@@ -2206,6 +2206,19 @@ body.resizing-h * {
   /* Chips take their own full row instead of trailing the count. */
   .browse-toolbar .applied-filter-chips { flex-basis: 100%; align-items: center; }
 
+  /* ── Problem detail header ────────────────────────────────────────
+     The study timer is absolutely centred on desktop, which is fine while
+     there's slack between the title and the ★ 🌳 ↗ ⛶ ✕ cluster. Once the
+     header narrows there is no free middle and it renders ON TOP of those
+     buttons. Put it back in normal flow: .col-hd is already
+     `justify-content: space-between`, so with three children it still sits
+     between title and buttons — just without overlapping them. */
+  .doc-detail-hd { gap: 8px; }
+  .doc-detail-hd .doc-detail-timer { position: static; transform: none; }
+  /* Let the title give up space to the timer instead of holding a fixed
+     half-width; it already ellipsizes. */
+  .doc-detail-hd .doc-detail-title { max-width: none; flex: 1 1 auto; }
+
   /* Anki card / review pane padding. */
   .col-main-scroll { padding: 12px 8px; }
 
