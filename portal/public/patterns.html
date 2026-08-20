@@ -334,6 +334,14 @@
   .group-combo-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 4px; }
   .group-combo-row  { display: flex; flex-direction: column; gap: 5px; }
   .group-combo-probs { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 8px; }
+  /* Named micros for this group×dimension — the "how", sitting between the
+     dimension card and its problem chips. */
+  .group-combo-micros { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 8px; margin-top: 5px; }
+  .group-combo-micro { font: inherit; font-size: 11px; font-weight: 600; line-height: 1.5;
+                    padding: 2px 8px; border-radius: 999px; cursor: pointer;
+                    color: var(--accent, var(--text)); background: var(--bg3);
+                    border: 1px solid var(--border); }
+  .group-combo-micro:hover { border-color: var(--accent, var(--text2)); background: var(--bg2); }
   .group-combo-card { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
                     background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
                     cursor: pointer; padding: 9px 12px; color: var(--text); font: inherit; transition: border-color .12s, background .12s; }
@@ -1924,6 +1932,37 @@ function groupComboProblems(g, kind, dimId) {
     return kind === 'ds' ? b.ds.has(dimId) : b.topic.has(dimId)
   })
 }
+// Which MICROS of a DS/Topic are actually in play for this group — so a group
+// row can name "Quickselect (Kth Element)" rather than just "Sorting", which
+// on its own says nothing about how the group solves anything.
+// Topic micros live at ANCHOR_DATA.topic[topic][micro]; a DS has both its own
+// core micros and the topic micros embedded under it, whose parent for display
+// purposes is the TOPIC (that's where the card is defined).
+function groupComboMicros(g, kind, dimId) {
+  if (!ANCHOR_DATA) return []
+  const ids = new Set(groupComboProblems(g, kind, dimId).map(String))
+  if (!ids.size) return []
+  const buckets = kind === 'topic'
+    ? [[dimId, ANCHOR_DATA.topic?.[dimId] || {}]]
+    : [[dimId, ANCHOR_DATA.core?.[dimId] || {}],
+       ...Object.entries(ANCHOR_DATA.dsTopic?.[dimId] || {})]
+  const out = [], seen = new Set()
+  for (const [parentId, micros] of buckets) {
+    for (const [micro, list] of Object.entries(micros)) {
+      if (!list.some(id => ids.has(String(id)))) continue
+      const key = parentId + '/' + micro
+      if (seen.has(key)) continue
+      seen.add(key)
+      const p = PATTERNS.find(x => x.id === parentId)
+      const m = p && (p.micros || []).find(x => x.id === micro)
+      // Skip micros the catalog no longer defines — a stale tag shouldn't
+      // render a chip that opens an empty drawer.
+      if (!m) continue
+      out.push({ parentId, micro, name: m.name })
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name))
+}
 // Tiny inline markdown: **bold** and `code` only. HTML-escape FIRST (entries
 // contain literal < > inside code spans like `sum<t` / `1 << k`), THEN convert
 // the markers — escHtml leaves * and ` untouched so the markup still matches.
@@ -2023,6 +2062,13 @@ function renderComboList(g, kind, entries) {
         <span class="cnt">${count} problem${count > 1 ? 's' : ''}</span>
         <span class="caret">›</span>
       </button>
+      ${(() => {
+        const micros = groupComboMicros(g, kind, p.id)
+        if (!micros.length) return ''
+        return `<div class="group-combo-micros">${micros.map(mi =>
+          `<button class="group-combo-micro" onclick="openMicroDetail('${mi.micro}','${mi.parentId}')"
+                   title="Open ${escHtml(mi.name)}">${escHtml(mi.name)}</button>`).join('')}</div>`
+      })()}
       <div class="group-combo-probs anchor-list">${chips}</div>
     </div>`
   }).join('')}</div>`
