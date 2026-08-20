@@ -130,6 +130,28 @@ const LIST_CAP = 400
 const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
 
+// ── Statement preview for the browse list ───────────────────────────────────
+// descriptionHtml already rides along with the list load (col A2:L), so this
+// costs no extra fetch — just a strip. Cached by slug because the list
+// re-renders on every keystroke in the search box and the result is fixed.
+const _snippetCache = new Map<string, string>()
+function snippetOf(p: LCProblem): string {
+  const hit = _snippetCache.get(p.slug)
+  if (hit !== undefined) return hit
+  const text = (p.descriptionHtml || '')
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+  // 200 chars comfortably overfills the 2-line clamp at any pane width, so the
+  // CSS does the visual truncation and this just bounds what we hand it.
+  const out = text.length > 200 ? text.slice(0, 200) + '…' : text
+  _snippetCache.set(p.slug, out)
+  return out
+}
+
 // ── pat_* tag → Patterns-reference deep link ────────────────────────────────
 // patterns.html routes on its URL hash (see applyHash there):
 //   #ds|topic/<patternId>[/<microId>]   ·   #group/<groupId>[/<subMicroId>]
@@ -1795,12 +1817,15 @@ export default function AdsHubView() {
                       {p.topics.length > 0 && (
                         <div className="doc-list-meta">{p.topics.join(' · ')}</div>
                       )}
-                      {p.tags.length > 0 && (
-                        <div className="doc-list-tags">
-                          {p.tags.map(t => (
-                            <span key={t} className="tag" title={t}>{t.split('::').pop()}</span>
-                          ))}
-                        </div>
+                      {/* Two lines of the statement instead of the tag chips.
+                          The chips were showing only the last :: segment, which
+                          both dropped the namespace and produced visible
+                          duplicates (sort-and-sweep twice, once from pat_topic
+                          and once from pat_ds). Full tags remain in the
+                          detail's collapsed "Tags" section, and they still
+                          drive filtering and search. */}
+                      {snippetOf(p) && (
+                        <div className="doc-list-snippet">{snippetOf(p)}</div>
                       )}
                     </li>
                   )
