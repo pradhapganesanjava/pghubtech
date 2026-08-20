@@ -1,0 +1,15 @@
+{
+  "1636": ["pat_topic::sorting::bucket-sort-freq", "pat_ds::array::sorting::bucket-sort-freq", "pat_topic::hash::freq-counter", "pat_ds::array::hash::freq-counter"],
+  "166":  ["pat_topic::hash::seen-set", "pat_ds::string::hash::seen-set", "pat_topic::math::digit-number-construct", "pat_ds::string::math::digit-number-construct"],
+  "532":  ["pat_topic::hash::freq-counter", "pat_ds::array::hash::freq-counter", "pat_topic::hash::complement-lookup", "pat_ds::array::hash::complement-lookup"],
+  "3371": ["pat_topic::hash::freq-counter", "pat_ds::array::hash::freq-counter", "pat_topic::hash::complement-lookup", "pat_ds::array::hash::complement-lookup"],
+  "791":  ["pat_ds::string::core::custom-order-compare", "pat_topic::hash::freq-counter", "pat_ds::string::hash::freq-counter"],
+  "1962": ["pat_topic::heap::top-k", "pat_ds::array::heap::top-k"],
+  "863":  ["pat_topic::dfs::dfs-template", "pat_ds::tree::dfs::dfs-template", "pat_topic::bfs::bfs-level-order", "pat_ds::tree::bfs::bfs-level-order"],
+  "1910": ["pat_topic::stack-topic::parens-rewrite", "pat_ds::string::stack-topic::parens-rewrite"],
+  "2337": ["pat_topic::two-pointers::tp-merge-walk", "pat_ds::string::two-pointers::tp-merge-walk"],
+  "3355": ["pat_topic::prefix-sum::difference-array", "pat_ds::array::prefix-sum::difference-array"],
+  "3389": ["pat_topic::hash::freq-counter", "pat_ds::string::hash::freq-counter"],
+  "1220": ["pat_topic::dp::state-machine-dp", "pat_ds::array::dp::state-machine-dp"],
+  "1282": ["pat_topic::hash::freq-counter", "pat_ds::array::hash::freq-counter"]
+}

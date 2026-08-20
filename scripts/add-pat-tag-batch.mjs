@@ -442,8 +442,11 @@ const BATCH = {
   705: ['pat_ds::trie::core::trie-basic'],                            // Design HashSet (bucket / linked list)
   706: ['pat_ds::trie::core::trie-basic'],                            // Design HashMap (similar)
   1268:['pat_ds::string::trie-topic::trie-autocomplete'],             // (dup-safe)
-  528: ['pat_ds::array::binary-search::bs-textbook'],                 // Random Pick with Weight (prefix + BS)
-  528: ['pat_ds::array::math::sum-formulas'],                         // (also math/prefix shape)
+  528: ['pat_ds::array::binary-search::bs-textbook',                  // Random Pick with Weight — build the
+        'pat_ds::array::math::sum-formulas'],                         //   prefix sums, then lower_bound a roll.
+                                                                      //   Was two 528: keys; the literal kept
+                                                                      //   only the last, so bs-textbook never
+                                                                      //   reached the sheet. Merged into one.
   710: ['pat_ds::array::binary-search::bs-textbook'],                 // Random Pick Not in Blacklist
 
   // ── Premium Algo 100 — additional anchors not covered earlier ─────
@@ -544,7 +547,9 @@ const BATCH = {
   // ── Intervals topic (sort, then sweep) — both Topic + DS-nested forms.
   //    (759 + 435 carry the interval tags on their greedy entries above.) ──
   252: ['pat_ds::array::interval::interval-sort-start-overlap',
-        'pat_topic::interval::interval-sort-start-overlap'],          // Can Attend Meetings (overlap detect)
+        'pat_topic::interval::interval-sort-start-overlap',           // Can Attend Meetings (overlap detect)
+        'pat_ds::array::interval::sweep-line-delta',                  //   + secondary framing: max concurrent
+        'pat_topic::interval::sweep-line-delta'],                     //   >= 2 means an overlap exists
   56:  ['pat_ds::array::interval::interval-sort-start-merge',
         'pat_topic::interval::interval-sort-start-merge'],            // Merge Intervals
   57:  ['pat_ds::array::interval::interval-sort-start-merge',
@@ -653,11 +658,21 @@ const BATCH = {
   630: ['pat_ds::array::greedy::greedy-end-sorted',                   // Course Schedule III — sort by deadline,
         'pat_group::scheduling'],                                     //   regret-swap the longest course out
   1094:['pat_topic::prefix-sum::difference-array',                    // Car Pooling — +n at from, −n at to,
-        'pat_ds::array::prefix-sum::difference-array'],               //   integrate once (twin of 1109)
+        'pat_ds::array::prefix-sum::difference-array',                //   integrate once (twin of 1109).
+        'pat_ds::array::interval::sweep-line-delta',                  //   Statement-level: weighted intervals,
+        'pat_topic::interval::sweep-line-delta',                      //   running load vs cap. Coords are dense
+        'pat_group::scheduling'],                                     //   (<=1000) so both substrates fit.
   1344:['pat_group::simulation'],                                     // Angle Between Hands — closed-form clock
                                                                       //   arithmetic; spec-following, like 2303
   393: ['pat_group::simulation'],                                     // UTF-8 Validation — mask/shift byte scan
                                                                       //   with a continuation counter
+
+  // ── Batch: sweep-line-delta (new interval micro) ──────────────────────
+  // Run scoped: --only 253    (252 and 1094 carry it on their entries above)
+  // 1851 deliberately NOT tagged: its sweep carries a min-HEAP of live
+  // intervals, not a signed running total — different micro, see the commit.
+  253: ['pat_ds::array::interval::sweep-line-delta',                  // Meeting Rooms II — min rooms IS max
+        'pat_topic::interval::sweep-line-delta'],                     //   concurrent; 1094 with every w = 1
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────

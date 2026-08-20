@@ -1308,6 +1308,12 @@ window.PG_PATTERNS = [
         cost: 'O(n log n).',
         contrast: 'Sorting by START can pick an early-start / late-end interval that blocks others; sorting by END frees time earliest (classic activity-selection / exchange argument).',
         anchors: [435] },
+      { id: 'sweep-line-delta', name: 'Sort by Boundary — Signed Delta Sweep (Max Concurrent)',
+        when: 'Weighted intervals on a MONOTONE axis where the answer is the max — or a cap-check — on the CONCURRENT total. Not the per-position array, and not which intervals were picked.',
+        how: 'Split each [w, s, e] into two loose events (s, +w) and (e, −w) and DISCARD the pairing. Sort by position, ties −w before +w (a release at x frees capacity for a claim at x). Sweep left→right accumulating a running total; compare it against the cap, or track its max.',
+        cost: 'O(n log n) sort + O(n) sweep, O(1) extra — independent of the coordinate RANGE.',
+        contrast: 'vs prefix-sum::difference-array — the SAME algorithm on a different substrate: index an array directly when coordinates are dense and small (1094 fits both), sort events when they are sparse or large. vs interval-sort-start-merge (carries an END — a frontier — and merges) — this carries a signed TOTAL and never looks at interval identity again. vs interval-sort-end-greedy — nothing is selected here, so it is not a greedy. The monotone axis is the precondition: 1094\'s car "cannot turn around and drive west" is the sentence that licenses a single pass.',
+        anchors: [252, 253, 1094] },
     ],
   },
 
