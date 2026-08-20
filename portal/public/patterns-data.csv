@@ -1323,6 +1323,7 @@ anchor_id,tag
 973,pat_ds::array::sorting::quickselect
 973,pat_topic::divide-conquer::dc-quickselect
 973,pat_ds::array::divide-conquer::dc-quickselect
+973,pat_group::rearrange
 974,pat_ds::array::core::prefix-sum-hashmap
 974,pat_topic::hash::complement-lookup
 974,pat_ds::array::hash::complement-lookup
