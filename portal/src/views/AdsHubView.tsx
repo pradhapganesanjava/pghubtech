@@ -15,14 +15,15 @@ const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
 interface AdsHubFilters {
   tags: string[]; companies: string[]; list: string | null
   diff: ('Easy' | 'Medium' | 'Hard')[]; customOnly: boolean; search: string
-  // Display preference rather than a filter, but it rides in the same payload
-  // so it persists the same way. loadFilters() merges over the defaults, so
-  // sessions holding an older payload just get the default.
-  showTopics: boolean
+  // Display preferences rather than filters, but they ride in the same payload
+  // so they persist the same way. loadFilters() merges over the defaults, so
+  // sessions holding an older payload just get the defaults.
+  showTopics: boolean   // topics line on browse LIST rows
+  showMeta: boolean     // difficulty + topics + tags row in the DETAIL pane
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
   tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
-  showTopics: true,
+  showTopics: true, showMeta: true,
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -295,6 +296,8 @@ export default function AdsHubView() {
   // Show/hide the LeetCode topics line on browse rows. Display only — topics
   // stay in the search index and in the detail pane either way.
   const [showTopics, setShowTopics] = useState<boolean>(_persisted.showTopics)
+  // Whole meta row in the detail pane, toggled by 🏷 in the problem header.
+  const [showMeta, setShowMeta] = useState<boolean>(_persisted.showMeta)
   const [selectedTags, setTags]   = useState<string[]>(_persisted.tags)
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
@@ -432,9 +435,9 @@ export default function AdsHubView() {
   useEffect(() => {
     saveFilters<AdsHubFilters>(ADSHUB_FILTERS_KEY, {
       tags: selectedTags, companies: selectedCompanies, list: selectedList,
-      diff, customOnly, search, showTopics,
+      diff, customOnly, search, showTopics, showMeta,
     })
-  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics])
+  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics, showMeta])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
   // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
   // in state (not pushed imperatively) so it survives leaving and re-entering
@@ -1205,7 +1208,7 @@ export default function AdsHubView() {
   // Difficulty/topics row + editable lineage tags. Sits at the top of the
   // detail's left content in every mode (so it lines up with Starter Code).
   function renderMeta() {
-    if (!selected) return null
+    if (!selected || !showMeta) return null
     return (
       <>
         {/* Collapsed, the whole block is one short line: difficulty + a count.
@@ -1919,6 +1922,13 @@ export default function AdsHubView() {
                 <StudyTimer key={selected.slug} />
                 <div style={{ display: 'flex', gap: 6, position: 'relative' }} onDoubleClick={e => e.stopPropagation()}>
                   {/* Notes toggle now lives in the code-panel header (right end). */}
+                  {/* 🏷 Show/hide the whole difficulty + topics + tags row. */}
+                  <button
+                    className={`bci-edit-btn bci-edit-btn-hd${showMeta ? ' active' : ''}`}
+                    onClick={() => setShowMeta(v => !v)}
+                    aria-pressed={showMeta}
+                    title={showMeta ? 'Hide difficulty, topics & tags' : 'Show difficulty, topics & tags'}
+                  >🏷</button>
                   {/* ★ Add to list */}
                   <button
                     className={`bci-edit-btn bci-edit-btn-hd${listsForSelected.length ? ' active' : ''}`}
