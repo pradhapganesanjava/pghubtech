@@ -1904,7 +1904,7 @@ function renderGroupMicros(g) {
     const pseudo = PATTERN_PSEUDO[mid]  ? `<pre class="combo-pseudo">${escHtml(PATTERN_PSEUDO[mid])}</pre>` : ''
     const visual = PATTERN_VISUALS[mid] ? `<pre class="combo-visual">${escHtml(PATTERN_VISUALS[mid])}</pre>` : ''
     const chips = list.map(id => `<a class="anchor" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})"><span class="num">#${id}</span></a>`).join('')
-    return `<div class="group-micro">
+    return `<div class="group-micro" id="gm-${escHtml(mid)}">
       <div class="group-micro-hd">
         <span class="group-micro-id">${escHtml(mid)}</span>
         <span class="group-micro-name">${escHtml(name)}</span>
@@ -2141,7 +2141,9 @@ function applyHash() {
     return
   }
   const parts = h.split('/')
-  // Group By route: #group[/<groupId>]
+  // Group By route: #group[/<groupId>[/<subMicroId>]]
+  // The optional third segment scrolls to one sub-micro card inside the group
+  // — it's what a pat_group::<group>::<micro> tag deep-links to.
   if (parts[0] === 'group') {
     activeTab       = 'group'
     activeGroupId   = parts[1] || null
@@ -2150,6 +2152,12 @@ function applyHash() {
     if (activeGroupId) expandedIds.add('group:' + activeGroupId)
     syncTabButtons()
     renderNav(); renderMain()
+    if (parts[2]) {
+      setTimeout(() => {
+        const el = document.getElementById('gm-' + parts[2])
+        if (el) el.scrollIntoView({ block: 'start' })
+      }, 40)
+    }
     return
   }
   // Detect new shape: first segment is 'ds' or 'topic'.
@@ -2164,6 +2172,15 @@ function applyHash() {
     activeTab       = (p && p.tab) || 'ds'
     activePatternId = pid
     activeMicroId   = mid ? `${pid}/${mid}` : null
+  }
+  // A deep link can name a pattern/micro that no longer exists — tags in the
+  // sheet outlive catalog renames. Drop the unresolvable part instead of
+  // rendering an empty pane, so the link still lands on its tab.
+  const pat = PATTERNS.find(x => x.tab === activeTab && x.id === activePatternId)
+  if (activePatternId && !pat) { activePatternId = null; activeMicroId = null }
+  else if (activeMicroId) {
+    const mid = activeMicroId.split('/')[1]
+    if (!(pat.micros || []).some(m => m.id === mid)) activeMicroId = null
   }
   if (activePatternId) expandedIds.add(activePatternId)  // open the deep-linked group
   syncTabButtons()

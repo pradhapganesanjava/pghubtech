@@ -66,9 +66,11 @@ export default function AdsHubSidebar({
   return (
     <>
       <div className="left-tab-bar">
-        <div className={`left-tab${tab === 'tags' ? ' active' : ''}`} onClick={() => setTab('tags')}>Tags</div>
-        <div className={`left-tab${tab === 'companies' ? ' active' : ''}`} onClick={() => setTab('companies')}>Companies</div>
-        <div className={`left-tab${tab === 'mylist' ? ' active' : ''}`} onClick={() => setTab('mylist')}>MyList</div>
+        {/* Titles matter here: the bar is 210px, so equal quarters truncate
+            COMPANIES and POINT2REM — hover gives the full label back. */}
+        <div className={`left-tab${tab === 'tags' ? ' active' : ''}`} onClick={() => setTab('tags')} title="Tags">Tags</div>
+        <div className={`left-tab${tab === 'companies' ? ' active' : ''}`} onClick={() => setTab('companies')} title="Companies">Companies</div>
+        <div className={`left-tab${tab === 'mylist' ? ' active' : ''}`} onClick={() => setTab('mylist')} title="MyList">MyList</div>
         <div className={`left-tab${tab === 'point2rem' ? ' active' : ''}`} onClick={() => setTab('point2rem')} title="Points to remember — notes grouped by tag">Point2Rem</div>
         {tab === 'point2rem' && (
           <div className="view-mode-toggle">

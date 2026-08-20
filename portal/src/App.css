@@ -1133,6 +1133,9 @@ body.resizing-h * {
   display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
 }
 .browse-toolbar .tb-count { font-size: 12px; color: var(--text2); white-space: nowrap; }
+/* Topics toggle — greyed when off so its state reads without a label. */
+.tb-topics { filter: grayscale(1); opacity: .5; }
+.tb-topics.active { filter: none; opacity: 1; }
 .browse-toolbar .tb-search { width: 220px; }
 
 /* ─── Toolbar overflow (⋯) — collapses on MOBILE only ──────────────
@@ -1151,6 +1154,7 @@ body.resizing-h * {
   .browse-toolbar .tb-search             { order: 3; }
   .browse-toolbar .tb-add                { order: 4; }
   .browse-toolbar .tb-export             { order: 5; }
+  .browse-toolbar .tb-topics             { order: 5; }
   .browse-toolbar .tb-count              { order: 6; }
   .browse-toolbar .applied-filter-chips  { order: 7; }
 }
@@ -1521,8 +1525,14 @@ body.resizing-h * {
 /* ─── Left panel tab bar ─────────────────────────────────── */
 .left-tab-bar { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); }
 .left-tab {
-  flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
+  /* min-width: 0 is what actually equalises these. Flex items default to
+     min-width: auto, so the long labels (COMPANIES, POINT2REM) refuse to
+     shrink below their text width and take space from TAGS — `flex: 1`
+     alone leaves the four tabs visibly unequal. */
+  flex: 1 1 0; min-width: 0;
+  padding: 8px 2px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .3px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: transparent; border: none; cursor: pointer;
   color: var(--text2); transition: all .15s;
 }
@@ -2193,6 +2203,8 @@ body.resizing-h * {
   .tb-overflow-items .tb-refresh::after { content: ' Refresh'; font-size: 13px; }
   .tb-overflow-items .tb-add::after     { content: ' Add problem'; font-size: 13px; }
   .tb-overflow-items .tb-export::after  { content: ' Export CSV'; font-size: 13px; }
+  .tb-overflow-items .tb-topics::after  { content: ' Topics: off'; font-size: 13px; }
+  .tb-overflow-items .tb-topics.active::after { content: ' Topics: on'; }
   /* The difficulty control is itself a dropdown — let it fill the panel row
      and open as a normal block beneath its trigger rather than floating. */
   .tb-overflow-items .adshub-diff-menu-wrap { width: 100%; }
@@ -4090,8 +4102,27 @@ body.resizing-h * {
 }
 .doc-list-title { font-size: 13px; font-weight: 600; color: var(--text); }
 .doc-list-meta {
-  margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 3px; display: flex; flex-wrap: wrap; gap: 3px;
   font-size: 11px; color: var(--text2);
+}
+/* Topic chips — compact and neutral. Kept as chips (not a " · " join) so each
+   topic reads as a discrete token, but on the theme's own greys: per-topic
+   hues were tried and were too loud against the statement line below. */
+.topic-chip {
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; line-height: 1.5;
+  white-space: nowrap;
+  color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+}
+/* Two-line statement preview on browse rows (replaced the tag chips). The
+   clamp does the visual truncation; snippetOf() only bounds the string. */
+.doc-list-snippet {
+  margin-top: 4px;
+  font-size: 11.5px; line-height: 1.45; color: var(--text3, var(--text2));
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .doc-list-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
 
@@ -4346,22 +4377,31 @@ body.resizing-h * {
      mismatches the list height. */
   max-height: calc(100vh - 56px - 52px);  /* viewport - topbar - toolbar */
 }
-.adshub-meta-row {
-  display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
-  padding: 12px 0 8px;
-}
 /* AudioReader in the problem header — sits between ⤢ and ✕. Compact
    so it doesn't overflow the header row. */
 .adshub-hd-audio { display: inline-flex; align-items: center; margin: 0 4px; }
 .adshub-hd-audio .audio-reader { font-size: 11px; gap: 4px; }
 .adshub-hd-audio .audio-reader button { padding: 2px 6px; font-size: 11px; }
-.adshub-meta-row .tag,
 .adshub-company-chips .tag,
 .doc-list-tags .tag {
   display: inline-block; padding: 2px 8px;
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: 20px; font-size: 11px; color: var(--text2);
 }
+/* pat_* tags deep-link into the Patterns reference; plain tags don't, so only
+   these get affordance. A <button> resets to match the sibling spans exactly. */
+.doc-list-tags .tag--pat {
+  font: inherit; font-size: 11px; line-height: inherit;
+  cursor: pointer; color: var(--primary);
+  border-color: rgba(var(--primary-rgb), .40);
+  background: rgba(var(--primary-rgb), .10);
+}
+.doc-list-tags .tag--pat:hover {
+  background: rgba(var(--primary-rgb), .20);
+  border-color: var(--primary);
+  text-decoration: underline;
+}
+.doc-list-tags .tag--pat:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .adshub-diff-badge {
   display: inline-block; padding: 2px 9px; border-radius: 20px;
   font-size: 11px; font-weight: 700;
@@ -4724,14 +4764,14 @@ body.resizing-h * {
 
 /* Editable custom-tags section in the detail pane (collapsible) */
 .adshub-tags-section { margin: 8px 0 4px; }
-.adshub-tags-summary {
-  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
-  color: var(--text2); padding: 4px 0;
+/* Difficulty + topics, above the lineage tags. There is no header row — the
+   chips are the content, so a "TOPICS & TAGS n" line only restated them. */
+.adshub-topics-row {
+  display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+  margin-bottom: 6px;
 }
-.adshub-tags-summary::-webkit-details-marker { display: none; }
-.adshub-tags-summary::before { content: '▸'; font-size: 9px; transition: transform .15s; display: inline-block; }
-.adshub-tags-section[open] .adshub-tags-summary::before { transform: rotate(90deg); }
+/* ✎ lives at the end of the tag chips now. Sized to sit on their line. */
+.adshub-tags-edit { font-size: 11px; padding: 1px 7px; line-height: 1.5; }
 .adshub-tags-body { padding-top: 6px; }
 .adshub-tags-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .adshub-tag-edit { margin-top: 4px; }

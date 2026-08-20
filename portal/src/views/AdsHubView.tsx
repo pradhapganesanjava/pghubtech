@@ -15,9 +15,14 @@ const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
 interface AdsHubFilters {
   tags: string[]; companies: string[]; list: string | null
   diff: ('Easy' | 'Medium' | 'Hard')[]; customOnly: boolean; search: string
+  // Display preference rather than a filter, but it rides in the same payload
+  // so it persists the same way. loadFilters() merges over the defaults, so
+  // sessions holding an older payload just get the default.
+  showTopics: boolean   // topics line on browse LIST rows
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
   tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
+  showTopics: true,
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -130,6 +135,55 @@ const LIST_CAP = 400
 const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
 
+// ── Statement preview for the browse list ───────────────────────────────────
+// descriptionHtml already rides along with the list load (col A2:L), so this
+// costs no extra fetch — just a strip. Cached by slug because the list
+// re-renders on every keystroke in the search box and the result is fixed.
+const _snippetCache = new Map<string, string>()
+function snippetOf(p: LCProblem): string {
+  const hit = _snippetCache.get(p.slug)
+  if (hit !== undefined) return hit
+  const text = (p.descriptionHtml || '')
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+  // 200 chars comfortably overfills the 2-line clamp at any pane width, so the
+  // CSS does the visual truncation and this just bounds what we hand it.
+  const out = text.length > 200 ? text.slice(0, 200) + '…' : text
+  _snippetCache.set(p.slug, out)
+  return out
+}
+
+// ── pat_* tag → Patterns-reference deep link ────────────────────────────────
+// patterns.html routes on its URL hash (see applyHash there):
+//   #ds|topic/<patternId>[/<microId>]   ·   #group/<groupId>[/<subMicroId>]
+// Only pat_* tags map onto it; anything else (plain topics, custom tags) has
+// no page to open and stays unlinked.
+//
+// The DS-embedded form is the one subtlety. A micro embedded under a DS is
+// rendered by patterns.html with the TOPIC as its parent — its card id is
+// `m-<topic>-<micro>`, not `m-<ds>-<micro>` — so `pat_ds::graph::bfs::x`
+// deep-links through the topic tab. Same card, same content; it's the only
+// address that actually resolves.
+export function patternsHashForTag(tag: string): string | null {
+  const p = tag.split('::')
+  if (p.length < 2) return null
+  const [ns, a, b, c] = p
+  if (ns === 'pat_group') return b ? `group/${a}/${b}` : `group/${a}`
+  if (ns === 'pat_topic') return b ? `topic/${a}/${b}` : `topic/${a}`
+  if (ns === 'pat_ds') {
+    if (!b) return `ds/${a}`
+    // pat_ds::<ds>::core::<micro> — a true DS-level micro, card id `m-<ds>-<micro>`.
+    if (b === 'core') return c ? `ds/${a}/${c}` : `ds/${a}`
+    // pat_ds::<ds>::<topic>::<micro> — embedded; address it via the topic tab.
+    return c ? `topic/${b}/${c}` : `ds/${a}`
+  }
+  return null
+}
+
 function diffClass(d: string): string {
   const k = d.toLowerCase()
   return k === 'easy' ? 'lc-easy' : k === 'medium' ? 'lc-medium' : k === 'hard' ? 'lc-hard' : ''
@@ -238,6 +292,14 @@ export default function AdsHubView() {
   // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
   const CUSTOM_ID_MIN = 10000
   const [customOnly, setCustomOnly] = useState<boolean>(_persisted.customOnly)
+  // Show/hide the LeetCode topics line on browse rows. Display only — topics
+  // stay in the search index and in the detail pane either way.
+  const [showTopics, setShowTopics] = useState<boolean>(_persisted.showTopics)
+  // Topics + tags block in the detail pane, toggled by 🏷 in the problem
+  // header. Deliberately NOT persisted: it resets to hidden on every problem
+  // (see the effect keyed on selected?.slug), so a stored value could never
+  // be read back anyway.
+  const [showMeta, setShowMeta] = useState(false)
   const [selectedTags, setTags]   = useState<string[]>(_persisted.tags)
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
@@ -375,10 +437,28 @@ export default function AdsHubView() {
   useEffect(() => {
     saveFilters<AdsHubFilters>(ADSHUB_FILTERS_KEY, {
       tags: selectedTags, companies: selectedCompanies, list: selectedList,
-      diff, customOnly, search,
+      diff, customOnly, search, showTopics,
     })
-  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
+  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
+  // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
+  // in state (not pushed imperatively) so it survives leaving and re-entering
+  // Patterns mode, which remounts the iframe.
+  const [patternsHash, setPatternsHash]    = useState<string | null>(null)
+
+  // Open a pat_* tag's page in the embedded Patterns reference. If the iframe
+  // is already mounted, assigning the hash navigates it in place (fires
+  // `hashchange` → applyHash); otherwise the hash rides in on the initial src.
+  function openPatternForTag(tag: string) {
+    const hash = patternsHashForTag(tag)
+    if (!hash) return
+    setPatternsHash(hash)
+    const win = patternsFrameRef.current?.contentWindow
+    if (adsMode === 'patterns' && win) {
+      try { win.location.hash = hash } catch { /* not loaded yet — src carries it */ }
+    }
+    setAdsMode('patterns')
+  }
 
   // Patterns iframe (public/patterns.html) → parent message bridge. When
   // the user clicks an anchor #NNN or a "Browse all <topic>" link inside
@@ -1122,7 +1202,9 @@ export default function AdsHubView() {
   }
 
   // Collapse the add-to-list menu + reset expand when selection clears.
-  useEffect(() => { setListMenuOpen(false); setNewListName('') }, [selected?.slug])
+  // Also re-hide the topics/tags block: opening a problem should land you on
+  // the statement, every time — not carry over a reveal from the last one.
+  useEffect(() => { setListMenuOpen(false); setNewListName(''); setShowMeta(false) }, [selected?.slug])
   useEffect(() => { if (!detailOpen) setViewerExpanded(false) }, [detailOpen])
 
   const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns'
@@ -1130,32 +1212,51 @@ export default function AdsHubView() {
   // Difficulty/topics row + editable lineage tags. Sits at the top of the
   // detail's left content in every mode (so it lines up with Starter Code).
   function renderMeta() {
-    if (!selected) return null
+    if (!selected || !showMeta) return null
     return (
       <>
-        <div className="adshub-meta-row">
-          {selected.difficulty && (
-            <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
-          )}
-          {selected.topics.map(t => <span key={t} className="tag">{t}</span>)}
-        </div>
-        <details className="adshub-tags-section" key={selected.slug + '::tags'}>
-          <summary className="adshub-tags-summary">
-            <span>Tags (lineage)</span>
-            <span className="tree-cnt">{selected.tags.length}</span>
-            {!editingTags && (
-              <button
-                className="bci-edit-btn bci-edit-btn-hd" style={{ marginLeft: 6 }}
-                onClick={e => { e.preventDefault(); e.currentTarget.closest('details')?.setAttribute('open', ''); startEditTags() }}
-                title="Edit tags"
-              >✎</button>
-            )}
-          </summary>
+        {/* Hidden until 🏷 in the problem header is pressed, and it resets to
+            hidden on every problem. No label/count header row: the chips are
+            right there, so "TOPICS & TAGS 7" was only restating them. */}
+        <div className="adshub-tags-section">
           <div className="adshub-tags-body">
+          {/* Difficulty + LeetCode's own topics. Kept on their own line above
+              the lineage tags — they're LeetCode's categorisation, the tags
+              below are yours, and running them together makes the two
+              indistinguishable. */}
+          {(selected.difficulty || selected.topics.length > 0) && (
+            <div className="adshub-topics-row">
+              {selected.difficulty && (
+                <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
+              )}
+              {selected.topics.map(t => <span key={t} className="topic-chip">{t}</span>)}
+            </div>
+          )}
           {!editingTags ? (
             selected.tags.length > 0 ? (
               <div className="doc-list-tags">
-                {selected.tags.map(t => <span key={t} className="tag" title={t}>{t}</span>)}
+                {selected.tags.map(t => {
+                  // Only pat_* tags have a page in the reference; everything
+                  // else stays an inert span rather than a dead-looking link.
+                  const hash = patternsHashForTag(t)
+                  return hash ? (
+                    <button
+                      key={t}
+                      className="tag tag--pat"
+                      title={`Open ${t} in the Patterns reference`}
+                      onClick={() => openPatternForTag(t)}
+                    >{t}</button>
+                  ) : (
+                    <span key={t} className="tag" title={t}>{t}</span>
+                  )
+                })}
+                {/* Sits at the end of the chips it edits, now that the header
+                    row that used to hold it is gone. */}
+                <button
+                  className="bci-edit-btn adshub-tags-edit"
+                  onClick={startEditTags}
+                  title="Edit tags"
+                >✎</button>
               </div>
             ) : (
               <button className="adshub-diff-pill" onClick={startEditTags}>➕ Add tags</button>
@@ -1201,7 +1302,7 @@ export default function AdsHubView() {
             </div>
           )}
           </div>
-        </details>
+        </div>
       </>
     )
   }
@@ -1597,6 +1698,18 @@ export default function AdsHubView() {
             title={`Export the ${filtered.length.toLocaleString()} currently-filtered problem${filtered.length === 1 ? '' : 's'} as CSV (id, title, difficulty, topics, tags, slug, statement)`}
             aria-label="Export CSV"
           >⬇</button>
+          {/* Display toggle for the topics line on browse rows. Lives with the
+              other low-frequency controls, so on mobile it rides inside the ⋯
+              panel and gets a text label there like its siblings. */}
+          <button
+            className={`rf-btn-cancel tb-topics${showTopics ? ' active' : ''}`}
+            onClick={() => setShowTopics(v => !v)}
+            title={showTopics
+              ? 'Hide the topics line on list rows (they stay searchable and stay in the detail pane)'
+              : 'Show the topics line on list rows'}
+            aria-pressed={showTopics}
+            aria-label="Toggle topics on list rows"
+          >🏷</button>
               </>}
             </div>
           </div>
@@ -1696,7 +1809,7 @@ export default function AdsHubView() {
                 <iframe
                   ref={patternsFrameRef}
                   title="Micro-Pattern Reference"
-                  src={`${import.meta.env.BASE_URL}patterns.html?v=${__BUILD_ID__}`}
+                  src={`${import.meta.env.BASE_URL}patterns.html?v=${__BUILD_ID__}${patternsHash ? `#${patternsHash}` : ''}`}
                   style={{ width: '100%', flex: 1, minHeight: 0, border: 0 }}
                   onLoad={sendPatternsTheme}
                 />
@@ -1730,15 +1843,22 @@ export default function AdsHubView() {
                         {p.title}
                         {p.hasNotes && <span className="adshub-note-badge" title="Has notes">✎</span>}
                       </div>
-                      {p.topics.length > 0 && (
-                        <div className="doc-list-meta">{p.topics.join(' · ')}</div>
-                      )}
-                      {p.tags.length > 0 && (
-                        <div className="doc-list-tags">
-                          {p.tags.map(t => (
-                            <span key={t} className="tag" title={t}>{t.split('::').pop()}</span>
+                      {showTopics && p.topics.length > 0 && (
+                        <div className="doc-list-meta">
+                          {p.topics.map(t => (
+                            <span key={t} className="topic-chip">{t}</span>
                           ))}
                         </div>
+                      )}
+                      {/* Two lines of the statement instead of the tag chips.
+                          The chips were showing only the last :: segment, which
+                          both dropped the namespace and produced visible
+                          duplicates (sort-and-sweep twice, once from pat_topic
+                          and once from pat_ds). Full tags remain in the
+                          detail's collapsed "Tags" section, and they still
+                          drive filtering and search. */}
+                      {snippetOf(p) && (
+                        <div className="doc-list-snippet">{snippetOf(p)}</div>
                       )}
                     </li>
                   )
@@ -1801,6 +1921,13 @@ export default function AdsHubView() {
                 <StudyTimer key={selected.slug} />
                 <div style={{ display: 'flex', gap: 6, position: 'relative' }} onDoubleClick={e => e.stopPropagation()}>
                   {/* Notes toggle now lives in the code-panel header (right end). */}
+                  {/* 🏷 Show/hide the whole difficulty + topics + tags row. */}
+                  <button
+                    className={`bci-edit-btn bci-edit-btn-hd${showMeta ? ' active' : ''}`}
+                    onClick={() => setShowMeta(v => !v)}
+                    aria-pressed={showMeta}
+                    title={showMeta ? 'Hide difficulty, topics & tags' : 'Show difficulty, topics & tags'}
+                  >🏷</button>
                   {/* ★ Add to list */}
                   <button
                     className={`bci-edit-btn bci-edit-btn-hd${listsForSelected.length ? ' active' : ''}`}
