@@ -4764,8 +4764,11 @@ body.resizing-h * {
 
 /* Editable custom-tags section in the detail pane (collapsible) */
 .adshub-tags-section { margin: 8px 0 4px; }
+/* Header line of the meta block. No longer a <summary> — the block is shown
+   or hidden wholesale by 🏷 in the problem header, so there's nothing here to
+   click and no disclosure triangle. */
 .adshub-tags-summary {
-  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   flex-wrap: wrap;
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
   color: var(--text2); padding: 8px 0 6px;
@@ -4779,9 +4782,6 @@ body.resizing-h * {
 .adshub-tags-label { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
 /* Topics sit above the lineage tags inside the drawer. */
 .adshub-topics-row { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 6px; }
-.adshub-tags-summary::-webkit-details-marker { display: none; }
-.adshub-tags-summary::before { content: '▸'; font-size: 9px; transition: transform .15s; display: inline-block; }
-.adshub-tags-section[open] .adshub-tags-summary::before { transform: rotate(90deg); }
 .adshub-tags-body { padding-top: 6px; }
 .adshub-tags-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .adshub-tag-edit { margin-top: 4px; }

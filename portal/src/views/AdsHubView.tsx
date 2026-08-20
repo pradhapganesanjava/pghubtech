@@ -23,7 +23,9 @@ interface AdsHubFilters {
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
   tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
-  showTopics: true, showMeta: true,
+  // showMeta defaults OFF: the statement is what you want on opening a
+  // problem; topics and lineage tags are looked up deliberately.
+  showTopics: true, showMeta: false,
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -1211,13 +1213,12 @@ export default function AdsHubView() {
     if (!selected || !showMeta) return null
     return (
       <>
-        {/* Collapsed, the whole block is one short line: difficulty + a count.
-            Topics moved inside alongside the lineage tags — both are metadata
-            you consult occasionally, neither is worth a permanent row above
-            the statement. Difficulty stays out because it's one short chip and
-            you want it at a glance. */}
-        <details className="adshub-tags-section" key={selected.slug + '::tags'}>
-          <summary className="adshub-tags-summary" title="Show topics and lineage tags">
+        {/* Hidden by default; 🏷 in the problem header is the ONLY toggle. It
+            was a <details> as well, which meant two clicks to actually see a
+            tag — 🏷 to reveal the row, then the disclosure to open it. Now the
+            block is either absent or fully open. */}
+        <div className="adshub-tags-section">
+          <div className="adshub-tags-summary">
             {selected.difficulty && (
               <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
             )}
@@ -1227,11 +1228,11 @@ export default function AdsHubView() {
             {!editingTags && (
               <button
                 className="bci-edit-btn bci-edit-btn-hd"
-                onClick={e => { e.preventDefault(); e.currentTarget.closest('details')?.setAttribute('open', ''); startEditTags() }}
+                onClick={startEditTags}
                 title="Edit tags"
               >✎</button>
             )}
-          </summary>
+          </div>
           <div className="adshub-tags-body">
           {/* LeetCode's own topics — separate from the lineage tags below, and
               not editable here, so they render outside the edit branch. */}
@@ -1303,7 +1304,7 @@ export default function AdsHubView() {
             </div>
           )}
           </div>
-        </details>
+        </div>
       </>
     )
   }
