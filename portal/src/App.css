@@ -1521,8 +1521,14 @@ body.resizing-h * {
 /* ─── Left panel tab bar ─────────────────────────────────── */
 .left-tab-bar { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); }
 .left-tab {
-  flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
+  /* min-width: 0 is what actually equalises these. Flex items default to
+     min-width: auto, so the long labels (COMPANIES, POINT2REM) refuse to
+     shrink below their text width and take space from TAGS — `flex: 1`
+     alone leaves the four tabs visibly unequal. */
+  flex: 1 1 0; min-width: 0;
+  padding: 8px 2px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .3px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: transparent; border: none; cursor: pointer;
   color: var(--text2); transition: all .15s;
 }
@@ -4346,16 +4352,14 @@ body.resizing-h * {
      mismatches the list height. */
   max-height: calc(100vh - 56px - 52px);  /* viewport - topbar - toolbar */
 }
-.adshub-meta-row {
-  display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
-  padding: 12px 0 8px;
-}
 /* AudioReader in the problem header — sits between ⤢ and ✕. Compact
    so it doesn't overflow the header row. */
 .adshub-hd-audio { display: inline-flex; align-items: center; margin: 0 4px; }
 .adshub-hd-audio .audio-reader { font-size: 11px; gap: 4px; }
 .adshub-hd-audio .audio-reader button { padding: 2px 6px; font-size: 11px; }
-.adshub-meta-row .tag,
+/* Difficulty + topics moved onto the tags summary, so the chip styling
+   follows them there (the old .adshub-meta-row wrapper is gone). */
+.adshub-tags-summary .tag,
 .adshub-company-chips .tag,
 .doc-list-tags .tag {
   display: inline-block; padding: 2px 8px;
@@ -4739,10 +4743,18 @@ body.resizing-h * {
 /* Editable custom-tags section in the detail pane (collapsible) */
 .adshub-tags-section { margin: 8px 0 4px; }
 .adshub-tags-summary {
-  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap;
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
-  color: var(--text2); padding: 4px 0;
+  color: var(--text2); padding: 8px 0 6px;
 }
+/* The difficulty badge + topic chips now live on this row; they carry their
+   own casing and weight, so opt them out of the summary's label styling. */
+.adshub-tags-summary .tag, .adshub-tags-summary .adshub-diff-badge {
+  text-transform: none; letter-spacing: normal; font-weight: 500;
+}
+/* "Tags N" is pushed to the end so the row reads: difficulty · topics … tags. */
+.adshub-tags-label { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
 .adshub-tags-summary::-webkit-details-marker { display: none; }
 .adshub-tags-summary::before { content: '▸'; font-size: 9px; transition: transform .15s; display: inline-block; }
 .adshub-tags-section[open] .adshub-tags-summary::before { transform: rotate(90deg); }

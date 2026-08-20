@@ -1178,19 +1178,22 @@ export default function AdsHubView() {
     if (!selected) return null
     return (
       <>
-        <div className="adshub-meta-row">
-          {selected.difficulty && (
-            <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
-          )}
-          {selected.topics.map(t => <span key={t} className="tag">{t}</span>)}
-        </div>
+        {/* Difficulty + topics sit ON the tags summary rather than in a row of
+            their own — one line instead of two, so the statement below starts
+            higher. The lineage tags stay collapsed behind it (they're for
+            filtering, not for reading); the count and ✎ remain visible. */}
         <details className="adshub-tags-section" key={selected.slug + '::tags'}>
-          <summary className="adshub-tags-summary">
-            <span>Tags (lineage)</span>
-            <span className="tree-cnt">{selected.tags.length}</span>
+          <summary className="adshub-tags-summary" title="Show lineage tags">
+            {selected.difficulty && (
+              <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
+            )}
+            {selected.topics.map(t => <span key={t} className="tag">{t}</span>)}
+            <span className="adshub-tags-label">
+              Tags <span className="tree-cnt">{selected.tags.length}</span>
+            </span>
             {!editingTags && (
               <button
-                className="bci-edit-btn bci-edit-btn-hd" style={{ marginLeft: 6 }}
+                className="bci-edit-btn bci-edit-btn-hd"
                 onClick={e => { e.preventDefault(); e.currentTarget.closest('details')?.setAttribute('open', ''); startEditTags() }}
                 title="Edit tags"
               >✎</button>
