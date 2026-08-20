@@ -619,7 +619,10 @@ const BATCH = {
   347: ['pat_topic::divide-conquer::dc-quickselect',
         'pat_ds::array::divide-conquer::dc-quickselect'],              // Top K Frequent Elements
   973: ['pat_topic::divide-conquer::dc-quickselect',
-        'pat_ds::array::divide-conquer::dc-quickselect'],              // K Closest Points to Origin
+        'pat_ds::array::divide-conquer::dc-quickselect',
+        'pat_group::rearrange'],                                       // K Closest Points to Origin — the K
+                                                                       //   need no internal order, so the array
+                                                                       //   is rearranged around a pivot, not sorted
   1985:['pat_topic::divide-conquer::dc-quickselect',
         'pat_ds::array::divide-conquer::dc-quickselect'],              // Kth Largest Integer in the Array
   105: ['pat_topic::divide-conquer::dc-tree-build',
