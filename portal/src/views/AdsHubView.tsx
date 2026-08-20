@@ -135,32 +135,6 @@ const LIST_CAP = 400
 const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
 
-// ── Topic chip colouring ────────────────────────────────────────────────────
-// A stable hue per topic name, so "Graph Theory" is the same colour on every
-// row and the eye can group by colour while scanning. Deterministic hash, not
-// a palette lookup — LeetCode adds topics and a fixed list would go stale.
-//
-// FNV-1a rather than the usual 31x: over the ~44 real topic names 31x collides
-// 3 times, and on the pairs you'd least want it to (Hash Table/Math, Dynamic
-// Programming/Recursion). FNV-1a collides once, on Database/Ordered Set.
-// Colour is a scanning aid, not the identity — the label is always there — so
-// one clash among rare topics is acceptable.
-const _hueCache = new Map<string, number>()
-function topicHue(t: string): number {
-  const hit = _hueCache.get(t)
-  if (hit !== undefined) return hit
-  let h = 2166136261 >>> 0
-  for (let i = 0; i < t.length; i++) {
-    h ^= t.charCodeAt(i)
-    h = Math.imul(h, 16777619) >>> 0
-  }
-  // Skip 40–70° (muddy yellows read poorly against both themes) by mapping
-  // into the remaining 330° of the wheel.
-  const hue = (h % 330 + 71) % 360
-  _hueCache.set(t, hue)
-  return hue
-}
-
 // ── Statement preview for the browse list ───────────────────────────────────
 // descriptionHtml already rides along with the list load (col A2:L), so this
 // costs no extra fetch — just a strip. Cached by slug because the list
@@ -1863,11 +1837,7 @@ export default function AdsHubView() {
                       {showTopics && p.topics.length > 0 && (
                         <div className="doc-list-meta">
                           {p.topics.map(t => (
-                            <span
-                              key={t}
-                              className="topic-chip"
-                              style={{ '--th': topicHue(t) } as React.CSSProperties}
-                            >{t}</span>
+                            <span key={t} className="topic-chip">{t}</span>
                           ))}
                         </div>
                       )}

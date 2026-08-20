@@ -4105,17 +4105,16 @@ body.resizing-h * {
   margin-top: 3px; display: flex; flex-wrap: wrap; gap: 3px;
   font-size: 11px; color: var(--text2);
 }
-/* Topic chips. --th is a per-topic hue set inline by topicHue(); one mid
-   lightness reads on both the dark and light themes, so the chip needs no
-   per-theme override — same trick as the --lc difficulty badges. */
+/* Topic chips — compact and neutral. Kept as chips (not a " · " join) so each
+   topic reads as a discrete token, but on the theme's own greys: per-topic
+   hues were tried and were too loud against the statement line below. */
 .topic-chip {
-  --tc: hsl(var(--th) 62% 55%);
   display: inline-block; padding: 1px 6px; border-radius: 4px;
   font-size: 10px; font-weight: 600; line-height: 1.5;
   white-space: nowrap;
-  color: var(--tc);
-  background: color-mix(in srgb, var(--tc) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tc) 32%, transparent);
+  color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
 }
 /* Two-line statement preview on browse rows (replaced the tag chips). The
    clamp does the visual truncation; snippetOf() only bounds the string. */
