@@ -1208,18 +1208,18 @@ export default function AdsHubView() {
     if (!selected) return null
     return (
       <>
-        {/* Difficulty + topics sit ON the tags summary rather than in a row of
-            their own — one line instead of two, so the statement below starts
-            higher. The lineage tags stay collapsed behind it (they're for
-            filtering, not for reading); the count and ✎ remain visible. */}
+        {/* Collapsed, the whole block is one short line: difficulty + a count.
+            Topics moved inside alongside the lineage tags — both are metadata
+            you consult occasionally, neither is worth a permanent row above
+            the statement. Difficulty stays out because it's one short chip and
+            you want it at a glance. */}
         <details className="adshub-tags-section" key={selected.slug + '::tags'}>
-          <summary className="adshub-tags-summary" title="Show lineage tags">
+          <summary className="adshub-tags-summary" title="Show topics and lineage tags">
             {selected.difficulty && (
               <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
             )}
-            {selected.topics.map(t => <span key={t} className="tag">{t}</span>)}
             <span className="adshub-tags-label">
-              Tags <span className="tree-cnt">{selected.tags.length}</span>
+              Topics &amp; tags <span className="tree-cnt">{selected.topics.length + selected.tags.length}</span>
             </span>
             {!editingTags && (
               <button
@@ -1230,6 +1230,13 @@ export default function AdsHubView() {
             )}
           </summary>
           <div className="adshub-tags-body">
+          {/* LeetCode's own topics — separate from the lineage tags below, and
+              not editable here, so they render outside the edit branch. */}
+          {selected.topics.length > 0 && (
+            <div className="adshub-topics-row">
+              {selected.topics.map(t => <span key={t} className="topic-chip">{t}</span>)}
+            </div>
+          )}
           {!editingTags ? (
             selected.tags.length > 0 ? (
               <div className="doc-list-tags">

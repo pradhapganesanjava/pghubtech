@@ -4382,9 +4382,6 @@ body.resizing-h * {
 .adshub-hd-audio { display: inline-flex; align-items: center; margin: 0 4px; }
 .adshub-hd-audio .audio-reader { font-size: 11px; gap: 4px; }
 .adshub-hd-audio .audio-reader button { padding: 2px 6px; font-size: 11px; }
-/* Difficulty + topics moved onto the tags summary, so the chip styling
-   follows them there (the old .adshub-meta-row wrapper is gone). */
-.adshub-tags-summary .tag,
 .adshub-company-chips .tag,
 .doc-list-tags .tag {
   display: inline-block; padding: 2px 8px;
@@ -4773,13 +4770,15 @@ body.resizing-h * {
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
   color: var(--text2); padding: 8px 0 6px;
 }
-/* The difficulty badge + topic chips now live on this row; they carry their
-   own casing and weight, so opt them out of the summary's label styling. */
-.adshub-tags-summary .tag, .adshub-tags-summary .adshub-diff-badge {
+/* The difficulty badge sits on this row; it carries its own casing and
+   weight, so opt it out of the summary's uppercase label styling. */
+.adshub-tags-summary .adshub-diff-badge {
   text-transform: none; letter-spacing: normal; font-weight: 500;
 }
-/* "Tags N" is pushed to the end so the row reads: difficulty · topics … tags. */
+/* The count is pushed to the end so the row reads: difficulty … topics & tags. */
 .adshub-tags-label { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
+/* Topics sit above the lineage tags inside the drawer. */
+.adshub-topics-row { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 6px; }
 .adshub-tags-summary::-webkit-details-marker { display: none; }
 .adshub-tags-summary::before { content: '▸'; font-size: 9px; transition: transform .15s; display: inline-block; }
 .adshub-tags-section[open] .adshub-tags-summary::before { transform: rotate(90deg); }
