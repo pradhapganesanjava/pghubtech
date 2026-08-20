@@ -656,8 +656,22 @@ const BATCH = {
   // Run scoped: --only 846,630,1094,1344,393
   // 1344 and 393 get GROUP-level tags only; neither has an honest micro in
   // the catalog yet (see the note in the ScaleAI list commit).
+  // ── Consecutive-run grouping — the k-consecutive engine ──────────────
+  // Same algorithm all three: count values, then repeatedly consume a run
+  // starting at the smallest key with a non-zero count. 1296 is 846 with a
+  // different story; 659 relaxes "exactly k" to "runs of length >= 3".
   846: ['pat_ds::array::hash::freq-counter',                          // Hand of Straights — Counter, then
-        'pat_topic::hash::freq-counter'],                             //   consume k consecutive from the min key
+        'pat_topic::hash::freq-counter',                              //   consume k consecutive from the min key
+        'pat_group::rearrange',
+        'pat_group::rearrange::k-consecutive'],
+  1296:['pat_ds::array::hash::freq-counter',                          // Divide Array in Sets of K Consecutive
+        'pat_topic::hash::freq-counter',                              //   Numbers — identical to 846
+        'pat_group::rearrange',
+        'pat_group::rearrange::k-consecutive'],
+  659: ['pat_ds::array::hash::freq-counter',                          // Split Array into Consecutive
+        'pat_topic::hash::freq-counter',                              //   Subsequences — runs of length >= 3,
+        'pat_group::rearrange',                                       //   so it also tracks open runs, not just
+        'pat_group::rearrange::k-consecutive'],                       //   a fixed k
   630: ['pat_ds::array::greedy::greedy-end-sorted',                   // Course Schedule III — sort by deadline,
         'pat_group::scheduling'],                                     //   regret-swap the longest course out
   1094:['pat_topic::prefix-sum::difference-array',                    // Car Pooling — +n at from, −n at to,
