@@ -217,6 +217,22 @@ export default function AdsHubView() {
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [diffMenuOpen])
+  // Toolbar overflow (⋯) — MOBILE ONLY. The low-frequency controls (refresh,
+  // difficulty, add, export) stay inline on desktop via `display: contents`
+  // and collapse behind this trigger under 768px, where the toolbar was
+  // wrapping into a ragged 3-4 rows. See .tb-overflow in App.css.
+  const [overflowOpen, setOverflowOpen] = useState(false)
+  const overflowRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!overflowOpen) return
+    function onClick(e: MouseEvent) {
+      // The difficulty dropdown lives INSIDE this panel, so a click on it is
+      // contained here and correctly leaves the panel open.
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) setOverflowOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [overflowOpen])
   // Custom problems live at frontend_id >= 10000 (see scripts/add-custom-problem.mjs).
   // A toggle is friendlier than substring-searching "1000" (which only catches
   // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
@@ -1478,14 +1494,6 @@ export default function AdsHubView() {
               title="DS → micro-pattern reference"
             >📐 Patterns</button>
           </div>
-          {/* Refresh is available in every mode — reloads problems from the sheet
-              and rebuilds the lineage (picks up tag/note edits made elsewhere). */}
-          <button
-            className="rf-btn-cancel"
-            onClick={refresh}
-            disabled={refreshing || loading}
-            title="Reload problems & rebuild lineage from the sheet"
-          >{refreshing ? '…' : '↻'}</button>
           {adsMode === 'browse' && <>
           <button
             className={`mobile-filter-btn${activeFilterCount > 0 ? ' has-active' : ''}`}
@@ -1494,6 +1502,40 @@ export default function AdsHubView() {
           >
             ☰ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
+          </>}
+          {/* ── Low-frequency actions: refresh · difficulty · add · export ──
+              These four are grouped so they can collapse behind one ⋯ trigger
+              under 768px, where the toolbar was wrapping into a ragged stack.
+              On desktop .tb-overflow / .tb-overflow-items are `display: contents`,
+              so the buttons stay direct flex items of .browse-toolbar and the
+              desktop row is UNCHANGED — CSS `order` restores their original
+              positions around the search box (see App.css). */}
+          <div
+            className={`tb-overflow${adsMode === 'browse' ? '' : ' tb-overflow--single'}`}
+            ref={overflowRef}
+          >
+            {/* Trigger is mobile-only, and only worth showing when it holds more
+                than the lone refresh button (i.e. in Browse). */}
+            {adsMode === 'browse' && (
+              <button
+                className={`tb-overflow-trigger${diff.length > 0 || customOnly ? ' has-active' : ''}`}
+                onClick={() => setOverflowOpen(o => !o)}
+                title="More actions"
+                aria-label="More actions"
+                aria-haspopup="true"
+                aria-expanded={overflowOpen}
+              >⋯</button>
+            )}
+            <div className={`tb-overflow-items${overflowOpen ? ' open' : ''}`}>
+              {/* Refresh is available in every mode — reloads problems from the sheet
+                  and rebuilds the lineage (picks up tag/note edits made elsewhere). */}
+              <button
+                className="rf-btn-cancel tb-refresh"
+                onClick={refresh}
+                disabled={refreshing || loading}
+                title="Reload problems & rebuild lineage from the sheet"
+              >{refreshing ? '…' : '↻'}</button>
+              {adsMode === 'browse' && <>
           {/* Multi-select dropdown: difficulty + ✨ Custom in one pill so
               the toolbar stays compact. Empty diff ≡ All. Auto-applies on
               every checkbox toggle. Click outside (or the trigger again)
@@ -1542,9 +1584,25 @@ export default function AdsHubView() {
               </div>
             )}
           </div>
+          <button
+            className="rf-btn-save tb-add"
+            onClick={openAddProblem}
+            title="Add a new problem"
+            aria-label="Add a new problem"
+          >＋</button>
+          <button
+            className="rf-btn-cancel tb-export"
+            onClick={exportFilteredCsv}
+            disabled={loading || filtered.length === 0}
+            title={`Export the ${filtered.length.toLocaleString()} currently-filtered problem${filtered.length === 1 ? '' : 's'} as CSV (id, title, difficulty, topics, tags, slug, statement)`}
+            aria-label="Export CSV"
+          >⬇</button>
+              </>}
+            </div>
+          </div>
+          {adsMode === 'browse' && <>
           <input
-            className="col-search"
-            style={{ width: 220 }}
+            className="col-search tb-search"
             placeholder="Search #id, title, tag, company…  ↵ to open top match"
             value={search}
             onChange={e => handleSearchChange(e.target.value)}
@@ -1559,20 +1617,7 @@ export default function AdsHubView() {
               }
             }}
           />
-          <button
-            className="rf-btn-save"
-            onClick={openAddProblem}
-            title="Add a new problem"
-            aria-label="Add a new problem"
-          >＋</button>
-          <button
-            className="rf-btn-cancel"
-            onClick={exportFilteredCsv}
-            disabled={loading || filtered.length === 0}
-            title={`Export the ${filtered.length.toLocaleString()} currently-filtered problem${filtered.length === 1 ? '' : 's'} as CSV (id, title, difficulty, topics, tags, slug, statement)`}
-            aria-label="Export CSV"
-          >⬇</button>
-          <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
+          <span className="tb-count">
             {filtered.length.toLocaleString()} / {problems.length.toLocaleString()}
           </span>
           {activeFilterCount > 0 && (
