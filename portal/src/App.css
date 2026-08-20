@@ -4362,6 +4362,20 @@ body.resizing-h * {
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: 20px; font-size: 11px; color: var(--text2);
 }
+/* pat_* tags deep-link into the Patterns reference; plain tags don't, so only
+   these get affordance. A <button> resets to match the sibling spans exactly. */
+.doc-list-tags .tag--pat {
+  font: inherit; font-size: 11px; line-height: inherit;
+  cursor: pointer; color: var(--primary);
+  border-color: rgba(var(--primary-rgb), .40);
+  background: rgba(var(--primary-rgb), .10);
+}
+.doc-list-tags .tag--pat:hover {
+  background: rgba(var(--primary-rgb), .20);
+  border-color: var(--primary);
+  text-decoration: underline;
+}
+.doc-list-tags .tag--pat:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .adshub-diff-badge {
   display: inline-block; padding: 2px 9px; border-radius: 20px;
   font-size: 11px; font-weight: 700;

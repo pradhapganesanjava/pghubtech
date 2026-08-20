@@ -130,6 +130,33 @@ const LIST_CAP = 400
 const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
 
+// ── pat_* tag → Patterns-reference deep link ────────────────────────────────
+// patterns.html routes on its URL hash (see applyHash there):
+//   #ds|topic/<patternId>[/<microId>]   ·   #group/<groupId>[/<subMicroId>]
+// Only pat_* tags map onto it; anything else (plain topics, custom tags) has
+// no page to open and stays unlinked.
+//
+// The DS-embedded form is the one subtlety. A micro embedded under a DS is
+// rendered by patterns.html with the TOPIC as its parent — its card id is
+// `m-<topic>-<micro>`, not `m-<ds>-<micro>` — so `pat_ds::graph::bfs::x`
+// deep-links through the topic tab. Same card, same content; it's the only
+// address that actually resolves.
+export function patternsHashForTag(tag: string): string | null {
+  const p = tag.split('::')
+  if (p.length < 2) return null
+  const [ns, a, b, c] = p
+  if (ns === 'pat_group') return b ? `group/${a}/${b}` : `group/${a}`
+  if (ns === 'pat_topic') return b ? `topic/${a}/${b}` : `topic/${a}`
+  if (ns === 'pat_ds') {
+    if (!b) return `ds/${a}`
+    // pat_ds::<ds>::core::<micro> — a true DS-level micro, card id `m-<ds>-<micro>`.
+    if (b === 'core') return c ? `ds/${a}/${c}` : `ds/${a}`
+    // pat_ds::<ds>::<topic>::<micro> — embedded; address it via the topic tab.
+    return c ? `topic/${b}/${c}` : `ds/${a}`
+  }
+  return null
+}
+
 function diffClass(d: string): string {
   const k = d.toLowerCase()
   return k === 'easy' ? 'lc-easy' : k === 'medium' ? 'lc-medium' : k === 'hard' ? 'lc-hard' : ''
@@ -379,6 +406,24 @@ export default function AdsHubView() {
     })
   }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
+  // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
+  // in state (not pushed imperatively) so it survives leaving and re-entering
+  // Patterns mode, which remounts the iframe.
+  const [patternsHash, setPatternsHash]    = useState<string | null>(null)
+
+  // Open a pat_* tag's page in the embedded Patterns reference. If the iframe
+  // is already mounted, assigning the hash navigates it in place (fires
+  // `hashchange` → applyHash); otherwise the hash rides in on the initial src.
+  function openPatternForTag(tag: string) {
+    const hash = patternsHashForTag(tag)
+    if (!hash) return
+    setPatternsHash(hash)
+    const win = patternsFrameRef.current?.contentWindow
+    if (adsMode === 'patterns' && win) {
+      try { win.location.hash = hash } catch { /* not loaded yet — src carries it */ }
+    }
+    setAdsMode('patterns')
+  }
 
   // Patterns iframe (public/patterns.html) → parent message bridge. When
   // the user clicks an anchor #NNN or a "Browse all <topic>" link inside
@@ -1155,7 +1200,21 @@ export default function AdsHubView() {
           {!editingTags ? (
             selected.tags.length > 0 ? (
               <div className="doc-list-tags">
-                {selected.tags.map(t => <span key={t} className="tag" title={t}>{t}</span>)}
+                {selected.tags.map(t => {
+                  // Only pat_* tags have a page in the reference; everything
+                  // else stays an inert span rather than a dead-looking link.
+                  const hash = patternsHashForTag(t)
+                  return hash ? (
+                    <button
+                      key={t}
+                      className="tag tag--pat"
+                      title={`Open ${t} in the Patterns reference`}
+                      onClick={() => openPatternForTag(t)}
+                    >{t}</button>
+                  ) : (
+                    <span key={t} className="tag" title={t}>{t}</span>
+                  )
+                })}
               </div>
             ) : (
               <button className="adshub-diff-pill" onClick={startEditTags}>➕ Add tags</button>
@@ -1696,7 +1755,7 @@ export default function AdsHubView() {
                 <iframe
                   ref={patternsFrameRef}
                   title="Micro-Pattern Reference"
-                  src={`${import.meta.env.BASE_URL}patterns.html?v=${__BUILD_ID__}`}
+                  src={`${import.meta.env.BASE_URL}patterns.html?v=${__BUILD_ID__}${patternsHash ? `#${patternsHash}` : ''}`}
                   style={{ width: '100%', flex: 1, minHeight: 0, border: 0 }}
                   onLoad={sendPatternsTheme}
                 />
