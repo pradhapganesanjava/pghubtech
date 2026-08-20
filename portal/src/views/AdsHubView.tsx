@@ -15,9 +15,14 @@ const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
 interface AdsHubFilters {
   tags: string[]; companies: string[]; list: string | null
   diff: ('Easy' | 'Medium' | 'Hard')[]; customOnly: boolean; search: string
+  // Display preference rather than a filter, but it rides in the same payload
+  // so it persists the same way. loadFilters() merges over the defaults, so
+  // sessions holding an older payload just get the default.
+  showTopics: boolean
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
   tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
+  showTopics: true,
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -129,6 +134,32 @@ const LIST_CAP = 400
 
 const DIFFS = ['Easy', 'Medium', 'Hard'] as const
 type Diff = typeof DIFFS[number]
+
+// ── Topic chip colouring ────────────────────────────────────────────────────
+// A stable hue per topic name, so "Graph Theory" is the same colour on every
+// row and the eye can group by colour while scanning. Deterministic hash, not
+// a palette lookup — LeetCode adds topics and a fixed list would go stale.
+//
+// FNV-1a rather than the usual 31x: over the ~44 real topic names 31x collides
+// 3 times, and on the pairs you'd least want it to (Hash Table/Math, Dynamic
+// Programming/Recursion). FNV-1a collides once, on Database/Ordered Set.
+// Colour is a scanning aid, not the identity — the label is always there — so
+// one clash among rare topics is acceptable.
+const _hueCache = new Map<string, number>()
+function topicHue(t: string): number {
+  const hit = _hueCache.get(t)
+  if (hit !== undefined) return hit
+  let h = 2166136261 >>> 0
+  for (let i = 0; i < t.length; i++) {
+    h ^= t.charCodeAt(i)
+    h = Math.imul(h, 16777619) >>> 0
+  }
+  // Skip 40–70° (muddy yellows read poorly against both themes) by mapping
+  // into the remaining 330° of the wheel.
+  const hue = (h % 330 + 71) % 360
+  _hueCache.set(t, hue)
+  return hue
+}
 
 // ── Statement preview for the browse list ───────────────────────────────────
 // descriptionHtml already rides along with the list load (col A2:L), so this
@@ -287,6 +318,9 @@ export default function AdsHubView() {
   // 10000–10009 due to substring semantics, not 10010 / 10020 / etc).
   const CUSTOM_ID_MIN = 10000
   const [customOnly, setCustomOnly] = useState<boolean>(_persisted.customOnly)
+  // Show/hide the LeetCode topics line on browse rows. Display only — topics
+  // stay in the search index and in the detail pane either way.
+  const [showTopics, setShowTopics] = useState<boolean>(_persisted.showTopics)
   const [selectedTags, setTags]   = useState<string[]>(_persisted.tags)
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
@@ -424,9 +458,9 @@ export default function AdsHubView() {
   useEffect(() => {
     saveFilters<AdsHubFilters>(ADSHUB_FILTERS_KEY, {
       tags: selectedTags, companies: selectedCompanies, list: selectedList,
-      diff, customOnly, search,
+      diff, customOnly, search, showTopics,
     })
-  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search])
+  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
   // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
   // in state (not pushed imperatively) so it survives leaving and re-entering
@@ -1681,6 +1715,18 @@ export default function AdsHubView() {
             title={`Export the ${filtered.length.toLocaleString()} currently-filtered problem${filtered.length === 1 ? '' : 's'} as CSV (id, title, difficulty, topics, tags, slug, statement)`}
             aria-label="Export CSV"
           >⬇</button>
+          {/* Display toggle for the topics line on browse rows. Lives with the
+              other low-frequency controls, so on mobile it rides inside the ⋯
+              panel and gets a text label there like its siblings. */}
+          <button
+            className={`rf-btn-cancel tb-topics${showTopics ? ' active' : ''}`}
+            onClick={() => setShowTopics(v => !v)}
+            title={showTopics
+              ? 'Hide the topics line on list rows (they stay searchable and stay in the detail pane)'
+              : 'Show the topics line on list rows'}
+            aria-pressed={showTopics}
+            aria-label="Toggle topics on list rows"
+          >🏷</button>
               </>}
             </div>
           </div>
@@ -1814,8 +1860,16 @@ export default function AdsHubView() {
                         {p.title}
                         {p.hasNotes && <span className="adshub-note-badge" title="Has notes">✎</span>}
                       </div>
-                      {p.topics.length > 0 && (
-                        <div className="doc-list-meta">{p.topics.join(' · ')}</div>
+                      {showTopics && p.topics.length > 0 && (
+                        <div className="doc-list-meta">
+                          {p.topics.map(t => (
+                            <span
+                              key={t}
+                              className="topic-chip"
+                              style={{ '--th': topicHue(t) } as React.CSSProperties}
+                            >{t}</span>
+                          ))}
+                        </div>
                       )}
                       {/* Two lines of the statement instead of the tag chips.
                           The chips were showing only the last :: segment, which

@@ -1133,6 +1133,9 @@ body.resizing-h * {
   display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
 }
 .browse-toolbar .tb-count { font-size: 12px; color: var(--text2); white-space: nowrap; }
+/* Topics toggle — greyed when off so its state reads without a label. */
+.tb-topics { filter: grayscale(1); opacity: .5; }
+.tb-topics.active { filter: none; opacity: 1; }
 .browse-toolbar .tb-search { width: 220px; }
 
 /* ─── Toolbar overflow (⋯) — collapses on MOBILE only ──────────────
@@ -1151,6 +1154,7 @@ body.resizing-h * {
   .browse-toolbar .tb-search             { order: 3; }
   .browse-toolbar .tb-add                { order: 4; }
   .browse-toolbar .tb-export             { order: 5; }
+  .browse-toolbar .tb-topics             { order: 5; }
   .browse-toolbar .tb-count              { order: 6; }
   .browse-toolbar .applied-filter-chips  { order: 7; }
 }
@@ -2199,6 +2203,8 @@ body.resizing-h * {
   .tb-overflow-items .tb-refresh::after { content: ' Refresh'; font-size: 13px; }
   .tb-overflow-items .tb-add::after     { content: ' Add problem'; font-size: 13px; }
   .tb-overflow-items .tb-export::after  { content: ' Export CSV'; font-size: 13px; }
+  .tb-overflow-items .tb-topics::after  { content: ' Topics: off'; font-size: 13px; }
+  .tb-overflow-items .tb-topics.active::after { content: ' Topics: on'; }
   /* The difficulty control is itself a dropdown — let it fill the panel row
      and open as a normal block beneath its trigger rather than floating. */
   .tb-overflow-items .adshub-diff-menu-wrap { width: 100%; }
@@ -4096,8 +4102,20 @@ body.resizing-h * {
 }
 .doc-list-title { font-size: 13px; font-weight: 600; color: var(--text); }
 .doc-list-meta {
-  margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 3px; display: flex; flex-wrap: wrap; gap: 3px;
   font-size: 11px; color: var(--text2);
+}
+/* Topic chips. --th is a per-topic hue set inline by topicHue(); one mid
+   lightness reads on both the dark and light themes, so the chip needs no
+   per-theme override — same trick as the --lc difficulty badges. */
+.topic-chip {
+  --tc: hsl(var(--th) 62% 55%);
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; line-height: 1.5;
+  white-space: nowrap;
+  color: var(--tc);
+  background: color-mix(in srgb, var(--tc) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tc) 32%, transparent);
 }
 /* Two-line statement preview on browse rows (replaced the tag chips). The
    clamp does the visual truncation; snippetOf() only bounds the string. */
