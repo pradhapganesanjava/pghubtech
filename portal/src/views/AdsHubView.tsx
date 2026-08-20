@@ -15,17 +15,14 @@ const ADSHUB_FILTERS_KEY = 'pghub.adshub.filters'
 interface AdsHubFilters {
   tags: string[]; companies: string[]; list: string | null
   diff: ('Easy' | 'Medium' | 'Hard')[]; customOnly: boolean; search: string
-  // Display preferences rather than filters, but they ride in the same payload
-  // so they persist the same way. loadFilters() merges over the defaults, so
-  // sessions holding an older payload just get the defaults.
+  // Display preference rather than a filter, but it rides in the same payload
+  // so it persists the same way. loadFilters() merges over the defaults, so
+  // sessions holding an older payload just get the default.
   showTopics: boolean   // topics line on browse LIST rows
-  showMeta: boolean     // difficulty + topics + tags row in the DETAIL pane
 }
 const ADSHUB_FILTERS_DEFAULTS: AdsHubFilters = {
   tags: [], companies: [], list: null, diff: [], customOnly: false, search: '',
-  // showMeta defaults OFF: the statement is what you want on opening a
-  // problem; topics and lineage tags are looked up deliberately.
-  showTopics: true, showMeta: false,
+  showTopics: true,
 }
 import {
   loadProblems, getCachedProblems, saveProblemNote, updateProblemTags, appendProblem,
@@ -298,8 +295,11 @@ export default function AdsHubView() {
   // Show/hide the LeetCode topics line on browse rows. Display only — topics
   // stay in the search index and in the detail pane either way.
   const [showTopics, setShowTopics] = useState<boolean>(_persisted.showTopics)
-  // Whole meta row in the detail pane, toggled by 🏷 in the problem header.
-  const [showMeta, setShowMeta] = useState<boolean>(_persisted.showMeta)
+  // Topics + tags block in the detail pane, toggled by 🏷 in the problem
+  // header. Deliberately NOT persisted: it resets to hidden on every problem
+  // (see the effect keyed on selected?.slug), so a stored value could never
+  // be read back anyway.
+  const [showMeta, setShowMeta] = useState(false)
   const [selectedTags, setTags]   = useState<string[]>(_persisted.tags)
   const [noteMode, setNoteMode]   = useState<NoteMode>('hidden')
   const [noteRev, setNoteRev]     = useState(0)        // bump to force NoteViewer reload after save
@@ -437,9 +437,9 @@ export default function AdsHubView() {
   useEffect(() => {
     saveFilters<AdsHubFilters>(ADSHUB_FILTERS_KEY, {
       tags: selectedTags, companies: selectedCompanies, list: selectedList,
-      diff, customOnly, search, showTopics, showMeta,
+      diff, customOnly, search, showTopics,
     })
-  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics, showMeta])
+  }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics])
   const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
   // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
   // in state (not pushed imperatively) so it survives leaving and re-entering
@@ -1202,7 +1202,9 @@ export default function AdsHubView() {
   }
 
   // Collapse the add-to-list menu + reset expand when selection clears.
-  useEffect(() => { setListMenuOpen(false); setNewListName('') }, [selected?.slug])
+  // Also re-hide the topics/tags block: opening a problem should land you on
+  // the statement, every time — not carry over a reveal from the last one.
+  useEffect(() => { setListMenuOpen(false); setNewListName(''); setShowMeta(false) }, [selected?.slug])
   useEffect(() => { if (!detailOpen) setViewerExpanded(false) }, [detailOpen])
 
   const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns'
@@ -1213,31 +1215,20 @@ export default function AdsHubView() {
     if (!selected || !showMeta) return null
     return (
       <>
-        {/* Hidden by default; 🏷 in the problem header is the ONLY toggle. It
-            was a <details> as well, which meant two clicks to actually see a
-            tag — 🏷 to reveal the row, then the disclosure to open it. Now the
-            block is either absent or fully open. */}
+        {/* Hidden until 🏷 in the problem header is pressed, and it resets to
+            hidden on every problem. No label/count header row: the chips are
+            right there, so "TOPICS & TAGS 7" was only restating them. */}
         <div className="adshub-tags-section">
-          <div className="adshub-tags-summary">
-            {selected.difficulty && (
-              <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
-            )}
-            <span className="adshub-tags-label">
-              Topics &amp; tags <span className="tree-cnt">{selected.topics.length + selected.tags.length}</span>
-            </span>
-            {!editingTags && (
-              <button
-                className="bci-edit-btn bci-edit-btn-hd"
-                onClick={startEditTags}
-                title="Edit tags"
-              >✎</button>
-            )}
-          </div>
           <div className="adshub-tags-body">
-          {/* LeetCode's own topics — separate from the lineage tags below, and
-              not editable here, so they render outside the edit branch. */}
-          {selected.topics.length > 0 && (
+          {/* Difficulty + LeetCode's own topics. Kept on their own line above
+              the lineage tags — they're LeetCode's categorisation, the tags
+              below are yours, and running them together makes the two
+              indistinguishable. */}
+          {(selected.difficulty || selected.topics.length > 0) && (
             <div className="adshub-topics-row">
+              {selected.difficulty && (
+                <span className={`adshub-diff-badge ${diffClass(selected.difficulty)}`}>{selected.difficulty}</span>
+              )}
               {selected.topics.map(t => <span key={t} className="topic-chip">{t}</span>)}
             </div>
           )}
@@ -1259,6 +1250,13 @@ export default function AdsHubView() {
                     <span key={t} className="tag" title={t}>{t}</span>
                   )
                 })}
+                {/* Sits at the end of the chips it edits, now that the header
+                    row that used to hold it is gone. */}
+                <button
+                  className="bci-edit-btn adshub-tags-edit"
+                  onClick={startEditTags}
+                  title="Edit tags"
+                >✎</button>
               </div>
             ) : (
               <button className="adshub-diff-pill" onClick={startEditTags}>➕ Add tags</button>
