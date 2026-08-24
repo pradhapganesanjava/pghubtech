@@ -1020,6 +1020,10 @@ anchor_id,tag
 653,pat_ds::bst::hash::complement-lookup
 653,pat_group::sum
 658,pat_ds::array::two-pointers::tp-k-sum
+659,pat_ds::array::hash::freq-counter
+659,pat_topic::hash::freq-counter
+659,pat_group::rearrange
+659,pat_group::rearrange::k-consecutive
 662,pat_ds::tree::bfs::bfs-position-tracked
 669,pat_ds::bst::core::bst-insert-delete
 669,pat_ds::bst::dfs::dfs-tree-mutate
@@ -1206,6 +1210,8 @@ anchor_id,tag
 844,pat_ds::string::stack-topic::parens-rewrite
 846,pat_ds::array::hash::freq-counter
 846,pat_topic::hash::freq-counter
+846,pat_group::rearrange
+846,pat_group::rearrange::k-consecutive
 847,pat_topic::dp::bitmask-dp
 847,pat_ds::graph::dp::bitmask-dp
 849,pat_ds::array::two-pointers::tp-fast-slow
@@ -1548,6 +1554,10 @@ anchor_id,tag
 1293,pat_ds::matrices::bfs::bfs-state-augmented
 1295,pat_topic::math::sum-formulas
 1295,pat_ds::array::math::sum-formulas
+1296,pat_ds::array::hash::freq-counter
+1296,pat_topic::hash::freq-counter
+1296,pat_group::rearrange
+1296,pat_group::rearrange::k-consecutive
 1306,pat_ds::array::dp::augmented-state-reachability
 1306,pat_topic::dp::augmented-state-reachability
 1310,pat_group::subarray

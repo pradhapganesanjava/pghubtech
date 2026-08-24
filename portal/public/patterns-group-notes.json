@@ -303,6 +303,15 @@
         "tiered-scan": { "name": "Piecewise / Tiered Accumulation", "when": "Apply per-band rules to a value crossing thresholds (tax brackets, tiered pricing).", "mechanism": "Walk the bands in order; for each take min(remaining, band-width) × band-rate; subtract from remaining until it is exhausted." }
       }
     },
+    "rearrange": {
+      "micros": {
+        "k-consecutive": {
+          "name": "Consecutive-Run Consume (Counter + Smallest-First)",
+          "when": "Split a multiset into groups of k CONSECUTIVE values — hands of straights, sets of k consecutive numbers, runs of length ≥ k.",
+          "mechanism": "Count the values. Repeatedly take the **smallest** key with a non-zero count and decrement it and the next k−1 keys; if any is missing, fail. Smallest-first is forced, and that is the whole proof: the minimum remaining value can only ever *start* a group, never sit inside one, so there is no choice to get wrong. O(n log n) for the ordered keys (#846, #1296, #659). **Not a sliding window**, despite how it reads: the run is over consecutive VALUES in a multiset, not consecutive POSITIONS. In hand `[1,2,3,6,2,3,4,7,8]` the group `[1,2,3]` is not contiguous by index, the input may be permuted freely, counts are decremented rather than scanned past, and one value's repeated occurrences serve several groups at once — 2 and 3 each feed both `[1,2,3]` and `[2,3,4]`. It also jumps over absent keys instead of traversing them."
+        }
+      }
+    },
     "partition": {
       "micros": {
         "subarray-binary-search": {
