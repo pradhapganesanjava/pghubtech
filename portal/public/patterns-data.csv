@@ -929,6 +929,7 @@ anchor_id,tag
 532,pat_ds::array::hash::freq-counter
 532,pat_topic::hash::complement-lookup
 532,pat_ds::array::hash::complement-lookup
+532,pat_group::sum
 540,pat_ds::array::binary-search::bs-textbook
 542,pat_topic::bfs::bfs-multi-source
 542,pat_ds::matrices::bfs::bfs-multi-source
@@ -2030,6 +2031,7 @@ anchor_id,tag
 3371,pat_ds::array::hash::freq-counter
 3371,pat_topic::hash::complement-lookup
 3371,pat_ds::array::hash::complement-lookup
+3371,pat_group::sum
 3381,pat_group::subarray
 3389,pat_topic::hash::freq-counter
 3389,pat_ds::string::hash::freq-counter

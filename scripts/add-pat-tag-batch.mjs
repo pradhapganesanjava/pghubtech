@@ -690,6 +690,14 @@ const BATCH = {
   // intervals, not a signed running total — different micro, see the commit.
   253: ['pat_ds::array::interval::sweep-line-delta',                  // Meeting Rooms II — min rooms IS max
         'pat_topic::interval::sweep-line-delta'],                     //   concurrent; 1094 with every w = 1
+
+  // ── complement-lookup problems missing the Sum / Target group ────────
+  // Every other problem on that micro (1, 167, 560, 653, 974) carries
+  // pat_group::sum; these two were the only gaps.
+  3371:['pat_group::sum'],                                            // Largest Outlier — o = S - 2s, then a
+                                                                      //   counted lookup (o may equal s)
+  532: ['pat_group::sum'],                                            // K-diff Pairs — same counted-lookup trap
+                                                                      //   at k == 0
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
