@@ -2038,6 +2038,8 @@ anchor_id,tag
 3371,pat_topic::hash::complement-lookup
 3371,pat_ds::array::hash::complement-lookup
 3371,pat_group::sum
+3371,pat_topic::math::sum-formulas
+3371,pat_ds::array::math::sum-formulas
 3381,pat_group::subarray
 3389,pat_topic::hash::freq-counter
 3389,pat_ds::string::hash::freq-counter

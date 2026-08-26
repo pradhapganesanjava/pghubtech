@@ -695,8 +695,11 @@ const BATCH = {
   // ── complement-lookup problems missing the Sum / Target group ────────
   // Every other problem on that micro (1, 167, 560, 653, 974) carries
   // pat_group::sum; these two were the only gaps.
-  3371:['pat_group::sum'],                                            // Largest Outlier — o = S - 2s, then a
-                                                                      //   counted lookup (o may equal s)
+  3371:['pat_group::sum',                                             // Largest Outlier — o = S - 2s, then a
+        'pat_topic::math::sum-formulas',                              //   counted lookup (o may equal s).
+        'pat_ds::array::math::sum-formulas'],                         //   The derivation IS closed-form sums:
+                                                                      //   "expected - actual" on the total, the
+                                                                      //   same move as 268 Missing Number.
   532: ['pat_group::sum'],                                            // K-diff Pairs — same counted-lookup trap
                                                                       //   at k == 0
 
