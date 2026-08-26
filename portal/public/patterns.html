@@ -1344,6 +1344,45 @@ function renderGroupNav(root, filter) {
         })
       })
     }
+    // Group sub-micros (pat_group::<g>::<micro>) — the group's OWN solution
+    // engines. They render in the main pane under "Micro-patterns" but had no
+    // nav row at all, so sum::subset and shortest-path's bfs/dijkstra were
+    // invisible here. Listed first: they are the group's own breakdown,
+    // where DS/Topics are cross-cuts.
+    const gMicros = groupMicros(gid)
+    const gDefs   = groupMicroDefs(gid)
+    const defOrder = Object.keys(gDefs)
+    const mids = Object.keys(gMicros)
+    const orderedMids = [...defOrder.filter(m => gMicros[m]),
+                         ...mids.filter(m => !defOrder.includes(m)).sort()]
+    if (orderedMids.length) {
+      const hdr = document.createElement('div')
+      hdr.className = 'tree-topics-hdr'
+      hdr.textContent = `Micro-patterns (${orderedMids.length})`
+      sub.appendChild(hdr)
+      orderedMids.forEach(mid => {
+        const name = (gDefs[mid] && gDefs[mid].name)
+          || mid.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        if (filter && !name.toLowerCase().includes(filter) && !meta.name.toLowerCase().includes(filter)) return
+        const a = document.createElement('a')
+        a.className = 'tree-topic-row tree-applies-row'
+        a.title = name
+        a.innerHTML = `
+          <span class="ico">⚙</span>
+          <span class="lbl">${escHtml(name)}</span>
+          <span class="count">${gMicros[mid].length}</span>`
+        a.onclick = () => {
+          if (isSelectingText()) return
+          if (activeGroupId !== gid) selectGroup(gid)
+          // Same target the #group/<g>/<micro> route scrolls to.
+          setTimeout(() => {
+            const el = document.getElementById('gm-' + mid)
+            if (el) el.scrollIntoView({ block: 'start' })
+          }, 40)
+        }
+        sub.appendChild(a)
+      })
+    }
     addDim('Data structures', inv.ds, 'ds')
     addDim('Topics', inv.topic, 'topic')
     grp.appendChild(sub)

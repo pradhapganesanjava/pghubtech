@@ -90,10 +90,12 @@ anchor_id,tag
 39,pat_ds::array::dfs::dfs-backtrack-undo
 39,pat_group::sum
 39,pat_group::subset-selection
+39,pat_group::sum::subset
 40,pat_topic::backtrack::subset-combination
 40,pat_ds::array::backtrack::subset-combination
 40,pat_group::sum
 40,pat_group::subset-selection
+40,pat_group::sum::subset
 41,pat_ds::array::core::index-as-hash
 42,pat_topic::stack-topic::monotonic-stack
 42,pat_ds::array::stack-topic::monotonic-stack
@@ -465,6 +467,7 @@ anchor_id,tag
 216,pat_ds::array::backtrack::subset-combination
 216,pat_group::sum
 216,pat_group::subset-selection
+216,pat_group::sum::subset
 217,pat_topic::hash::seen-set
 217,pat_ds::array::hash::seen-set
 219,pat_topic::hash::seen-set
@@ -801,6 +804,7 @@ anchor_id,tag
 416,pat_ds::array::dp::knapsack-01
 416,pat_group::sum
 416,pat_group::subset-selection
+416,pat_group::sum::subset
 417,pat_ds::matrices::core::mat-grid-dfs-bfs
 417,pat_topic::dfs::dfs-grid-flood
 417,pat_ds::matrices::dfs::dfs-grid-flood
@@ -890,6 +894,7 @@ anchor_id,tag
 494,pat_ds::array::dp::knapsack-01
 494,pat_group::sum
 494,pat_group::subset-selection
+494,pat_group::sum::subset
 496,pat_topic::stack-topic::monotonic-stack
 496,pat_ds::array::stack-topic::monotonic-stack
 499,pat_ds::matrices::heap::dijkstra
@@ -929,6 +934,7 @@ anchor_id,tag
 532,pat_ds::array::hash::freq-counter
 532,pat_topic::hash::complement-lookup
 532,pat_ds::array::hash::complement-lookup
+532,pat_group::sum
 540,pat_ds::array::binary-search::bs-textbook
 542,pat_topic::bfs::bfs-multi-source
 542,pat_ds::matrices::bfs::bfs-multi-source
@@ -1064,6 +1070,7 @@ anchor_id,tag
 698,pat_ds::array::dp::bitmask-dp
 698,pat_group::sum
 698,pat_group::subset-selection
+698,pat_group::sum::subset
 700,pat_ds::bst::core::bst-insert-delete
 701,pat_ds::bst::core::bst-insert-delete
 703,pat_topic::heap::top-k
@@ -2030,6 +2037,9 @@ anchor_id,tag
 3371,pat_ds::array::hash::freq-counter
 3371,pat_topic::hash::complement-lookup
 3371,pat_ds::array::hash::complement-lookup
+3371,pat_group::sum
+3371,pat_topic::math::sum-formulas
+3371,pat_ds::array::math::sum-formulas
 3381,pat_group::subarray
 3389,pat_topic::hash::freq-counter
 3389,pat_ds::string::hash::freq-counter

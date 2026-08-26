@@ -71,7 +71,8 @@ const BATCH = {
   200: ['pat_ds::matrices::dfs::dfs-grid-flood'],                    // Number of Islands +grid
   1143:['pat_ds::string::dp::dp-2-strings'],                          // LCS
   309: ['pat_ds::array::dp::state-machine-dp'],                      // Stock Cooldown
-  416: ['pat_ds::array::dp::knapsack-01'],                            // Partition Equal Subset
+  416: ['pat_ds::array::dp::knapsack-01',                             // Partition Equal Subset
+        'pat_group::sum::subset'],
   287: ['pat_ds::array::two-pointers::tp-fast-slow'],                // Find Duplicate
   // 11 was keyed twice in this literal (here and in batch 4); the later key
   // silently won, so this tp-converging entry never applied. Consolidated onto
@@ -690,6 +691,27 @@ const BATCH = {
   // intervals, not a signed running total — different micro, see the commit.
   253: ['pat_ds::array::interval::sweep-line-delta',                  // Meeting Rooms II — min rooms IS max
         'pat_topic::interval::sweep-line-delta'],                     //   concurrent; 1094 with every w = 1
+
+  // ── complement-lookup problems missing the Sum / Target group ────────
+  // Every other problem on that micro (1, 167, 560, 653, 974) carries
+  // pat_group::sum; these two were the only gaps.
+  3371:['pat_group::sum',                                             // Largest Outlier — o = S - 2s, then a
+        'pat_topic::math::sum-formulas',                              //   counted lookup (o may equal s).
+        'pat_ds::array::math::sum-formulas'],                         //   The derivation IS closed-form sums:
+                                                                      //   "expected - actual" on the total, the
+                                                                      //   same move as 268 Missing Number.
+  532: ['pat_group::sum'],                                            // K-diff Pairs — same counted-lookup trap
+                                                                      //   at k == 0
+
+  // ── sum::subset — the engine split inside Sum / Target ───────────────
+  // complement-lookup COMPUTES the partner (target - x) and finds it in
+  // O(1); these have to SEARCH for membership. That is the whole gap
+  // between #1 Two Sum and #416. 416 carries the tag on its entry above.
+  39:  ['pat_group::sum::subset'],                                    // Combination Sum (unbounded)
+  40:  ['pat_group::sum::subset'],                                    // Combination Sum II (each once)
+  216: ['pat_group::sum::subset'],                                    // Combination Sum III (fixed k)
+  494: ['pat_group::sum::subset'],                                    // Target Sum (sign assignment)
+  698: ['pat_group::sum::subset'],                                    // Partition to K Equal Sum Subsets
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
