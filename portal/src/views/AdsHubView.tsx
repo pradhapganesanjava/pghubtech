@@ -844,10 +844,19 @@ export default function AdsHubView() {
     loadLists().then(setLists).catch(() => { /* tab may not exist yet */ })
   }, [])
 
-  const listSlugs = useMemo(
-    () => selectedList ? new Set(lists.find(l => l.name === selectedList)?.slugs ?? []) : null,
-    [selectedList, lists],
-  )
+  // Lists nest by `::`, the same separator the tag tree uses — "C3AI::P0" is a
+  // sub-list of "C3AI". Selecting a parent unions it with every descendant, so
+  // C3AI shows all 81 while C3AI::P0 shows only its 20. Mirrors how tag
+  // filtering prefix-matches below.
+  const listSlugs = useMemo(() => {
+    if (!selectedList) return null
+    const out = new Set<string>()
+    for (const l of lists) {
+      if (l.name !== selectedList && !l.name.startsWith(selectedList + '::')) continue
+      for (const s of l.slugs) out.add(s)
+    }
+    return out
+  }, [selectedList, lists])
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()

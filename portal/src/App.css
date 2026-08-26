@@ -4805,6 +4805,14 @@ body.resizing-h * {
 
 /* MyList rows in the sidebar */
 .adshub-list-row { display: flex; align-items: center; }
+/* Sub-list caret. Leaves render an empty one of the same width so every row's
+   label starts at the same x within its depth. */
+.adshub-list-caret {
+  flex: 0 0 14px; width: 14px; padding: 0; background: none; border: none;
+  color: var(--text3); font-size: 9px; line-height: 1; cursor: pointer;
+}
+.adshub-list-caret--leaf { cursor: default; }
+.adshub-list-main .adshub-list-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adshub-list-row.active .adshub-list-main { background: rgba(var(--primary-rgb), .12); color: var(--primary); }
 .adshub-list-main {
   flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
