@@ -451,6 +451,13 @@
       }
     },
     "sum": {
+      "micros": {
+        "subset": {
+          "name": "Subset-Sum Search (Membership Is the Unknown)",
+          "when": "The target is a sum over a SUBSET you have to find — partition into equal halves, assign signs to hit a target, pick combinations adding to k.",
+          "mechanism": "You cannot compute the partner, so you search for it: knapsack DP over (index, remaining target) when each value is used once or unbounded; bitmask DP when k groups must each hit the target; backtracking with sort-and-dedup pruning when the combinations themselves must be listed. O(n · target) for the DP forms, exponential for the listing ones. **This is the dividing line inside Sum / Target**: complement-lookup COMPUTES the partner (target − x) and finds it in O(1), which is why #1 Two Sum is Easy; here membership itself is unknown, which is why #416 Partition Equal Subset Sum is not (#39, #40, #216, #416, #494, #698)."
+        }
+      },
       "ds": {
         "array": {
           "tldr": "Sum/Target on arrays reduces to picking the right blade: sorted two-pointer, prefix-sum + hashmap, or knapsack-style subset DP.",
