@@ -305,6 +305,11 @@
     },
     "rearrange": {
       "micros": {
+        "bucket-chunk": {
+          "name": "Bucket by Key, Then Chunk (K of a Kind)",
+          "when": "Every element carries the key that decides which group it belongs to — its required group size, its duplicate count — and groups are formed from elements sharing that key.",
+          "mechanism": "One pass to bucket by the key, then cut each bucket into pieces of the required shape and flush. No search and no backtracking: the key IS the assignment, so the only work is bookkeeping. In #1282 the key is groupSizes[i], and a bucket for size s is flushed every time it reaches s people — which is also why the answer is never unique and the problem says \"return any\". O(n) time. Contrast with **k-consecutive** in this same family: there a group spans DIFFERENT adjacent keys and the run must be searched for downward from the smallest, so order over the key domain matters; here a group is drawn from ONE key and order never does."
+        },
         "k-consecutive": {
           "name": "Consecutive-Run Consume (Counter + Smallest-First)",
           "when": "Split a multiset into groups of k CONSECUTIVE values — hands of straights, sets of k consecutive numbers, runs of length ≥ k.",
