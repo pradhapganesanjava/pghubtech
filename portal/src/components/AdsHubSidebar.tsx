@@ -29,6 +29,13 @@ interface Props {
   onSelectP2R:       (item: P2RItem) => void
   onCreateP2R:       () => void
   onRefreshP2R:      () => void
+  // Quiz/Recall — the drill deck that opens in the MIDDLE pane. Its entry
+  // point sits at the top of this tab, above the tag tree, because a card is
+  // written from the same place the note it distils lives.
+  recallCount:       number
+  recallActive:      boolean
+  onOpenRecall:      () => void
+  onCreateRecall:    () => void
   // Panel chrome
   collapsed:         boolean
   onCollapse:        () => void
@@ -144,6 +151,7 @@ export default function AdsHubSidebar({
   problems, selectedTags, onToggleTag, selectedCompanies, onToggleCompany,
   lists, selectedList, onSelectList, onDeleteList, onCreateList, onManageList,
   p2rItems, p2rLoading, p2rError, p2rSelectedId, onSelectP2R, onCreateP2R, onRefreshP2R,
+  recallCount, recallActive, onOpenRecall, onCreateRecall,
   collapsed, onCollapse,
 }: Props) {
   const [tab, setTab]       = useState<SideTab>('tags')
@@ -298,6 +306,27 @@ export default function AdsHubSidebar({
       })()}
 
       {/* ── Point2Rem ────────────────────────────────────────── */}
+      {/* Quiz/Recall entry — deliberately ABOVE the tag tree. Points are what
+          you reread; cards are what you answer cold, and the deck opens in the
+          middle pane rather than the detail pane so its references have
+          somewhere to land (the right pane). */}
+      {tab === 'point2rem' && (
+        <div className="recall-launch">
+          <button
+            className={`recall-launch-btn${recallActive ? ' active' : ''}`}
+            onClick={onOpenRecall}
+            title="Open the Quiz / Recall deck in the middle pane — questions you answer from memory, with the problems and points they came from"
+          >
+            <span className="recall-launch-label">🎯 Quiz / Recall</span>
+            <span className="tree-cnt">{recallCount}</span>
+          </button>
+          <button
+            className="recall-launch-new"
+            onClick={onCreateRecall}
+            title="Write a new recall card"
+          >＋</button>
+        </div>
+      )}
       {tab === 'point2rem' && (
         <Point2RemTree
           items={p2rItems}

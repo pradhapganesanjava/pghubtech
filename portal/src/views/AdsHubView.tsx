@@ -33,8 +33,13 @@ import {
   loadPoint2Rem, getCachedPoint2Rem, savePoint2Rem, deletePoint2Rem, emptyP2RItem,
 } from '../adapters/point2remRepo'
 import type { P2RItem } from '../adapters/point2remRepo'
+import {
+  loadRecall, getCachedRecall, saveRecall, deleteRecall, emptyRecallItem,
+} from '../adapters/recallRepo'
+import type { RecallItem } from '../adapters/recallRepo'
 import AdsHubSidebar from '../components/AdsHubSidebar'
 import Point2RemDetail from '../components/Point2RemDetail'
+import RecallDeck from '../components/RecallDeck'
 import AdsLineage from '../components/AdsLineage'
 import CodePanel from '../components/CodePanel'
 import HandwritingPad from '../components/HandwritingPad'
@@ -423,6 +428,72 @@ export default function AdsHubView() {
     setP2rSel(null)
     toast('Point deleted', 'success')
   }
+  // Open a Point2Rem note *as a reference* — from a Recall card, say. Unlike
+  // openP2R this never toggles: clicking a reference always means "show me
+  // that", never "close it".
+  function openP2RRef(item: P2RItem) {
+    setSelected(null)
+    setP2rEditing(false)
+    setP2rSel(item)
+  }
+
+  // ── Quiz / Recall ─────────────────────────────────────────────────────────
+  // The drill deck. Lives in the MIDDLE pane (adsMode === 'recall') rather
+  // than the detail pane, so a card's references — LC problems and Point2Rem
+  // notes — have the right-hand pane to open into without unseating the card.
+  const recallCached = getCachedRecall()
+  const [recallItems, setRecallItems]     = useState<RecallItem[]>(recallCached ?? [])
+  const [recallLoading, setRecallLoading] = useState(recallCached == null)
+  const [recallError, setRecallError]     = useState('')
+  const [recallId, setRecallId]           = useState<string | null>(null)
+  // A blank card handed to the deck by ＋ New; cleared once the form closes.
+  const [recallDraft, setRecallDraft]     = useState<RecallItem | null>(null)
+
+  async function fetchRecall(force = false) {
+    setRecallLoading(true); setRecallError('')
+    try {
+      setRecallItems(await loadRecall(force))
+    } catch (e) {
+      setRecallError((e as Error).message)
+    } finally {
+      setRecallLoading(false)
+    }
+  }
+  useEffect(() => {
+    if (recallCached != null) return   // module cache — use the deck's ↻ to reload
+    void fetchRecall()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Opening the deck un-maximizes any open detail: the middle column is where
+  // the deck renders, and viewerExpanded hides it.
+  function openRecall() {
+    setViewerExpanded(false)
+    setAdsMode('recall')
+  }
+  function newRecall() {
+    openRecall()
+    setRecallDraft(emptyRecallItem())   // fresh object each time → the form reopens
+  }
+  async function handleSaveRecall(draft: RecallItem) {
+    const saved = await saveRecall(draft)   // throws → the form shows the error
+    setRecallItems(getCachedRecall() ?? [])
+    toast('Card saved', 'success')
+    return saved
+  }
+  async function handleDeleteRecall(id: string) {
+    await deleteRecall(id)
+    setRecallItems(getCachedRecall() ?? [])
+    toast('Card deleted', 'success')
+  }
+  // Card tags are their own vocabulary (same shape as Point2Rem's), so the
+  // editor suggests from the deck plus whatever the points already use.
+  const recallKnownTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const i of recallItems) for (const t of i.tags) set.add(t)
+    for (const i of p2rItems)    for (const t of i.tags) set.add(t)
+    return [...set].sort()
+  }, [recallItems, p2rItems])
+
   // Tag suggestions in the editor come from the points themselves — Point2Rem
   // tags are their own vocabulary, not the problems' lineage tags.
   const p2rKnownTags = useMemo(() => {
@@ -440,7 +511,7 @@ export default function AdsHubView() {
       diff, customOnly, search, showTopics,
     })
   }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics])
-  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns'>('browse')
+  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns' | 'recall'>('browse')
   // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
   // in state (not pushed imperatively) so it survives leaving and re-entering
   // Patterns mode, which remounts the iframe.
@@ -760,9 +831,21 @@ export default function AdsHubView() {
   // because the parse effect's setSelected hasn't re-rendered yet) would
   // wipe the ?id= out of the URL BEFORE the parse effect could honour it.
   const [urlApplied, setUrlApplied] = useState(false)
+  // Last ?recall= id we acted on. apply() re-runs on every problems change,
+  // and without this the deck would yank the user back in after they'd left it.
+  const recallUrlSeen = useRef<string | null>(null)
   useEffect(() => {
     function apply() {
       const sp = new URLSearchParams(window.location.search)
+      // ?recall=<card-id> — open the deck parked on that card.
+      const rc = sp.get('recall') ?? ''
+      if (!rc) recallUrlSeen.current = null
+      else if (rc !== recallUrlSeen.current) {
+        recallUrlSeen.current = rc
+        setRecallId(rc)
+        setViewerExpanded(false)
+        setAdsMode('recall')
+      }
       let id = sp.get('id') ?? ''
       let q  = sp.get('q')  ?? ''
       // User's documented format: ?q={id:223} — pull the id out of q.
@@ -777,7 +860,9 @@ export default function AdsHubView() {
           // Deep links land in expanded/maximized view — the visitor came
           // for THIS problem, give it the full pane (matches the behavior
           // when a typed search narrows to one match, see auto-open below).
-          setViewerExpanded(true)
+          // Unless ?recall= came along: then the problem is the card's
+          // *reference*, and maximizing would hide the deck that sent them.
+          if (!rc) setViewerExpanded(true)
         }
       }
       // Open the gate only once problems are loaded — otherwise the sync
@@ -805,6 +890,23 @@ export default function AdsHubView() {
       window.history.replaceState({}, '', next)
     }
   }, [selected?.frontendId, urlApplied])
+
+  // …and the open card as ?recall=<id> while the deck is the middle pane, so
+  // "the one about consecutive windows" is a link you can send yourself.
+  // Reads the query fresh, so it composes with the ?id= effect above rather
+  // than racing it.
+  useEffect(() => {
+    if (!urlApplied) return
+    if (!/\/adshub\b/i.test(window.location.pathname)) return
+    const sp = new URLSearchParams(window.location.search)
+    if (adsMode === 'recall' && recallId) sp.set('recall', recallId)
+    else                                  sp.delete('recall')
+    const qs = sp.toString()
+    const next = window.location.pathname + (qs ? '?' + qs : '')
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.replaceState({}, '', next)
+    }
+  }, [adsMode, recallId, urlApplied])
 
   async function refresh() {
     if (refreshing) return
@@ -1558,6 +1660,10 @@ export default function AdsHubView() {
           onSelectP2R={openP2R}
           onCreateP2R={newP2R}
           onRefreshP2R={() => void fetchP2R(true)}
+          recallCount={recallItems.length}
+          recallActive={adsMode === 'recall'}
+          onOpenRecall={openRecall}
+          onCreateRecall={newRecall}
           collapsed={sidebarHidden}
           onCollapse={() => { if (viewerExpanded) setViewerExpanded(false); else setLeftColl(c => !c) }}
         />
@@ -1603,6 +1709,15 @@ export default function AdsHubView() {
               onClick={() => { setAdsMode('patterns'); setSelected(null) }}
               title="DS → micro-pattern reference"
             >📐 Patterns</button>
+            {/* Recall mode — the drill deck. Unlike Patterns it deliberately
+                KEEPS any open problem/note: a card's whole point is to be read
+                next to the problem it came from. Its other entry point is the
+                link above the Point2Rem tree in the sidebar. */}
+            <button
+              className={`adshub-diff-pill${adsMode === 'recall' ? ' active' : ''}`}
+              onClick={openRecall}
+              title="Quiz / Recall — questions you answer from memory"
+            >🎯 Recall</button>
           </div>
           {adsMode === 'browse' && <>
           <button
@@ -1788,6 +1903,16 @@ export default function AdsHubView() {
               ...(adsMode === 'patterns' || adsMode === 'lineage'
                 ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 56px)' }
                 : {}),
+              // Recall: same flex-column shape, but bounded by the SPLIT
+              // (100%) rather than by calc(100vh - 56px). The viewport-based
+              // cap forgets the toolbar sitting above this column — it comes
+              // out ~52px too tall (more when the toolbar wraps), so the
+              // bottom of the deck lands past the split's clip edge and the
+              // ◀ Prev / Next ▶ row becomes unreachable. 100% is exactly the
+              // space the column actually has, whatever the toolbar's height.
+              ...(adsMode === 'recall'
+                ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', maxHeight: '100%' }
+                : {}),
             }}
           >
             {adsMode === 'lineage' ? (
@@ -1823,6 +1948,28 @@ export default function AdsHubView() {
                   onLoad={sendPatternsTheme}
                 />
               </>
+            ) : adsMode === 'recall' ? (
+              <RecallDeck
+                items={recallItems}
+                loading={recallLoading}
+                error={recallError}
+                problems={problems}
+                points={p2rItems}
+                knownTags={recallKnownTags}
+                currentId={recallId}
+                onCurrentId={setRecallId}
+                // Both reference kinds land in the RIGHT pane, leaving the
+                // deck exactly where it was in the middle.
+                onOpenProblem={p => setSelected(p)}
+                onOpenPoint={openP2RRef}
+                onSave={handleSaveRecall}
+                onDelete={handleDeleteRecall}
+                onRefresh={() => void fetchRecall(true)}
+                onClose={() => setAdsMode('browse')}
+                onWiden={() => setListRatio(r => r >= 78 ? 60 : 85)}
+                draftSeed={recallDraft}
+                onDraftDone={() => setRecallDraft(null)}
+              />
             ) : loading ? (
               <div className="browse-stream-init">
                 <div className="browse-stream-spinner" />
