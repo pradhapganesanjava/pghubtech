@@ -238,6 +238,48 @@ const LISTS = {
     146, 981, 341, 393,                 // Design & iterators
     215, 973, 68, 224, 127, 133, 819, 759,  // Safety net
   ],
+  // Intuit — mapped from round reports rather than a published list, so each
+  // entry is a judgement call about which LC problem the description means.
+  // Sub-lists nest on `::` (see AdsHubView's listSlugs union), so selecting
+  // 'Intuit' shows all 46 and 'Intuit::P0' only its 24.
+  //
+  // Tier 1 -> P0, Tier 2 -> P1. There is no P2: the source has two tiers, and
+  // inventing a third would be noise.
+  //
+  // 63 Unique Paths II answered a phrase in BOTH tiers ("matrix path finding"
+  // and "robot path count in a binary grid"); kept in P0 only so the tiers
+  // stay disjoint and can be worked in order.
+  //
+  // Descriptions with no direct or indirect LC analogue are dropped, per the
+  // brief: the SQL and pandas exercises, `ls -l` parsing, the open-ended
+  // scheduler/AI-conversation design rounds, "debug this recursive function",
+  // and "one LC-medium, priority-queue based" (too vague to pin down).
+  'Intuit::P0': [
+    66, 20, 72, 3, 23, 21, 56,          // arrays / strings / lists / intervals
+    146, 460,                            // LRU -> LFU
+    1091, 63,                            // 0/1-grid pathing
+    929, 468,                            // string normalisation / validation
+    198, 53,                             // no-two-adjacent, Kadane
+    1971, 210,                           // BFS reachability, lexicographic topo
+    139,                                 // word break
+    206, 876, 25,                        // linked-list trio
+    1647, 1312, 1334,                    // freq deletions, palindrome cost, city distance
+  ],
+  'Intuit::P1': [
+    1188,                                // producer / consumer
+    329, 105, 104,                       // matrix path DP, tree build, tree height
+    151, 128, 26, 80, 46, 1,             // strings / arrays / permutations / two-sum
+    1018, 85, 34, 42, 207, 37, 36,       // bit-prefix, maximal rectangle, bounds BS, RW, cycle, sudoku
+    622, 1411, 38, 819, 621,             // queue design, grid colouring, look-and-say, stop words, scheduler
+  ],
+  // Root — the union, so 'Intuit' alone shows everything. Listed explicitly
+  // rather than derived: seed-lists resolves each name independently.
+  'Intuit': [
+    66, 20, 72, 3, 23, 21, 56, 146, 460, 1091, 63, 929, 468, 198, 53, 1971,
+    210, 139, 206, 876, 25, 1647, 1312, 1334,
+    1188, 329, 105, 104, 151, 128, 26, 80, 46, 1, 1018, 85, 34, 42, 207, 37,
+    36, 622, 1411, 38, 819, 621,
+  ],
   'Top Interview 150': [
     88,27,26,80,169,189,121,122,55,45,274,380,238,134,135,42,13,12,58,14,151,6,28,68,
     125,392,167,11,15,
