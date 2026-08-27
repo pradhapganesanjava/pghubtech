@@ -1553,6 +1553,8 @@ anchor_id,tag
 1277,pat_ds::matrices::dp::dp-2d-square
 1282,pat_topic::hash::freq-counter
 1282,pat_ds::array::hash::freq-counter
+1282,pat_group::rearrange
+1282,pat_group::rearrange::bucket-chunk
 1283,pat_ds::array::binary-search::bs-on-answer
 1284,pat_ds::matrices::bfs::bfs-encoded-state
 1291,pat_ds::array::bfs::bfs-encoded-state
@@ -1945,6 +1947,10 @@ anchor_id,tag
 2559,pat_ds::array::prefix-sum::ps-1d
 2588,pat_group::subarray
 2607,pat_group::subarray
+2610,pat_ds::array::hash::freq-counter
+2610,pat_topic::hash::freq-counter
+2610,pat_group::rearrange
+2610,pat_group::rearrange::bucket-chunk
 2611,pat_ds::array::greedy::exchange-argument
 2616,pat_topic::binary-search::bs-on-answer-compound
 2616,pat_ds::array::binary-search::bs-on-answer-compound

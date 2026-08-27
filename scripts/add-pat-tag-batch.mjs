@@ -712,6 +712,18 @@ const BATCH = {
   216: ['pat_group::sum::subset'],                                    // Combination Sum III (fixed k)
   494: ['pat_group::sum::subset'],                                    // Target Sum (sign assignment)
   698: ['pat_group::sum::subset'],                                    // Partition to K Equal Sum Subsets
+
+  // ── rearrange::bucket-chunk — "k of a kind" grouping ─────────────────
+  // The key each element carries IS its group assignment, so there is no
+  // search: bucket by the key, flush a group whenever a bucket reaches the
+  // required shape. Sibling of k-consecutive, where a group instead spans
+  // adjacent DIFFERENT keys and has to be searched for.
+  1282:['pat_group::rearrange',                                       // Group the People Given the Group
+        'pat_group::rearrange::bucket-chunk'],                        //   Size — key is groupSizes[i]
+  2610:['pat_ds::array::hash::freq-counter',                          // Convert Array Into 2D Array —
+        'pat_topic::hash::freq-counter',                              //   row i takes every value with
+        'pat_group::rearrange',                                       //   count > i; the count is the key
+        'pat_group::rearrange::bucket-chunk'],
 }
 
 // ── env + auth (matches the convention used by sibling scripts) ──────────
