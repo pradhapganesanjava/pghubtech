@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "updated": "2026-08-26",
+  "_readme": [
+    "Recall — the quiz/drill deck behind AdsHub's 🎯 Quiz / Recall page.",
+    "",
+    "A Point2Rem note is prose you REREAD. A Recall card is a question you",
+    "ANSWER FROM MEMORY: the small reusable move that shortens the code, or the",
+    "pattern confusion worth drilling until it's automatic. Cards open in the",
+    "middle pane; their linked problems and Point2Rem notes open in the right",
+    "pane so a reference never loses your place in the deck.",
+    "",
+    "THIS FILE IS ONLY A SEED. The live cards are rows in the 'Recall' tab of",
+    "the Google Sheet, created + edited from the portal (＋ New / ✎ / 🗑). This",
+    "file is copied into that tab once, when the tab is first created; editing",
+    "it afterwards changes nothing for a sheet that already exists.",
+    "",
+    "Card fields:",
+    "  id        required, unique, kebab-case — used for the ?recall= deep link",
+    "  question  required, the prompt you answer cold — keep it one or two lines",
+    "  hint      optional nudge, revealed before the answer",
+    "  answer    markdown by default; set format:'html' to write raw HTML",
+    "  kind      'trick' (default) | 'confusion' | 'concept'",
+    "  tags      ::-hierarchical paths; drives the grouping. [] ⇒ 'untagged'",
+    "  problems  LC frontend ids — open in the right pane",
+    "  points    Point2Rem ids — open in the right pane",
+    "  links     [{ label, url }] external references",
+    "  format    'md' (default) | 'html'",
+    "  updated   free-form date string, shown on the card"
+  ],
+  "items": [
+    {
+      "id": "consecutive-window-by-span",
+      "question": "A window `a[i..j]` holds distinct values. How do you check it's a run of **consecutive integers** without walking it?",
+      "hint": "Compare two spans: the one in value-land and the one in index-land.",
+      "kind": "trick",
+      "tags": ["_ds::array::window", "_prob::subarray::consecutive"],
+      "problems": ["128", "298", "594", "1497"],
+      "updated": "2026-08-26",
+      "answer": "**Value-span must equal index-span.**\n\n```\nmax - min + 1 == j - i + 1      // == k, the window length\n```\n\nOn a *sorted* window that's just `a[j] - a[i] + 1 == k`. One subtraction instead of a `for` loop doing `a[t-1] + 1 == a[t]`.\n\nWhy it works: `k` distinct integers can only fit inside a span of `k` if they fill it completely — there is no room for a gap. Both halves of the premise matter:\n\n- **Distinct** — without it `[1,1,2]` has span 2 and length 3… and `[2,2,3,3]` passes for the wrong reason. Pair the check with a `Set`/frequency count when duplicates are possible.\n- **Span, not order** — `max-min+1 == k` needs *no* sort at all. That's the version to reach for on an unsorted window: track running `min`/`max` and a `Set` size.\n\nThe same identity read backwards is the whole of **Longest Consecutive Sequence**: put everything in a set, start a run only at a value with no `v-1`, and walk up."
+    },
+    {
+      "id": "greedy-or-dfs-memo",
+      "question": "It smells like DFS + memo over states — but greedy might be three lines. What's the 30-second test?",
+      "hint": "Ask what a wrong-looking local choice could ever buy you later.",
+      "kind": "confusion",
+      "tags": ["_algo::greedy", "_algo::dp::memo", "_meta::pattern-choice"],
+      "problems": ["45", "55", "134", "435", "621"],
+      "points": ["dp-state-checklist"],
+      "updated": "2026-08-26",
+      "answer": "Greedy is correct exactly when **taking the locally-best option never closes a door**. Two questions settle it:\n\n1. **Can a worse choice now be repaid later?** If yes → you need DP: the state has to remember what you gave up. If no → greedy.\n2. **Can I state an exchange argument in one line?** \"Swap any optimal solution's first choice for mine and it's no worse.\" If that sentence writes itself, greedy is safe.\n\n| Shape | Answer |\n| --- | --- |\n| Reachability / min steps on a line (`Jump Game I/II`) | **Greedy** — the farthest reach dominates; nothing is repaid |\n| Max non-overlapping intervals | **Greedy by earliest end** |\n| *Weighted* non-overlapping intervals | **DP** — a fat interval can be worth two thin ones |\n| Pick k items, each with a cost *and* a cap | **DP** — the cap is state |\n| Circular gas station | **Greedy** — a failing start means every station in it fails |\n\nTiebreaker under pressure: if you can't name the state in one line, greedy is probably the intended solution and you're overbuilding. If you *can* name it but the greedy choice needs a \"…unless\", it's DP.\n\nCheap safety net: write the greedy, then brute-force N ≤ 10 in your head against one adversarial input built to punish the local choice."
+    },
+    {
+      "id": "prefix-sum-count-seed",
+      "question": "Count subarrays summing to `k`. What's in the hash map, and what does it start with?",
+      "hint": "Not sums-seen. Counts of sums seen — and one of them exists before you start.",
+      "kind": "trick",
+      "tags": ["_ds::array::prefix-sum", "_prob::subarray::count"],
+      "problems": ["560", "523", "974", "930"],
+      "updated": "2026-08-26",
+      "answer": "`map: prefixSum → how many times it has occurred`, seeded **`{0: 1}`**.\n\n```\nrun = 0; map = {0: 1}; ans = 0\nfor x in a:\n    run += x\n    ans += map.get(run - k, 0)   // count BEFORE inserting\n    map[run] = map.get(run, 0) + 1\n```\n\nThe two details that break it if you get them wrong:\n\n- **`{0:1}`** is the empty prefix. Without it you miss every subarray that starts at index 0.\n- **Count, then insert.** Inserting first lets a zero-length subarray match itself when `k == 0`.\n\nSame skeleton, different key — that's the whole family:\n\n| Question | Map key |\n| --- | --- |\n| Sum == k | `run` |\n| Divisible by k | `run % k` (normalize negatives: `((r % k) + k) % k`) |\n| Binary array, equal 0s/1s | `run` with `0 → -1` |\n| *Longest* rather than count | store **first** index only — never overwrite |"
+    },
+    {
+      "id": "exactly-k-via-at-most",
+      "question": "\"Exactly K distinct\" in a sliding window. Why does nobody write it directly?",
+      "hint": "Two cheap windows beat one clever one.",
+      "kind": "trick",
+      "tags": ["_ds::array::sliding-window", "_prob::subarray::count"],
+      "problems": ["992", "1248", "930"],
+      "points": ["sliding-window-shrink-rule"],
+      "updated": "2026-08-26",
+      "answer": "Because the direct version needs two shrink pointers moving at different rates, and almost nobody gets it right under time pressure. Decompose instead:\n\n```\nexactly(K) = atMost(K) - atMost(K - 1)\n```\n\n`atMost` is the plain window everyone can write: expand right, shrink while invalid, and add `right - left + 1` — the number of subarrays *ending* at `right`. Three lines of reuse, called twice.\n\nThis generalises past \"distinct\": it works for any predicate that's **monotone** in the parameter — at-most-K odds (`1248`), at-most-K sum, at-most-K replacements. If `atMost(K)` includes everything `atMost(K-1)` does, the subtraction is exact.\n\nSee [[sliding-window-shrink-rule]] for the shrink table this sits on top of."
+    },
+    {
+      "id": "binary-search-the-answer",
+      "question": "The answer is a number, brute force is O(range × n), and there's no obvious DP. What should the shape of the solution be?",
+      "hint": "You're not searching the array. You're searching the answer.",
+      "kind": "confusion",
+      "tags": ["_algo::binary-search::on-answer", "_meta::pattern-choice"],
+      "problems": ["875", "1011", "410", "1482", "774"],
+      "updated": "2026-08-26",
+      "answer": "**Binary search on the answer** — the pattern that hides behind DP-looking minimax wording (\"minimize the largest…\", \"the minimum speed such that…\").\n\nThe trigger is monotonicity: build `feasible(x)` and check that it's a step function — `false false false | true true true`. If a bigger `x` never makes things harder, the boundary is binary-searchable.\n\n```\nlo, hi = minPossible, maxPossible\nwhile lo < hi:\n    mid = lo + (hi - lo) // 2\n    if feasible(mid): hi = mid      // mid may be the answer — keep it\n    else:              lo = mid + 1\nreturn lo\n```\n\nThe whole difficulty moves into `feasible`, which is usually a greedy one-pass count. Cost drops to O(n log range).\n\nGiveaway phrasings: *minimize the maximum*, *maximize the minimum*, *smallest capacity/speed/rate such that*, *split into m parts*.\n\nContrast with real DP: if the answer depends on **which** items you took (not just how many / how large), monotonicity fails and this doesn't apply."
+    },
+    {
+      "id": "monotonic-stack-pop-moment",
+      "question": "Monotonic stack: where exactly does the answer get computed?",
+      "hint": "Not on push.",
+      "kind": "trick",
+      "tags": ["_ds::stack::monotonic", "_prob::array::next-greater"],
+      "problems": ["496", "739", "84", "42", "907"],
+      "updated": "2026-08-26",
+      "answer": "**At the pop.** The element being popped has just met the thing that beats it — that's the only moment when both of its boundaries are known.\n\n```\nfor i, x in enumerate(a):\n    while stack and a[stack[-1]] < x:     // < or <= decides tie handling\n        mid = stack.pop()\n        # RIGHT boundary = i, LEFT boundary = stack[-1] (or -1 if empty)\n        answer(mid, left=stack[-1] if stack else -1, right=i)\n    stack.append(i)\n```\n\nTwo things to fix in your head, because they're the only real decisions:\n\n- **Store indices, not values.** You almost always need the width `right - left - 1`.\n- **Direction of the invariant.** Decreasing stack → *next greater*. Increasing stack → *next smaller*, which is what `Largest Rectangle in Histogram` and `Sum of Subarray Minimums` want.\n\nAnd the leftovers: after the loop the stack still holds elements that never got beaten. Either drain them against a sentinel (`append 0` / `append ∞` to the input) or handle them in a second loop — forgetting this is the classic bug in `84`."
+    },
+    {
+      "id": "index-as-hashmap",
+      "question": "Values are in `[1..n]` and the interviewer says **O(1) extra space**. What's the storage you already have?",
+      "hint": "The array itself has n slots and you're allowed to scribble in them.",
+      "kind": "trick",
+      "tags": ["_ds::array::in-place", "_prob::array::missing-duplicate"],
+      "problems": ["41", "268", "287", "442", "448"],
+      "updated": "2026-08-26",
+      "answer": "**The array is the hash map** — value `v` maps to index `v - 1`. Two ways to write into it:\n\n1. **Sign marking** — on seeing `v`, do `a[abs(v)-1] *= -1`. A slot that's still positive at the end was never visited ⇒ that index+1 is missing; a slot already negative when you get there ⇒ duplicate. Non-destructive to magnitudes.\n2. **Cyclic sort** — while `a[i] != i+1` and the target slot doesn't already hold its own value, `swap(a[i], a[a[i]-1])`. Each swap places one value permanently, so the whole thing is O(n) despite the nested-looking loop. Then one pass finds the first `i` with `a[i] != i+1`.\n\nCyclic sort is the better default when you need the *smallest* missing (`41`), because after it the array is self-indexing and the answer is the first mismatch.\n\nGuardrails: junk outside `[1..n]` must be ignored (in `41`, sweep it to `n+1` first), and the swap loop needs the \"already correct\" check or it spins forever on duplicates."
+    },
+    {
+      "id": "backtracking-duplicate-skip",
+      "question": "Subsets / combinations with a duplicate-containing input. What's the one line that kills duplicate results?",
+      "hint": "Sort first — then it's about siblings, not ancestors.",
+      "kind": "trick",
+      "tags": ["_algo::backtracking", "_prob::combinatorics::subsets"],
+      "problems": ["47", "40", "90", "491"],
+      "updated": "2026-08-26",
+      "answer": "Sort the input, then inside the loop:\n\n```\nfor i in range(start, n):\n    if i > start and a[i] == a[i-1]:\n        continue        # same value already tried at THIS depth\n    ...\n```\n\nThe subtlety is `i > start`, not `i > 0`. You're forbidding a duplicate from being **the same-position sibling** twice; you are *not* forbidding it from appearing deeper in the branch. `i > 0` would refuse `[1,1]` entirely.\n\nFor permutations (`47`) there's no `start`, so the same idea reads through the `used[]` array:\n\n```\nif a[i] == a[i-1] and not used[i-1]: continue\n```\n\n— take duplicates strictly left-to-right, so only one ordering of an equal group survives.\n\nWhen the input can't be sorted (`491`, subsequences must keep order), fall back to a per-level `set` of values already tried at this depth. Same idea, different bookkeeping."
+    },
+    {
+      "id": "union-find-or-dfs",
+      "question": "Connectivity question. Union-Find or DFS — what decides it?",
+      "hint": "Ask *when* the edges arrive.",
+      "kind": "confusion",
+      "tags": ["_ds::graph::union-find", "_ds::graph::traversal", "_meta::pattern-choice"],
+      "problems": ["547", "684", "721", "1319", "261"],
+      "points": ["valid-tree-connected-and-acyclic", "undirected-cycle-parent-rule"],
+      "updated": "2026-08-26",
+      "answer": "**Time.** DFS/BFS needs the whole graph before it starts; Union-Find answers as edges arrive.\n\n- Graph is **given up front**, one connectivity question → **DFS/BFS**. Shorter, no boilerplate.\n- Edges **stream in**, or the question is *\"which edge first causes…\"* → **Union-Find**. `684 Redundant Connection` is exactly this: the answer is the first edge whose two endpoints already share a root.\n- **Merging identities** (accounts, emails, equations) → Union-Find, because the merge *is* the problem.\n- You need the actual **path**, or the traversal order matters → DFS. Union-Find knows *whether* two nodes are connected, never *how*.\n\nSize check: with path compression + union by rank it's effectively O(α(n)) ≈ O(1), so cost is never the deciding factor — shape is.\n\nOne trap worth memorising: on an **undirected** graph, DFS cycle detection must skip the parent edge, not just \"any visited neighbour\" — see [[undirected-cycle-parent-rule]]."
+    },
+    {
+      "id": "complement-reframe",
+      "question": "\"Minimum removals/changes to make X true.\" Why is that almost never the problem you should solve?",
+      "hint": "n minus something.",
+      "kind": "concept",
+      "tags": ["_meta::reframe", "_algo::dp::lis"],
+      "problems": ["300", "1143", "1187", "1671", "516"],
+      "updated": "2026-08-26",
+      "answer": "Because `min removals = n − max keep`, and **max keep** is usually a pattern you already know while **min removals** is usually nothing at all.\n\n| Asked as | Actually |\n| --- | --- |\n| Min deletions to make it sorted | `n − LIS` |\n| Min ops to make two strings equal | `n + m − 2·LCS` |\n| Min moves to make it a mountain | LIS from left + LIS from right, joined at each peak |\n| Min chars to delete for a palindrome | `n − LPS` = `n − LCS(s, reverse(s))` |\n\nThe move: whenever the objective is *destructive* (remove, delete, change), flip it to the *constructive* twin (keep, match, build) and look again. Half the \"hard DP\" wording in interviews is just this disguise.\n\nSame reflex applies to counting: \"count arrangements with at least one X\" is nearly always `total − count(no X)`."
+    },
+    {
+      "id": "fast-slow-entry-point",
+      "question": "Floyd's cycle detection found a meeting point. How do you get from there to the cycle's **entry** node?",
+      "hint": "Send one pointer home.",
+      "kind": "trick",
+      "tags": ["_ds::linked-list::two-pointer", "_prob::cycle::detect"],
+      "problems": ["141", "142", "287", "202"],
+      "updated": "2026-08-26",
+      "answer": "Reset **one** pointer to the head, then advance both **one step at a time**. They meet at the entry.\n\n```\nslow = fast = head\nwhile fast and fast.next:\n    slow, fast = slow.next, fast.next.next\n    if slow is fast: break\nelse: return None            # no cycle\n\nslow = head\nwhile slow is not fast:\n    slow, fast = slow.next, fast.next\nreturn slow                  # cycle entry\n```\n\nWhy: let `a` = head→entry, `b` = entry→meeting. At the meeting the slow pointer has walked `a + b` and the fast one twice that, so the extra `a + b` it covered is a whole number of loops — which makes the distance from the meeting point back around to the entry exactly `a`. Same distance as head→entry, hence the tie.\n\nWorth knowing because it's the O(1)-space answer to `287 Find the Duplicate Number`, where the \"linked list\" is the *implicit* graph `i → a[i]` and nobody hands you a `next` pointer."
+    },
+    {
+      "id": "two-heaps-median",
+      "question": "Running median of a stream. What's the structure, and what's the invariant that keeps it honest?",
+      "hint": "Two of them, facing each other.",
+      "kind": "trick",
+      "tags": ["_ds::heap::two-heaps", "_prob::stream::median"],
+      "problems": ["295", "480", "502"],
+      "points": ["heap-when-k-matters"],
+      "updated": "2026-08-26",
+      "answer": "A **max-heap of the low half** and a **min-heap of the high half**, with the median sitting at the two tops.\n\nInvariants, both required:\n\n1. `max(low) ≤ min(high)` — every element on the left is ≤ every element on the right.\n2. `0 ≤ len(low) − len(high) ≤ 1` — sizes stay balanced, low allowed one extra.\n\nThe safe insert is always **push-then-transfer**, never a comparison branch:\n\n```\npush x onto low\npush low.pop() onto high        # keeps invariant 1 automatically\nif len(high) > len(low):\n    push high.pop() onto low    # restores invariant 2\n```\n\nRead: odd total → `low.top()`; even → the average of the two tops.\n\nFor the *windowed* version (`480`) the missing piece is deletion, which heaps don't do — use lazy deletion (a `to_remove` counter map, discard stale tops before reading) or swap in a balanced BST / ordered multiset."
+    },
+    {
+      "id": "bit-lowest-set-bit",
+      "question": "`n & (n-1)` and `n & -n` — which is which, and when do you reach for them?",
+      "hint": "One removes, one isolates.",
+      "kind": "trick",
+      "tags": ["_ds::bit::manipulation"],
+      "problems": ["191", "231", "338", "260"],
+      "updated": "2026-08-26",
+      "answer": "- **`n & (n-1)` clears the lowest set bit.** Loop it and the iteration count is the popcount — O(set bits) instead of O(32). `n & (n-1) == 0` ⇒ `n` is a power of two (guard `n > 0`).\n- **`n & -n` isolates the lowest set bit** (leaves just that one bit). This is the splitter in `260 Single Number III`: XOR everything, take any set bit of the result, and partition the input on it so the two singletons land in different buckets.\n\nBoth fall out of two's complement: `-n` is `~n + 1`, so `n` and `-n` agree on exactly one bit — the lowest set one — and `n-1` flips that bit plus every zero below it.\n\nThe third of the trio, for counting bits over a whole range (`338`): `bits[i] = bits[i >> 1] + (i & 1)`. DP in one line."
+    },
+    {
+      "id": "rotate-via-transpose",
+      "question": "Rotate a square matrix 90° clockwise in place. What are the two passes?",
+      "hint": "Neither of them is a rotation.",
+      "kind": "trick",
+      "tags": ["_ds::matrix::in-place", "_prob::matrix::rotate"],
+      "problems": ["48", "867", "54"],
+      "updated": "2026-08-26",
+      "answer": "**Transpose, then reverse each row.**\n\n```\nfor i in range(n):\n    for j in range(i+1, n):          # j starts at i+1 — not 0\n        a[i][j], a[j][i] = a[j][i], a[i][j]\nfor row in a:\n    row.reverse()\n```\n\nCounter-clockwise is the same first pass, then **reverse the column order** (i.e. reverse the list of rows) instead.\n\nThe one bug worth pre-empting: `j` must start at `i+1`. Starting at `0` swaps every pair twice and hands you the original matrix back.\n\nWhy bother over the four-way ring rotation: two flat passes with no index arithmetic to get wrong, and it reads correctly the first time under pressure."
+    }
+  ]
+}

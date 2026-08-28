@@ -4946,3 +4946,183 @@ body.resizing-h * {
 .p2r-hint { text-transform: none; letter-spacing: normal; font-weight: 400; color: var(--text3); font-size: 11px; }
 .p2r-hint.over { color: var(--danger); font-weight: 600; }
 .p2r-form-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+
+/* ── Quiz / Recall (sidebar launcher + middle-pane deck) ────────────────── */
+/* Launcher — sits ABOVE the Point2Rem tag tree. Deliberately heavier than a
+   tag row: it changes what the MIDDLE pane shows, it isn't a filter. */
+.recall-launch {
+  display: flex; align-items: stretch; gap: 4px; padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.recall-launch-btn {
+  flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 7px 10px; border-radius: 7px; cursor: pointer; text-align: left;
+  font-size: 12.5px; font-weight: 600; line-height: 1.3;
+  color: var(--text); background: var(--bg3);
+  border: 1px solid var(--border);
+}
+.recall-launch-btn:hover { border-color: var(--primary); color: var(--primary); }
+.recall-launch-btn.active {
+  background: rgba(var(--primary-rgb), .14); border-color: var(--primary); color: var(--primary);
+}
+.recall-launch-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recall-launch-new {
+  width: 30px; border-radius: 7px; cursor: pointer; font-size: 14px;
+  color: var(--text2); background: var(--bg3); border: 1px solid var(--border);
+}
+.recall-launch-new:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Deck chrome */
+.recall-hd { display: flex; align-items: center; gap: 8px; }
+/* min-width:0 — without it the flex item refuses to shrink below its text and
+   the ellipsis never kicks in when the column is narrow (detail pane open). */
+.recall-hd .doc-detail-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recall-hd-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.recall-new-btn { white-space: nowrap; }
+.recall-progress {
+  font-size: 11px; color: var(--text3, var(--text2)); white-space: nowrap;
+  font-variant-numeric: tabular-nums; padding: 0 2px;
+}
+
+.recall-filters {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.recall-filters .col-search { flex: 1 1 180px; min-width: 120px; }
+.recall-tag-select { flex: 0 1 190px; font-size: 12px; padding: 5px 6px; }
+
+/* The deck body owns the scroll — the column above it is overflow:hidden so
+   the header and filter bar stay put while a long answer scrolls.
+   flex-basis 0 + min-height 0 is what lets it shrink below its content; with
+   `flex: 1` alone (basis auto) a long answer grows the item instead, pushing
+   the card past the column's clip edge with no scrollbar to get it back.
+   No bottom padding — .recall-nav is sticky and supplies its own. */
+.recall-body {
+  flex: 1 1 0; min-height: 0; max-height: 100%;
+  overflow-y: auto; overscroll-behavior-y: contain;
+  padding: 14px 16px 0;
+}
+
+/* ── One card ───────────────────────────────────────────────────────────── */
+.recall-card { max-width: 780px; }
+.recall-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.recall-tag { cursor: pointer; }
+.recall-tag:hover { color: var(--primary); border-color: var(--primary); }
+
+.recall-kind {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+  border: 1px solid transparent;
+}
+/* :root is the DARK palette here (see Tokens), so the bright hues are the
+   default and only the two light themes need darkening for contrast. */
+.recall-kind--trick     { background: rgba(234, 179, 8, .16);  color: #fbbf24; border-color: rgba(234, 179, 8, .35); }
+.recall-kind--confusion { background: rgba(168, 85, 247, .16); color: #c084fc; border-color: rgba(168, 85, 247, .35); }
+.recall-kind--concept   { background: rgba(14, 165, 233, .16); color: #38bdf8; border-color: rgba(14, 165, 233, .35); }
+html[data-theme="light"]   .recall-kind--trick,
+html[data-theme="cartoon"] .recall-kind--trick     { color: #a16207; }
+html[data-theme="light"]   .recall-kind--confusion,
+html[data-theme="cartoon"] .recall-kind--confusion { color: #7e22ce; }
+html[data-theme="light"]   .recall-kind--concept,
+html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
+
+.recall-q {
+  font-size: 17px; line-height: 1.5; font-weight: 600; color: var(--text);
+  padding: 14px 16px; border-radius: 10px; background: var(--bg2);
+  border: 1px solid var(--border); border-left: 3px solid var(--primary);
+  white-space: pre-wrap;
+}
+.recall-hint-btn { margin-top: 10px; }
+.recall-hint-shown {
+  margin-top: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px;
+  color: var(--text2); background: rgba(234, 179, 8, .10);
+  border: 1px dashed rgba(234, 179, 8, .45);
+}
+.recall-reveal {
+  margin-top: 16px; width: 100%; padding: 11px; font-size: 13.5px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.recall-key {
+  font-size: 10px; font-family: 'Fira Code', monospace; opacity: .75;
+  border: 1px solid currentColor; border-radius: 4px; padding: 1px 5px;
+}
+.recall-answer-hd {
+  margin: 18px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text3, var(--text2));
+}
+.recall-answer { border-top: 1px solid var(--border); padding-top: 10px; }
+
+.recall-refs { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--border); }
+.recall-ref-hint {
+  margin-left: auto; font-size: 10.5px; font-weight: 400; text-transform: none;
+  letter-spacing: normal; color: var(--text3, var(--text2));
+}
+
+/* Pinned to the bottom of the scroll area: a long answer must never push
+   ◀ Prev / Next ▶ out of reach, and the deck reads better when moving on is
+   always one click away rather than one scroll-to-the-end away. */
+.recall-nav {
+  position: sticky; bottom: 0; z-index: 2;
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 22px; padding: 12px 0 14px;
+  border-top: 1px solid var(--border); background: var(--bg);
+}
+.recall-nav-mid { display: flex; gap: 6px; margin: 0 auto; }
+
+/* ── List mode ──────────────────────────────────────────────────────────── */
+.recall-list { max-width: 860px; padding-bottom: 24px; }
+.recall-list-row {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  background: transparent; border: none; color: var(--text2);
+  padding: 7px 8px; cursor: pointer; font-size: 13px; border-radius: 6px;
+  text-align: left; line-height: 1.4;
+}
+.recall-list-row:hover { background: var(--bg3); color: var(--text); }
+.recall-list-row.active { background: rgba(var(--primary-rgb), .14); color: var(--primary); font-weight: 600; }
+.recall-list-q { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Editor ─────────────────────────────────────────────────────────────── */
+.recall-form { max-width: 780px; padding-bottom: 8px; }
+/* Same reasoning as .recall-nav: a long answer must not push Save out of the
+   pane while you're writing it. */
+.recall-form .rf-actions {
+  position: sticky; bottom: 0; z-index: 2;
+  padding: 10px 0 14px; background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+/* Field captions that don't wrap a control (Kind pills, the Answer heading) —
+   same look as .p2r-form label, minus the label semantics. */
+.recall-form .recall-field {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--text2);
+}
+.recall-form .adshub-html-editor { min-height: 30vh; }
+.recall-form .adshub-editor-preview { min-height: 30vh; }
+.recall-resolve { display: flex; flex-wrap: wrap; gap: 5px; margin-top: -4px; }
+.recall-resolve-chip {
+  font-size: 11px; color: var(--text3, var(--text2)); background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.recall-resolve-chip.missing { color: var(--danger); border-color: var(--danger); opacity: .8; }
+
+@media (max-width: 768px) {
+  .recall-filters { padding: 6px 8px; }
+  .recall-body { padding: 12px 10px 20px; }
+  .recall-q { font-size: 15.5px; padding: 12px; }
+}
+
+/* Questions render as inline markdown — give the code spans the same
+   treatment the answer body gets, at the question's larger size. */
+.recall-q code {
+  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: .88em;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px;
+}
+.recall-list-q code {
+  font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: .9em;
+  background: var(--bg3); border-radius: 3px; padding: 0 3px;
+}
