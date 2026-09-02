@@ -27,6 +27,10 @@ export const Config = {
   get sheetId(): string {
     return ls('sid') || (import.meta.env.VITE_SHEET_ID ?? '')
   },
+  // DART keeps its own spreadsheet inside the Drive folder PGHubTechDART.
+  // Cached here so day-to-day loads skip the Drive folder+file lookup; it is
+  // re-resolved automatically whenever this is empty.
+  get dartSheetId(): string { return ls('dartsid') || '' },
   get theme(): string { return ls('theme') || 'dark' },
   get allowedEmails(): string[] {
     const raw = import.meta.env.VITE_ALLOWED_EMAILS ?? ''
@@ -35,6 +39,7 @@ export const Config = {
 
   set googleClientId(v: string) { lsSet('gci', v) },
   set sheetId(v: string)        { lsSet('sid', v) },
+  set dartSheetId(v: string)    { v ? lsSet('dartsid', v) : lsDel('dartsid') },
   set theme(v: string)          { lsSet('theme', v) },
 
   // ── AI assistant — persisted to Sheet (Settings tab) AND mirrored to
@@ -61,7 +66,7 @@ export const Config = {
   set ttsVoice(v: string)           { v ? lsSet('ttsv',   v) : lsDel('ttsv') },
   set audioOn(v: boolean)           { lsSet('audio', String(v)) },
 
-  clearSheetId() { lsDel('sid') },
+  clearSheetId() { lsDel('sid'); lsDel('dartsid') },
   isClientConfigured(): boolean { return !!this.googleClientId },
   isSheetConfigured(): boolean  { return !!this.sheetId },
   isAIConfigured(): boolean     { return !!(this.azureEndpoint && this.azureApiKey) },

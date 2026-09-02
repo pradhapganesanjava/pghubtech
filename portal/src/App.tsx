@@ -8,7 +8,6 @@ import SheetSetupModal from './components/SheetSetupModal'
 import HomeView from './views/HomeView'
 import BrowseView from './views/BrowseView'
 import DocsView from './views/DocsView'
-import NotesView from './views/NotesView'
 import UtilsView from './views/UtilsView'
 import AISkillsView from './views/AISkillsView'
 import AdsView from './views/AdsView'
@@ -195,8 +194,10 @@ export default function App() {
   return (
     <ToastProvider>
       <div className="layout">
+        {/* 'notes' is a legacy path that now resolves to the Utils view, so
+            TopBar is told 'utils' for it rather than leaving the nav unlit. */}
         <TopBar
-          view={view}
+          view={view === 'notes' ? 'utils' : view}
           onNav={v => setView(v as View)}
           theme={theme}
           onTheme={handleTheme}
@@ -208,8 +209,9 @@ export default function App() {
         {view === 'home'     && <HomeView />}
         {view === 'browse'   && <BrowseView />}
         {view === 'docs'     && <DocsView />}
-        {view === 'notes'    && <NotesView />}
-        {view === 'utils'    && <UtilsView />}
+        {(view === 'utils' || view === 'notes') && (
+          <UtilsView initialTab={view === 'notes' ? 'notes' : undefined} />
+        )}
         {view === 'ads'      && <AdsView />}
         {view === 'ads-hub'  && <AdsHubView />}
         {view === 'ai-skills' && <AISkillsView />}
@@ -238,10 +240,7 @@ export default function App() {
           <button className={`bn-btn${view === 'docs'     ? ' active' : ''}`} onClick={() => setView('docs')}>
             <span className="bn-icon">📄</span><span className="bn-label">Docs</span>
           </button>
-          <button className={`bn-btn${view === 'notes'    ? ' active' : ''}`} onClick={() => setView('notes')}>
-            <span className="bn-icon">📓</span><span className="bn-label">Notes</span>
-          </button>
-          <button className={`bn-btn${view === 'utils'    ? ' active' : ''}`} onClick={() => setView('utils')}>
+          <button className={`bn-btn${view === 'utils' || view === 'notes' ? ' active' : ''}`} onClick={() => setView('utils')}>
             <span className="bn-icon">🧰</span><span className="bn-label">Utils</span>
           </button>
           {/* Ads tab temporarily hidden (pghubads.web.app) — may remove later */}

@@ -12,12 +12,20 @@ import { useToast } from '../components/Toast'
 import EphemeralAIChat from '../components/EphemeralAIChat'
 import { LLM } from '../lib/llm'
 import { generateToDoHierarchy } from '../lib/todoGen'
+import DartView from './DartView'
+import NotesView from './NotesView'
 import type { ToDoDraft } from '../lib/todoGen'
 
-type SubTab = 'todo' | 'activity'
+type SubTab = 'todo' | 'activity' | 'dart' | 'notes'
 
-export default function UtilsView() {
-  const [tab, setTab] = useState<SubTab>('activity')
+export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) {
+  const [tab, setTab] = useState<SubTab>(initialTab ?? 'dart')
+
+  // /notes used to be its own top-level view; it now resolves here with the
+  // Notes tab preselected, so old links and bookmarks still land in the right
+  // place. Only set when a tab was actually requested, so navigating to plain
+  // /utils leaves whichever tab the user was already on alone.
+  useEffect(() => { if (initialTab) setTab(initialTab) }, [initialTab])
 
   return (
     <div className="utils-wrap">
@@ -30,11 +38,23 @@ export default function UtilsView() {
           className={`utils-tab${tab === 'activity' ? ' active' : ''}`}
           onClick={() => setTab('activity')}
         >📅 Activity Log</button>
+        <button
+          className={`utils-tab${tab === 'dart' ? ' active' : ''}`}
+          onClick={() => setTab('dart')}
+        >🎯 DART</button>
+        <button
+          className={`utils-tab${tab === 'notes' ? ' active' : ''}`}
+          onClick={() => setTab('notes')}
+        >📓 Notes</button>
       </div>
 
-      <div className={`utils-body${tab === 'activity' || tab === 'todo' ? ' utils-body-flush' : ''}`}>
+      {/* Every tab below is a full-height, self-scrolling layout, so the body
+          is always flush (no padding, overflow clipped at this level). */}
+      <div className="utils-body utils-body-flush">
         {tab === 'todo'     && <ToDoPanel />}
         {tab === 'activity' && <ActivityPanel />}
+        {tab === 'dart'     && <DartView />}
+        {tab === 'notes'    && <NotesView />}
       </div>
     </div>
   )

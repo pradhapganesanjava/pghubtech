@@ -25,7 +25,7 @@ const NAVS = [
   { id: 'home',   label: 'Home'   },
   { id: 'browse', label: 'Browse' },
   { id: 'docs',   label: 'Docs'   },
-  { id: 'notes',  label: 'Notes'  },
+  // Notes now lives as a tab inside Utils.
   { id: 'utils',  label: 'Utils'  },
   // { id: 'ads', label: 'Ads' },  // temporarily hidden (pghubads.web.app) — may remove later
   { id: 'ads-hub', label: 'AdsHub' },

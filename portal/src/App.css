@@ -2681,10 +2681,19 @@ body.resizing-h * {
 .pn-btn-danger:hover { border-color: var(--danger); color: var(--danger); }
 
 /* ─── Notes view ─────────────────────────────────────────── */
+/* Notes moved under Utils, so .notes-view-wrap now sits inside .utils-wrap
+   (already calc(100vh - 56px)) plus the 45px utils-tabbar. Its own
+   browse-body-wrap height would overflow that slot — hand sizing to flex,
+   exactly as .todo3-wrap and .activity-3pane do. */
+.notes-view-wrap.browse-body-wrap {
+  height: auto !important;
+  max-height: 100%;
+}
+
 .notes-side-body {
   flex: 1 1 0; min-height: 0; overflow-y: auto;
-  /* Hard cap: topbar(56) + tab-bar(36) + search-row(49) */
-  max-height: calc(100vh - 145px);
+  /* Hard cap: topbar(56) + utils-tabbar(45) + tab-bar(36) + search-row(49) */
+  max-height: calc(100vh - 190px);
   display: flex; flex-direction: column; gap: 6px;
   padding-bottom: 12px;
 }
@@ -2799,8 +2808,9 @@ body.resizing-h * {
 }
 .notes-tree-body {
   flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 0 4px 8px;
-  /* Hard cap: topbar(56) + tree-hd(42) + tree-search(46) + content-search(46) */
-  max-height: calc(100vh - 195px);
+  /* Hard cap: topbar(56) + utils-tabbar(45) + tree-hd(42) + tree-search(46)
+     + content-search(46) */
+  max-height: calc(100vh - 240px);
 }
 
 /* Always-visible search input under the tab bar. */
@@ -3074,8 +3084,8 @@ body.resizing-h * {
 .notes-page-hd { user-select: none; }
 .notes-editor-body {
   flex: 1 1 0; min-height: 0; overflow: auto;
-  /* Hard cap: topbar(56) + page col-hd(50) */
-  max-height: calc(100vh - 115px);
+  /* Hard cap: topbar(56) + utils-tabbar(45) + page col-hd(50) */
+  max-height: calc(100vh - 160px);
   padding: 12px 16px;
   display: flex; flex-direction: column;
 }
@@ -5278,4 +5288,867 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 .recall-list-q code {
   font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: .9em;
   background: var(--bg3); border-radius: 3px; padding: 0 3px;
+}
+
+/* ─── DART — Daily Activity & Results Tracker ──────────────────── */
+.dart-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.dart-body { flex: 1; min-height: 0; overflow: auto; padding: 18px 22px 40px; }
+.dart-loading {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 10px; color: var(--text2); font-size: 13px;
+}
+.dart-error {
+  margin: 20px; padding: 14px 16px; border-radius: var(--radius);
+  border: 1px solid var(--danger); color: var(--danger);
+  background: rgba(239,68,68,.08); font-size: 13px;
+}
+
+/* Today — day header */
+.dart-today { max-width: 860px; margin: 0 auto; width: 100%; }
+.dart-dayhead {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 18px;
+}
+.dart-daynav { display: flex; align-items: center; gap: 10px; }
+.dart-navbtn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text2); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.dart-navbtn:hover { color: var(--text); border-color: var(--primary); }
+.dart-daytitle { line-height: 1.2; }
+.dart-dayname { font-size: 13px; color: var(--text2); }
+.dart-daydate { font-size: 22px; font-weight: 600; }
+.dart-todaybtn {
+  margin-left: auto; background: transparent; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--primary); font-size: 12px;
+  padding: 4px 10px; cursor: pointer;
+}
+
+.dart-stats { display: flex; gap: 10px; margin: 16px 0 12px; flex-wrap: wrap; }
+.dart-stat {
+  flex: 1 1 110px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+}
+.dart-stat-v { font-size: 20px; font-weight: 600; line-height: 1.2; }
+.dart-stat-v.good { color: var(--success); }
+.dart-stat-l { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+.dart-progress { height: 5px; border-radius: 3px; background: var(--bg3); overflow: hidden; }
+.dart-progress-fill { height: 100%; background: var(--primary); transition: width .2s; }
+
+.dart-nextline {
+  margin-top: 12px; font-size: 13px; color: var(--text2);
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+}
+.dart-nextline b { color: var(--text); font-weight: 600; }
+.dart-next-block { color: var(--text2); opacity: .75; }
+.dart-next-clear { color: var(--success); }
+.dart-next-must { color: var(--warning); }
+
+/* Today — sections */
+.dart-section {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+}
+.dart-section-hd { display: flex; align-items: center; gap: 10px; }
+.dart-section-title { font-size: 15px; font-weight: 600; }
+.dart-section-meta { font-size: 12px; color: var(--text2); }
+.dart-section-sub { font-size: 12px; color: var(--text2); font-style: italic; margin-top: 2px; }
+
+.dart-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.dart-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 6px; border-radius: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.dart-item:last-child { border-bottom: 0; }
+.dart-item:hover { background: var(--bg3); }
+.dart-item.done .dart-item-title { text-decoration: line-through; opacity: .5; }
+
+.dart-check {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border: 1.5px solid var(--border); border-radius: 5px;
+  background: transparent; color: var(--success);
+  font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .12s, background .12s;
+}
+.dart-check:hover:not(:disabled) { border-color: var(--primary); }
+.dart-check[aria-pressed="true"] { border-color: var(--success); background: rgba(34,197,94,.12); }
+.dart-check:disabled { opacity: .4; cursor: default; }
+
+.dart-item-title { flex: 1; font-size: 14px; }
+.dart-item-mins {
+  font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Today — goal rows carry more furniture than a plain routine tick. */
+.dart-goal-item { align-items: flex-start; gap: 10px; }
+.dart-goal-item .dart-check { margin-top: 2px; }
+.dart-goal-main { flex: 1; min-width: 0; }
+.dart-goal-line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dart-goal-why { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+.dart-goal-prog { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.dart-goal-bar {
+  flex: 1; max-width: 220px; height: 4px; border-radius: 2px;
+  background: var(--bg3); overflow: hidden;
+}
+.dart-goal-bar-fill { height: 100%; background: var(--primary); }
+.dart-goal-prog-t { font-size: 11px; color: var(--text2); white-space: nowrap; }
+.dart-goal-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;
+}
+.dart-goal-logrow { display: flex; gap: 4px; align-items: center; }
+.dart-goal-today { font-size: 11px; color: var(--success); }
+
+.dart-chip {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; padding: 2px 7px; border-radius: 10px;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.dart-chip-must   { color: var(--warning); border-color: var(--warning); background: rgba(245,158,11,.1); }
+.dart-chip-could  { color: var(--text2);   border-color: var(--border); }
+.dart-chip-done   { color: var(--success); border-color: var(--success); background: rgba(34,197,94,.1); }
+.dart-chip-paused { color: var(--text2);   border-color: var(--border); background: var(--bg3); }
+
+.dart-mins-input {
+  width: 58px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 5px; color: var(--text); font-size: 12px; padding: 4px 6px;
+}
+.dart-mins-input:focus { border-color: var(--primary); outline: none; }
+.dart-minibtn {
+  background: transparent; border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text2); font-size: 11px; padding: 3px 8px; cursor: pointer;
+  white-space: nowrap;
+}
+.dart-minibtn:hover:not(:disabled) { color: var(--text); border-color: var(--primary); }
+.dart-minibtn:disabled { opacity: .4; cursor: default; }
+.dart-minibtn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+.dart-edit-actions { display: flex; gap: 4px; margin-left: auto; }
+.dart-addrow { display: flex; gap: 6px; align-items: center; margin-top: 10px; }
+.dart-addrow .rf-input { flex: 1; }
+.dart-addblock { margin-top: 0; }
+.dart-today-foot { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.dart-editbtn {
+  align-self: flex-start; background: transparent;
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text2); font-size: 12px; padding: 5px 12px; cursor: pointer;
+}
+.dart-editbtn:hover { color: var(--text); border-color: var(--primary); }
+
+/* Goals */
+.dart-goals { max-width: 860px; margin: 0 auto; width: 100%; }
+.dart-goals-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.dart-goals-count { margin-left: auto; font-size: 12px; color: var(--text2); }
+.dart-inline-check {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text2); cursor: pointer;
+}
+.dart-goal-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.dart-goal-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.dart-goal-card.paused { opacity: .6; }
+.dart-goal-card-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dart-goal-card-title { font-size: 15px; font-weight: 600; }
+.dart-freq { font-size: 11px; color: var(--text2); text-transform: capitalize; }
+.dart-goal-card-notes { font-size: 12.5px; color: var(--text2); margin-top: 4px; white-space: pre-wrap; }
+.dart-goal-card-meta {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-size: 11.5px; color: var(--text2); margin-top: 8px;
+}
+.dart-overdue { color: var(--danger); }
+.dart-goal-card-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+.dart-goal-form {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.dart-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+.dart-field > span { font-size: 11px; color: var(--text2); }
+.dart-field textarea.rf-input { resize: vertical; font-family: inherit; }
+.dart-field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.dart-form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Thoughts */
+.dart-thoughts { max-width: 860px; margin: 0 auto; width: 100%; }
+.dart-composer {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px;
+}
+.dart-composer-box {
+  width: 100%; resize: vertical; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: inherit; font-size: 14px;
+  padding: 10px 12px; line-height: 1.55;
+}
+.dart-composer-box:focus { border-color: var(--primary); outline: none; }
+.dart-composer-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 8px; flex-wrap: wrap;
+}
+.dart-hint { font-size: 11px; color: var(--text2); }
+
+.dart-thought-filters {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;
+}
+.dart-fchip {
+  background: transparent; border: 1px solid var(--border); border-radius: 14px;
+  color: var(--text2); font-size: 11.5px; padding: 3px 10px; cursor: pointer;
+}
+.dart-fchip:hover { color: var(--text); }
+.dart-fchip.active { color: var(--primary); border-color: var(--primary); background: rgba(var(--primary-rgb), .1); }
+.dart-fchip-n { opacity: .6; margin-left: 2px; }
+.dart-search { margin-left: auto; max-width: 200px; }
+
+.dart-thought-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dart-thought {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+}
+.dart-thought-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dart-thought-date { font-size: 11.5px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.dart-thought-spacer { flex: 1; }
+.dart-bucket-select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+  color: var(--primary); font-size: 11px; padding: 2px 6px; cursor: pointer;
+}
+.dart-thought-summary { font-size: 14px; margin-top: 6px; }
+.dart-highlights { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--text2); }
+.dart-highlights li { margin: 2px 0; }
+.dart-thought-raw {
+  margin-top: 8px; padding: 10px 12px; background: var(--bg); border-radius: 8px;
+  border: 1px solid var(--border); font-size: 12px; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word; font-family: inherit; color: var(--text2);
+}
+
+@media (max-width: 720px) {
+  .dart-body { padding: 12px 12px 32px; }
+  .dart-stat { flex-basis: calc(50% - 5px); }
+  .dart-goal-item { flex-wrap: wrap; }
+  .dart-goal-right { flex-direction: row; align-items: center; width: 100%; padding-left: 30px; }
+  .dart-search { margin-left: 0; max-width: none; width: 100%; }
+}
+.dart-extra { font-size: 11px; color: var(--success); margin-top: 6px; }
+.dart-workdue { font-size: 11.5px; color: var(--warning); margin-top: 6px; }
+/* Vertical label on a progress row — time vs work are read separately, so
+   each bar is named rather than blended into one percentage. */
+.dart-vlabel {
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text2); width: 30px; flex-shrink: 0;
+}
+.dart-goal-bar-fill.work { background: var(--success); }
+
+/* ─── DART Thoughts — tree nav + rich cards ─────────────────────── */
+.dart-thoughts-wrap { display: flex; flex: 1; min-height: 0; }
+.th-nav {
+  width: 230px; flex-shrink: 0; min-height: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border); background: var(--bg);
+}
+/* Collapsed rail. A lone 13px arrow did not read as "there is a panel here",
+   so the rail gets its own surface, a boxed control, a vertical caption and
+   the item count — the same cues the expanded panel has, turned on their side. */
+.th-nav-strip {
+  width: 34px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex; justify-content: center;
+  align-items: flex-start;      /* the control sits at the top, not centred */
+  padding: 0;
+}
+.th-nav-strip .th-strip-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 0 14px;
+  background: transparent; border: 0; cursor: pointer;
+  color: var(--text2);
+}
+.th-nav-strip .th-strip-btn:hover { background: var(--bg3); color: var(--primary); }
+.th-nav-strip .th-strip-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg); color: var(--primary);
+  font-size: 11px; line-height: 1;
+}
+.th-nav-strip .th-strip-btn:hover .th-strip-icon { border-color: var(--primary); }
+.th-strip-vert {
+  writing-mode: vertical-rl;
+  font-size: 10px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text2); white-space: nowrap;
+}
+.th-nav-strip .th-strip-n {
+  font-size: 10px; font-weight: 700; color: var(--text2);
+  background: var(--bg3); border-radius: 8px; padding: 1px 5px;
+}
+
+.th-strip-btn {
+  background: transparent; border: 0; color: var(--text2);
+  cursor: pointer; font-size: 13px; padding: 2px 5px;
+}
+.th-strip-btn:hover { color: var(--primary); }
+.th-nav-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 10px 6px; font-size: 12px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.th-nav-modes { display: flex; gap: 4px; padding: 0 10px 8px; }
+.th-mode {
+  flex: 1; background: transparent; border: 1px solid var(--border);
+  border-radius: 5px; color: var(--text2); font-size: 11px;
+  padding: 3px 0; cursor: pointer;
+}
+.th-mode.active { color: var(--primary); border-color: var(--primary); background: rgba(var(--primary-rgb), .1); }
+.th-nav-all {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0 8px 6px; padding: 5px 8px;
+  background: transparent; border: 0; border-radius: 5px;
+  color: var(--text); font-size: 12px; cursor: pointer; text-align: left;
+}
+.th-nav-all:hover { background: var(--bg3); }
+.th-nav-all.active { color: var(--primary); background: rgba(var(--primary-rgb), .12); }
+.th-nav-body {
+  flex: 1 1 0; min-height: 0; overflow-y: auto;
+  padding: 0 8px 12px;
+  /* budget: topbar(56) + utils-tabbar(45) + dart-subtabs(40) + nav head(~90) */
+  max-height: calc(100vh - 231px);
+}
+.th-flat-list { list-style: none; margin: 0; padding: 0; }
+.th-flat-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  width: 100%; padding: 4px 6px; border-radius: 4px;
+  background: transparent; border: 0; color: var(--text);
+  font-size: 11.5px; cursor: pointer; text-align: left;
+}
+.th-flat-row:hover { background: var(--bg3); }
+.th-flat-row.active { color: var(--primary); background: rgba(var(--primary-rgb), .12); }
+.th-flat-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.th-flat-parent { color: var(--text2); opacity: .7; }
+.th-flat-leaf { font-weight: 500; }
+
+.th-crumb {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--primary); margin-bottom: 10px;
+}
+.th-path-btn {
+  background: transparent; border: 1px dashed var(--border); border-radius: 10px;
+  color: var(--text2); font-size: 10.5px; padding: 2px 8px; cursor: pointer;
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.th-path-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+.th-raw-wrap { margin-top: 10px; }
+.th-raw-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text2); margin: 8px 0 4px;
+}
+.dart-thought-raw.original { border-style: dashed; opacity: .85; }
+
+/* ── Rich thought cards. This class vocabulary is what the model writes
+      against (see lib/thoughtGen.ts) — every colour comes from a theme token
+      so a generated card reads correctly in all six themes. ── */
+.th-rich { margin-top: 10px; font-size: 13.5px; line-height: 1.65; }
+.th-rich > *:first-child { margin-top: 0; }
+.th-rich h3 {
+  font-size: 15px; font-weight: 650; margin: 14px 0 6px;
+  color: var(--text); padding-bottom: 4px; border-bottom: 1px solid var(--border);
+}
+.th-rich h4 {
+  font-size: 12.5px; font-weight: 600; margin: 12px 0 4px;
+  color: var(--primary); text-transform: uppercase; letter-spacing: .04em;
+}
+.th-rich p  { margin: 6px 0; }
+.th-rich ul, .th-rich ol { margin: 6px 0 6px 18px; }
+.th-rich li { margin: 3px 0; }
+.th-rich strong { color: var(--text); font-weight: 650; }
+.th-rich blockquote {
+  margin: 8px 0; padding: 4px 12px;
+  border-left: 3px solid var(--border); color: var(--text2); font-style: italic;
+}
+.th-rich table { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 12.5px; }
+.th-rich th, .th-rich td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; }
+.th-rich th { background: var(--bg3); font-weight: 600; }
+
+.th-hl {
+  background: rgba(var(--primary-rgb), .18);
+  border-radius: 3px; padding: 0 3px; color: var(--text);
+}
+.th-key { color: var(--primary); font-weight: 600; }
+
+.th-callout {
+  margin: 10px 0; padding: 8px 12px;
+  border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0;
+  background: rgba(var(--primary-rgb), .08); font-size: 13px;
+}
+.th-callout.good { border-left-color: var(--success); background: rgba(34,197,94,.09); }
+.th-callout.warn { border-left-color: var(--warning); background: rgba(245,158,11,.09); }
+
+/* Numbered process */
+.th-steps { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.th-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 7px; background: var(--bg);
+}
+.th-step-n {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.th-step-b { flex: 1; min-width: 0; }
+
+/* Flow / cycle diagrams — CSS boxes rather than an image, so they stay
+   readable, themeable and selectable at any width. */
+.th-flow, .th-cycle {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 12px 0; padding: 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+}
+.th-cycle { border-style: dashed; position: relative; }
+.th-cycle::after {
+  content: '↻ repeats'; position: absolute; top: -8px; right: 10px;
+  font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text2); background: var(--bg2); padding: 0 6px;
+}
+.th-flow-step {
+  padding: 5px 10px; border-radius: 6px; font-size: 12px;
+  background: rgba(var(--primary-rgb), .12);
+  border: 1px solid rgba(var(--primary-rgb), .35);
+  color: var(--text);
+}
+.th-flow-arrow { color: var(--text2); font-size: 13px; flex-shrink: 0; }
+
+.th-grid {
+  display: grid; gap: 8px; margin: 10px 0;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.th-card {
+  padding: 9px 11px; border: 1px solid var(--border);
+  border-radius: 7px; background: var(--bg); font-size: 12.5px;
+}
+.th-card h4 { margin-top: 0; }
+
+/* Desktop keeps the rail: icon only, no label. */
+.th-strip-btn { display: flex; align-items: center; gap: 8px; }
+.th-strip-label { display: none; }
+.th-nav-hd .th-strip-vert, .th-nav-hd .th-strip-n { display: none; }
+
+@media (max-width: 720px) {
+  /* Stacked, the tree is a disclosure above the composer rather than a column
+     beside it — collapsed it is one tappable bar naming the active filter. */
+  .dart-thoughts-wrap { flex-direction: column; min-height: 0; }
+
+  .th-nav-strip {
+    width: auto; padding: 0; flex-shrink: 0;
+    border-right: 0; border-bottom: 1px solid var(--border);
+  }
+  .th-nav-strip .th-strip-btn {
+    flex-direction: row; align-items: center;
+    width: 100%; padding: 11px 14px; gap: 10px;
+    font-size: 13px; color: var(--text);
+  }
+  .th-strip-vert { display: none; }
+  .th-nav-strip .th-strip-icon {
+    width: 20px; height: 20px; transform: rotate(90deg);
+  }
+  .th-strip-label {
+    display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--text2);
+  }
+  .th-strip-label b {
+    font-size: 13px; text-transform: none; letter-spacing: 0;
+    color: var(--primary); font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .th-strip-n {
+    margin-left: auto; font-size: 11px; color: var(--text2);
+    background: var(--bg3); border-radius: 9px; padding: 1px 8px;
+  }
+
+
+  .th-nav {
+    width: auto; flex-shrink: 0;
+    border-right: 0; border-bottom: 1px solid var(--border);
+    max-height: 52vh;
+  }
+  .th-nav-hd { padding: 10px 14px 6px; }
+  .th-nav-hd .th-strip-btn { gap: 6px; }
+  .th-nav-hd .th-strip-label {
+    display: inline; flex: none; font-size: 11px; color: var(--primary);
+  }
+  .th-nav-modes, .th-nav-all { padding-left: 14px; padding-right: 14px; }
+  .th-nav-all { margin-left: 0; margin-right: 0; border-radius: 0; padding-top: 8px; padding-bottom: 8px; }
+  .th-nav-body { max-height: none; flex: 1 1 auto; padding: 0 14px 12px; }
+
+  /* Touch targets: the desktop rows are 2px-padded and far too small to tap. */
+  .th-nav-body .tree-row { padding: 3px 0; }
+  .th-nav-body .tree-lbl, .th-flat-row { min-height: 34px; font-size: 13px; }
+  .tree-toggle { min-width: 26px; min-height: 26px; }
+  .th-mode { padding: 7px 0; font-size: 12px; }
+
+  .th-crumb { font-size: 13px; }
+  .th-path-btn { max-width: 100%; }
+  .dart-thoughts .dart-thought-filters { gap: 5px; }
+  .dart-search { margin-left: 0; max-width: none; width: 100%; }
+}
+
+/* ─── DART Today — two-column shell ─────────────────────────────── */
+.dart-today-wrap { display: flex; flex: 1; min-height: 0; }
+.dart-today-wrap > .dart-today { flex: 1; min-width: 0; max-width: none; margin: 0; }
+.dart-side {
+  width: 260px; flex-shrink: 0; min-height: 0; overflow-y: auto;
+  border-left: 1px solid var(--border); background: var(--bg);
+  padding: 14px 12px;
+}
+
+/* Completion ring beside the date */
+.dart-ringwrap { margin-left: auto; position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.dart-ring { display: block; }
+.dart-ring-bg { fill: none; stroke: var(--bg3); stroke-width: 6; }
+.dart-ring-fg {
+  fill: none; stroke: var(--primary); stroke-width: 6; stroke-linecap: round;
+  transition: stroke-dasharray .3s;
+}
+.dart-ringlbl {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--text2);
+}
+.dart-ringlbl b { color: var(--text); font-size: 14px; }
+
+/* Stat tiles — tinted by meaning so the numbers register at a glance. */
+.dart-stat.t-ask  { border-color: rgba(var(--primary-rgb), .45); background: rgba(var(--primary-rgb), .07); }
+.dart-stat.t-ask  .dart-stat-v { color: var(--primary); }
+.dart-stat.t-good { border-color: rgba(34,197,94,.45);  background: rgba(34,197,94,.07); }
+.dart-stat.t-good .dart-stat-v { color: var(--success); }
+.dart-stat.t-warn { border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.07); }
+.dart-stat.t-warn .dart-stat-v { color: var(--warning); }
+
+/* The single "what now" line */
+.dart-focus { margin-top: 12px; }
+.dart-focus-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 12px; border-radius: 8px; font-size: 13.5px;
+  border-left: 3px solid var(--border); background: var(--bg3);
+}
+.dart-focus-row.must  { border-left-color: var(--warning); background: rgba(245,158,11,.1); }
+.dart-focus-row.next  { border-left-color: var(--primary); background: rgba(var(--primary-rgb), .09); }
+.dart-focus-row.clear { border-left-color: var(--success); background: rgba(34,197,94,.09); }
+.dart-focus-tag {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  padding: 2px 7px; border-radius: 9px; background: var(--bg2); color: var(--text2);
+  flex-shrink: 0;
+}
+.dart-focus-row.must  .dart-focus-tag { color: var(--warning); }
+.dart-focus-row.next  .dart-focus-tag { color: var(--primary); }
+.dart-focus-row.clear .dart-focus-tag { color: var(--success); }
+.dart-focus-main { font-weight: 600; flex: 1; min-width: 0; }
+.dart-focus-ask  { color: var(--text2); font-size: 12.5px; }
+
+/* ── Goal cards: headline collapsed, detail on open ── */
+.dart-cards { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dart-card {
+  border: 1px solid var(--border); border-left-width: 4px;
+  border-radius: 9px; background: var(--bg); overflow: hidden;
+  transition: border-color .15s, background .15s;
+}
+.dart-card.s-must { border-left-color: var(--warning); background: rgba(245,158,11,.07); }
+.dart-card.s-could{ border-left-color: var(--primary); background: rgba(var(--primary-rgb), .05); }
+.dart-card.s-done { border-left-color: var(--success); background: rgba(34,197,94,.06); }
+.dart-card.s-done .dart-card-title { text-decoration: line-through; opacity: .55; }
+.dart-card.open { background: var(--bg2); }
+
+.dart-card-hd {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 11px 13px; cursor: pointer;
+}
+.dart-card-hd:hover { background: rgba(255,255,255,.03); }
+.dart-card-tick {
+  width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px;
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: var(--bg2); color: var(--success);
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.dart-card-tick:hover:not(:disabled) { border-color: var(--primary); }
+.dart-card-tick[aria-pressed="true"] { border-color: var(--success); background: rgba(34,197,94,.15); }
+.dart-card-tick:disabled { opacity: .4; cursor: default; }
+.dart-card-main { flex: 1; min-width: 0; }
+.dart-card-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.dart-badge {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  padding: 2.5px 8px; border-radius: 10px; white-space: nowrap;
+}
+.dart-badge.b-must  { background: var(--warning); color: #1a1200; }
+.dart-badge.b-could { background: rgba(var(--primary-rgb), .2); color: var(--primary); border: 1px solid rgba(var(--primary-rgb), .5); }
+.dart-badge.b-done  { background: var(--success); color: #04240f; }
+.dart-card-dl { font-size: 11.5px; color: var(--text2); font-weight: 500; }
+.dart-card.s-must .dart-card-dl { color: var(--warning); }
+.dart-card-title { font-size: 15px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
+.dart-card-ask {
+  margin-top: 3px; font-size: 13px; font-weight: 600; color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.dart-card.s-must .dart-card-ask { color: var(--warning); }
+.dart-card-caret {
+  color: var(--text2); font-size: 11px; flex-shrink: 0; margin-top: 3px;
+  transition: transform .15s;
+}
+.dart-card-caret.open { transform: rotate(180deg); }
+.dart-card-body {
+  padding: 0 13px 12px 46px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.dart-card-why { font-size: 11.5px; color: var(--text2); padding-top: 9px; }
+.dart-card-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+
+/* ── Routine items as chips ── */
+.dart-section.complete { border-color: rgba(34,197,94,.4); }
+.dart-blockcount {
+  font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 9px;
+  background: var(--bg3); color: var(--text2); margin-left: auto;
+}
+.dart-blockcount.done { background: rgba(34,197,94,.18); color: var(--success); }
+.dart-chips { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 7px; }
+.dart-rchip { display: flex; align-items: center; gap: 2px; }
+.dart-rchip-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 12px 7px 9px; border-radius: 8px;
+  border: 1px solid var(--border); border-left: 3px solid rgba(var(--primary-rgb), .55);
+  background: var(--bg); color: var(--text);
+  font-size: 13px; cursor: pointer; transition: background .12s, border-color .12s;
+}
+.dart-rchip-btn:hover:not(:disabled) { background: var(--bg3); border-color: var(--primary); }
+.dart-rchip-btn:disabled { opacity: .5; cursor: default; }
+.dart-rchip-tick {
+  width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px;
+  border: 1.5px solid var(--border); color: var(--success);
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+}
+.dart-rchip.done .dart-rchip-btn {
+  background: rgba(34,197,94,.1); border-left-color: var(--success);
+}
+.dart-rchip.done .dart-rchip-tick { border-color: var(--success); background: rgba(34,197,94,.2); }
+.dart-rchip.done .dart-rchip-title { text-decoration: line-through; opacity: .55; }
+.dart-rchip-mins { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
+
+/* ─── Consistency grid ─────────────────────────────────────────── */
+.cg-wrap { display: flex; flex-direction: column; gap: 8px; }
+.cg-hd { display: flex; align-items: center; justify-content: space-between; }
+.cg-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text2);
+}
+.cg-nav { display: flex; align-items: center; gap: 3px; }
+.cg-navbtn {
+  width: 20px; height: 20px; border: 1px solid var(--border); border-radius: 4px;
+  background: transparent; color: var(--text2); font-size: 12px; line-height: 1; cursor: pointer;
+}
+.cg-navbtn:hover:not(:disabled) { color: var(--primary); border-color: var(--primary); }
+.cg-navbtn:disabled { opacity: .35; cursor: default; }
+.cg-now {
+  background: transparent; border: 0; color: var(--primary);
+  font-size: 10.5px; cursor: pointer; padding: 0 3px;
+}
+.cg-range {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+  font-size: 10px; color: var(--text2); font-variant-numeric: tabular-nums;
+}
+.cg-range-note { color: var(--text2); opacity: .7; white-space: nowrap; }
+.cg-stats { display: flex; gap: 6px; }
+.cg-stat {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 7px; text-align: center;
+}
+.cg-stat b { display: block; font-size: 14px; color: var(--text); }
+.cg-stat span { font-size: 9px; color: var(--text2); }
+
+.cg-scroll { overflow-x: auto; padding-bottom: 2px; }
+.cg-months { display: flex; gap: 3px; margin-bottom: 3px; }
+.cg-month {
+  width: 13px; font-size: 8.5px; color: var(--text2);
+  white-space: nowrap; overflow: visible;
+}
+.cg-body { display: flex; gap: 3px; }
+.cg-dowcol { display: flex; flex-direction: column; gap: 3px; width: 10px; flex-shrink: 0; }
+.cg-dow { height: 13px; font-size: 8px; color: var(--text2); line-height: 13px; }
+.cg-col { display: flex; flex-direction: column; gap: 3px; }
+.cg-cell {
+  width: 13px; height: 13px; border-radius: 3px; padding: 0;
+  border: 1px solid transparent; background: var(--bg3); cursor: pointer;
+  display: block;
+}
+.cg-cell.l0 { background: var(--bg3); }
+.cg-cell.l1 { background: rgba(var(--primary-rgb), .28); }
+.cg-cell.l2 { background: rgba(var(--primary-rgb), .5); }
+.cg-cell.l3 { background: rgba(var(--primary-rgb), .75); }
+.cg-cell.l4 { background: rgb(var(--primary-rgb)); }
+.cg-cell.future {
+  background: transparent; border: 1px dashed var(--border);
+  /* Clickable: the Today view computes what any date asks for, so the runway
+     ahead can be opened to plan against. */
+}
+.cg-cell.full  { box-shadow: inset 0 0 0 1.5px var(--success); }
+.cg-cell.today { border-color: var(--text2); }
+.cg-cell.sel   { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.cg-cell:hover:not(:disabled) { border-color: var(--text); }
+
+.cg-legend {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 9px; color: var(--text2);
+}
+.cg-legend .cg-cell { width: 10px; height: 10px; cursor: default; }
+.cg-legend .cg-cell.future { cursor: default; }
+.cg-legend-ring { margin-top: -4px; }
+
+@media (max-width: 900px) {
+  /* Stacked, the side column belongs BELOW the day's list: on a phone the
+     first thing wanted is what to do next, not the history behind it. */
+  .dart-today-wrap { flex-direction: column; }
+  .dart-side {
+    width: auto; border-left: 0; border-top: 1px solid var(--border);
+    padding: 14px 12px 24px;
+  }
+  /* The grid is fixed-width cells; let it scroll rather than squeeze. */
+  .dart-side .cg-scroll { overflow-x: auto; }
+}
+
+/* The day's budget, under the consistency grid. In a 260px column the four
+   tiles read better two-up than in the single row they had across the header. */
+.dart-budget {
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.dart-budget-hd {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text2);
+}
+.dart-budget .dart-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0; }
+.dart-budget .dart-stat { flex: none; padding: 8px 10px; }
+.dart-budget .dart-stat-v { font-size: 17px; }
+
+/* ─── Goals page — same card language as Today ──────────────────── */
+.dart-goals .dart-cards { gap: 9px; }
+.dart-goals-must {
+  color: var(--warning); font-weight: 700; margin-right: 10px;
+}
+
+/* Out-of-window states stay deliberately neutral: a paused or finished goal
+   is not a failure, so it must not borrow the must-do palette. */
+.dart-card.s-paused, .dart-card.s-upcoming { border-left-color: var(--border); opacity: .72; }
+.dart-card.s-ended  { border-left-color: var(--danger); background: rgba(239,68,68,.06); }
+.dart-badge.b-paused, .dart-badge.b-upcoming {
+  background: var(--bg3); color: var(--text2); border: 1px solid var(--border);
+}
+.dart-badge.b-ended { background: var(--danger); color: #fff; }
+.dart-card.s-ended .dart-card-dl { color: var(--danger); }
+
+/* The numbers — the reason this page exists. */
+.dart-metrics { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 8px; }
+.dart-metric { display: flex; flex-direction: column; gap: 1px; }
+.dart-metric-nums {
+  display: flex; align-items: baseline; gap: 1px;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.dart-metric-done {
+  font-size: 24px; font-weight: 800; letter-spacing: -.02em;
+  color: var(--primary);
+}
+.dart-metric.k-work .dart-metric-done { color: var(--success); }
+.dart-metric.behind  .dart-metric-done { color: var(--warning); }
+.dart-metric-slash  { font-size: 17px; font-weight: 400; color: var(--text2); opacity: .6; }
+.dart-metric-target { font-size: 16px; font-weight: 600; color: var(--text2); }
+.dart-metric-meta { display: flex; align-items: baseline; gap: 6px; }
+.dart-metric-pct {
+  font-size: 10.5px; font-weight: 700; color: var(--text2);
+  font-variant-numeric: tabular-nums;
+}
+.dart-metric-unit { font-size: 10.5px; color: var(--text2); opacity: .8; }
+.dart-card.s-ended .dart-metric-done,
+.dart-card.s-paused .dart-metric-done,
+.dart-card.s-upcoming .dart-metric-done { color: var(--text2); }
+
+/* Criticality note — quiet by default, loud when it matters. */
+.dart-card-note {
+  margin-top: 7px; font-size: 12px; color: var(--text2); line-height: 1.45;
+}
+.dart-card-note.critical {
+  color: var(--warning); font-weight: 600;
+}
+.dart-card.s-ended .dart-card-note.critical { color: var(--danger); }
+.dart-goals .dart-card-body { padding-left: 13px; }
+.dart-goals .dart-card-hd { padding: 12px 14px; }
+
+/* ─── Today — numbers carry the weight ──────────────────────────── */
+/* Same treatment as the Goals metrics: the figure is loud, what it counts is
+   quiet. Colour comes from the vertical (time / work), never from the item. */
+.dart-asks { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 6px; }
+.dart-ask { display: flex; align-items: baseline; gap: 5px; }
+.dart-ask-v {
+  font-size: 21px; font-weight: 800; letter-spacing: -.02em;
+  line-height: 1.1; font-variant-numeric: tabular-nums;
+  color: var(--primary);
+}
+.dart-ask.k-work .dart-ask-v { color: var(--success); }
+.dart-ask-u { font-size: 11px; color: var(--text2); }
+/* Amber marks the vertical that is actually behind — not the whole card. The
+   badge already says must-do; the numbers say WHICH one is slipping. */
+.dart-ask.behind .dart-ask-v { color: var(--warning); }
+.dart-card.s-done .dart-asks { display: none; }
+
+/* Deadline escalates as the runway shortens. */
+.dart-card-dl {
+  font-weight: 700; font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.dart-card-dl.u-calm { color: var(--text2); }
+.dart-card-dl.u-soon { color: var(--warning); }
+.dart-card-dl.u-now  {
+  color: var(--danger); text-transform: uppercase; letter-spacing: .04em;
+  font-size: 11px;
+}
+
+.dart-focus-ask { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.dart-section-meta b { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Routine chips: the duration is a number too, and reads as one. */
+.dart-rchip-mins {
+  font-size: 11.5px; font-weight: 700; color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.dart-rchip.done .dart-rchip-mins { color: var(--success); }
+.dart-rchip-title { font-weight: 500; }
+
+/* ─── Today goal cards: one line ────────────────────────────────── */
+/* Status, runway, title and the day's ask sit on a single row. Sizes and
+   colours are unchanged — only the axis is. flex-wrap does the rest: on a
+   narrow window or a phone the row breaks back into stacked lines by itself. */
+.dart-today .dart-card-hd { align-items: center; gap: 10px; }
+.dart-today .dart-card-main {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  column-gap: 12px; row-gap: 4px;
+}
+.dart-today .dart-card-title {
+  flex: 1 1 auto; min-width: 150px; margin-top: 0;
+}
+.dart-today .dart-asks {
+  margin-top: 0; flex: 0 0 auto; column-gap: 14px; row-gap: 2px;
+}
+/* The badge is a pill, so baseline alignment would hang it low. */
+.dart-today .dart-badge { align-self: center; flex-shrink: 0; }
+.dart-today .dart-card-dl { flex-shrink: 0; }
+
+@media (max-width: 560px) {
+  /* Below this the single row is more cramped than it is useful — let the
+     title claim its own line and keep the ask numbers beneath it. */
+  .dart-today .dart-card-title { flex-basis: 100%; min-width: 0; }
 }
