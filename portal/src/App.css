@@ -4947,6 +4947,152 @@ body.resizing-h * {
 .p2r-hint.over { color: var(--danger); font-weight: 600; }
 .p2r-form-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+/* HTML pattern-recall cards — larger type, color-coded flow, char tiles. */
+.p2r-viz {
+  font-size: 15px; line-height: 1.75; color: var(--text);
+  display: flex; flex-direction: column; gap: 16px; padding: 2px 0 8px;
+}
+.p2r-viz-kicker {
+  font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text2);
+}
+.p2r-viz-oneline {
+  font-size: 16px; font-weight: 650; line-height: 1.45;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(var(--primary-rgb), .12);
+  border: 1px solid rgba(var(--primary-rgb), .35);
+  color: var(--text);
+}
+.p2r-viz-oneline em { color: var(--primary); font-style: normal; font-weight: 800; }
+.p2r-viz-flow {
+  display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px;
+}
+.p2r-viz-step {
+  flex: 1 1 120px; display: flex; gap: 8px; align-items: flex-start;
+  padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--bg2); min-width: 0;
+}
+.p2r-viz-step .n {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff;
+}
+.p2r-viz-step .b { font-size: 13px; font-weight: 650; line-height: 1.35; }
+.p2r-viz-step .s { display: block; font-size: 11px; font-weight: 500; color: var(--text2); margin-top: 2px; }
+.p2r-viz-step.s1 .n { background: var(--danger); }
+.p2r-viz-step.s2 .n { background: var(--warning); }
+.p2r-viz-step.s3 .n { background: var(--primary); }
+.p2r-viz-step.s4 .n { background: var(--success); }
+.p2r-viz-arrow {
+  align-self: center; color: var(--text2); font-weight: 800; font-size: 16px;
+  flex: 0 0 auto;
+}
+.p2r-body .section-html-body .p2r-viz-hd,
+.p2r-viz-hd {
+  font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--primary); margin: 2px 0 0;
+}
+.p2r-viz-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.p2r-viz-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.p2r-viz-ul { margin: 6px 0 0; padding-left: 18px; }
+.p2r-viz-ul li { margin: 4px 0; }
+.p2r-viz-pre .mark { color: var(--warning); font-weight: 700; }
+.p2r-viz-pre .unmark { color: var(--success); font-weight: 700; }
+.p2r-viz-pre .bad { color: var(--danger); font-weight: 700; }
+.p2r-viz-card {
+  padding: 9px 12px; border-radius: 10px; background: var(--bg2);
+  border: 1px solid var(--border); border-left-width: 3px; font-size: 14px; line-height: 1.5;
+}
+.p2r-viz-card.i   { border-left-color: var(--primary); }
+.p2r-viz-card.j   { border-left-color: var(--warning); }
+.p2r-viz-card.lps { border-left-color: var(--success); }
+.p2r-viz-card.x   { border-left-color: var(--danger); }
+.p2r-viz-card code { font-size: 13.5px; }
+.p2r-viz code { font-size: 13.5px; }
+.p2r-viz-legend {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 12px; font-weight: 650;
+  color: var(--text2);
+}
+.p2r-viz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.p2r-viz-dot {
+  width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+  font-style: normal; flex-shrink: 0;
+}
+.p2r-viz-dot.i   { background: var(--primary); }
+.p2r-viz-dot.j   { background: var(--warning); }
+.p2r-viz-dot.lps { background: var(--success); }
+.p2r-viz-dot.x   { background: var(--danger); }
+.p2r-viz-scene {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+.p2r-viz-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.p2r-viz-lab {
+  width: 72px; flex: 0 0 72px; font-size: 11px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text2);
+}
+.p2r-viz-ch {
+  width: 32px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; font-size: 16px; font-weight: 800;
+  background: var(--bg3); color: var(--text2); border: 1px solid transparent;
+}
+.p2r-viz-ch.i   { background: rgba(var(--primary-rgb), .2); color: var(--primary); border-color: rgba(var(--primary-rgb), .45); }
+.p2r-viz-ch.j   { background: rgba(245, 158, 11, .18); color: var(--warning); border-color: rgba(245, 158, 11, .45); }
+.p2r-viz-ch.lps { background: rgba(34, 197, 94, .18); color: var(--success); border-color: rgba(34, 197, 94, .45); }
+.p2r-viz-ch.x   { background: rgba(239, 68, 68, .2); color: var(--danger); border-color: rgba(239, 68, 68, .5); }
+.p2r-viz-ch.ghost { opacity: .35; }
+.p2r-viz-call {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px; font-weight: 650; color: var(--text);
+  padding: 6px 10px; border-radius: 8px; background: var(--bg3);
+}
+.p2r-viz-call .j   { color: var(--warning); }
+.p2r-viz-call .i   { color: var(--primary); }
+.p2r-viz-call .lps { color: var(--success); }
+.p2r-viz-call .x   { color: var(--danger); }
+.p2r-viz-down {
+  text-align: center; color: var(--text2); font-weight: 800; font-size: 18px; line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.p2r-viz-why {
+  padding: 10px 14px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--border);
+  font-size: 14.5px;
+}
+.p2r-viz-why blockquote {
+  margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--success);
+  background: rgba(34, 197, 94, .08); border-radius: 0 8px 8px 0;
+  font-weight: 650; color: var(--text);
+}
+.p2r-body .section-html-body pre.p2r-viz-pre,
+.p2r-viz-pre {
+  margin: 0; padding: 12px 14px; border-radius: 10px; overflow-x: auto;
+  background: var(--bg2); border: 1px solid var(--border);
+  font-size: 13.5px; line-height: 1.6; color: var(--text);
+}
+.p2r-viz-pre .cmt { color: var(--text2); }
+.p2r-viz-pre .kw  { color: var(--primary); font-weight: 700; }
+.p2r-viz-pre .fn  { color: var(--warning); }
+.p2r-viz-pre .ok  { color: var(--success); }
+.p2r-viz-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.p2r-viz-table th, .p2r-viz-table td {
+  text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.p2r-viz-table th {
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text2);
+}
+.p2r-viz-table code { font-size: 12.5px; }
+.p2r-viz-pid { color: var(--primary); font-weight: 700; }
+
+@media (max-width: 720px) {
+  .p2r-viz-grid, .p2r-viz-grid.cols-3 { grid-template-columns: 1fr; }
+  .p2r-viz-arrow { display: none; }
+}
+
 
 /* ── Quiz / Recall (sidebar launcher + middle-pane deck) ────────────────── */
 /* Launcher — sits ABOVE the Point2Rem tag tree. Deliberately heavier than a
@@ -5080,6 +5226,13 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   text-align: left; line-height: 1.4;
 }
 .recall-list-row:hover { background: var(--bg3); color: var(--text); }
+/* The flat group header doubles as the tag filter, so it's a <button> — reset
+   the control chrome and let .p2r-group-hd keep the sticky/underline look. */
+.recall-group-hd {
+  width: 100%; border: none; cursor: pointer; font: inherit; text-align: left;
+}
+.recall-group-hd:hover .flat-tag-leaf { color: var(--primary); }
+.recall-group-hd.active .flat-tag-leaf { color: var(--primary); font-weight: 600; }
 .recall-list-row.active { background: rgba(var(--primary-rgb), .14); color: var(--primary); font-weight: 600; }
 .recall-list-q { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

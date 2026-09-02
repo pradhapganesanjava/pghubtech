@@ -74,8 +74,8 @@ function shuffled<T>(xs: T[]): T[] {
   return out
 }
 
-// Tag root (first :: segment) — the grouping key in list mode.
-const tagRoot = (t: string) => t.split('::')[0] || RECALL_UNTAGGED
+// Cards group by their full tag path in list mode; RECALL_UNTAGGED catches
+// the untagged ones so they stay visible instead of dropping out.
 
 export default function RecallDeck({
   items, loading, error, problems, points, knownTags, currentId, onCurrentId,
@@ -547,44 +547,60 @@ export default function RecallDeck({
   } else if (queue.length === 0) {
     inner = <div className="col-empty">No cards match this filter</div>
   } else if (body === 'list') {
-    // Group by tag root so a long deck stays scannable. Unlike the Point2Rem
-    // tree, a card is filed ONCE — under its FIRST tag's root. List mode is an
-    // inventory you scan to pick a card, and most cards carry two or three
-    // roots (`_ds` + `_prob` + `_meta`), so cross-filing tripled the rows and
-    // buried the deck. Reaching a card by its other tags is what the tag
-    // filter above is for.
-    const groups = new Map<string, RecallItem[]>()
+    // Flat inventory: one group per FULL tag path, sorted. A card is listed
+    // under every tag it carries, so it's reachable by its DS and by its
+    // technique — no tag-order accident decides where it shows up.
+    // Flat, not a tree: this pane is a list you scan top-to-bottom, and the
+    // path renders small enough (`_ds::array::` dimmed, leaf normal) that the
+    // hierarchy still reads without any expanding.
+    const byTag = new Map<string, RecallItem[]>()
     for (const i of queue) {
-      const root = i.tags.length ? tagRoot(i.tags[0]) : RECALL_UNTAGGED
-      const g = groups.get(root)
-      if (g) g.push(i); else groups.set(root, [i])
+      for (const tag of (i.tags.length ? i.tags : [RECALL_UNTAGGED])) {
+        const list = byTag.get(tag)
+        if (list) list.push(i); else byTag.set(tag, [i])
+      }
     }
+    const groups = [...byTag.entries()].sort(([a], [b]) => a.localeCompare(b))
     inner = (
       <div className="recall-list">
-        {[...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([root, list]) => (
-          <div key={root} className="p2r-group">
-            <div className="p2r-group-hd" title={root}>
-              <span className="flat-tag-path"><span className="flat-tag-leaf">{root}</span></span>
-              <span className="tree-cnt">{list.length}</span>
-            </div>
-            {list.map(i => (
+        {groups.map(([tag, list]) => {
+          const parts  = tag.split('::')
+          const prefix = parts.slice(0, -1).join('::')
+          const leaf   = parts[parts.length - 1]
+          return (
+            <div key={tag} className="p2r-group">
+              {/* The header is the filter control: click narrows the whole deck
+                  (quiz mode included) to that tag, click again clears it. */}
               <button
-                key={i.id}
-                className={`recall-list-row${i.id === currentId ? ' active' : ''}`}
-                onClick={() => { onCurrentId(i.id); setBody('quiz') }}
-                title="Open in quiz mode"
+                className={`p2r-group-hd recall-group-hd${tagPick === tag ? ' active' : ''}`}
+                title={tagPick === tag ? `Clear the ${tag} filter` : `Filter the deck to ${tag}`}
+                onClick={() => setTagPick(p => p === tag ? '' : tag)}
               >
-                {kindBadge(i.kind)}
-                <span className="recall-list-q" dangerouslySetInnerHTML={{ __html: renderQuestion(i.question) }} />
-                {(i.problems.length > 0 || i.points.length > 0) && (
-                  <span className="tree-cnt" title={`${i.problems.length} problems · ${i.points.length} notes`}>
-                    🔗{i.problems.length + i.points.length}
-                  </span>
-                )}
+                <span className="flat-tag-path">
+                  {prefix && <span className="flat-tag-prefix">{prefix}::</span>}
+                  <span className="flat-tag-leaf">{leaf}</span>
+                </span>
+                <span className="tree-cnt">{list.length}</span>
               </button>
-            ))}
-          </div>
-        ))}
+              {list.map(i => (
+                <button
+                  key={`${tag}::${i.id}`}
+                  className={`recall-list-row${i.id === currentId ? ' active' : ''}`}
+                  onClick={() => { onCurrentId(i.id); setBody('quiz') }}
+                  title="Open in quiz mode"
+                >
+                  {kindBadge(i.kind)}
+                  <span className="recall-list-q" dangerouslySetInnerHTML={{ __html: renderQuestion(i.question) }} />
+                  {(i.problems.length > 0 || i.points.length > 0) && (
+                    <span className="tree-cnt" title={`${i.problems.length} problems · ${i.points.length} notes`}>
+                      🔗{i.problems.length + i.points.length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )
+        })}
       </div>
     )
   } else if (current) {
