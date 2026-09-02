@@ -6012,8 +6012,22 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 @media (max-width: 900px) {
   /* Stacked, the side column belongs BELOW the day's list: on a phone the
      first thing wanted is what to do next, not the history behind it. */
-  .dart-today-wrap { flex-direction: column; }
+  .dart-today-wrap {
+    flex-direction: column;
+    /* ONE scroll region for the whole day, not two nested ones. Side by side
+       each pane scrolls itself, but stacked that starves the task list: the
+       side column claims its full natural height (grid + budget ≈ 400px) and
+       whatever is left becomes a cramped little viewport for the cards. Here
+       the wrapper scrolls and both children size to their content, so the
+       page reads top to bottom the way a phone expects. */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .dart-today-wrap > .dart-today {
+    flex: 0 0 auto; min-height: 0; overflow: visible;
+  }
   .dart-side {
+    flex: 0 0 auto; overflow: visible;
     width: auto; border-left: 0; border-top: 1px solid var(--border);
     padding: 14px 12px 24px;
   }
