@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
 import { sanitizeHtml } from '../lib/sanitize'
 import type { RecallItem, RecallKind } from '../adapters/recallRepo'
-import { RECALL_KINDS, RECALL_KIND_META, RECALL_MAX_ANSWER, RECALL_UNTAGGED } from '../adapters/recallRepo'
+import { RECALL_KINDS, RECALL_KIND_META, RECALL_MAX_ANSWER } from '../adapters/recallRepo'
 import type { LCProblem } from '../adapters/adsRepo'
 import type { P2RItem } from '../adapters/point2remRepo'
 
@@ -39,9 +39,40 @@ interface Props {
   // A blank card handed in by ＋ New; the deck opens straight into the form.
   draftSeed:     RecallItem | null
   onDraftDone:   () => void
+  // Shared with the left Point2Rem tag tree — pick `_ds::heap` there and
+  // the deck narrows to that branch.
+  tagFilter?:    string
+  onTagFilter?:  (tag: string) => void
+  // Bumped each time Quiz is opened so the deck reshuffles.
+  shuffleNonce?: number
 }
 
 type Body = 'quiz' | 'list' | 'edit'
+type ListSort = 'az' | 'za' | 'tag' | 'updated' | 'kind'
+
+const LIST_SORT_META: { id: ListSort; label: string }[] = [
+  { id: 'az',      label: 'A–Z' },
+  { id: 'za',      label: 'Z–A' },
+  { id: 'tag',     label: 'Tag' },
+  { id: 'updated', label: 'Updated' },
+  { id: 'kind',    label: 'Kind' },
+]
+
+function sortRecallList(a: RecallItem, b: RecallItem, sort: ListSort): number {
+  const byQ = () => a.question.localeCompare(b.question, undefined, { sensitivity: 'base' })
+  if (sort === 'za') return b.question.localeCompare(a.question, undefined, { sensitivity: 'base' })
+  if (sort === 'tag') {
+    const ta = a.tags[0] ?? ''
+    const tb = b.tags[0] ?? ''
+    return ta.localeCompare(tb) || byQ()
+  }
+  if (sort === 'updated') return (b.updated || '').localeCompare(a.updated || '') || byQ()
+  if (sort === 'kind') {
+    const order: Record<string, number> = { trick: 0, confusion: 1, concept: 2 }
+    return (order[a.kind] ?? 9) - (order[b.kind] ?? 9) || byQ()
+  }
+  return byQ()
+}
 
 function diffClass(d: string): string {
   const k = d.toLowerCase()
@@ -62,6 +93,12 @@ function renderAnswer(answer: string, format: 'md' | 'html'): string {
   catch { return sanitizeHtml(answer) }
 }
 
+function renderPointContent(content: string, format: 'md' | 'html'): string {
+  if (format === 'html') return sanitizeHtml(content)
+  try { return sanitizeHtml(marked.parse(content, { async: false }) as string) }
+  catch { return sanitizeHtml(content) }
+}
+
 const splitList = (s: string) => s.split(/\s*;\s*/).map(x => x.trim()).filter(Boolean)
 
 // Fisher–Yates over a copy — the deck order is state, not a re-sort of props.
@@ -74,18 +111,18 @@ function shuffled<T>(xs: T[]): T[] {
   return out
 }
 
-// Cards group by their full tag path in list mode; RECALL_UNTAGGED catches
-// the untagged ones so they stay visible instead of dropping out.
-
 export default function RecallDeck({
   items, loading, error, problems, points, knownTags, currentId, onCurrentId,
   onOpenProblem, onOpenPoint, onSave, onDelete, onRefresh, onClose, onWiden,
-  draftSeed, onDraftDone,
+  draftSeed, onDraftDone, tagFilter, onTagFilter, shuffleNonce,
 }: Props) {
   const [body, setBody]       = useState<Body>('quiz')
   const [search, setSearch]   = useState('')
   const [kinds, setKinds]     = useState<RecallKind[]>([])   // [] ⇒ all
-  const [tagPick, setTagPick] = useState('')                 // '' ⇒ all
+  const [tagPickLocal, setTagPickLocal] = useState('')
+  const [listSort, setListSort] = useState<ListSort>('az')
+  const tagPick = onTagFilter ? (tagFilter ?? '') : tagPickLocal
+  const setTagPick = onTagFilter ?? setTagPickLocal
   const [revealed, setReveal] = useState(false)
   const [hinted, setHinted]   = useState(false)
   // Ids in the order the deck walks them. null ⇒ natural (filtered) order.
@@ -101,6 +138,11 @@ export default function RecallDeck({
     if (!draftSeed) return
     setDraft(draftSeed); setBody('edit'); setFormErr(''); setPreview(false)
   }, [draftSeed])
+
+  useEffect(() => {
+    if (shuffleNonce == null || items.length === 0) return
+    setShuffle(shuffled(items).map(i => i.id))
+  }, [shuffleNonce]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchLower = search.trim().toLowerCase()
 
@@ -205,6 +247,11 @@ export default function RecallDeck({
   // ── Editing ────────────────────────────────────────────────────────────────
 
   function startEdit(item: RecallItem) {
+    if (item.source === 'p2r') {
+      const point = points.find(p => p.id === item.id)
+      if (point) onOpenPoint(point)
+      return
+    }
     setDraft({ ...item }); setBody('edit'); setFormErr(''); setPreview(false)
   }
   function cancelEdit() {
@@ -288,7 +335,7 @@ export default function RecallDeck({
               format: 'md', updated: '',
             })}
             title="Write a new card"
-          >＋ New</button>
+          >＋</button>
           <button className="rf-btn-cancel" onClick={onRefresh} disabled={loading} title="Reload from the sheet">
             {loading ? '…' : '↻'}
           </button>
@@ -308,8 +355,7 @@ export default function RecallDeck({
 
   function renderReferences(item: RecallItem) {
     const probs = resolveProblems(item.problems)
-    const pts   = resolvePoints(item.points)
-    if (probs.length === 0 && pts.length === 0 && item.links.length === 0) return null
+    if (probs.length === 0 && item.links.length === 0) return null
     return (
       <div className="recall-refs">
         {probs.length > 0 && (
@@ -335,28 +381,6 @@ export default function RecallDeck({
             </ul>
           </div>
         )}
-        {pts.length > 0 && (
-          <div className="p2r-links" style={{ marginTop: 10, borderTop: 'none' }}>
-            <div className="detail-section-hd" style={{ padding: '6px 0' }}>
-              Point2Rem notes <span className="tree-cnt">{pts.length}</span>
-              <span className="recall-ref-hint">opens on the right →</span>
-            </div>
-            <ul className="adshub-prob-results">
-              {pts.map(({ id, point }) => (
-                <li
-                  key={id}
-                  onClick={() => point && onOpenPoint(point)}
-                  title={point ? `Open “${point.title}” in the right pane` : `${id} is not in Point2Rem`}
-                  style={point ? undefined : { opacity: .5, cursor: 'default' }}
-                >
-                  <span className="adshub-pid">📌</span>
-                  <span className="adshub-prob-title">{point ? point.title : id}</span>
-                  {point && <span className="adshub-prob-add">↗</span>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
         {item.links.length > 0 && (
           <div className="p2r-links" style={{ marginTop: 10, borderTop: 'none' }}>
             <div className="detail-section-hd" style={{ padding: '6px 0' }}>
@@ -377,7 +401,8 @@ export default function RecallDeck({
 
   const kindBadge = (kind: RecallKind) => (
     <span className={`recall-kind recall-kind--${kind}`} title={RECALL_KIND_META[kind].blurb}>
-      {RECALL_KIND_META[kind].icon} {RECALL_KIND_META[kind].label}
+      {RECALL_KIND_META[kind].icon}
+      <span className="recall-kind-label"> {RECALL_KIND_META[kind].label}</span>
     </span>
   )
 
@@ -413,7 +438,7 @@ export default function RecallDeck({
                 className={`adshub-diff-pill${draft.kind === k ? ' active' : ''}`}
                 onClick={() => setField('kind', k)}
                 title={RECALL_KIND_META[k].blurb}
-              >{RECALL_KIND_META[k].icon} {RECALL_KIND_META[k].label}</button>
+              >{RECALL_KIND_META[k].icon}<span className="recall-kind-label"> {RECALL_KIND_META[k].label}</span></button>
             ))}
           </div>
         </div>
@@ -453,11 +478,11 @@ export default function RecallDeck({
           </div>
         )}
 
-        <label>Point2Rem notes <span className="p2r-hint">· note ids, <code>;</code> separated</span>
+        <label>Point2Rem notes <span className="p2r-hint">· note ids, <code>;</code> separated — these <b>are</b> the revealed answer</span>
           <input
             className="rf-input" value={draft.points.join('; ')} disabled={saving}
             onChange={e => setField('points', splitList(e.target.value))}
-            placeholder="sliding-window-shrink-rule; dp-state-checklist"
+            placeholder="pair-diff-one-direction-dedup"
           />
         </label>
         {draft.points.length > 0 && (
@@ -547,60 +572,46 @@ export default function RecallDeck({
   } else if (queue.length === 0) {
     inner = <div className="col-empty">No cards match this filter</div>
   } else if (body === 'list') {
-    // Flat inventory: one group per FULL tag path, sorted. A card is listed
-    // under every tag it carries, so it's reachable by its DS and by its
-    // technique — no tag-order accident decides where it shows up.
-    // Flat, not a tree: this pane is a list you scan top-to-bottom, and the
-    // path renders small enough (`_ds::array::` dimmed, leaf normal) that the
-    // hierarchy still reads without any expanding.
-    const byTag = new Map<string, RecallItem[]>()
-    for (const i of queue) {
-      for (const tag of (i.tags.length ? i.tags : [RECALL_UNTAGGED])) {
-        const list = byTag.get(tag)
-        if (list) list.push(i); else byTag.set(tag, [i])
-      }
-    }
-    const groups = [...byTag.entries()].sort(([a], [b]) => a.localeCompare(b))
-    inner = (
+    // Full Point2Rem inventory: one row per note, not grouped (a note with
+    // three tags would otherwise appear three times) and not limited to the
+    // current quiz tag/shuffle. Search still narrows the list.
+    const seen = new Set<string>()
+    const flat = items.filter(i => {
+      if (seen.has(i.id)) return false
+      seen.add(i.id)
+      if (kinds.length && !kinds.includes(i.kind)) return false
+      if (tagPick && !i.tags.some(t => t === tagPick || t.startsWith(tagPick + '::'))) return false
+      if (!searchLower) return true
+      return i.question.toLowerCase().includes(searchLower)
+        || i.hint.toLowerCase().includes(searchLower)
+        || i.answer.toLowerCase().includes(searchLower)
+        || i.tags.some(t => t.toLowerCase().includes(searchLower))
+        || i.problems.some(p => `#${p}`.includes(searchLower))
+    }).sort((a, b) => sortRecallList(a, b, listSort))
+    inner = flat.length === 0 ? (
+      <div className="col-empty">No notes match</div>
+    ) : (
       <div className="recall-list">
-        {groups.map(([tag, list]) => {
-          const parts  = tag.split('::')
-          const prefix = parts.slice(0, -1).join('::')
-          const leaf   = parts[parts.length - 1]
-          return (
-            <div key={tag} className="p2r-group">
-              {/* The header is the filter control: click narrows the whole deck
-                  (quiz mode included) to that tag, click again clears it. */}
-              <button
-                className={`p2r-group-hd recall-group-hd${tagPick === tag ? ' active' : ''}`}
-                title={tagPick === tag ? `Clear the ${tag} filter` : `Filter the deck to ${tag}`}
-                onClick={() => setTagPick(p => p === tag ? '' : tag)}
-              >
-                <span className="flat-tag-path">
-                  {prefix && <span className="flat-tag-prefix">{prefix}::</span>}
-                  <span className="flat-tag-leaf">{leaf}</span>
-                </span>
-                <span className="tree-cnt">{list.length}</span>
-              </button>
-              {list.map(i => (
-                <button
-                  key={`${tag}::${i.id}`}
-                  className={`recall-list-row${i.id === currentId ? ' active' : ''}`}
-                  onClick={() => { onCurrentId(i.id); setBody('quiz') }}
-                  title="Open in quiz mode"
-                >
-                  {kindBadge(i.kind)}
-                  <span className="recall-list-q" dangerouslySetInnerHTML={{ __html: renderQuestion(i.question) }} />
-                  {(i.problems.length > 0 || i.points.length > 0) && (
-                    <span className="tree-cnt" title={`${i.problems.length} problems · ${i.points.length} notes`}>
-                      🔗{i.problems.length + i.points.length}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )
-        })}
+        <div className="p2r-group">
+          <div className="p2r-group-hd">
+            <span className="flat-tag-leaf">All Point2Rem notes</span>
+            <span className="tree-cnt">{flat.length}</span>
+          </div>
+          {flat.map(i => (
+            <button
+              key={i.id}
+              className={`recall-list-row${i.id === currentId ? ' active' : ''}`}
+              onClick={() => { onCurrentId(i.id); setBody('quiz') }}
+              title="Open in quiz mode"
+            >
+              {kindBadge(i.kind)}
+              <span className="recall-list-q" dangerouslySetInnerHTML={{ __html: renderQuestion(i.question) }} />
+              {i.tags[0] && (
+                <span className="flat-tag-prefix" title={i.tags.join(' · ')}>{i.tags[0]}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
     )
   } else if (current) {
@@ -611,7 +622,7 @@ export default function RecallDeck({
           {current.tags.map(t => (
             <button
               key={t} className="tag recall-tag" title={`Filter the deck to ${t}`}
-              onClick={() => setTagPick(p => p === t ? '' : t)}
+              onClick={() => setTagPick(tagPick === t ? '' : t)}
             >{t}</button>
           ))}
           {current.updated && <span className="p2r-updated">{current.updated}</span>}
@@ -628,10 +639,38 @@ export default function RecallDeck({
         {revealed ? (
           <>
             <div className="recall-answer-hd">Answer</div>
-            <div
-              className="adshub-desc section-html-body recall-answer"
-              dangerouslySetInnerHTML={{ __html: answerHtml || '<em style="opacity:.5">No answer written yet.</em>' }}
-            />
+            {current.answer.trim() ? (
+              <div
+                className="adshub-desc section-html-body recall-answer"
+                dangerouslySetInnerHTML={{ __html: answerHtml }}
+              />
+            ) : current.points.length === 0 ? (
+              <div className="adshub-desc section-html-body recall-answer">
+                <em style={{ opacity: .5 }}>No answer written yet.</em>
+              </div>
+            ) : null}
+            {resolvePoints(current.points).map(({ id, point }) => (
+              <div key={id} className="recall-p2r-embed">
+                <div className="recall-p2r-embed-hd">
+                  <span className="recall-p2r-embed-title">📌 {point ? point.title : id}</span>
+                  {point && (
+                    <button
+                      className="bci-edit-btn"
+                      title="Open in the right pane"
+                      onClick={() => onOpenPoint(point)}
+                    >↗</button>
+                  )}
+                </div>
+                {point ? (
+                  <div
+                    className="adshub-desc section-html-body p2r-body"
+                    dangerouslySetInnerHTML={{ __html: renderPointContent(point.content, point.format) }}
+                  />
+                ) : (
+                  <em style={{ opacity: .5 }}>{id} is not in Point2Rem</em>
+                )}
+              </div>
+            ))}
             {renderReferences(current)}
           </>
         ) : (
@@ -645,8 +684,10 @@ export default function RecallDeck({
               button swallows them (see the keydown guard above). */}
           <button className="rf-btn-cancel" onClick={e => { e.currentTarget.blur(); go(-1) }} title="Previous card (←)">◀ Prev</button>
           <div className="recall-nav-mid">
-            <button className="bci-edit-btn" onClick={() => startEdit(current)} title="Edit this card">✎</button>
-            <button className="bci-edit-btn" onClick={() => handleDelete(current)} title="Delete this card">🗑</button>
+            <button className="bci-edit-btn" onClick={() => startEdit(current)} title={current.source === 'p2r' ? 'Open the Point2Rem note' : 'Edit this card'}>✎</button>
+            {current.source !== 'p2r' && (
+              <button className="bci-edit-btn" onClick={() => handleDelete(current)} title="Delete this card">🗑</button>
+            )}
           </div>
           <button className="rf-btn-save" onClick={e => { e.currentTarget.blur(); go(1) }} title="Next card (→)">Next ▶</button>
         </div>
@@ -656,7 +697,7 @@ export default function RecallDeck({
   }
 
   return (
-    <>
+    <div className="recall-deck">
       {header}
       {body !== 'edit' && items.length > 0 && (
         <div className="recall-filters">
@@ -673,7 +714,7 @@ export default function RecallDeck({
                 className={`adshub-diff-pill${kinds.includes(k) ? ' active' : ''}`}
                 onClick={() => setKinds(ks => ks.includes(k) ? ks.filter(x => x !== k) : [...ks, k])}
                 title={RECALL_KIND_META[k].blurb}
-              >{RECALL_KIND_META[k].icon} {RECALL_KIND_META[k].label}</button>
+              >{RECALL_KIND_META[k].icon}<span className="recall-kind-label"> {RECALL_KIND_META[k].label}</span></button>
             ))}
           </div>
           <select
@@ -685,6 +726,18 @@ export default function RecallDeck({
             <option value="">All tags</option>
             {tagOptions.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
+          {body === 'list' && (
+            <select
+              className="rf-input recall-tag-select"
+              value={listSort}
+              onChange={e => setListSort(e.target.value as ListSort)}
+              title="Sort the list"
+            >
+              {LIST_SORT_META.map(s => (
+                <option key={s.id} value={s.id}>Sort: {s.label}</option>
+              ))}
+            </select>
+          )}
           {(searchLower || kinds.length > 0 || tagPick) && (
             <button
               className="col-hd-clear"
@@ -694,6 +747,6 @@ export default function RecallDeck({
         </div>
       )}
       <div className="recall-body" ref={bodyRef}>{inner}</div>
-    </>
+    </div>
   )
 }

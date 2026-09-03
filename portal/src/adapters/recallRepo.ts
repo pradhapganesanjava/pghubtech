@@ -70,6 +70,7 @@ export interface RecallItem {
   links:    RecallLink[]
   format:   'md' | 'html'
   updated:  string
+  source?:  'p2r'           // client-only: card is a Point2Rem note, not a sheet row
 }
 
 // Cards with no tags group under this synthetic path so they stay visible
