@@ -33,7 +33,6 @@ interface Props {
   onOpenPoint:   (i: P2RItem) => void
   onSave:        (draft: RecallItem) => Promise<RecallItem>
   onDelete:      (id: string) => Promise<void>
-  onRefresh:     () => void
   onClose:       () => void
   onWiden:       () => void
   // A blank card handed in by ＋ New; the deck opens straight into the form.
@@ -113,7 +112,7 @@ function shuffled<T>(xs: T[]): T[] {
 
 export default function RecallDeck({
   items, loading, error, problems, points, knownTags, currentId, onCurrentId,
-  onOpenProblem, onOpenPoint, onSave, onDelete, onRefresh, onClose, onWiden,
+  onOpenProblem, onOpenPoint, onSave, onDelete, onClose, onWiden,
   draftSeed, onDraftDone, tagFilter, onTagFilter, shuffleNonce,
 }: Props) {
   const [body, setBody]       = useState<Body>('quiz')
@@ -123,6 +122,10 @@ export default function RecallDeck({
   const [listSort, setListSort] = useState<ListSort>('az')
   const tagPick = onTagFilter ? (tagFilter ?? '') : tagPickLocal
   const setTagPick = onTagFilter ?? setTagPickLocal
+  // The filter strip is a second row of chrome, so it's collapsed by default
+  // and ☰ in the header reveals it. Any active filter badges the trigger —
+  // a narrowed deck must never look like the whole deck.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [revealed, setReveal] = useState(false)
   const [hinted, setHinted]   = useState(false)
   // Ids in the order the deck walks them. null ⇒ natural (filtered) order.
@@ -141,7 +144,7 @@ export default function RecallDeck({
 
   useEffect(() => {
     if (shuffleNonce == null || items.length === 0) return
-    setShuffle(shuffled(items).map(i => i.id))
+    deal()
   }, [shuffleNonce]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchLower = search.trim().toLowerCase()
@@ -189,6 +192,24 @@ export default function RecallDeck({
     if (queue.length === 0) return
     const next = (pos + delta + queue.length) % queue.length
     onCurrentId(queue[next].id)
+    bodyRef.current?.scrollTo({ top: 0 })
+  }
+
+  // Re-deal: a fresh order AND a move to the top of it. The move is the point —
+  // pos is derived from currentId, so a new permutation on its own leaves the
+  // same card on screen wearing a different number.
+  //
+  // Permute all items, not just the filtered deck, so widening the filter later
+  // brings the rest back in random order too; the landing card is the first of
+  // the permutation that the filter actually shows.
+  function deal() {
+    const order = shuffled(items).map(i => i.id)
+    setShuffle(order)
+    // Never land back on the card already open — a 1-in-N no-op reads as a
+    // broken button. ◀ ▶ wrap, so anything skipped here is still reachable.
+    const visible = new Set(deck.map(i => i.id))
+    const head = order.find(id => visible.has(id) && (id !== currentId || visible.size === 1))
+    if (head) onCurrentId(head)
     bodyRef.current?.scrollTo({ top: 0 })
   }
 
@@ -291,16 +312,35 @@ export default function RecallDeck({
 
   // ── Header ─────────────────────────────────────────────────────────────────
 
+  // Search / kind / tag each count as one narrowing. Sort isn't a filter — it
+  // reorders the list without hiding anything — so it stays out of the badge.
+  const activeFilters = (searchLower ? 1 : 0) + kinds.length + (tagPick ? 1 : 0)
+
   const header = (
     <div
       className="col-hd doc-detail-hd recall-hd"
-      style={{ padding: '10px 12px', flexShrink: 0 }}
       onDoubleClick={onWiden}
       title="🎯 Quiz / Recall — double-click to widen / restore"
     >
       <span className="doc-detail-title">
         {body === 'edit' ? (draft?.id ? '✎ Edit card' : '＋ New card') : '🎯 Quiz / Recall'}
       </span>
+      {/* Sits against the title rather than in the action run on the right:
+          it opens the strip that scopes WHAT the deck is showing, which is a
+          statement about the title, not another verb like 🔀 / ＋ / ↻. */}
+      {body !== 'edit' && items.length > 0 && (
+        <button
+          className={`bci-edit-btn bci-edit-btn-hd recall-filter-toggle${filtersOpen ? ' active' : ''}${!filtersOpen && activeFilters > 0 ? ' has-active' : ''}`}
+          onClick={() => setFiltersOpen(o => !o)}
+          aria-expanded={filtersOpen}
+          title={`Search · filter · sort${activeFilters > 0 ? ` — ${activeFilters} active` : ''}`}
+        >☰{activeFilters > 0 && <span className="recall-filter-cnt">{activeFilters}</span>}</button>
+      )}
+      {/* Centred on the row, so "where am I in the deck" reads as a status
+          line rather than one more thing crowding the buttons. */}
+      {body === 'quiz' && queue.length > 0 && (
+        <span className="recall-progress">{pos + 1} / {queue.length}</span>
+      )}
       <div className="recall-hd-actions">
         {body !== 'edit' && (
           <div className="adshub-diff-pills">
@@ -316,14 +356,15 @@ export default function RecallDeck({
             >≡ List</button>
           </div>
         )}
-        {body === 'quiz' && queue.length > 0 && (
-          <span className="recall-progress">{pos + 1} / {queue.length}</span>
-        )}
         {body !== 'edit' && <>
+          {/* Every click re-deals. It used to toggle back to deck order, but the
+              deck already opens shuffled, so the off state was both unreachable
+              in practice and indistinguishable from a shuffle that did nothing. */}
           <button
-            className={`bci-edit-btn bci-edit-btn-hd${shuffleIds ? ' active' : ''}`}
-            onClick={() => setShuffle(x => x ? null : shuffled(deck).map(i => i.id))}
-            title={shuffleIds ? 'Shuffled — click for deck order' : 'Shuffle the deck'}
+            className="bci-edit-btn bci-edit-btn-hd"
+            onClick={deal}
+            disabled={deck.length === 0}
+            title="Shuffle — deal a new order and jump to a new card"
           >🔀</button>
           <button
             className="rf-btn-save recall-new-btn"
@@ -336,9 +377,6 @@ export default function RecallDeck({
             })}
             title="Write a new card"
           >＋</button>
-          <button className="rf-btn-cancel" onClick={onRefresh} disabled={loading} title="Reload from the sheet">
-            {loading ? '…' : '↻'}
-          </button>
         </>}
         {/* While editing, ✕ backs out of the FORM — closing the whole deck
             from here would drop the draft with no warning. */}
@@ -699,7 +737,7 @@ export default function RecallDeck({
   return (
     <div className="recall-deck">
       {header}
-      {body !== 'edit' && items.length > 0 && (
+      {body !== 'edit' && items.length > 0 && filtersOpen && (
         <div className="recall-filters">
           <input
             className="col-search"
