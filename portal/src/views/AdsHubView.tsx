@@ -34,11 +34,12 @@ import {
 } from '../adapters/point2remRepo'
 import type { P2RItem } from '../adapters/point2remRepo'
 import {
-  loadRecall, getCachedRecall, saveRecall, deleteRecall, emptyRecallItem,
+  loadRecall, getCachedRecall, saveRecall, deleteRecall,
 } from '../adapters/recallRepo'
 import type { RecallItem } from '../adapters/recallRepo'
 import AdsHubSidebar from '../components/AdsHubSidebar'
 import Point2RemDetail from '../components/Point2RemDetail'
+import { mergeRecallDeck } from '../lib/p2rAsRecall'
 import RecallDeck from '../components/RecallDeck'
 import AdsLineage from '../components/AdsLineage'
 import CodePanel from '../components/CodePanel'
@@ -407,13 +408,22 @@ export default function AdsHubView() {
   function openP2R(item: P2RItem) {
     setSelected(null)
     setP2rEditing(false)
-    setP2rSel(cur => cur?.id === item.id ? null : item)
+    setViewerExpanded(false)
+    if (p2rSel?.id === item.id && adsMode === 'point2rem') {
+      setP2rSel(null)
+      setAdsMode('browse')
+      return
+    }
+    setP2rSel(item)
+    setAdsMode('point2rem')
   }
   // ＋ New — open a blank note straight in edit mode.
   function newP2R() {
     setSelected(null)
     setP2rEditing(true)
     setP2rSel(emptyP2RItem())
+    setViewerExpanded(false)
+    setAdsMode('point2rem')
   }
   async function handleSaveP2R(draft: P2RItem) {
     const saved = await savePoint2Rem(draft)     // throws → the panel shows the error
@@ -426,6 +436,7 @@ export default function AdsHubView() {
     await deletePoint2Rem(id)
     setP2rItems(getCachedPoint2Rem() ?? [])
     setP2rSel(null)
+    setAdsMode('browse')
     toast('Point deleted', 'success')
   }
   // Open a Point2Rem note *as a reference* — from a Recall card, say. Unlike
@@ -435,6 +446,8 @@ export default function AdsHubView() {
     setSelected(null)
     setP2rEditing(false)
     setP2rSel(item)
+    setViewerExpanded(false)
+    setAdsMode('point2rem')
   }
 
   // ── Quiz / Recall ─────────────────────────────────────────────────────────
@@ -448,6 +461,12 @@ export default function AdsHubView() {
   const [recallId, setRecallId]           = useState<string | null>(null)
   // A blank card handed to the deck by ＋ New; cleared once the form closes.
   const [recallDraft, setRecallDraft]     = useState<RecallItem | null>(null)
+  const [recallTag, setRecallTag]         = useState('')
+  const [recallShuffleNonce, setRecallShuffleNonce] = useState(0)
+  const recallDeck = useMemo(
+    () => mergeRecallDeck(p2rItems, recallItems),
+    [p2rItems, recallItems],
+  )
 
   async function fetchRecall(force = false) {
     setRecallLoading(true); setRecallError('')
@@ -468,11 +487,22 @@ export default function AdsHubView() {
   // the deck renders, and viewerExpanded hides it.
   function openRecall() {
     setViewerExpanded(false)
+    setSelected(null)
+    setP2rSel(null)           // mobile hides the list column when a detail is open
+    setLeftColl(true)         // close the tags accordion so the deck isn't a 0-height leftover
     setAdsMode('recall')
+    setRecallTag('')          // whole Point2Rem deck, not one tag / one note
+    setRecallId(null)
+    setRecallShuffleNonce(n => n + 1)
   }
-  function newRecall() {
-    openRecall()
-    setRecallDraft(emptyRecallItem())   // fresh object each time → the form reopens
+  function pickP2RTag(path: string) {
+    setRecallTag(cur => cur === path ? '' : path)
+    setViewerExpanded(false)
+    setSelected(null)
+    setP2rSel(null)
+    setLeftColl(true)
+    setAdsMode('recall')
+    setRecallShuffleNonce(n => n + 1)
   }
   async function handleSaveRecall(draft: RecallItem) {
     const saved = await saveRecall(draft)   // throws → the form shows the error
@@ -502,7 +532,8 @@ export default function AdsHubView() {
     return [...set].sort()
   }, [p2rItems])
   // True when EITHER pane occupant is open — drives the split sizing below.
-  const detailOpen = !!selected || !!p2rSel
+  const detailOpen = !!selected
+  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns' | 'recall' | 'point2rem'>('browse')
 
   // Persist all filter state — Clear All triggers this too via state resets.
   useEffect(() => {
@@ -511,7 +542,6 @@ export default function AdsHubView() {
       diff, customOnly, search, showTopics,
     })
   }, [selectedTags, selectedCompanies, selectedList, diff, customOnly, search, showTopics])
-  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns' | 'recall'>('browse')
   // Hash handed to the Patterns iframe, set when a pat_* tag is clicked. Kept
   // in state (not pushed imperatively) so it survives leaving and re-entering
   // Patterns mode, which remounts the iframe.
@@ -1657,13 +1687,14 @@ export default function AdsHubView() {
           p2rLoading={p2rLoading}
           p2rError={p2rError}
           p2rSelectedId={p2rSel?.id ?? null}
+          p2rSelectedTag={recallTag}
           onSelectP2R={openP2R}
+          onPickP2RTag={pickP2RTag}
           onCreateP2R={newP2R}
           onRefreshP2R={() => void fetchP2R(true)}
-          recallCount={recallItems.length}
+          recallCount={recallDeck.length}
           recallActive={adsMode === 'recall'}
           onOpenRecall={openRecall}
-          onCreateRecall={newRecall}
           collapsed={sidebarHidden}
           onCollapse={() => { if (viewerExpanded) setViewerExpanded(false); else setLeftColl(c => !c) }}
         />
@@ -1688,7 +1719,7 @@ export default function AdsHubView() {
           <div className="adshub-diff-pills" style={{ marginRight: 4 }}>
             <button
               className={`adshub-diff-pill${adsMode === 'browse' ? ' active' : ''}`}
-              onClick={() => setAdsMode('browse')}
+              onClick={() => { setAdsMode('browse'); setP2rSel(null); setP2rEditing(false) }}
             >📋 Browse</button>
             <button
               className={`adshub-diff-pill${adsMode === 'lineage' ? ' active' : ''}`}
@@ -1892,28 +1923,14 @@ export default function AdsHubView() {
         <div className="browse-cards-split" ref={splitRef}>
           {/* Left column — Patterns iframe (mode==='patterns') OR problem
               list (mode==='browse'). Hidden when detail is maximized. */}
-          {!viewerExpanded && (
+          {(!viewerExpanded || adsMode === 'point2rem') && (
           <div
-            className="browse-col-cards"
-            style={{
-              ...(detailOpen ? { flex: `0 0 ${listRatio}%` } : {}),
-              // Patterns/Lineage: make the column a flex container so the
-              // <iframe flex:1> can fill remaining vertical space, and
-              // drop the column's own overflow:auto (iframe scrolls).
-              ...(adsMode === 'patterns' || adsMode === 'lineage'
-                ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: 'calc(100vh - 56px)' }
-                : {}),
-              // Recall: same flex-column shape, but bounded by the SPLIT
-              // (100%) rather than by calc(100vh - 56px). The viewport-based
-              // cap forgets the toolbar sitting above this column — it comes
-              // out ~52px too tall (more when the toolbar wraps), so the
-              // bottom of the deck lands past the split's clip edge and the
-              // ◀ Prev / Next ▶ row becomes unreachable. 100% is exactly the
-              // space the column actually has, whatever the toolbar's height.
-              ...(adsMode === 'recall'
-                ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', maxHeight: '100%' }
-                : {}),
-            }}
+            className={[
+              'browse-col-cards',
+              adsMode === 'patterns' || adsMode === 'lineage' ? 'browse-col-cards--embed' : '',
+              adsMode === 'recall' || adsMode === 'point2rem' ? 'browse-col-cards--fill' : '',
+            ].filter(Boolean).join(' ')}
+            style={detailOpen ? { flex: `0 0 ${listRatio}%` } : undefined}
           >
             {adsMode === 'lineage' ? (
               <AdsLineage
@@ -1950,16 +1967,17 @@ export default function AdsHubView() {
               </>
             ) : adsMode === 'recall' ? (
               <RecallDeck
-                items={recallItems}
-                loading={recallLoading}
-                error={recallError}
+                items={recallDeck}
+                loading={recallLoading || p2rLoading}
+                error={recallError || p2rError}
                 problems={problems}
                 points={p2rItems}
                 knownTags={recallKnownTags}
                 currentId={recallId}
                 onCurrentId={setRecallId}
-                // Both reference kinds land in the RIGHT pane, leaving the
-                // deck exactly where it was in the middle.
+                tagFilter={recallTag}
+                onTagFilter={setRecallTag}
+                shuffleNonce={recallShuffleNonce}
                 onOpenProblem={p => setSelected(p)}
                 onOpenPoint={openP2RRef}
                 onSave={handleSaveRecall}
@@ -1969,6 +1987,21 @@ export default function AdsHubView() {
                 onWiden={() => setListRatio(r => r >= 78 ? 60 : 85)}
                 draftSeed={recallDraft}
                 onDraftDone={() => setRecallDraft(null)}
+              />
+            ) : adsMode === 'point2rem' && p2rSel ? (
+              <Point2RemDetail
+                key={p2rSel.id || '__new__'}
+                item={p2rSel}
+                problems={problems}
+                knownTags={p2rKnownTags}
+                startEditing={p2rEditing}
+                onOpenProblem={p => setSelected(p)}
+                onSave={handleSaveP2R}
+                onDelete={handleDeleteP2R}
+                onClose={() => { setP2rSel(null); setP2rEditing(false); setAdsMode('browse') }}
+                expanded={viewerExpanded}
+                onToggleExpand={() => setViewerExpanded(v => !v)}
+                onHeaderDoubleClick={() => setListRatio(r => r <= 18 ? 40 : 15)}
               />
             ) : loading ? (
               <div className="browse-stream-init">
@@ -2042,26 +2075,8 @@ export default function AdsHubView() {
             />
           )}
 
-          {/* Detail pane — a Point2Rem note when one is open, otherwise the
-              selected problem (the two are mutually exclusive). */}
-          {p2rSel && !selected && (
-            <Point2RemDetail
-              // Re-key per note so the editor's draft state resets cleanly
-              // between notes (and between "new" and a saved note).
-              key={p2rSel.id || '__new__'}
-              item={p2rSel}
-              problems={problems}
-              knownTags={p2rKnownTags}
-              startEditing={p2rEditing}
-              onOpenProblem={p => { setP2rSel(null); setSelected(p) }}
-              onSave={handleSaveP2R}
-              onDelete={handleDeleteP2R}
-              onClose={() => { setP2rSel(null); setP2rEditing(false) }}
-              expanded={viewerExpanded}
-              onToggleExpand={() => setViewerExpanded(v => !v)}
-              onHeaderDoubleClick={() => setListRatio(r => r <= 18 ? 40 : 15)}
-            />
-          )}
+          {/* Detail pane — selected LC problem only. Point2Rem notes render
+              in the middle column so they never sit next to Browse or Quiz. */}
           {selected && (
             <div className="browse-col-detail has-selection" style={{ flex: 1 }}>
               <div

@@ -1175,6 +1175,26 @@ body.resizing-h * {
   overscroll-behavior-y: contain;
   border-right: 1px solid var(--border);
 }
+.browse-col-cards > .browse-col-detail {
+  min-height: 0;
+  border-right: none;
+  max-height: none;
+}
+/* Patterns/Lineage iframe column — flex so the frame fills leftover height. */
+.browse-col-cards--embed {
+  display: flex; flex-direction: column; overflow: hidden;
+  max-height: calc(100vh - 56px);
+}
+/* Recall + Point2Rem note page: fill the split on desktop (header stays put,
+   body scrolls). Mobile overrides this — a 100% height + overflow:hidden
+   flex chain collapses to 0px when the column-stack parent has no definite
+   height, which is why Recall looked like a blank section on phones. */
+.browse-col-cards--fill {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  max-height: 100%;
+}
 /* BrowseView-only opt-in: the toolbar lives INSIDE the cards column, so the
    column flips to flex-column with a non-scrolling toolbar slot and an
    inner scroll wrapper. AdsHubView and any other consumer of
@@ -1539,6 +1559,58 @@ body.resizing-h * {
 .left-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -1px; }
 .left-tab:hover:not(.active) { color: var(--text); background: var(--bg3); }
 
+/* ── Sidebar panel picker ──────────────────────────────────────────────────
+   Only the panels you opened are tabs; the rest live behind ▾. A tab now
+   carries its own ✕, so the label and the close button share the cell. */
+.left-tab { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.left-tab-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.left-tab-close {
+  flex-shrink: 0; background: transparent; border: none; cursor: pointer;
+  /* --text3 is referenced elsewhere in this file but never defined, so it
+     resolves to `unset`; --text2 is the real dim tone. */
+  color: var(--text2); font-size: 9px; line-height: 1; padding: 2px;
+  border-radius: 3px; opacity: 0; transition: opacity .12s, color .12s, background .12s;
+}
+/* Revealed on hover or when active, so a resting bar stays clean but the ✕ is
+   never more than a hover away. Always visible on touch (no hover). */
+.left-tab:hover .left-tab-close,
+.left-tab.active .left-tab-close { opacity: 1; }
+.left-tab-close:hover { color: var(--danger, #ef4444); background: var(--bg2); }
+@media (hover: none) { .left-tab-close { opacity: 1; } }
+
+.left-tab-picker { position: relative; flex-shrink: 0; display: flex; }
+/* Coloured and given a chip background on purpose: a grey caret here reads as
+   another tree toggle (the rows below use ▾/▸ to expand), and ≡ would collide
+   with the Point2Rem flat-mode button that shares this bar. A primary-tinted
+   kebab is the one control in the row that looks like a menu. */
+.left-tab-menu-btn {
+  background: rgba(var(--primary-rgb), .12); border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer; color: var(--primary); font-size: 15px; font-weight: 700;
+  line-height: 1; padding: 0 7px; align-self: stretch;
+  transition: color .15s, background .12s;
+}
+.left-tab-menu-btn:hover,
+.left-tab-menu-btn.active { background: rgba(var(--primary-rgb), .24); }
+
+/* Sits above the tree rows below it; the scrim swallows the outside click. */
+.left-tab-scrim { position: fixed; inset: 0; z-index: 40; }
+.left-tab-menu {
+  position: absolute; top: 100%; left: 0; z-index: 41; min-width: 156px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18); padding: 4px; margin-top: 2px;
+}
+.left-tab-menu-row {
+  display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 4px;
+}
+.left-tab-menu-row:hover { background: var(--bg3); }
+.left-tab-menu-row.active .left-tab-menu-lbl { color: var(--primary); font-weight: 600; }
+.left-tab-menu-cb { flex-shrink: 0; cursor: pointer; margin: 0; }
+.left-tab-menu-lbl {
+  flex: 1; text-align: left; background: transparent; border: none; cursor: pointer;
+  color: var(--text); font-size: 12px; padding: 2px 0;
+}
+
 .panel-toggle-btn {
   flex-shrink: 0; background: transparent; border: none;
   border-left: 1px solid var(--border); cursor: pointer; color: var(--text2);
@@ -1608,6 +1680,38 @@ body.resizing-h * {
 }
 .vm-btn:hover  { background: var(--bg2); color: var(--text); }
 .vm-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* ─── Sidebar panel toolbar ──────────────────────────────────
+   One row of chrome per panel: the search box plus whatever icons that panel
+   needs. Point2Rem previously stacked search / Quiz launcher / fold buttons
+   as three strips, which ate the tree's vertical space in a 210px column. */
+.side-tool-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 6px 0;
+}
+/* Overrides .col-search's width:100% + flex-shrink:0 so the icons keep their
+   size and the input is what gives way as the sidebar narrows. Four icons plus
+   a usable input is the whole budget of a 210px column — hence the tight
+   paddings here and the short placeholder in AdsHubSidebar. */
+.side-tool-row .col-search {
+  flex: 1 1 auto; min-width: 0; width: auto; padding: 7px 7px;
+}
+.p2r-tool {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center; gap: 1px;
+  min-width: 24px; height: 29px; padding: 0 4px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text2); font-size: 12.5px; line-height: 1; cursor: pointer;
+  transition: color .12s, border-color .12s, background .12s;
+}
+.p2r-tool:hover:not(:disabled) { color: var(--primary); border-color: var(--primary); }
+.p2r-tool:disabled { opacity: .45; cursor: default; }
+.p2r-tool.active {
+  background: rgba(var(--primary-rgb), .16); border-color: var(--primary); color: var(--primary);
+}
+/* The deck size is the one number worth carrying in the row — it says how much
+   there is to drill before you commit to opening it. */
+.p2r-tool-cnt { font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .tag-flat-list {
   flex: 1 1 0; min-height: 0;
@@ -2079,13 +2183,15 @@ body.resizing-h * {
     display: none;
   }
 
-  /* When the user picks a card / doc, the list hides and the viewer goes
-     full-width. Hitting ✕ clears the selection and brings the list back. */
-  .browse-cards-split:has(.browse-col-detail.has-selection) > .browse-col-cards,
-  .browse-cards-split:has(.browse-col-detail.has-selection) > .qa-divider {
+  /* When the user picks a problem, the list hides and the viewer goes
+     full-width. Direct-child only: a Point2Rem / quiz note lives INSIDE
+     .browse-col-cards and also uses .browse-col-detail — a descendant
+     :has() would hide the column that contains the note. */
+  .browse-cards-split:has(> .browse-col-detail.has-selection) > .browse-col-cards,
+  .browse-cards-split:has(> .browse-col-detail.has-selection) > .qa-divider {
     display: none;
   }
-  .browse-cards-split:has(.browse-col-detail.has-selection) > .browse-col-detail {
+  .browse-cards-split:has(> .browse-col-detail.has-selection) > .browse-col-detail {
     flex: 1;
   }
 
@@ -4922,11 +5028,18 @@ body.resizing-h * {
 .p2r-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Flat mode: one group per full tag path */
-.p2r-group { margin-bottom: 6px; }
+.p2r-group { margin-bottom: 8px; }
 .p2r-group-hd {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 6px 8px 3px; font-size: 12px; border-bottom: 1px solid var(--border);
   position: sticky; top: 0; background: var(--bg); z-index: 1;
+}
+.recall-list .p2r-group-hd {
+  position: static; z-index: auto;
+}
+.p2r-flat-quiz {
+  flex: none; width: 100%; margin: 0 0 4px; padding: 6px 8px;
+  position: sticky; top: 0; z-index: 1;
 }
 
 /* Detail page */
@@ -5104,13 +5217,10 @@ body.resizing-h * {
 }
 
 
-/* ── Quiz / Recall (sidebar launcher + middle-pane deck) ────────────────── */
-/* Launcher — sits ABOVE the Point2Rem tag tree. Deliberately heavier than a
-   tag row: it changes what the MIDDLE pane shows, it isn't a filter. */
-.recall-launch {
-  display: flex; align-items: stretch; gap: 4px; padding: 8px 8px 6px;
-  border-bottom: 1px solid var(--border); margin-bottom: 4px;
-}
+/* ── Quiz / Recall (flat-mode tag launcher + middle-pane deck) ─────────── */
+/* Per-tag launcher in the Point2Rem flat list. Deliberately heavier than a
+   tag row: it changes what the MIDDLE pane shows, it isn't a filter. (The
+   all-notes entry point is the 🎯 icon in .side-tool-row.) */
 .recall-launch-btn {
   flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 7px 10px; border-radius: 7px; cursor: pointer; text-align: left;
@@ -5123,11 +5233,11 @@ body.resizing-h * {
   background: rgba(var(--primary-rgb), .14); border-color: var(--primary); color: var(--primary);
 }
 .recall-launch-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recall-launch-new {
-  width: 30px; border-radius: 7px; cursor: pointer; font-size: 14px;
-  color: var(--text2); background: var(--bg3); border: 1px solid var(--border);
+
+.recall-deck {
+  display: flex; flex-direction: column;
+  flex: 1 1 0; min-height: 0; min-width: 0; height: 100%;
 }
-.recall-launch-new:hover { border-color: var(--primary); color: var(--primary); }
 
 /* Deck chrome */
 .recall-hd { display: flex; align-items: center; gap: 8px; }
@@ -5135,7 +5245,7 @@ body.resizing-h * {
    the ellipsis never kicks in when the column is narrow (detail pane open). */
 .recall-hd .doc-detail-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recall-hd-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.recall-new-btn { white-space: nowrap; }
+.recall-new-btn { white-space: nowrap; min-width: 30px; padding-left: 8px; padding-right: 8px; }
 .recall-progress {
   font-size: 11px; color: var(--text3, var(--text2)); white-space: nowrap;
   font-variant-numeric: tabular-nums; padding: 0 2px;
@@ -5161,7 +5271,16 @@ body.resizing-h * {
 }
 
 /* ── One card ───────────────────────────────────────────────────────────── */
-.recall-card { max-width: 780px; }
+.recall-card { max-width: 920px; }
+.recall-p2r-embed {
+  margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+  background: var(--bg2); border: 1px solid var(--border);
+}
+.recall-p2r-embed-hd {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.recall-p2r-embed-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; min-width: 0; }
 .recall-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .recall-tag { cursor: pointer; }
 .recall-tag:hover { color: var(--primary); border-color: var(--primary); }
@@ -5273,9 +5392,109 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 .recall-resolve-chip.missing { color: var(--danger); border-color: var(--danger); opacity: .8; }
 
 @media (max-width: 768px) {
-  .recall-filters { padding: 6px 8px; }
-  .recall-body { padding: 12px 10px 20px; }
-  .recall-q { font-size: 15.5px; padding: 12px; }
+  .recall-hd {
+    padding: 8px 8px; gap: 6px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 4; background: var(--bg2);
+  }
+  .recall-hd .doc-detail-title {
+    display: block; flex: 1 1 100%; max-width: none;
+  }
+  .recall-hd-actions { flex-wrap: nowrap; gap: 4px; }
+  .recall-hd-actions .adshub-diff-pills { flex-shrink: 0; }
+  .recall-progress { display: none; }
+
+  .recall-filters { padding: 8px; gap: 8px; }
+  .recall-filters .col-search { flex: 1 1 100%; min-width: 0; }
+  .recall-filters .adshub-diff-pills { width: 100%; }
+  .recall-filters .adshub-diff-pill { flex: 1; justify-content: center; padding: 6px 4px; }
+  .recall-filters .recall-kind-label { display: none; }
+  .recall-tag-select { flex: 1 1 calc(50% - 4px); min-width: 0; max-width: none; }
+  .recall-body { padding: 8px 8px calc(24px + 58px + env(safe-area-inset-bottom)); }
+  .recall-q { font-size: 16px; padding: 14px; }
+  .recall-card { max-width: none; min-width: 0; }
+  .recall-p2r-embed { padding: 10px; overflow-x: auto; }
+  .recall-nav { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+  .recall-list { max-width: none; padding-bottom: 24px; }
+  .recall-list-row {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 10px;
+    font-size: 15.5px;
+    color: var(--text);
+    min-height: 52px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--bg2);
+  }
+  .recall-list-row + .recall-list-row { margin-top: 0; }
+  .recall-list-row:hover { background: var(--bg3); }
+  .recall-list-row.active {
+    background: rgba(var(--primary-rgb), .16);
+    border-left: 3px solid var(--primary);
+    padding-left: 7px;
+  }
+  .recall-list-q {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .recall-list-row .flat-tag-prefix { display: none; }
+  .recall-list-row .recall-kind { flex-shrink: 0; margin-top: 2px; }
+  .recall-list-row .recall-kind-label { display: none; }
+
+  /* Let the split size to the deck instead of a 100% that resolves to 0
+     in the mobile column stack (Safari especially). */
+  .browse-main:has(.browse-col-cards--fill),
+  .browse-main:has(.recall-deck) {
+    overflow: visible;
+    min-height: 0;
+  }
+  .browse-cards-split:has(.browse-col-cards--fill),
+  .browse-cards-split:has(.recall-deck) {
+    height: auto;
+    min-height: 50vh;
+    overflow: visible;
+    flex: 1 1 auto;
+  }
+
+  /* Size to content and scroll this column — do NOT use height:100% /
+     overflow:hidden here. On the mobile column stack those resolve to 0
+     and clip the entire deck. Budget: topbar + toolbar + bottom nav. */
+  .browse-col-cards--fill,
+  .browse-col-cards:has(.recall-deck),
+  .browse-col-cards:has(> .browse-col-detail) {
+    height: auto !important;
+    max-height: calc(100dvh - 56px - 52px - 58px - env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 50vh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column;
+  }
+  .recall-deck {
+    height: auto;
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+  .recall-body {
+    flex: none;
+    max-height: none;
+    overflow: visible;
+    min-height: 0;
+  }
+  .browse-col-cards--fill > .browse-col-detail,
+  .browse-col-cards > .browse-col-detail {
+    flex: 1 0 auto !important;
+    min-height: 40vh;
+    height: auto;
+    overflow: visible;
+  }
 }
 
 /* Questions render as inline markdown — give the code spans the same
@@ -5792,6 +6011,9 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   .th-nav-body .tree-row { padding: 3px 0; }
   .th-nav-body .tree-lbl, .th-flat-row { min-height: 34px; font-size: 13px; }
   .tree-toggle { min-width: 26px; min-height: 26px; }
+  /* Sidebar toolbar icons — 29px is a desktop-mouse target. */
+  .p2r-tool { min-width: 34px; height: 36px; font-size: 14px; }
+  .side-tool-row .col-search { padding: 9px 10px; font-size: 13px; }
   .th-mode { padding: 7px 0; font-size: 12px; }
 
   .th-crumb { font-size: 13px; }
