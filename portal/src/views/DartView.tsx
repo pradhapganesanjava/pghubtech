@@ -30,7 +30,7 @@ import ConsistencyGrid from '../components/ConsistencyGrid'
 import { LLM } from '../lib/llm'
 import { refineThought, renderThought } from '../lib/thoughtGen'
 import { sanitizeHtml } from '../lib/sanitize'
-import { buildTrie, TreeNode } from '../components/DocTagTree'
+import ThoughtTree, { titleOf, UNFILED } from '../components/ThoughtTree'
 
 type DartSubTab = 'today' | 'goals' | 'thoughts'
 
@@ -1091,14 +1091,14 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
   const [loading, setLoading]   = useState(true)
   const [draft, setDraft]       = useState('')
   const [saving, setSaving]     = useState(false)
-  const [stage, setStage]       = useState('')          // what the AI is doing
+  const [stage, setStage]       = useState('')
   const [bucketFilter, setBF]   = useState<ThoughtBucket | 'all'>('all')
-  const [pathFilter, setPF]     = useState<string>('')  // '' = everything
+  const [pathFilter, setPF]     = useState<string>('')
   const [search, setSearch]     = useState('')
   const [view, setView]         = useState<ThoughtView>('tree')
-  // Starts collapsed: the composer and the cards are what the page is for, and
-  // the tree is a filter you reach for rather than something to keep open.
   const [navCollapsed, setNav]  = useState(true)
+  // One thought opened on its own, rather than the whole deck stacked.
+  const [selectedId, setSel]    = useState<string | null>(null)
   const [openRaw, setOpenRaw]   = useState<Set<string>>(new Set())
   const [openOrig, setOpenOrig] = useState<Set<string>>(new Set())
   const [busyId, setBusyId]     = useState<string | null>(null)
@@ -1110,19 +1110,16 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
       .catch(e => { setLoading(false); toast(`Load failed: ${(e as Error).message}`, 'error') })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Every path already in use — fed to the model so it files new thoughts into
-  // the existing tree instead of growing a parallel branch each time.
   const knownPaths = useMemo(
     () => [...new Set(thoughts.map(t => t.path).filter(Boolean))].sort(),
     [thoughts],
   )
 
-  // One pipeline for both "save new" and "re-process existing".
   async function process(raw: string): Promise<Omit<DartThought, 'id' | 'createdAt' | 'updatedAt'>> {
     const base = {
       date: isoDate(new Date()), raw, rawOriginal: raw,
       bucket: 'Other' as ThoughtBucket, summary: firstLine(raw),
-      highlights: [] as string[], path: 'Unfiled', rich: '',
+      highlights: [] as string[], path: UNFILED, rich: '',
     }
     if (!LLM.isConfigured()) {
       toast('Saved unprocessed — add the Azure key in Settings to clean and sort thoughts.', 'info')
@@ -1132,7 +1129,6 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
     const refined = await refineThought(raw, knownPaths)
     if (!refined) return base
     setStage('Building the visual card…')
-    // A failed render must not lose a good clean-up, so it is caught separately.
     const rich = await renderThought(refined.cleaned).catch(() => '')
     return {
       ...base,
@@ -1147,11 +1143,10 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
     if (!raw || saving) return
     setSaving(true)
     try {
-      const fields = await process(raw)
-      const t = await addThought(fields)
+      const t = await addThought(await process(raw))
       setThoughts(prev => [t, ...prev])
       setDraft('')
-      boxRef.current?.focus()
+      setSel(t.id)          // land on what was just captured
     } catch (e) {
       toast(`Save failed: ${(e as Error).message}`, 'error')
     } finally {
@@ -1159,9 +1154,6 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
     }
   }
 
-  // Re-runs both passes from the ORIGINAL capture, never from an already
-  // cleaned `raw` — repeated clean-ups of a clean-up drift away from what was
-  // actually said.
   async function reprocess(t: DartThought) {
     if (busyId) return
     if (!LLM.isConfigured()) { toast('AI is not configured — add the Azure key in Settings.', 'error'); return }
@@ -1199,6 +1191,7 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
     try {
       await deleteThought(t.id)
       setThoughts(prev => prev.filter(x => x.id !== t.id))
+      if (selectedId === t.id) setSel(null)
     } catch (e) { toast(`Delete failed: ${(e as Error).message}`, 'error') }
   }
 
@@ -1216,51 +1209,101 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
     return m
   }, [thoughts])
 
-  // Reuses the ::-path trie that backs the Docs / AdsHub tag trees.
-  const trie = useMemo(
-    () => buildTrie(thoughts.map(t => (t.path ? [t.path] : []))),
-    [thoughts],
-  )
-  const flatPaths = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const t of thoughts) if (t.path) m.set(t.path, (m.get(t.path) ?? 0) + 1)
-    return [...m.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [thoughts])
-
-  const shown = useMemo(() => {
+  // Search runs over the whole record — cleaned text, the original capture,
+  // the summary and the path — so a half-remembered phrase finds its thought.
+  const searched = useMemo(() => {
     const q = search.trim().toLowerCase()
+    if (!q) return thoughts
     return thoughts.filter(t =>
-      (bucketFilter === 'all' || t.bucket === bucketFilter) &&
-      // Selecting a branch includes everything beneath it.
-      (!pathFilter || t.path === pathFilter || t.path.startsWith(pathFilter + '::')) &&
-      (!q || t.raw.toLowerCase().includes(q) || t.summary.toLowerCase().includes(q)
-          || t.path.toLowerCase().includes(q)),
-    )
-  }, [thoughts, bucketFilter, pathFilter, search])
+      t.summary.toLowerCase().includes(q) ||
+      t.raw.toLowerCase().includes(q) ||
+      (t.rawOriginal || '').toLowerCase().includes(q) ||
+      t.path.toLowerCase().includes(q) ||
+      t.bucket.toLowerCase().includes(q) ||
+      t.highlights.some(h => h.toLowerCase().includes(q)))
+  }, [thoughts, search])
+
+  const shown = useMemo(() => searched.filter(t =>
+    (bucketFilter === 'all' || t.bucket === bucketFilter) &&
+    (!pathFilter || t.path === pathFilter || t.path.startsWith(pathFilter + '::'))),
+    [searched, bucketFilter, pathFilter])
+
+  const selected = thoughts.find(t => t.id === selectedId) ?? null
+
+  function pickThought(t: DartThought) {
+    setSel(t.id)
+    if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 720px)').matches) {
+      setNav(true)          // stacked, the nav overlays the content — close it
+    }
+  }
+
+  const navBody = (
+    <>
+      <div className="th-nav-search">
+        <input
+          className="rf-input" placeholder="Search thoughts…" value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && <button className="dart-minibtn" onClick={() => setSearch('')}>✕</button>}
+      </div>
+      <button
+        className={`th-nav-all${pathFilter === '' && !selectedId ? ' active' : ''}`}
+        onClick={() => { setPF(''); setSel(null) }}
+      >All thoughts <span className="tt-count">{searched.length}</span></button>
+
+      <div className="th-nav-body">
+        {searched.length === 0 ? (
+          <div className="col-empty">{search ? 'Nothing matches.' : 'No thoughts yet.'}</div>
+        ) : view === 'tree' ? (
+          <ThoughtTree
+            thoughts={searched}
+            selectedId={selectedId} selectedPath={pathFilter}
+            onPickThought={pickThought}
+            onPickPath={p => { setPF(cur => cur === p ? '' : p); setSel(null) }}
+            expandAll={!!search.trim()}
+          />
+        ) : (
+          <ul className="tt-flat">
+            {searched.map(t => (
+              <li key={t.id}>
+                <button
+                  className={`tt-leaf${selectedId === t.id ? ' active' : ''}`}
+                  onClick={() => pickThought(t)} title={t.path}
+                >
+                  <span className="tt-leaf-dot" aria-hidden>💭</span>
+                  <span className="tt-leaf-body">
+                    <span className="tt-leaf-title">{titleOf(t)}</span>
+                    <span className="tt-leaf-path">{t.path.split('::').join(' › ')}</span>
+                  </span>
+                  <span className="tt-leaf-date">{t.date.slice(5)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  )
 
   return (
     <div className="dart-thoughts-wrap">
-      {/* ── Left nav: the thought tree ───────────────────── */}
       {navCollapsed ? (
         <div className="th-nav-strip">
-          <button className="th-strip-btn" onClick={() => setNav(false)} title="Show groups">
+          <button className="th-strip-btn" onClick={() => setNav(false)} title="Show thoughts">
             <span className="th-strip-icon">▸</span>
-            {/* Two captions for two shapes: a vertical word down the desktop
-                rail, and a full-width bar naming the active filter when the
-                layout stacks. Only ever one is visible. */}
-            <span className="th-strip-vert">Groups</span>
+            <span className="th-strip-vert">Thoughts</span>
             <span className="th-strip-label">
-              Groups
-              <b>{pathFilter ? pathFilter.split('::').slice(-1)[0] : 'All thoughts'}</b>
+              Thoughts
+              <b>{selected ? titleOf(selected) : pathFilter ? pathFilter.split('::').slice(-1)[0] : 'All'}</b>
             </span>
-            <span className="th-strip-n">{shown.length}</span>
+            <span className="th-strip-n">{searched.length}</span>
           </button>
         </div>
       ) : (
         <div className="th-nav">
           <div className="th-nav-hd">
             <span>Thoughts</span>
-            <button className="th-strip-btn" onClick={() => setNav(true)} title="Hide groups">
+            <button className="th-strip-btn" onClick={() => setNav(true)} title="Hide list">
               <span className="th-strip-icon">◂</span>
               <span className="th-strip-label">Done</span>
             </button>
@@ -1269,60 +1312,15 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
             <button className={`th-mode${view === 'tree' ? ' active' : ''}`} onClick={() => setView('tree')}>Tree</button>
             <button className={`th-mode${view === 'flat' ? ' active' : ''}`} onClick={() => setView('flat')}>Flat</button>
           </div>
-          <button
-            className={`th-nav-all${pathFilter === '' ? ' active' : ''}`}
-            onClick={() => setPF('')}
-          >All thoughts <span className="tree-cnt">{thoughts.length}</span></button>
-
-          <div className="th-nav-body">
-            {view === 'tree' ? (
-              Object.keys(trie.children).length === 0 ? (
-                <div className="col-empty">No groups yet.</div>
-              ) : (
-                Object.entries(trie.children)
-                  .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([name, node]) => (
-                    <TreeNode
-                      key={node.fullPath} name={name} node={node}
-                      selected={pathFilter ? [pathFilter] : []}
-                      onToggle={p => setPF(cur => cur === p ? '' : p)}
-                      searchLower=""
-                    />
-                  ))
-              )
-            ) : flatPaths.length === 0 ? (
-              <div className="col-empty">No groups yet.</div>
-            ) : (
-              <ul className="th-flat-list">
-                {flatPaths.map(([path, n]) => (
-                  <li key={path}>
-                    <button
-                      className={`th-flat-row${pathFilter === path ? ' active' : ''}`}
-                      onClick={() => setPF(cur => cur === path ? '' : path)}
-                      title={path}
-                    >
-                      <span className="th-flat-path">
-                        {path.split('::').slice(0, -1).map(seg => (
-                          <span className="th-flat-parent" key={seg}>{seg}::</span>
-                        ))}
-                        <span className="th-flat-leaf">{path.split('::').slice(-1)[0]}</span>
-                      </span>
-                      <span className="tree-cnt">{n}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {navBody}
         </div>
       )}
 
-      {/* ── Main column ──────────────────────────────────── */}
       <div className="dart-body dart-thoughts">
         <div className="dart-composer">
           <textarea
-            ref={boxRef} className="dart-composer-box" rows={4} value={draft}
-            placeholder="What's on your mind? Dump it raw — speech, typos and all. It gets cleaned up, filed in the tree, and turned into a visual card."
+            ref={boxRef} className="dart-composer-box" rows={selected ? 2 : 4} value={draft}
+            placeholder="What's on your mind? Dump it raw — it gets cleaned up, filed in the tree, and turned into a visual card."
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save() }}
           />
@@ -1336,107 +1334,148 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
           </div>
         </div>
 
-        <div className="dart-thought-filters">
-          <button className={`dart-fchip${bucketFilter === 'all' ? ' active' : ''}`} onClick={() => setBF('all')}>
-            All <span className="dart-fchip-n">{thoughts.length}</span>
-          </button>
-          {THOUGHT_BUCKETS.map(b => (
-            <button
-              key={b} className={`dart-fchip${bucketFilter === b ? ' active' : ''}`}
-              onClick={() => setBF(b)}
-            >{b} <span className="dart-fchip-n">{bucketCounts.get(b) ?? 0}</span></button>
-          ))}
-          <input
-            className="rf-input dart-search" placeholder="Search…" value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-
-        {pathFilter && (
-          <div className="th-crumb">
-            {pathFilter.split('::').join(' › ')}
-            <button className="dart-minibtn" onClick={() => setPF('')}>clear</button>
-          </div>
-        )}
-
         {loading ? (
           <div className="col-empty">Loading…</div>
-        ) : shown.length === 0 ? (
-          <div className="col-empty">
-            {thoughts.length === 0
-              ? 'Nothing yet. Dump a thought above — it gets cleaned up, filed, and rendered as a card you can actually re-read.'
-              : 'No thoughts match this filter.'}
+        ) : selected ? (
+          /* ── One thought, opened on its own ── */
+          <div className="th-single">
+            <div className="th-single-bar">
+              <button className="dart-minibtn" onClick={() => setSel(null)}>← All thoughts</button>
+              <span className="th-single-crumb">
+                {(selected.path || UNFILED).split('::').join(' › ')}
+              </span>
+            </div>
+            <ThoughtCard
+              t={selected} busy={busyId === selected.id}
+              rawOpen={openRaw.has(selected.id)} origOpen={openOrig.has(selected.id)}
+              onToggleRaw={() => toggle(setOpenRaw, selected.id)}
+              onToggleOrig={() => toggle(setOpenOrig, selected.id)}
+              onBucket={b => setBucket(selected, b)}
+              onPath={() => movePath(selected)}
+              onReprocess={() => reprocess(selected)}
+              onDelete={() => remove(selected)}
+            />
           </div>
         ) : (
-          <ul className="dart-thought-list">
-            {shown.map(t => (
-              <li className="dart-thought" key={t.id}>
-                <div className="dart-thought-hd">
-                  <span className="dart-thought-date">{t.date}</span>
-                  <select
-                    className="dart-bucket-select" value={t.bucket}
-                    onChange={e => setBucket(t, e.target.value as ThoughtBucket)}
-                  >
-                    {THOUGHT_BUCKETS.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                  <button className="th-path-btn" onClick={() => movePath(t)} title="Change tree path">
-                    {t.path ? t.path.split('::').join(' › ') : 'Unfiled'}
-                  </button>
-                  <span className="dart-thought-spacer" />
-                  <button className="dart-minibtn" disabled={busyId === t.id} onClick={() => reprocess(t)}>
-                    {busyId === t.id ? '…' : '✨ Re-process'}
-                  </button>
-                  <button className="dart-minibtn" onClick={() => toggle(setOpenRaw, t.id)}>
-                    {openRaw.has(t.id) ? 'Hide text' : 'Text'}
-                  </button>
-                  <button className="dart-minibtn danger" onClick={() => remove(t)}>✕</button>
-                </div>
+          <>
+            <div className="dart-thought-filters">
+              <button className={`dart-fchip${bucketFilter === 'all' ? ' active' : ''}`} onClick={() => setBF('all')}>
+                All <span className="dart-fchip-n">{thoughts.length}</span>
+              </button>
+              {THOUGHT_BUCKETS.map(b => (
+                <button
+                  key={b} className={`dart-fchip${bucketFilter === b ? ' active' : ''}`}
+                  onClick={() => setBF(b)}
+                >{b} <span className="dart-fchip-n">{bucketCounts.get(b) ?? 0}</span></button>
+              ))}
+            </div>
 
-                {t.summary && <div className="dart-thought-summary">{t.summary}</div>}
+            {pathFilter && (
+              <div className="th-crumb">
+                {pathFilter.split('::').join(' › ')}
+                <button className="dart-minibtn" onClick={() => setPF('')}>clear</button>
+              </div>
+            )}
 
-                {t.rich ? (
-                  <div
-                    className="th-rich"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(t.rich) }}
-                  />
-                ) : (
-                  t.highlights.length > 0 && (
-                    <ul className="dart-highlights">
-                      {t.highlights.map((h, i) => <li key={i}>{h}</li>)}
-                    </ul>
-                  )
-                )}
-
-                {t.rich && t.highlights.length > 0 && (
-                  <ul className="dart-highlights">
-                    {t.highlights.map((h, i) => <li key={i}>{h}</li>)}
-                  </ul>
-                )}
-
-                {openRaw.has(t.id) && (
-                  <div className="th-raw-wrap">
-                    <div className="th-raw-hd">
-                      <span>Cleaned capture</span>
-                      {t.rawOriginal && t.rawOriginal !== t.raw && (
-                        <button className="dart-minibtn" onClick={() => toggle(setOpenOrig, t.id)}>
-                          {openOrig.has(t.id) ? 'Hide original' : 'Show original'}
-                        </button>
-                      )}
-                    </div>
-                    <pre className="dart-thought-raw">{t.raw}</pre>
-                    {openOrig.has(t.id) && (
-                      <>
-                        <div className="th-raw-hd"><span>Original, exactly as captured</span></div>
-                        <pre className="dart-thought-raw original">{t.rawOriginal}</pre>
-                      </>
-                    )}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+            {shown.length === 0 ? (
+              <div className="col-empty">
+                {thoughts.length === 0
+                  ? 'Nothing yet. Dump a thought above — it gets cleaned up, filed, and rendered as a card you can actually re-read.'
+                  : 'No thoughts match this filter.'}
+              </div>
+            ) : (
+              <ul className="th-index">
+                {shown.map(t => (
+                  <li key={t.id}>
+                    <button className="th-index-row" onClick={() => pickThought(t)}>
+                      <span className="th-index-date">{t.date}</span>
+                      <span className="th-index-title">{titleOf(t)}</span>
+                      <span className="th-index-bucket">{t.bucket}</span>
+                      <span className="th-index-path">{(t.path || UNFILED).split('::').join(' › ')}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </div>
+    </div>
+  )
+}
+
+// One thought, rendered in full. Used by the single view; kept separate so the
+// index stays a cheap list of titles rather than a wall of rich cards.
+function ThoughtCard({
+  t, busy, rawOpen, origOpen,
+  onToggleRaw, onToggleOrig, onBucket, onPath, onReprocess, onDelete,
+}: {
+  t: DartThought; busy: boolean; rawOpen: boolean; origOpen: boolean
+  onToggleRaw: () => void; onToggleOrig: () => void
+  onBucket: (b: ThoughtBucket) => void; onPath: () => void
+  onReprocess: () => void; onDelete: () => void
+}) {
+  return (
+    <div className="dart-thought">
+      <div className="dart-thought-hd">
+        <span className="dart-thought-date">{t.date}</span>
+        <select
+          className="dart-bucket-select" value={t.bucket}
+          onChange={e => onBucket(e.target.value as ThoughtBucket)}
+        >
+          {THOUGHT_BUCKETS.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <button className="th-path-btn" onClick={onPath} title="Change tree path">
+          {(t.path || UNFILED).split('::').join(' › ')}
+        </button>
+        <span className="dart-thought-spacer" />
+        <button className="dart-minibtn" onClick={onToggleRaw}>
+          {rawOpen ? 'Hide Raw Text' : 'Raw Text'}
+        </button>
+        <button className="dart-minibtn danger" onClick={onDelete}>✕</button>
+      </div>
+
+      {t.summary && <div className="dart-thought-summary">{t.summary}</div>}
+
+      {t.rich
+        ? <div className="th-rich" dangerouslySetInnerHTML={{ __html: sanitizeHtml(t.rich) }} />
+        : t.highlights.length > 0 && (
+            <ul className="dart-highlights">
+              {t.highlights.map((h, i) => <li key={i}>{h}</li>)}
+            </ul>
+          )}
+
+      {t.rich && t.highlights.length > 0 && (
+        <ul className="dart-highlights">
+          {t.highlights.map((h, i) => <li key={i}>{h}</li>)}
+        </ul>
+      )}
+
+      {rawOpen && (
+        <div className="th-raw-wrap">
+          <div className="th-raw-hd">
+            <span>Cleaned capture</span>
+            <span className="th-raw-actions">
+              {t.rawOriginal && t.rawOriginal !== t.raw && (
+                <button className="dart-minibtn" onClick={onToggleOrig}>
+                  {origOpen ? 'Hide original' : 'Show original'}
+                </button>
+              )}
+              <button className="dart-minibtn" disabled={busy} onClick={onReprocess}
+                      title="Re-run the clean-up and the visual card from the original capture">
+                {busy ? '…' : '✨ Re-process'}
+              </button>
+            </span>
+          </div>
+          <pre className="dart-thought-raw">{t.raw}</pre>
+          {origOpen && (
+            <>
+              <div className="th-raw-hd"><span>Original, exactly as captured</span></div>
+              <pre className="dart-thought-raw original">{t.rawOriginal}</pre>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
