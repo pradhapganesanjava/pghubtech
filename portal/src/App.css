@@ -5240,15 +5240,201 @@ body.resizing-h * {
 }
 
 /* Deck chrome */
-.recall-hd { display: flex; align-items: center; gap: 8px; }
-/* min-width:0 — without it the flex item refuses to shrink below its text and
-   the ellipsis never kicks in when the column is narrow (detail pane open). */
-.recall-hd .doc-detail-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recall-hd-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* container-type so .recall-progress can react to THIS column's width rather
+   than the viewport's — the deck is 40% of the split when a problem is open,
+   which no media query can see. position:relative anchors the centring. */
+.recall-hd {
+  display: flex; align-items: center; gap: 8px;
+  position: relative; container-type: inline-size;
+}
+/* No flex-grow: ☰ sits right after the title, so a growing title would shove
+   it into the middle of the row. min-width:0 keeps it the one shrinkable item
+   so the ellipsis (not the button run) absorbs a narrow column. The cap keeps
+   title + ☰ clear of the centred progress (base rule allows 50% - 48px, which
+   the ☰ added after it would eat into). */
+.recall-hd .doc-detail-title {
+  flex: 0 1 auto; min-width: 0; max-width: calc(50% - 80px);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* margin-left:auto does the right-aligning the title's flex:1 used to do —
+   and keeps working in edit mode, where ☰ isn't rendered at all. */
+.recall-hd-actions {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-left: auto; flex-shrink: 0;
+}
 .recall-new-btn { white-space: nowrap; min-width: 30px; padding-left: 8px; padding-right: 8px; }
+/* Out of flow so it lands on the row's true centre — the left group (title +
+   ☰) and the right button run have very different widths, so auto margins
+   would only centre it in the leftover gap, visibly off to the left. */
 .recall-progress {
+  position: absolute; left: 50%; transform: translateX(-50%);
   font-size: 11px; color: var(--text3, var(--text2)); white-space: nowrap;
   font-variant-numeric: tabular-nums; padding: 0 2px;
+}
+/* Below this the button run reaches past the middle, so absolute centring
+   would put the count underneath the Quiz / List pills. Drop back into flow
+   and let it sit in whatever gap is left. */
+@container (max-width: 660px) {
+  .recall-progress {
+    position: static; transform: none; margin-left: auto;
+  }
+}
+/* Narrower still and the count is squeezing the title down to an ellipsis, so
+   it goes. Keyed to the header's own width, not the viewport, because the deck
+   is also a ~40% column of a desktop split — the same squeeze happens there on
+   a wide screen. */
+@container (max-width: 330px) {
+  .recall-progress { display: none; }
+}
+
+/* ☰ trigger for the filter strip below. Two lit states, deliberately
+   different: `.active` = strip open, `.has-active` = strip closed but the deck
+   IS narrowed, which is the state that would otherwise be invisible. Same
+   primary tint at a lower alpha, plus the count, mirrors .mobile-filter-btn. */
+.recall-filter-toggle {
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.recall-filter-toggle.has-active {
+  background: rgba(var(--primary-rgb), .14);
+  border-color: var(--primary); color: var(--primary);
+}
+.recall-filter-cnt {
+  font-size: 10px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Chrome row control metrics ───────────────────────────────────────
+   The two chrome rows — the mode toolbar and the deck header — each mix
+   four button families (.adshub-diff-pill, .bci-edit-btn, .rf-btn-*,
+   .detail-close-btn). Every family carried its own padding, so the rows
+   resolved to five different heights between 24 and 32px and read as
+   ragged. These blocks give all of them one height and one horizontal
+   padding, driven by tokens on the row itself.
+
+   Sized from the row rather than on the families because .rf-btn-save,
+   .rf-btn-cancel and .detail-close-btn are also the note editor's form
+   buttons, which want to stay comfortable.
+
+   Must stay AFTER those family rules: the selectors here are two classes,
+   same weight as .bci-edit-btn.bci-edit-btn-hd, so source order is what
+   decides. Split by breakpoint because under 768px the ⋯ panel re-lays
+   three of these buttons out as full-width list rows, which must keep
+   their own metrics. */
+@media (min-width: 769px) {
+  .browse-toolbar, .recall-hd { --ctl-h: 26px; --ctl-px: 9px; }
+  .browse-toolbar { padding: 6px 12px; gap: 8px; }
+  .recall-hd      { padding: 6px 10px; }
+
+  /* .mobile-filter-btn is left out on purpose — it defaults to
+     display:none here, and this rule would light it up. */
+  .browse-toolbar .adshub-diff-pill,
+  .browse-toolbar .tb-refresh,
+  .browse-toolbar .tb-add,
+  .browse-toolbar .tb-export,
+  .browse-toolbar .tb-topics,
+  .recall-hd .adshub-diff-pill,
+  .recall-hd .bci-edit-btn,
+  .recall-hd .recall-new-btn,
+  .recall-hd .detail-close-btn {
+    box-sizing: border-box;
+    height: var(--ctl-h);
+    padding: 0 var(--ctl-px);
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  /* Icon-only controls: exact squares, so the run reads as equal tiles
+     instead of short wide slabs. width AND min-width, because two of them
+     ship a min-width of their own. */
+  .browse-toolbar .tb-refresh,
+  .recall-hd .bci-edit-btn,
+  .recall-hd .recall-new-btn,
+  .recall-hd .detail-close-btn {
+    width: var(--ctl-h); min-width: var(--ctl-h); padding: 0;
+  }
+  /* ☰ is the exception — its count badge grows it off the square. */
+  .recall-hd .recall-filter-toggle {
+    width: auto; padding: 0 5px; gap: 2px;
+  }
+  /* 14px glyphs leave no breathing room in a 26px box. */
+  .recall-hd .bci-edit-btn.bci-edit-btn-hd { font-size: 13px; }
+  /* Inputs match the buttons, so the row has one box height throughout. */
+  .browse-toolbar .col-search { box-sizing: border-box; height: var(--ctl-h); padding: 0 10px; }
+}
+/* Same alignment at touch size. 32px matches the ⋯ trigger, which is the
+   one control in these rows already sized for a thumb. */
+@media (max-width: 768px) {
+  .browse-toolbar, .recall-hd { --ctl-h: 32px; --ctl-px: 10px; }
+  /* .recall-hd's tablet padding is further down; the toolbar's only existed
+     for ≤480px, so 481–768px was pairing 32px controls with the original
+     10px/14px row and came out 4px taller than either neighbour. */
+  .browse-toolbar { padding: 8px 12px; gap: 8px; }
+  .browse-toolbar .adshub-diff-pill,
+  .browse-toolbar .mobile-filter-btn,
+  /* Lineage / Patterns / Recall keep ↻ inline (.tb-overflow--single), so it
+     belongs to the row and takes the row's metrics. In Browse it's a
+     full-width row of the ⋯ panel instead, which sizes its own. */
+  .browse-toolbar .tb-overflow--single .tb-refresh,
+  .recall-hd .adshub-diff-pill,
+  .recall-hd .bci-edit-btn,
+  .recall-hd .recall-new-btn,
+  .recall-hd .detail-close-btn {
+    box-sizing: border-box;
+    height: var(--ctl-h);
+    padding: 0 var(--ctl-px);
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .browse-toolbar .tb-overflow--single .tb-refresh,
+  .recall-hd .bci-edit-btn,
+  .recall-hd .recall-new-btn,
+  .recall-hd .detail-close-btn {
+    width: var(--ctl-h); min-width: var(--ctl-h); padding: 0;
+  }
+  .recall-hd .recall-filter-toggle { width: auto; padding: 0 7px; gap: 3px; }
+  /* The search box shares a wrapped line with ☰ Filters and ⋯, so it takes
+     the row height too. Padding stays asymmetric — it's a text field, not a
+     centred icon. */
+  .browse-toolbar .col-search { box-sizing: border-box; height: var(--ctl-h); }
+}
+/* Phone: keep ↻ on the mode pills' row. At 390px the four pills plus one
+   32px icon overrun the line by a handful of pixels, and the icon is what
+   wraps — a whole row of chrome for one button. Tighter pill padding buys
+   those pixels back. Below ~360px there's nothing left to buy, so the pill
+   strip scrolls sideways instead and the icons keep their place on the line.
+
+   Has to sit after the block above, which sets --ctl-px at the same
+   specificity; the ⋯ collapse that shares this breakpoint is up at the
+   .tb-overflow rules. */
+@media (max-width: 480px) {
+  /* gap is restated because the tablet rule above is later in the file than
+     the ≤480 block that used to own it. */
+  .browse-toolbar { padding: 8px 10px; gap: 6px; --ctl-px: 6px; }
+  /* 11px + 6px padding is what makes four pills and the icon fit a 375px
+     screen; at the desktop 12px/9px they overrun by ~30px. */
+  .browse-toolbar .adshub-diff-pill { font-size: 11px; flex: 0 0 auto; }
+  .browse-toolbar .adshub-diff-pills {
+    min-width: 0; gap: 3px;
+    flex-wrap: nowrap; overflow-x: auto;
+    scrollbar-width: none;              /* a scrollbar here would eat the row's height */
+  }
+  .browse-toolbar .adshub-diff-pills::-webkit-scrollbar { display: none; }
+  .browse-toolbar .tb-refresh,
+  .browse-toolbar .mobile-filter-btn,
+  .browse-toolbar .tb-overflow-trigger { flex-shrink: 0; }
+  /* The ⋯ panel captions its icons ("↻ Refresh"), and .tb-overflow--single
+     leaves that panel as display:contents — so the caption was matching the
+     INLINE button too. ~90px of button for one icon is what pushed it off
+     the pills' row in the first place; inline it stays a bare icon. */
+  .tb-overflow--single .tb-refresh::after { content: none; }
+  /* Narrower than ~360px the pills genuinely don't fit, and .browse-toolbar
+     wraps rather than shrinks — flex only shrinks WITHIN a line, so the icon
+     would hop to a row of its own again. Capping the strip's width leaves
+     room for the icon on the line and makes the strip scroll instead.
+     Only the modes whose row is just pills + ↻ get the cap; Browse also
+     carries ☰ Filters and ⋯, which can't share a phone row regardless. */
+  .browse-toolbar:has(.tb-overflow--single) .adshub-diff-pills {
+    max-width: calc(100% - 46px);   /* 32 icon + 6 gap + 4 strip margin + slack */
+  }
 }
 
 .recall-filters {
@@ -5392,16 +5578,36 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 .recall-resolve-chip.missing { color: var(--danger); border-color: var(--danger); opacity: .8; }
 
 @media (max-width: 768px) {
+  /* One row, same as desktop: title · ☰ · count · Quiz/List · 🔀 ＋ ✕. It used
+     to break after ☰ and give the action run a full second line, which cost
+     ~40px of a phone screen and hid the count entirely. nowrap is what holds
+     the line together; the title absorbs the squeeze. */
   .recall-hd {
-    padding: 8px 8px; gap: 6px; flex-wrap: wrap;
+    padding: 8px; gap: 6px; flex-wrap: nowrap;
     position: sticky; top: 0; z-index: 4; background: var(--bg2);
   }
+  /* The one shrinkable item on the row, so it ellipsizes and every control
+     keeps its full size. */
   .recall-hd .doc-detail-title {
-    display: block; flex: 1 1 100%; max-width: none;
+    flex: 0 1 auto; min-width: 0; max-width: none;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .recall-hd-actions { flex-wrap: nowrap; gap: 4px; }
+  .recall-hd-actions {
+    flex-wrap: nowrap; gap: 4px;
+    margin-left: auto; flex-shrink: 0;
+  }
   .recall-hd-actions .adshub-diff-pills { flex-shrink: 0; }
-  .recall-progress { display: none; }
+  /* Phone. The row above fits 390px with barely anything left for the title,
+     so trim it the way the mode toolbar is trimmed: 11px labels, 6px padding.
+     Nested rather than a fourth top-level ≤480px block, which would have to
+     be ordered against the one above by hand. */
+  @media (max-width: 480px) {
+    .recall-hd { --ctl-px: 6px; gap: 4px; }
+    .recall-hd .adshub-diff-pill { font-size: 11px; }
+    .recall-hd .adshub-diff-pills { gap: 3px; }
+    .recall-hd-actions { gap: 3px; }
+    .recall-progress { font-size: 10px; padding: 0; }
+  }
 
   .recall-filters { padding: 8px; gap: 8px; }
   .recall-filters .col-search { flex: 1 1 100%; min-width: 0; }

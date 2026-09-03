@@ -398,7 +398,7 @@ export default function AdsHubView() {
     }
   }
   useEffect(() => {
-    if (p2rCached != null) return   // module cache — use the tab's ↻ to reload
+    if (p2rCached != null) return   // module cache — the toolbar ↻ reloads it
     void fetchP2R()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -479,7 +479,7 @@ export default function AdsHubView() {
     }
   }
   useEffect(() => {
-    if (recallCached != null) return   // module cache — use the deck's ↻ to reload
+    if (recallCached != null) return   // module cache — the toolbar ↻ reloads it
     void fetchRecall()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -938,17 +938,28 @@ export default function AdsHubView() {
     }
   }, [adsMode, recallId, urlApplied])
 
-  async function refresh() {
+  // The page's only reload, so no section carries its own ↻. Neither column
+  // maps to a single sheet — the left nav's 🎯 count already needs problems,
+  // Point2Rem and recall together — so a per-section button would leave the
+  // rest of the page stale. Three independent calls, so they go out at once
+  // rather than in series. fetchP2R / fetchRecall land their own failures in
+  // p2rError / recallError, which their panels render; only problems needs a
+  // toast from here.
+  async function refreshAll() {
     if (refreshing) return
     setRefresh(true)
-    try {
-      setProblems(await loadProblems(true))
-      toast('Refreshed', 'success')
-    } catch (e) {
-      toast(`Refresh failed: ${(e as Error).message}`, 'error')
-    } finally {
-      setRefresh(false)
+    const problemsJob = loadProblems(true)
+      .then(ps => { setProblems(ps); return null })
+      .catch((e: Error) => e.message)
+    // Patterns is an iframe over a static file, not a sheet — re-navigating it
+    // is the only way to pick up an edited patterns.html.
+    if (adsMode === 'patterns') {
+      patternsFrameRef.current?.contentWindow?.location.reload()
     }
+    const [problemsErr] = await Promise.all([problemsJob, fetchP2R(true), fetchRecall(true)])
+    setRefresh(false)
+    if (problemsErr) toast(`Refresh failed: ${problemsErr}`, 'error')
+    else toast('Refreshed', 'success')
   }
 
   // Reset the note + tag panels whenever the selection changes.
@@ -1691,7 +1702,6 @@ export default function AdsHubView() {
           onSelectP2R={openP2R}
           onPickP2RTag={pickP2RTag}
           onCreateP2R={newP2R}
-          onRefreshP2R={() => void fetchP2R(true)}
           recallCount={recallDeck.length}
           recallActive={adsMode === 'recall'}
           onOpenRecall={openRecall}
@@ -1783,13 +1793,14 @@ export default function AdsHubView() {
               >⋯</button>
             )}
             <div className={`tb-overflow-items${overflowOpen ? ' open' : ''}`}>
-              {/* Refresh is available in every mode — reloads problems from the sheet
-                  and rebuilds the lineage (picks up tag/note edits made elsewhere). */}
+              {/* The page's only refresh, in every mode: reloads the left nav
+                  and the active centre section together. Sections deliberately
+                  have no ↻ of their own — see refreshAll. */}
               <button
                 className="rf-btn-cancel tb-refresh"
-                onClick={refresh}
+                onClick={refreshAll}
                 disabled={refreshing || loading}
-                title="Reload problems & rebuild lineage from the sheet"
+                title="Reload this page — problems, Point2Rem notes and recall cards"
               >{refreshing ? '…' : '↻'}</button>
               {adsMode === 'browse' && <>
           {/* Multi-select dropdown: difficulty + ✨ Custom in one pill so
@@ -1936,7 +1947,7 @@ export default function AdsHubView() {
               <AdsLineage
                 problems={problems}
                 focusNum={lineageFocus}
-                onRefresh={refresh}
+                onRefresh={refreshAll}
                 onOpenProblem={num => {
                   // Open in the side detail pane — stay in Lineage (don't flip to Browse).
                   const p = problems.find(x => x.frontendId === String(num) || x.frontendId === String(Number(num)))
@@ -1982,7 +1993,6 @@ export default function AdsHubView() {
                 onOpenPoint={openP2RRef}
                 onSave={handleSaveRecall}
                 onDelete={handleDeleteRecall}
-                onRefresh={() => void fetchRecall(true)}
                 onClose={() => setAdsMode('browse')}
                 onWiden={() => setListRatio(r => r >= 78 ? 60 : 85)}
                 draftSeed={recallDraft}

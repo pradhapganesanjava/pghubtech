@@ -50,7 +50,6 @@ interface Props {
   onSelectP2R:       (item: P2RItem) => void
   onPickP2RTag:      (path: string) => void
   onCreateP2R:       () => void
-  onRefreshP2R:      () => void
   // Quiz/Recall — random Q/A over the Point2Rem notes in this tree. Writing a
   // new card is the deck's own ＋, not the sidebar's.
   recallCount:       number
@@ -170,7 +169,7 @@ function ListNodeRow({
 export default function AdsHubSidebar({
   problems, selectedTags, onToggleTag, selectedCompanies, onToggleCompany,
   lists, selectedList, onSelectList, onDeleteList, onCreateList, onManageList,
-  p2rItems, p2rLoading, p2rError, p2rSelectedId, p2rSelectedTag, onSelectP2R, onPickP2RTag, onCreateP2R, onRefreshP2R,
+  p2rItems, p2rLoading, p2rError, p2rSelectedId, p2rSelectedTag, onSelectP2R, onPickP2RTag, onCreateP2R,
   recallCount, recallActive, onOpenRecall,
   collapsed, onCollapse,
 }: Props) {
@@ -308,8 +307,9 @@ export default function AdsHubSidebar({
       )}
 
       {/* Search (open panel) + New-list button on MyList. Point2Rem puts its
-          whole toolbar here — quiz, new note, reload, fold — as icons, so the
-          panel is one row of chrome instead of three stacked strips. */}
+          whole toolbar here — quiz, new note, fold — as icons, so the panel is
+          one row of chrome instead of three stacked strips. Reloading is the
+          toolbar ↻'s job, not this panel's. */}
       {tab && (
       <div className="side-tool-row">
         <input
@@ -317,7 +317,7 @@ export default function AdsHubSidebar({
           placeholder={
             tab === 'tags' ? 'Search tags…' :
             tab === 'companies' ? 'Search companies…' :
-            // Short on purpose: Point2Rem shares this row with four icons, so
+            // Short on purpose: Point2Rem shares this row with three icons, so
             // anything longer renders mid-word-truncated at 210px.
             tab === 'mylist' ? 'Search lists…' : 'Search…'
           }
@@ -335,9 +335,6 @@ export default function AdsHubSidebar({
               title={`Quiz / Recall — shuffle all ${recallCount} notes as Q/A. Click a tag below to drill one branch.`}
             >🎯<span className="p2r-tool-cnt">{recallCount}</span></button>
             <button className="p2r-tool" onClick={onCreateP2R} title="Write a new point">＋</button>
-            <button className="p2r-tool" onClick={onRefreshP2R} disabled={p2rLoading} title="Reload from the sheet">
-              {p2rLoading ? '…' : '↻'}
-            </button>
             {p2rMode === 'tree' && (
               <button
                 className="p2r-tool"
