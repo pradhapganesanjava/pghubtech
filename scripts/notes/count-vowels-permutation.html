@@ -1,0 +1,358 @@
+<style>
+  .cvp{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a2e;max-width:720px}
+  .cvp *{box-sizing:border-box}
+  .cvp h2{margin:0 0 8px;font-size:18px;letter-spacing:-.02em}
+  .cvp h3{margin:16px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#64748b}
+  .cvp p{margin:8px 0}
+  .cvp .sub{color:#64748b;font-size:13px;margin:0 0 12px}
+  .cvp .chip{display:inline-block;font:700 12px/1 ui-monospace,Menlo,monospace;padding:3px 8px;border-radius:999px;border:1px solid transparent}
+  .cvp .a{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+  .cvp .e{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .cvp .i{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe}
+  .cvp .o{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  .cvp .u{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+  .cvp .box{border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin:10px 0}
+  .cvp .idea{background:#f8fafc;border-left:4px solid #4f46e5}
+  .cvp .warn{background:#fff7ed;border-left:4px solid #f97316}
+  .cvp .ok{background:#f0fdf4;border-left:4px solid #22c55e}
+  .cvp .k{font-weight:700;color:#312e81}
+  .cvp .graph{display:grid;gap:6px}
+  .cvp .figs{display:grid;gap:10px;margin:10px 0 14px}
+  .cvp .figs img{width:100%;height:auto;border-radius:10px;border:1px solid #e2e8f0;background:#f4f4f5}
+  .cvp .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;border-radius:8px;background:#fff;border:1px solid #eef2f7}
+  .cvp .arrow{color:#94a3b8;font-weight:700}
+  .cvp .cards{display:grid;gap:8px}
+  .cvp .card{border-radius:10px;padding:10px 12px;border:1px solid}
+  .cvp .card .eq{font:13px/1.45 ui-monospace,Menlo,monospace;margin-top:4px}
+  .cvp .ca{background:#fff1f2;border-color:#fecdd3}
+  .cvp .ce{background:#eff6ff;border-color:#bfdbfe}
+  .cvp .ci{background:#f5f3ff;border-color:#ddd6fe}
+  .cvp .co{background:#fffbeb;border-color:#fde68a}
+  .cvp .cu{background:#ecfdf5;border-color:#a7f3d0}
+  .cvp .steps{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:start}
+  .cvp .n{width:22px;height:22px;border-radius:50%;background:#4f46e5;color:#fff;font:700 11px/22px sans-serif;text-align:center}
+  .cvp pre{margin:10px 0 0;background:#0f172a;color:#e2e8f0;border:0;border-radius:10px;padding:14px 16px;font:12.5px/1.55 ui-monospace,Menlo,monospace;overflow-x:auto}
+  .cvp pre .kw{color:#c4b5fd}.cvp pre .fn{color:#93c5fd}.cvp pre .st{color:#86efac}.cvp pre .nu{color:#fdba74}.cvp pre .cm{color:#64748b}
+  .cvp table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+  .cvp th,.cvp td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
+  .cvp th{background:#f8fafc;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+  .cvp .meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+  .cvp .pill{font:700 11px/1 sans-serif;padding:5px 8px;border-radius:6px;background:#eef2ff;color:#3730a3}
+  .cvp ul{margin:6px 0 0;padding-left:18px}
+  .cvp li{margin:3px 0}
+  .cvp hr.div{border:0;border-top:2px dashed #c7d2fe;margin:28px 0 18px}
+  .cvp .opt{font-size:11px;font-weight:800;letter-spacing:.08em;color:#4f46e5;background:#eef2ff;display:inline-block;padding:3px 8px;border-radius:6px;margin-bottom:8px}
+  .cvp .bars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}
+  .cvp .bar{text-align:center;border-radius:10px;padding:10px 4px;border:1px solid;font:700 18px/1.1 ui-monospace,Menlo,monospace}
+  .cvp .bar small{display:block;font:700 11px/1.4 sans-serif;margin-top:4px;opacity:.85}
+  .cvp .ba{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+  .cvp .be{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+  .cvp .bi{background:#f5f3ff;border-color:#ddd6fe;color:#6d28d9}
+  .cvp .bo{background:#fffbeb;border-color:#fde68a;color:#b45309}
+  .cvp .bu{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+  .cvp .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0;color:#64748b;font-size:12px;font-weight:700}
+  .cvp .map{font:12.5px/1.55 ui-monospace,Menlo,monospace;background:#0f172a;color:#cbd5e1;border-radius:10px;padding:12px 14px;margin:10px 0;white-space:pre-wrap}
+  .cvp .map .h{color:#94a3b8}
+  .cvp .map .va{color:#fb7185}.cvp .map .ve{color:#60a5fa}.cvp .map .vi{color:#c4b5fd}.cvp .map .vo{color:#fbbf24}.cvp .map .vu{color:#34d399}
+  .cvp .fwd{font-size:11px;font-weight:800;letter-spacing:.08em;color:#0f766e;background:#ccfbf1;display:inline-block;padding:3px 8px;border-radius:6px;margin-bottom:8px}
+  .cvp .teal{background:#f0fdfa;border-left:4px solid #14b8a6}
+  .cvp .pill2{font:700 11px/1 sans-serif;padding:5px 8px;border-radius:6px;background:#ccfbf1;color:#115e59}
+</style>
+<div class="cvp">
+
+<h2>#1220 · Count Vowels Permutation</h2>
+<p class="sub">Hard · Top-down memo → 5 rolling variables · count walks, do not build strings</p>
+
+<div class="figs">
+  <img alt="Visualize the rules." src="https://leetcode.com/problems/count-vowels-permutation/Figures/1220/1220-Page-1.png">
+  <img alt="Putting the rules together." src="https://leetcode.com/problems/count-vowels-permutation/Figures/1220/1220-Page-2.png">
+</div>
+
+<div class="box idea">
+  <span class="k">Idea.</span>
+  A valid string is a walk of length <code>n</code> on a 5-node graph.
+  <code>vowel_permutation_count(i, vowel)</code> = how many length-<code>i</code> strings <b>end with</b> that vowel.
+  Cache every <code>(i, vowel)</code> so each state is solved once.
+</div>
+
+<h3>Rules = directed edges</h3>
+<p>“Followed by” is one-way. <span class="chip a">a</span> → <span class="chip e">e</span> means <code>ae</code>, not <code>ea</code>.</p>
+<div class="box graph">
+  <div class="row"><span class="chip a">a</span><span class="arrow">→</span><span class="chip e">e</span></div>
+  <div class="row"><span class="chip e">e</span><span class="arrow">→</span><span class="chip a">a</span> <span class="chip i">i</span></div>
+  <div class="row"><span class="chip i">i</span><span class="arrow">→</span><span class="chip a">a</span> <span class="chip e">e</span> <span class="chip o">o</span> <span class="chip u">u</span> <span style="color:#94a3b8;font-size:12px">(not i)</span></div>
+  <div class="row"><span class="chip o">o</span><span class="arrow">→</span><span class="chip i">i</span> <span class="chip u">u</span></div>
+  <div class="row"><span class="chip u">u</span><span class="arrow">→</span><span class="chip a">a</span></div>
+</div>
+
+<div class="box warn">
+  <span class="k">Why invert?</span>
+  The function asks “who can sit in front of this <em>new last</em> letter?”
+  New last <span class="chip a">a</span> comes from <span class="chip e">e</span> <span class="chip i">i</span> <span class="chip u">u</span>
+  (those are the letters that may be followed by <code>a</code>).
+  <code>ae</code> is counted in the <span class="chip e">e</span> bucket — it ends with <code>e</code>.
+</div>
+
+<h3>Recurrence · length i, ending with …</h3>
+<div class="cards">
+  <div class="card ca"><span class="chip a">a</span>
+    <div class="eq">count(i,a) = count(i−1,e) + count(i−1,i) + count(i−1,u)</div></div>
+  <div class="card ce"><span class="chip e">e</span>
+    <div class="eq">count(i,e) = count(i−1,a) + count(i−1,i)</div></div>
+  <div class="card ci"><span class="chip i">i</span>
+    <div class="eq">count(i,i) = count(i−1,e) + count(i−1,o)</div></div>
+  <div class="card co"><span class="chip o">o</span>
+    <div class="eq">count(i,o) = count(i−1,i)</div></div>
+  <div class="card cu"><span class="chip u">u</span>
+    <div class="eq">count(i,u) = count(i−1,i) + count(i−1,o)</div></div>
+</div>
+
+<div class="box ok" style="margin-top:10px">
+  <div class="steps">
+    <div class="n">1</div><div><b>Base</b> — <code>i == 1</code>: return <code>1</code> (the single letter itself).</div>
+    <div class="n">2</div><div><b>Answer</b> — sum <code>count(n, v)</code> for <code>v in aeiou</code>, then <code>% (10⁹+7)</code>.</div>
+    <div class="n">3</div><div><b>Memo</b> — <code>@cache</code> on <code>(i, vowel)</code>. 5n states, O(1) work each → O(n).</div>
+  </div>
+</div>
+
+<h3>Walk · n = 2</h3>
+<table>
+  <tr><th>End</th><th>From length 1</th><th>Strings</th></tr>
+  <tr><td><span class="chip a">a</span></td><td>1+1+1 = 3</td><td><code>ea ia ua</code></td></tr>
+  <tr><td><span class="chip e">e</span></td><td>1+1 = 2</td><td><code>ae ie</code></td></tr>
+  <tr><td><span class="chip i">i</span></td><td>1+1 = 2</td><td><code>ei oi</code></td></tr>
+  <tr><td><span class="chip o">o</span></td><td>1</td><td><code>io</code></td></tr>
+  <tr><td><span class="chip u">u</span></td><td>1+1 = 2</td><td><code>iu ou</code></td></tr>
+</table>
+<p>Total <b>10</b>. For <code>n = 1</code> → 5. For <code>n = 5</code> → 68.</p>
+
+<h3>Code</h3>
+<pre><span class="kw">import</span> functools
+
+<span class="kw">class</span> <span class="fn">Solution</span>:
+    <span class="kw">def</span> <span class="fn">countVowelPermutation</span>(self, n: int) -&gt; int:
+        MOD = <span class="nu">10</span> ** <span class="nu">9</span> + <span class="nu">7</span>
+        <span class="fn">@functools.cache</span>
+        <span class="kw">def</span> <span class="fn">vowel_permutation_count</span>(i, vowel):
+            total = <span class="nu">1</span>                          <span class="cm"># i == 1</span>
+            <span class="kw">if</span> i &gt; <span class="nu">1</span>:
+                <span class="kw">if</span> vowel == <span class="st">'a'</span>:
+                    total = (vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'e'</span>)
+                           + vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'i'</span>)
+                           + vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'u'</span>)) % MOD
+                <span class="kw">elif</span> vowel == <span class="st">'e'</span>:
+                    total = (vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'a'</span>)
+                           + vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'i'</span>)) % MOD
+                <span class="kw">elif</span> vowel == <span class="st">'i'</span>:
+                    total = (vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'e'</span>)
+                           + vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'o'</span>)) % MOD
+                <span class="kw">elif</span> vowel == <span class="st">'o'</span>:
+                    total = vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'i'</span>)
+                <span class="kw">else</span>:
+                    total = (vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'i'</span>)
+                           + vowel_permutation_count(i - <span class="nu">1</span>, <span class="st">'o'</span>)) % MOD
+            <span class="kw">return</span> total
+
+        <span class="kw">return</span> sum(vowel_permutation_count(n, vowel) <span class="kw">for</span> vowel <span class="kw">in</span> <span class="st">'aeiou'</span>) % MOD</pre>
+
+<div class="meta">
+  <span class="pill">Time O(n) · 5n cached calls</span>
+  <span class="pill">Space O(n) · memo + recursion stack</span>
+</div>
+
+<hr class="div">
+<div class="opt">OPTIMAL · O(1) SPACE</div>
+<h2>From recursion to 5 variables</h2>
+
+<div class="box idea">
+  <span class="k">The trick.</span>
+  Memo is a table of size <code>n × 5</code>. Look at any recurrence: <code>count(i, ·)</code> only reads <code>count(i−1, ·)</code>.
+  You never need length <code>i−2</code>. So drop the table. Keep <b>five numbers</b> — the current length’s counts — and overwrite them each step.
+</div>
+
+<h3>1 · See the memo as a table</h3>
+<p>Each recursive call writes one cell. After memo fills, it looks like this (row = length):</p>
+<table>
+  <tr><th>length i</th><th><span class="chip a">a</span></th><th><span class="chip e">e</span></th><th><span class="chip i">i</span></th><th><span class="chip o">o</span></th><th><span class="chip u">u</span></th><th>sum</th></tr>
+  <tr><td><code>i = 1</code> base</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td><b>5</b></td></tr>
+  <tr><td><code>i = 2</code></td><td>3</td><td>2</td><td>2</td><td>1</td><td>2</td><td><b>10</b></td></tr>
+  <tr><td><code>i = 3</code></td><td>6</td><td>5</td><td>3</td><td>2</td><td>3</td><td><b>19</b></td></tr>
+</table>
+<p>Recursion fills this <em>from the bottom</em> (asks for <code>n</code>, then <code>n−1</code>, …, hits <code>1</code>, then returns up). A loop fills the <em>same cells from the top</em> — row 1, then 2, then 3. Same numbers.</p>
+
+<h3>2 · Drop every row you don’t need</h3>
+<div class="steps" style="margin:10px 0">
+  <div class="n">1</div>
+  <div><b>2D memo</b> <code>dp[i][vowel]</code> — O(n) space. Recursion stack also O(n).</div>
+  <div class="n">2</div>
+  <div><b>Two rows</b> — only <code>prev[5]</code> and <code>cur[5]</code>. After each length, <code>prev = cur</code>.</div>
+  <div class="n">3</div>
+  <div><b>Five scalars</b> — name them after the vowels. The names <em>are</em> the previous row. Compute a new 5-tuple in one assignment.</div>
+</div>
+
+<div class="map">
+  <span class="h"># the recursive cell          becomes the variable of the SAME vowel</span>
+  count(i, <span class="va">'a'</span>)  →  <span class="va">a</span>     <span class="h"># strings of current length ending in a</span>
+  count(i, <span class="ve">'e'</span>)  →  <span class="ve">e</span>
+  count(i, <span class="vi">'i'</span>)  →  <span class="vi">i</span>
+  count(i, <span class="vo">'o'</span>)  →  <span class="vo">o</span>
+  count(i, <span class="vu">'u'</span>)  →  <span class="vu">u</span>
+
+  <span class="h"># a recurrence copies over with a find-replace:</span>
+  count(i, <span class="va">a</span>) = count(i-1,<span class="ve">e</span>) + count(i-1,<span class="vi">i</span>) + count(i-1,<span class="vu">u</span>)
+          ↓
+  new_<span class="va">a</span>    =            <span class="ve">e</span>  +            <span class="vi">i</span>  +            <span class="vu">u</span>
+</div>
+
+<div class="box warn">
+  <span class="k">The one trap.</span>
+  On the right-hand side, <span class="chip e">e</span> <span class="chip i">i</span> <span class="chip u">u</span> are the <b>old</b> length’s counts.
+  If you write <code>a = e + i + u</code> and then <code>e = a + i</code>, the second line uses the <em>new</em> <code>a</code> — mixed lengths, wrong answer.
+  Build all five next values from the old five, then assign together.
+</div>
+
+<h3>3 · One step is just renaming</h3>
+<p>Start at length 1 — same base as <code>return 1</code> in the recursive function:</p>
+<div class="bars">
+  <div class="bar ba">1<small>a</small></div>
+  <div class="bar be">1<small>e</small></div>
+  <div class="bar bi">1<small>i</small></div>
+  <div class="bar bo">1<small>o</small></div>
+  <div class="bar bu">1<small>u</small></div>
+</div>
+<div class="flow">length 1 · total 5 &nbsp;→&nbsp; apply the five formulas once</div>
+<div class="bars">
+  <div class="bar ba">3<small>e+i+u</small></div>
+  <div class="bar be">2<small>a+i</small></div>
+  <div class="bar bi">2<small>e+o</small></div>
+  <div class="bar bo">1<small>i</small></div>
+  <div class="bar bu">2<small>i+o</small></div>
+</div>
+<div class="flow">length 2 · total 10 &nbsp;→&nbsp; same formulas again</div>
+<div class="bars">
+  <div class="bar ba">6<small>2+2+2</small></div>
+  <div class="bar be">5<small>3+2</small></div>
+  <div class="bar bi">3<small>2+1</small></div>
+  <div class="bar bo">2<small>2</small></div>
+  <div class="bar bu">3<small>2+1</small></div>
+</div>
+<p>Repeat <code>n − 1</code> times. The recursive version did the same <code>n − 1</code> hops down to the base; the loop hops up from the base. Stop when the variables hold length <code>n</code>, then sum them.</p>
+
+<h3>4 · Optimal code</h3>
+<pre><span class="kw">class</span> <span class="fn">Solution</span>:
+    <span class="kw">def</span> <span class="fn">countVowelPermutation</span>(self, n: int) -&gt; int:
+        MOD = <span class="nu">10</span> ** <span class="nu">9</span> + <span class="nu">7</span>
+        a = e = i = o = u = <span class="nu">1</span>          <span class="cm"># length 1</span>
+        <span class="kw">for</span> _ <span class="kw">in</span> range(n - <span class="nu">1</span>):
+            a, e, i, o, u = (
+                (e + i + u) % MOD,     <span class="cm"># new a  ←  old e,i,u</span>
+                (a + i) % MOD,         <span class="cm"># new e  ←  old a,i</span>
+                (e + o) % MOD,         <span class="cm"># new i  ←  old e,o</span>
+                i % MOD,               <span class="cm"># new o  ←  old i</span>
+                (i + o) % MOD,         <span class="cm"># new u  ←  old i,o</span>
+            )
+        <span class="kw">return</span> (a + e + i + o + u) % MOD</pre>
+
+<div class="meta">
+  <span class="pill">Time O(n) · n−1 steps, 5 adds each</span>
+  <span class="pill">Space O(1) · five ints, no stack</span>
+</div>
+
+<div class="box ok" style="margin-top:12px">
+  <span class="k">How to derive it in an interview.</span>
+  Write the recursive function first. Then say: “every call depends only on length <code>i−1</code>, so I can iterate length 1→n and keep five running counts.”
+  Copy the five <code>if vowel == …</code> branches into the tuple. Tuple-unpack so old values stay intact. Done.
+</div>
+
+<hr class="div">
+<div class="fwd">ELEGANT · FORWARD DFS (SUCCESSORS)</div>
+<h2>Walk next letters, not previous</h2>
+
+<div class="box teal">
+  <span class="k">Meaning.</span>
+  <code>count(i, vowel)</code> = ways to finish a length-<code>n</code> string after placing <code>vowel</code> at position <code>i</code>.
+  Follow the rule map as written: from here, only recurse to <b>allowed next</b> letters.
+  Start at position <code>1</code>. When <code>i == n</code> the nth letter is already chosen → <code>1</code> complete string.
+</div>
+
+<h3>1 · Top-down + cache + MOD</h3>
+<pre><span class="kw">from</span> functools <span class="kw">import</span> cache
+
+<span class="kw">class</span> <span class="fn">Solution</span>:
+    <span class="kw">def</span> <span class="fn">countVowelPermutation</span>(self, n: int) -&gt; int:
+        MOD = <span class="nu">10</span>**<span class="nu">9</span> + <span class="nu">7</span>
+        NEXT = {
+            <span class="st">'a'</span>: [<span class="st">'e'</span>],
+            <span class="st">'e'</span>: [<span class="st">'a'</span>, <span class="st">'i'</span>],
+            <span class="st">'i'</span>: [<span class="st">'a'</span>, <span class="st">'e'</span>, <span class="st">'o'</span>, <span class="st">'u'</span>],
+            <span class="st">'o'</span>: [<span class="st">'i'</span>, <span class="st">'u'</span>],
+            <span class="st">'u'</span>: [<span class="st">'a'</span>],
+        }
+
+        <span class="fn">@cache</span>
+        <span class="kw">def</span> <span class="fn">count</span>(i, vowel):
+            <span class="kw">if</span> i == n:
+                <span class="kw">return</span> <span class="nu">1</span>
+            <span class="kw">return</span> sum(count(i + <span class="nu">1</span>, nxt) <span class="kw">for</span> nxt <span class="kw">in</span> NEXT[vowel]) % MOD
+
+        <span class="kw">return</span> sum(count(<span class="nu">1</span>, c) <span class="kw">for</span> c <span class="kw">in</span> <span class="st">'aeiou'</span>) % MOD</pre>
+
+<div class="meta">
+  <span class="pill2">@cache on (i, vowel) · 5n states</span>
+  <span class="pill2">% MOD on child-sum and on the 5 starts</span>
+</div>
+
+<div class="box ok" style="margin-top:12px">
+  <span class="k">Index pairing.</span>
+  Start <code>count(1, c)</code> + stop <code>i == n</code> fills positions <code>1 … n</code> (length n).
+  Start <code>count(0, c)</code> with the same stop would fill <code>0 … n</code> → length n+1. Don’t mix them.
+</div>
+
+<h3>2 · Same recurrence, 5 variables</h3>
+<p>Each call only reads <code>count(i+1, ·)</code>, so fill from the <b>end</b>. At position <code>n</code> every vowel is already a finished string → all ones. Walk back <code>n−1</code> steps to position <code>1</code>. Each variable becomes the sum of its <b>successors</b>.</p>
+
+<div class="map">
+<span class="h"># NEXT[vowel] copied into the tuple</span>
+new_<span class="va">a</span> = <span class="ve">e</span>                  <span class="h"># a → e</span>
+new_<span class="ve">e</span> = <span class="va">a</span> + <span class="vi">i</span>              <span class="h"># e → a, i</span>
+new_<span class="vi">i</span> = <span class="va">a</span> + <span class="ve">e</span> + <span class="vo">o</span> + <span class="vu">u</span>    <span class="h"># i → a, e, o, u</span>
+new_<span class="vo">o</span> = <span class="vi">i</span> + <span class="vu">u</span>              <span class="h"># o → i, u</span>
+new_<span class="vu">u</span> = <span class="va">a</span>                  <span class="h"># u → a</span>
+</div>
+
+<pre><span class="kw">class</span> <span class="fn">Solution</span>:
+    <span class="kw">def</span> <span class="fn">countVowelPermutation</span>(self, n: int) -&gt; int:
+        MOD = <span class="nu">10</span>**<span class="nu">9</span> + <span class="nu">7</span>
+        a = e = i = o = u = <span class="nu">1</span>          <span class="cm"># position n</span>
+        <span class="kw">for</span> _ <span class="kw">in</span> range(n - <span class="nu">1</span>):         <span class="cm"># walk back to position 1</span>
+            a, e, i, o, u = (
+                e % MOD,               <span class="cm"># a → e</span>
+                (a + i) % MOD,         <span class="cm"># e → a, i</span>
+                (a + e + o + u) % MOD, <span class="cm"># i → a, e, o, u</span>
+                (i + u) % MOD,         <span class="cm"># o → i, u</span>
+                a % MOD,               <span class="cm"># u → a</span>
+            )
+        <span class="kw">return</span> (a + e + i + o + u) % MOD</pre>
+
+<div class="meta">
+  <span class="pill2">Time O(n)</span>
+  <span class="pill2">Space O(1) · five ints</span>
+</div>
+
+<p style="margin-top:10px"><code>n = 1</code>: loop skipped, <code>(1+1+1+1+1) % MOD = 5</code>. Base ones need no MOD — they are the five <code>count(n, ·)</code> ones. Tuple unpack keeps the right-hand side on the <b>old</b> five values.</p>
+
+<div class="box idea">
+  <span class="k">Dual of the section above.</span>
+  Predecessor DP grows length <code>1 → n</code> (<code>new_a = e+i+u</code>).
+  This one walks position <code>n → 1</code> along <code>NEXT</code> (<code>new_a = e</code>).
+  Same answer; this map matches the problem statement one-for-one.
+</div>
+
+<h3>Refer</h3>
+<ul>
+  <li><a href="https://leetcode.com/problems/knight-dialer/" target="_blank" rel="noopener">#935 · Knight Dialer</a> — same “count walks of length n on a tiny graph” DP</li>
+  <li><a href="https://leetcode.com/problems/student-attendance-record-ii/" target="_blank" rel="noopener">#552 · Student Attendance Record II</a> — state-machine DP with local transition rules</li>
+  <li><a href="https://leetcode.com/problems/out-of-boundary-paths/" target="_blank" rel="noopener">#576 · Out of Boundary Paths</a> — top-down memo on (steps, position)</li>
+</ul>
+
+</div>
