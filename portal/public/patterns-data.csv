@@ -640,6 +640,7 @@ anchor_id,tag
 315,pat_ds::array::divide-conquer::dc-merge-count
 316,pat_topic::stack-topic::parens-rewrite
 316,pat_ds::string::stack-topic::parens-rewrite
+316,pat_group::subsequence
 317,pat_topic::bfs::bfs-multi-source
 317,pat_ds::matrices::bfs::bfs-multi-source
 317,pat_ds::graph::core::bfs
@@ -778,6 +779,7 @@ anchor_id,tag
 399,pat_ds::graph::union-find::uf-weighted
 402,pat_topic::stack-topic::parens-rewrite
 402,pat_ds::string::stack-topic::parens-rewrite
+402,pat_group::subsequence
 403,pat_topic::dp::augmented-state-reachability
 403,pat_ds::array::dp::augmented-state-reachability
 404,pat_ds::tree::dfs::dfs-template
