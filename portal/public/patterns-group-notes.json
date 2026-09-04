@@ -349,6 +349,19 @@
               "visual": "coin outer, target inner\n  coin 1 fully absorbed → then coin 2 …   each multiset counted once"
             },
             {
+              "id": 552,
+              "title": "Student Attendance Record II",
+              "tag": "state (i, absences, trailing lates)",
+              "note": "Two bounded counters instead of one symbol — the state is their **product**, not a single last-choice.",
+              "points": [
+                "`A` total **≤ 1** and `L` consecutive **≤ 2** ⇒ `2 × 3 = 6` states per index.",
+                "**The reset is the machine**: a `P` or `A` sends trailing-`L` back to 0; only `L` increments it.",
+                "Six rolling values, `O(n)` time and `O(1)` space.",
+                "Contrast #1220, whose state is a single last symbol."
+              ],
+              "visual": "state = (absences 0|1, trailing L 0|1|2)\n\n  P → (a, 0)        L → (a, l+1)  if l < 2\n  A → (a+1, 0)      if a = 0        6 states, all reachable"
+            },
+            {
               "id": 790,
               "title": "Domino and Tromino Tiling",
               "tag": "state machine · jagged frontier",
@@ -359,6 +372,18 @@
                 "Shares the `state-machine-dp` micro with the stock problems — same skeleton, **sum instead of max**."
               ],
               "visual": "flush        overhang\n ██│          ██┐\n ██│          ██┘   two frontier shapes ⇒ two running counts"
+            },
+            {
+              "id": 935,
+              "title": "Knight Dialer",
+              "tag": "adjacency rule · state (i, last digit)",
+              "note": "**#1220 with a bigger alphabet** — same walk-counting, 10 nodes instead of 5.",
+              "points": [
+                "Knight moves on a keypad form a fixed **10-node directed graph**; the answer is the number of walks of length `n`.",
+                "`5` is a **dead end** — no knight move leaves it, so it only ever contributes at `n = 1`.",
+                "Ten rolling counters, `O(n)` time and `O(1)` space; mod `1e9+7`.",
+                "Matrix exponentiation drops it to `O(log n)` — the same trick applies to #1220."
+              ]
             },
             {
               "id": 1137,
@@ -384,6 +409,29 @@
                 "Same shape as #935 Knight Dialer and #552 — only the graph changes."
               ],
               "visual": "rules as edges          who precedes me\n  a → e                   a ← e, i, u\n  e → a, i                e ← a, i\n  i → a,e,o,u             i ← e, o\n  o → i, u                o ← i\n  u → a                   u ← i, o"
+            },
+            {
+              "id": 1223,
+              "title": "Dice Roll Simulation",
+              "tag": "state (rolls, last face, run length)",
+              "note": "#552's shape with a **per-face** cap — the run-length limit differs by face.",
+              "points": [
+                "State is `(rolls used, last face, current run)`: `6 × max(rollMax)` values.",
+                "**The cap is per face**, which is the only real twist over #552's single `L ≤ 2`.",
+                "Rolling the same face extends the run; any other face resets it to 1."
+              ]
+            },
+            {
+              "id": 1416,
+              "title": "Restore The Array",
+              "tag": "index-only · bounded look-back",
+              "note": "**The odd one out on this card**: there is no auxiliary state symbol — closer to #91 than to a state machine.",
+              "points": [
+                "`dp[i] = Σ dp[j]` over every split whose value is in `[1, k]` — the state is just the index.",
+                "Because `k ≤ 1e9`, the look-back is **at most 10 digits**, so it is a bounded window rather than an unbounded sum.",
+                "Leading `'0'` kills a split outright, exactly as in #91.",
+                "Tagged `state-machine-dp` for grouping; `rolling-state-fixed-window` (what #91 carries) describes the mechanics better."
+              ]
             }
           ]
         }
