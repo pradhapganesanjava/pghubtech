@@ -14,6 +14,11 @@
 //     Log!       id, date, kind, ref_id, title, minutes, done_at, units
 //     Thoughts!  id, date, raw, bucket, summary, highlights, created_at,
 //                updated_at, path, rich, raw_original
+//     Journal!   one row per DATE — the day written up, cleaned, and split into
+//                a timeline plus the day's reflection. Structured fields that
+//                are lists or records ride as JSON in a single cell.
+//     JournalInsights! generated summaries over a window, kept so a report can
+//                be re-read rather than regenerated.
 //
 // Log holds one row per completion (kind ∈ {routine, goal}); un-ticking a
 // routine deletes its row, so "done today" is always a straight sum over the
@@ -34,6 +39,9 @@ const ROUTINES_TAB = 'Routines'
 const GOALS_TAB    = 'Goals'
 const LOG_TAB      = 'Log'
 const THOUGHTS_TAB = 'Thoughts'
+const CONFIG_TAB   = 'Config'
+const JOURNAL_TAB  = 'Journal'
+const JINSIGHT_TAB = 'JournalInsights'
 
 const BLOCK_HEADERS   = ['id','title','subtitle','position','created_at','updated_at'] as const
 const ROUTINE_HEADERS = ['id','block_id','title','minutes','position','active','created_at','updated_at'] as const
@@ -42,10 +50,15 @@ const ROUTINE_HEADERS = ['id','block_id','title','minutes','position','active','
 const GOAL_HEADERS    = ['id','title','notes','start_date','end_date','frequency','target_minutes','priority','active','created_at','updated_at','target_units','unit_label'] as const
 const LOG_HEADERS     = ['id','date','kind','ref_id','title','minutes','done_at','units'] as const
 const THOUGHT_HEADERS = ['id','date','raw','bucket','summary','highlights','created_at','updated_at','path','rich','raw_original'] as const
+const JOURNAL_HEADERS = ['id','date','raw','raw_original','wake_time','sleep_time','timeline','went_right','went_wrong','expected','reality','fixing','worked','summary','created_at','updated_at'] as const
+const JINSIGHT_HEADERS = ['id','from_date','to_date','label','days_covered','rich','created_at'] as const
+const CONFIG_HEADERS = ['key','value','notes'] as const
 
 const TABS: [string, readonly string[]][] = [
   [BLOCKS_TAB, BLOCK_HEADERS], [ROUTINES_TAB, ROUTINE_HEADERS], [GOALS_TAB, GOAL_HEADERS],
   [LOG_TAB, LOG_HEADERS], [THOUGHTS_TAB, THOUGHT_HEADERS],
+  [JOURNAL_TAB, JOURNAL_HEADERS], [JINSIGHT_TAB, JINSIGHT_HEADERS],
+  [CONFIG_TAB, CONFIG_HEADERS],
 ]
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -87,11 +100,8 @@ export interface DartLogEntry {
   units: number
 }
 
-export const THOUGHT_BUCKETS = [
-  'Lessons Learned', 'Process Improvement', 'Productivity',
-  'Tips', 'Tricks', 'Strategies', 'Goal', 'Other',
-] as const
-export type ThoughtBucket = typeof THOUGHT_BUCKETS[number]
+// Buckets are user-editable data now, so this is a plain string.
+export type ThoughtBucket = string
 
 export interface DartThought {
   id: string; date: string
@@ -112,12 +122,15 @@ export interface DartThought {
 // capped so the left-nav tree can never grow past four levels.
 export const MAX_PATH_DEPTH = 4
 
-// Canonical top-level groups. The classifier is told to file under one of
-// these unless a thought genuinely fits none, which is what stops a subject
-// from scattering — business thoughts landing half in Career and half in
-// Other, say. Sub-groups below the root stay free-form. Add a root here to
-// make it a first-class home for future thoughts.
-export const THOUGHT_ROOTS = ['Business', 'Career', 'Learning'] as const
+// Taxonomy defaults. These exist ONLY to seed the Config tab the first time
+// the store is opened — after that the sheet is the source of truth and these
+// are never read again, so a root or a bucket is added by editing the sheet
+// rather than by shipping code. See dartConfig() / loadDartConfig().
+export const DEFAULT_THOUGHT_ROOTS = ['Business', 'Career', 'Learning']
+export const DEFAULT_THOUGHT_BUCKETS = [
+  'Lessons Learned', 'Process Improvement', 'Productivity',
+  'Tips', 'Tricks', 'Strategies', 'Goal', 'Other',
+]
 
 export function normalisePath(raw: string): string {
   return (raw || '')
@@ -233,6 +246,27 @@ async function ensureSchema(): Promise<void> {
 
 async function reconcileHeaders(): Promise<void> {
   const id = await doc()
+
+  // A store created before a tab existed simply has no such sheet, and a
+  // values.batchGet naming a missing range fails outright — so tabs are added
+  // before headers are compared. Together these two steps mean a new tab or a
+  // new column needs nothing but an entry in TABS above.
+  const meta = await GAuth.fetch(`${SHEETS_BASE}/${id}?fields=sheets.properties.title`, { headers: auth() })
+  if (!meta.ok) return
+  const have = new Set(
+    ((await meta.json() as { sheets?: { properties?: { title?: string } }[] }).sheets ?? [])
+      .map(sh => sh.properties?.title ?? ''))
+  const missing = TABS.filter(([tab]) => !have.has(tab))
+  if (missing.length > 0) {
+    const added = await GAuth.fetch(`${SHEETS_BASE}/${id}:batchUpdate`, {
+      method:  'POST', headers: auth(true),
+      body:    JSON.stringify({
+        requests: missing.map(([title]) => ({ addSheet: { properties: { title } } })),
+      }),
+    })
+    if (!added.ok) return
+  }
+
   const ranges = TABS.map(([tab, h]) => `${tab}!A1:${colLetter(h.length)}1`)
   const qs  = ranges.map(r => `ranges=${encodeURIComponent(r)}`).join('&')
   const res = await GAuth.fetch(`${SHEETS_BASE}/${id}/values:batchGet?${qs}`, { headers: auth() })
@@ -589,4 +623,223 @@ export async function updateThought(t: DartThought): Promise<DartThought> {
 
 export async function deleteThought(id: string): Promise<void> {
   await deleteRowsByIds(THOUGHTS_TAB, [id])
+}
+
+// ── Journal ──────────────────────────────────────────────────────────────────
+
+export type BandKey = string
+
+export interface DayBand {
+  key: BandKey; label: string; from: number; to: number; hint: string
+}
+
+// The day, split the way it is actually lived. `to` is exclusive, and night
+// runs to midnight. Seeded into Config on first open, edited in the sheet after.
+export const DEFAULT_DAY_BANDS: DayBand[] = [
+  { key: 'early',     label: 'Early Morning', from: 0,  to: 7,  hint: 'before 7' },
+  { key: 'morning',   label: 'Morning',       from: 7,  to: 12, hint: '7 – 11' },
+  { key: 'afternoon', label: 'Afternoon',     from: 12, to: 17, hint: '12 – 4' },
+  { key: 'evening',   label: 'Evening',       from: 17, to: 20, hint: '5 – 8' },
+  { key: 'night',     label: 'Night',         from: 20, to: 24, hint: '8 – midnight' },
+]
+
+export function bandForHour(h: number): BandKey {
+  const b = dartConfig().dayBands.find(x => h >= x.from && h < x.to)
+  return b?.key ?? 'night'
+}
+
+export interface TimelineItem {
+  band:    BandKey
+  from:    string     // 'HH:MM' or '' when only a band is known
+  to:      string
+  minutes: number     // 0 when no duration was stated
+  title:   string
+  detail:  string
+}
+
+export interface JournalEntry {
+  id:          string
+  date:        string        // YYYY-MM-DD — one entry per day
+  raw:         string        // cleaned capture
+  rawOriginal: string        // exactly what was dictated or typed
+  wakeTime:    string        // 'HH:MM' or ''
+  sleepTime:   string
+  timeline:    TimelineItem[]
+  wentRight:   string[]
+  wentWrong:   string[]
+  expected:    string        // what the day was meant to be
+  reality:     string        // what it actually was
+  fixing:      string[]      // habits / tasks being worked on
+  worked:      string[]      // habits / strategies that paid off
+  summary:     string
+  createdAt:   string
+  updatedAt:   string
+}
+
+export type JournalFields = Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'>
+
+// Lists and records ride as JSON in one cell rather than spreading across
+// columns — the shape changes as the extractor improves, and a sheet full of
+// half-used columns would be worse than one opaque-but-stable field.
+function jparse<T>(cell: string | undefined, fallback: T): T {
+  if (!cell) return fallback
+  try { return JSON.parse(cell) as T } catch { return fallback }
+}
+const lines = (c: string | undefined) =>
+  (c ?? '').split('\n').map(x => x.trim()).filter(Boolean)
+
+export async function loadJournal(): Promise<JournalEntry[]> {
+  const rows = await readRows(JOURNAL_TAB, 'A2:P')
+  return rows.filter(r => r[0]).map(r => ({
+    id: r[0], date: r[1] ?? '', raw: r[2] ?? '', rawOriginal: r[3] || r[2] || '',
+    wakeTime: r[4] ?? '', sleepTime: r[5] ?? '',
+    timeline: jparse<TimelineItem[]>(r[6], []),
+    wentRight: lines(r[7]), wentWrong: lines(r[8]),
+    expected: r[9] ?? '', reality: r[10] ?? '',
+    fixing: lines(r[11]), worked: lines(r[12]),
+    summary: r[13] ?? '', createdAt: r[14] ?? '', updatedAt: r[15] ?? '',
+  })).sort((a, b) => b.date.localeCompare(a.date))
+}
+
+function journalRow(e: JournalEntry): string[] {
+  return [
+    e.id, e.date, e.raw, e.rawOriginal, e.wakeTime, e.sleepTime,
+    JSON.stringify(e.timeline),
+    e.wentRight.join('\n'), e.wentWrong.join('\n'),
+    e.expected, e.reality,
+    e.fixing.join('\n'), e.worked.join('\n'),
+    e.summary, e.createdAt, e.updatedAt,
+  ]
+}
+
+// One entry per date: writing a day that already exists replaces it rather
+// than stacking a second row, so the calendar can never show a day twice.
+export async function saveJournal(fields: JournalFields): Promise<JournalEntry> {
+  const now = new Date().toISOString()
+  const existing = (await loadJournal()).find(e => e.date === fields.date)
+  if (existing) {
+    const updated: JournalEntry = { ...existing, ...fields, updatedAt: now }
+    const row = await rowOf(JOURNAL_TAB, existing.id)
+    if (row < 0) throw new Error('Journal entry not found')
+    await writeRow(JOURNAL_TAB, row, journalRow(updated))
+    return updated
+  }
+  const created: JournalEntry = { ...fields, id: uuid('dj'), createdAt: now, updatedAt: now }
+  await appendRows(JOURNAL_TAB, 'P', [journalRow(created)])
+  return created
+}
+
+export async function deleteJournal(id: string): Promise<void> {
+  await deleteRowsByIds(JOURNAL_TAB, [id])
+}
+
+// ── Journal insights ─────────────────────────────────────────────────────────
+
+export interface JournalInsight {
+  id:          string
+  fromDate:    string
+  toDate:      string
+  label:       string      // the window as chosen, e.g. 'Last 30 days'
+  daysCovered: number
+  rich:        string      // generated HTML, sanitised on display
+  createdAt:   string
+}
+
+export async function loadInsights(): Promise<JournalInsight[]> {
+  const rows = await readRows(JINSIGHT_TAB, 'A2:G')
+  return rows.filter(r => r[0]).map(r => ({
+    id: r[0], fromDate: r[1] ?? '', toDate: r[2] ?? '', label: r[3] ?? '',
+    daysCovered: num(r[4]), rich: r[5] ?? '', createdAt: r[6] ?? '',
+  })).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+export async function addInsight(
+  i: Omit<JournalInsight, 'id' | 'createdAt'>,
+): Promise<JournalInsight> {
+  const created: JournalInsight = { ...i, id: uuid('ji'), createdAt: new Date().toISOString() }
+  await appendRows(JINSIGHT_TAB, 'G', [[
+    created.id, created.fromDate, created.toDate, created.label,
+    String(created.daysCovered), created.rich, created.createdAt,
+  ]])
+  return created
+}
+
+export async function deleteInsight(id: string): Promise<void> {
+  await deleteRowsByIds(JINSIGHT_TAB, [id])
+}
+
+// ── Config ───────────────────────────────────────────────────────────────────
+//
+// Everything the app treats as taxonomy — thought roots, buckets, the day's
+// time bands — lives in the Config tab, not in this file. The DEFAULT_* values
+// above seed the tab the first time the store is opened; from then on the sheet
+// is authoritative and editing it there is how the vocabulary changes.
+//
+// A synchronous accessor backs rendering (dartConfig()), refreshed by an async
+// load (loadDartConfig()) the views call on mount.
+
+export interface DartConfig {
+  thoughtRoots:   string[]
+  thoughtBuckets: string[]
+  dayBands:       DayBand[]
+}
+
+const CONFIG_SEED: { key: string; value: string; notes: string }[] = [
+  { key: 'thought_roots', value: DEFAULT_THOUGHT_ROOTS.join('\n'),
+    notes: 'Top-level groups a thought can be filed under. One per line.' },
+  { key: 'thought_buckets', value: DEFAULT_THOUGHT_BUCKETS.join('\n'),
+    notes: 'Bucket options on a thought. One per line.' },
+  { key: 'day_bands', value: JSON.stringify(DEFAULT_DAY_BANDS),
+    notes: 'Journal time bands. JSON: [{key,label,from,to,hint}], to is exclusive.' },
+]
+
+let _config: DartConfig = {
+  thoughtRoots:   [...DEFAULT_THOUGHT_ROOTS],
+  thoughtBuckets: [...DEFAULT_THOUGHT_BUCKETS],
+  dayBands:       [...DEFAULT_DAY_BANDS],
+}
+let _configPromise: Promise<DartConfig> | null = null
+
+/** Current config. Defaults until loadDartConfig() has run once. */
+export function dartConfig(): DartConfig { return _config }
+
+export async function loadDartConfig(force = false): Promise<DartConfig> {
+  if (force) _configPromise = null
+  if (!_configPromise) {
+    _configPromise = readConfig().catch(e => { _configPromise = null; throw e })
+  }
+  return _configPromise
+}
+
+async function readConfig(): Promise<DartConfig> {
+  const rows = await readRows(CONFIG_TAB, 'A2:C')
+  const have = new Map(rows.filter(r => r[0]).map(r => [r[0], r[1] ?? '']))
+
+  // Seed any key the sheet does not carry yet, so a store written before a
+  // setting existed picks it up without a migration.
+  const missing = CONFIG_SEED.filter(k => !have.has(k.key))
+  if (missing.length > 0) {
+    await appendRows(CONFIG_TAB, 'C', missing.map(k => [k.key, k.value, k.notes]))
+    for (const k of missing) have.set(k.key, k.value)
+  }
+
+  const list = (key: string, fallback: string[]) => {
+    const v = (have.get(key) ?? '').split('\n').map(x => x.trim()).filter(Boolean)
+    return v.length > 0 ? v : fallback
+  }
+  let bands = [...DEFAULT_DAY_BANDS]
+  try {
+    const parsed = JSON.parse(have.get('day_bands') || '[]') as DayBand[]
+    // A malformed edit must not leave the journal with no bands at all.
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(b => b?.key && typeof b.from === 'number')) {
+      bands = parsed
+    }
+  } catch { /* keep the defaults */ }
+
+  _config = {
+    thoughtRoots:   list('thought_roots',   DEFAULT_THOUGHT_ROOTS),
+    thoughtBuckets: list('thought_buckets', DEFAULT_THOUGHT_BUCKETS),
+    dayBands:       bands,
+  }
+  return _config
 }

@@ -12,7 +12,7 @@
 
 import { LLM } from './llm'
 import { parseLooseJson } from './looseJson'
-import { MAX_PATH_DEPTH, THOUGHT_BUCKETS, THOUGHT_ROOTS, normalisePath } from '../adapters/dartRepo'
+import { MAX_PATH_DEPTH, dartConfig, normalisePath } from '../adapters/dartRepo'
 import type { ThoughtBucket } from '../adapters/dartRepo'
 
 export interface RefinedThought {
@@ -44,20 +44,18 @@ Return ONLY a JSON object, no prose, no code fence:
 - Do NOT reformat into lists. It stays flowing prose, exactly as delivered.
 - If the text is already clean, return it unchanged.
 
-**bucket** — exactly one of: ${THOUGHT_BUCKETS.join(', ')}. Use "Other" only when
+**bucket** — exactly one of: ${dartConfig().thoughtBuckets.join(', ')}. Use "Other" only when
 nothing fits.
 
 **path** — where this belongs in a topic tree, "::"-delimited, Title Case,
 AT MOST ${MAX_PATH_DEPTH} levels (fewer is better; 2-3 is usual).
 
 The FIRST level must be one of these roots unless the thought genuinely fits none:
-  Business - companies, markets, strategy, entrepreneurship, how work gets
-             judged, results vs hype, positioning a product or a business.
-  Career   - this person's own role, employment, standing, personal growth.
-  Learning - how to study, read, remember, practise, understand.
-A thought ABOUT business belongs under Business even when the writer draws a
-lesson for their own work from it. Use Career only when the subject is their
-own job or standing. (Roots in code: ${THOUGHT_ROOTS.join(', ')}.)
+${dartConfig().thoughtRoots.map(r => `  ${r}`).join('\n')}
+Guidance where roots overlap: a thought ABOUT business belongs under Business
+even when the writer draws a lesson for their own work from it; use Career only
+when the subject is their own job or standing; Learning is how to study, read,
+remember, practise or understand.
 
 ${existingPaths.length > 0
   ? `Existing paths - reuse one when the thought belongs with it, or extend one
@@ -84,9 +82,10 @@ export async function refineThought(
   } | null
   if (!p) return null
 
-  const bucket = (THOUGHT_BUCKETS as readonly string[]).includes(p.bucket ?? '')
+  const buckets = dartConfig().thoughtBuckets
+  const bucket: ThoughtBucket = buckets.includes(p.bucket ?? '')
     ? p.bucket as ThoughtBucket
-    : 'Other'
+    : (buckets[buckets.length - 1] ?? 'Other')
   return {
     // A refusal or an empty field must never blank the user's capture.
     cleaned:    (p.cleaned ?? '').trim() || raw,
