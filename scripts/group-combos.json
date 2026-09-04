@@ -67,6 +67,10 @@
           "title": "Continuous Subarray Sum"
         },
         {
+          "id": "532",
+          "title": "K-diff Pairs in an Array"
+        },
+        {
           "id": "560",
           "title": "Subarray Sum Equals K"
         },
@@ -113,6 +117,10 @@
         {
           "id": "2761",
           "title": "Prime Pairs With Target Sum"
+        },
+        {
+          "id": "3371",
+          "title": "Identify the Largest Outlier in an Array"
         },
         {
           "id": "10027",
@@ -173,6 +181,10 @@
           "title": "Two Sum II - Input Array Is Sorted"
         },
         {
+          "id": "532",
+          "title": "K-diff Pairs in an Array"
+        },
+        {
           "id": "560",
           "title": "Subarray Sum Equals K"
         },
@@ -183,6 +195,10 @@
         {
           "id": "974",
           "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "3371",
+          "title": "Identify the Largest Outlier in an Array"
         }
       ],
       "sorting": [
@@ -309,6 +325,16 @@
           "title": "Maximum Sum of Distinct Subarrays With Length K"
         }
       ],
+      "divide-conquer": [
+        {
+          "id": "327",
+          "title": "Count of Range Sum"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        }
+      ],
       "prefix-sum": [
         {
           "id": "363",
@@ -341,6 +367,470 @@
         {
           "id": "2761",
           "title": "Prime Pairs With Target Sum"
+        },
+        {
+          "id": "3371",
+          "title": "Identify the Largest Outlier in an Array"
+        }
+      ]
+    }
+  },
+  "subarray": {
+    "ds": {
+      "string": [
+        {
+          "id": "3",
+          "title": "Longest Substring Without Repeating Characters"
+        },
+        {
+          "id": "159",
+          "title": "Longest Substring with At Most Two Distinct Characters"
+        },
+        {
+          "id": "340",
+          "title": "Longest Substring with At Most K Distinct Characters"
+        },
+        {
+          "id": "395",
+          "title": "Longest Substring with At Least K Repeating Characters"
+        },
+        {
+          "id": "1100",
+          "title": "Find K-Length Substrings With No Repeated Characters"
+        },
+        {
+          "id": "2062",
+          "title": "Count Vowel Substrings of a String"
+        }
+      ],
+      "array": [
+        {
+          "id": "11",
+          "title": "Container With Most Water"
+        },
+        {
+          "id": "53",
+          "title": "Maximum Subarray"
+        },
+        {
+          "id": "152",
+          "title": "Maximum Product Subarray"
+        },
+        {
+          "id": "209",
+          "title": "Minimum Size Subarray Sum"
+        },
+        {
+          "id": "220",
+          "title": "Contains Duplicate III"
+        },
+        {
+          "id": "239",
+          "title": "Sliding Window Maximum"
+        },
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "487",
+          "title": "Max Consecutive Ones II"
+        },
+        {
+          "id": "523",
+          "title": "Continuous Subarray Sum"
+        },
+        {
+          "id": "525",
+          "title": "Contiguous Array"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "581",
+          "title": "Shortest Unsorted Continuous Subarray"
+        },
+        {
+          "id": "643",
+          "title": "Maximum Average Subarray I"
+        },
+        {
+          "id": "644",
+          "title": "Maximum Average Subarray II"
+        },
+        {
+          "id": "862",
+          "title": "Shortest Subarray with Sum at Least K"
+        },
+        {
+          "id": "904",
+          "title": "Fruit Into Baskets"
+        },
+        {
+          "id": "907",
+          "title": "Sum of Subarray Minimums"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        },
+        {
+          "id": "930",
+          "title": "Binary Subarrays With Sum"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "992",
+          "title": "Subarrays with K Different Integers"
+        },
+        {
+          "id": "1004",
+          "title": "Max Consecutive Ones III"
+        },
+        {
+          "id": "1011",
+          "title": "Capacity To Ship Packages Within D Days"
+        },
+        {
+          "id": "1231",
+          "title": "Divide Chocolate"
+        },
+        {
+          "id": "1248",
+          "title": "Count Number of Nice Subarrays"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        },
+        {
+          "id": "1423",
+          "title": "Maximum Points You Can Obtain from Cards"
+        },
+        {
+          "id": "1438",
+          "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit"
+        },
+        {
+          "id": "1493",
+          "title": "Longest Subarray of 1's After Deleting One Element"
+        },
+        {
+          "id": "1567",
+          "title": "Maximum Length of Subarray With Positive Product"
+        },
+        {
+          "id": "1856",
+          "title": "Maximum Subarray Min-Product"
+        },
+        {
+          "id": "2031",
+          "title": "Count Subarrays With More Ones Than Zeros"
+        },
+        {
+          "id": "2104",
+          "title": "Sum of Subarray Ranges"
+        },
+        {
+          "id": "2334",
+          "title": "Subarray With Elements Greater Than Varying Threshold"
+        },
+        {
+          "id": "2398",
+          "title": "Maximum Number of Robots Within Budget"
+        },
+        {
+          "id": "2461",
+          "title": "Maximum Sum of Distinct Subarrays With Length K"
+        },
+        {
+          "id": "3719",
+          "title": "Longest Balanced Subarray I"
+        },
+        {
+          "id": "3721",
+          "title": "Longest Balanced Subarray II"
+        },
+        {
+          "id": "3737",
+          "title": "Count Subarrays With Majority Element I"
+        },
+        {
+          "id": "3739",
+          "title": "Count Subarrays With Majority Element II"
+        }
+      ]
+    },
+    "topic": {
+      "hash": [
+        {
+          "id": "3",
+          "title": "Longest Substring Without Repeating Characters"
+        },
+        {
+          "id": "159",
+          "title": "Longest Substring with At Most Two Distinct Characters"
+        },
+        {
+          "id": "340",
+          "title": "Longest Substring with At Most K Distinct Characters"
+        },
+        {
+          "id": "395",
+          "title": "Longest Substring with At Least K Repeating Characters"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "904",
+          "title": "Fruit Into Baskets"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "992",
+          "title": "Subarrays with K Different Integers"
+        },
+        {
+          "id": "1100",
+          "title": "Find K-Length Substrings With No Repeated Characters"
+        },
+        {
+          "id": "2062",
+          "title": "Count Vowel Substrings of a String"
+        }
+      ],
+      "sliding-window": [
+        {
+          "id": "3",
+          "title": "Longest Substring Without Repeating Characters"
+        },
+        {
+          "id": "159",
+          "title": "Longest Substring with At Most Two Distinct Characters"
+        },
+        {
+          "id": "209",
+          "title": "Minimum Size Subarray Sum"
+        },
+        {
+          "id": "220",
+          "title": "Contains Duplicate III"
+        },
+        {
+          "id": "340",
+          "title": "Longest Substring with At Most K Distinct Characters"
+        },
+        {
+          "id": "395",
+          "title": "Longest Substring with At Least K Repeating Characters"
+        },
+        {
+          "id": "487",
+          "title": "Max Consecutive Ones II"
+        },
+        {
+          "id": "643",
+          "title": "Maximum Average Subarray I"
+        },
+        {
+          "id": "904",
+          "title": "Fruit Into Baskets"
+        },
+        {
+          "id": "930",
+          "title": "Binary Subarrays With Sum"
+        },
+        {
+          "id": "992",
+          "title": "Subarrays with K Different Integers"
+        },
+        {
+          "id": "1004",
+          "title": "Max Consecutive Ones III"
+        },
+        {
+          "id": "1100",
+          "title": "Find K-Length Substrings With No Repeated Characters"
+        },
+        {
+          "id": "1248",
+          "title": "Count Number of Nice Subarrays"
+        },
+        {
+          "id": "1423",
+          "title": "Maximum Points You Can Obtain from Cards"
+        },
+        {
+          "id": "1493",
+          "title": "Longest Subarray of 1's After Deleting One Element"
+        },
+        {
+          "id": "2062",
+          "title": "Count Vowel Substrings of a String"
+        },
+        {
+          "id": "2461",
+          "title": "Maximum Sum of Distinct Subarrays With Length K"
+        }
+      ],
+      "two-pointers": [
+        {
+          "id": "11",
+          "title": "Container With Most Water"
+        }
+      ],
+      "greedy": [
+        {
+          "id": "53",
+          "title": "Maximum Subarray"
+        },
+        {
+          "id": "152",
+          "title": "Maximum Product Subarray"
+        }
+      ],
+      "divide-conquer": [
+        {
+          "id": "53",
+          "title": "Maximum Subarray"
+        },
+        {
+          "id": "395",
+          "title": "Longest Substring with At Least K Repeating Characters"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        },
+        {
+          "id": "2031",
+          "title": "Count Subarrays With More Ones Than Zeros"
+        },
+        {
+          "id": "3719",
+          "title": "Longest Balanced Subarray I"
+        },
+        {
+          "id": "3721",
+          "title": "Longest Balanced Subarray II"
+        },
+        {
+          "id": "3737",
+          "title": "Count Subarrays With Majority Element I"
+        },
+        {
+          "id": "3739",
+          "title": "Count Subarrays With Majority Element II"
+        }
+      ],
+      "deque-topic": [
+        {
+          "id": "239",
+          "title": "Sliding Window Maximum"
+        },
+        {
+          "id": "862",
+          "title": "Shortest Subarray with Sum at Least K"
+        },
+        {
+          "id": "918",
+          "title": "Maximum Sum Circular Subarray"
+        },
+        {
+          "id": "1438",
+          "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit"
+        },
+        {
+          "id": "2398",
+          "title": "Maximum Number of Robots Within Budget"
+        }
+      ],
+      "binary-search": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "644",
+          "title": "Maximum Average Subarray II"
+        },
+        {
+          "id": "1011",
+          "title": "Capacity To Ship Packages Within D Days"
+        },
+        {
+          "id": "1231",
+          "title": "Divide Chocolate"
+        }
+      ],
+      "dp": [
+        {
+          "id": "410",
+          "title": "Split Array Largest Sum"
+        },
+        {
+          "id": "1335",
+          "title": "Minimum Difficulty of a Job Schedule"
+        }
+      ],
+      "prefix-sum": [
+        {
+          "id": "523",
+          "title": "Continuous Subarray Sum"
+        },
+        {
+          "id": "525",
+          "title": "Contiguous Array"
+        },
+        {
+          "id": "560",
+          "title": "Subarray Sum Equals K"
+        },
+        {
+          "id": "974",
+          "title": "Subarray Sums Divisible by K"
+        },
+        {
+          "id": "1248",
+          "title": "Count Number of Nice Subarrays"
+        }
+      ],
+      "stack-topic": [
+        {
+          "id": "581",
+          "title": "Shortest Unsorted Continuous Subarray"
+        },
+        {
+          "id": "907",
+          "title": "Sum of Subarray Minimums"
+        },
+        {
+          "id": "1856",
+          "title": "Maximum Subarray Min-Product"
+        },
+        {
+          "id": "2104",
+          "title": "Sum of Subarray Ranges"
+        },
+        {
+          "id": "2334",
+          "title": "Subarray With Elements Greater Than Varying Threshold"
+        }
+      ],
+      "math": [
+        {
+          "id": "1330",
+          "title": "Reverse Subarray To Maximize Array Value"
         }
       ]
     }
@@ -1111,316 +1601,84 @@
       ]
     }
   },
-  "subarray": {
+  "count-ways": {
     "ds": {
       "array": [
         {
-          "id": "53",
-          "title": "Maximum Subarray"
+          "id": "62",
+          "title": "Unique Paths"
         },
         {
-          "id": "152",
-          "title": "Maximum Product Subarray"
+          "id": "377",
+          "title": "Combination Sum IV"
         },
         {
-          "id": "209",
-          "title": "Minimum Size Subarray Sum"
+          "id": "518",
+          "title": "Coin Change II"
         },
         {
-          "id": "220",
-          "title": "Contains Duplicate III"
+          "id": "790",
+          "title": "Domino and Tromino Tiling"
         },
         {
-          "id": "239",
-          "title": "Sliding Window Maximum"
-        },
+          "id": "1220",
+          "title": "Count Vowels Permutation"
+        }
+      ],
+      "matrices": [
         {
-          "id": "410",
-          "title": "Split Array Largest Sum"
-        },
+          "id": "63",
+          "title": "Unique Paths II"
+        }
+      ],
+      "string": [
         {
-          "id": "487",
-          "title": "Max Consecutive Ones II"
-        },
-        {
-          "id": "523",
-          "title": "Continuous Subarray Sum"
-        },
-        {
-          "id": "525",
-          "title": "Contiguous Array"
-        },
-        {
-          "id": "560",
-          "title": "Subarray Sum Equals K"
-        },
-        {
-          "id": "581",
-          "title": "Shortest Unsorted Continuous Subarray"
-        },
-        {
-          "id": "643",
-          "title": "Maximum Average Subarray I"
-        },
-        {
-          "id": "644",
-          "title": "Maximum Average Subarray II"
-        },
-        {
-          "id": "862",
-          "title": "Shortest Subarray with Sum at Least K"
-        },
-        {
-          "id": "904",
-          "title": "Fruit Into Baskets"
-        },
-        {
-          "id": "907",
-          "title": "Sum of Subarray Minimums"
-        },
-        {
-          "id": "918",
-          "title": "Maximum Sum Circular Subarray"
-        },
-        {
-          "id": "930",
-          "title": "Binary Subarrays With Sum"
-        },
-        {
-          "id": "974",
-          "title": "Subarray Sums Divisible by K"
-        },
-        {
-          "id": "992",
-          "title": "Subarrays with K Different Integers"
-        },
-        {
-          "id": "1004",
-          "title": "Max Consecutive Ones III"
-        },
-        {
-          "id": "1011",
-          "title": "Capacity To Ship Packages Within D Days"
-        },
-        {
-          "id": "1231",
-          "title": "Divide Chocolate"
-        },
-        {
-          "id": "1248",
-          "title": "Count Number of Nice Subarrays"
-        },
-        {
-          "id": "1335",
-          "title": "Minimum Difficulty of a Job Schedule"
-        },
-        {
-          "id": "1423",
-          "title": "Maximum Points You Can Obtain from Cards"
-        },
-        {
-          "id": "1438",
-          "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit"
-        },
-        {
-          "id": "1493",
-          "title": "Longest Subarray of 1's After Deleting One Element"
-        },
-        {
-          "id": "1567",
-          "title": "Maximum Length of Subarray With Positive Product"
-        },
-        {
-          "id": "1856",
-          "title": "Maximum Subarray Min-Product"
-        },
-        {
-          "id": "2104",
-          "title": "Sum of Subarray Ranges"
-        },
-        {
-          "id": "2334",
-          "title": "Subarray With Elements Greater Than Varying Threshold"
-        },
-        {
-          "id": "2398",
-          "title": "Maximum Number of Robots Within Budget"
-        },
-        {
-          "id": "2461",
-          "title": "Maximum Sum of Distinct Subarrays With Length K"
+          "id": "115",
+          "title": "Distinct Subsequences"
         }
       ]
     },
     "topic": {
-      "greedy": [
-        {
-          "id": "53",
-          "title": "Maximum Subarray"
-        },
-        {
-          "id": "152",
-          "title": "Maximum Product Subarray"
-        }
-      ],
-      "sliding-window": [
-        {
-          "id": "209",
-          "title": "Minimum Size Subarray Sum"
-        },
-        {
-          "id": "220",
-          "title": "Contains Duplicate III"
-        },
-        {
-          "id": "487",
-          "title": "Max Consecutive Ones II"
-        },
-        {
-          "id": "643",
-          "title": "Maximum Average Subarray I"
-        },
-        {
-          "id": "904",
-          "title": "Fruit Into Baskets"
-        },
-        {
-          "id": "930",
-          "title": "Binary Subarrays With Sum"
-        },
-        {
-          "id": "992",
-          "title": "Subarrays with K Different Integers"
-        },
-        {
-          "id": "1004",
-          "title": "Max Consecutive Ones III"
-        },
-        {
-          "id": "1248",
-          "title": "Count Number of Nice Subarrays"
-        },
-        {
-          "id": "1423",
-          "title": "Maximum Points You Can Obtain from Cards"
-        },
-        {
-          "id": "1493",
-          "title": "Longest Subarray of 1's After Deleting One Element"
-        },
-        {
-          "id": "2461",
-          "title": "Maximum Sum of Distinct Subarrays With Length K"
-        }
-      ],
-      "deque-topic": [
-        {
-          "id": "239",
-          "title": "Sliding Window Maximum"
-        },
-        {
-          "id": "862",
-          "title": "Shortest Subarray with Sum at Least K"
-        },
-        {
-          "id": "918",
-          "title": "Maximum Sum Circular Subarray"
-        },
-        {
-          "id": "1438",
-          "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit"
-        },
-        {
-          "id": "2398",
-          "title": "Maximum Number of Robots Within Budget"
-        }
-      ],
-      "binary-search": [
-        {
-          "id": "410",
-          "title": "Split Array Largest Sum"
-        },
-        {
-          "id": "644",
-          "title": "Maximum Average Subarray II"
-        },
-        {
-          "id": "1011",
-          "title": "Capacity To Ship Packages Within D Days"
-        },
-        {
-          "id": "1231",
-          "title": "Divide Chocolate"
-        }
-      ],
       "dp": [
         {
-          "id": "410",
-          "title": "Split Array Largest Sum"
+          "id": "62",
+          "title": "Unique Paths"
         },
         {
-          "id": "1335",
-          "title": "Minimum Difficulty of a Job Schedule"
-        }
-      ],
-      "prefix-sum": [
-        {
-          "id": "523",
-          "title": "Continuous Subarray Sum"
+          "id": "63",
+          "title": "Unique Paths II"
         },
         {
-          "id": "525",
-          "title": "Contiguous Array"
+          "id": "70",
+          "title": "Climbing Stairs"
         },
         {
-          "id": "560",
-          "title": "Subarray Sum Equals K"
+          "id": "91",
+          "title": "Decode Ways"
         },
         {
-          "id": "974",
-          "title": "Subarray Sums Divisible by K"
+          "id": "115",
+          "title": "Distinct Subsequences"
         },
         {
-          "id": "1248",
-          "title": "Count Number of Nice Subarrays"
-        }
-      ],
-      "hash": [
-        {
-          "id": "560",
-          "title": "Subarray Sum Equals K"
+          "id": "377",
+          "title": "Combination Sum IV"
         },
         {
-          "id": "974",
-          "title": "Subarray Sums Divisible by K"
-        }
-      ],
-      "stack-topic": [
-        {
-          "id": "581",
-          "title": "Shortest Unsorted Continuous Subarray"
+          "id": "518",
+          "title": "Coin Change II"
         },
         {
-          "id": "907",
-          "title": "Sum of Subarray Minimums"
+          "id": "790",
+          "title": "Domino and Tromino Tiling"
         },
         {
-          "id": "1856",
-          "title": "Maximum Subarray Min-Product"
+          "id": "1137",
+          "title": "N-th Tribonacci Number"
         },
         {
-          "id": "2104",
-          "title": "Sum of Subarray Ranges"
-        },
-        {
-          "id": "2334",
-          "title": "Subarray With Elements Greater Than Varying Threshold"
-        }
-      ],
-      "math": [
-        {
-          "id": "1330",
-          "title": "Reverse Subarray To Maximize Array Value"
+          "id": "1220",
+          "title": "Count Vowels Permutation"
         }
       ]
     }
@@ -1437,8 +1695,16 @@
           "title": "Distinct Subsequences"
         },
         {
+          "id": "316",
+          "title": "Remove Duplicate Letters"
+        },
+        {
           "id": "392",
           "title": "Is Subsequence"
+        },
+        {
+          "id": "402",
+          "title": "Remove K Digits"
         },
         {
           "id": "583",
@@ -1557,6 +1823,16 @@
         {
           "id": "1671",
           "title": "Minimum Number of Removals to Make Mountain Array"
+        }
+      ],
+      "stack-topic": [
+        {
+          "id": "316",
+          "title": "Remove Duplicate Letters"
+        },
+        {
+          "id": "402",
+          "title": "Remove K Digits"
         }
       ],
       "greedy": [
@@ -2345,8 +2621,16 @@
           "title": "Task Scheduler"
         },
         {
+          "id": "630",
+          "title": "Course Schedule III"
+        },
+        {
           "id": "1029",
           "title": "Two City Scheduling"
+        },
+        {
+          "id": "1094",
+          "title": "Car Pooling"
         },
         {
           "id": "1229",
@@ -2395,6 +2679,10 @@
           "title": "Meeting Rooms II"
         },
         {
+          "id": "630",
+          "title": "Course Schedule III"
+        },
+        {
           "id": "1029",
           "title": "Two City Scheduling"
         },
@@ -2407,6 +2695,14 @@
         {
           "id": "252",
           "title": "Meeting Rooms"
+        },
+        {
+          "id": "253",
+          "title": "Meeting Rooms II"
+        },
+        {
+          "id": "1094",
+          "title": "Car Pooling"
         }
       ],
       "heap": [
@@ -2417,6 +2713,12 @@
         {
           "id": "2402",
           "title": "Meeting Rooms III"
+        }
+      ],
+      "prefix-sum": [
+        {
+          "id": "1094",
+          "title": "Car Pooling"
         }
       ],
       "two-pointers": [
@@ -2693,6 +2995,78 @@
         {
           "id": "1671",
           "title": "Minimum Number of Removals to Make Mountain Array"
+        }
+      ]
+    }
+  },
+  "rearrange": {
+    "ds": {
+      "array": [
+        {
+          "id": "659",
+          "title": "Split Array into Consecutive Subsequences"
+        },
+        {
+          "id": "846",
+          "title": "Hand of Straights"
+        },
+        {
+          "id": "973",
+          "title": "K Closest Points to Origin"
+        },
+        {
+          "id": "1282",
+          "title": "Group the People Given the Group Size They Belong To"
+        },
+        {
+          "id": "1296",
+          "title": "Divide Array in Sets of K Consecutive Numbers"
+        },
+        {
+          "id": "2610",
+          "title": "Convert an Array Into a 2D Array With Conditions"
+        }
+      ]
+    },
+    "topic": {
+      "hash": [
+        {
+          "id": "659",
+          "title": "Split Array into Consecutive Subsequences"
+        },
+        {
+          "id": "846",
+          "title": "Hand of Straights"
+        },
+        {
+          "id": "1282",
+          "title": "Group the People Given the Group Size They Belong To"
+        },
+        {
+          "id": "1296",
+          "title": "Divide Array in Sets of K Consecutive Numbers"
+        },
+        {
+          "id": "2610",
+          "title": "Convert an Array Into a 2D Array With Conditions"
+        }
+      ],
+      "heap": [
+        {
+          "id": "973",
+          "title": "K Closest Points to Origin"
+        }
+      ],
+      "sorting": [
+        {
+          "id": "973",
+          "title": "K Closest Points to Origin"
+        }
+      ],
+      "divide-conquer": [
+        {
+          "id": "973",
+          "title": "K Closest Points to Origin"
         }
       ]
     }

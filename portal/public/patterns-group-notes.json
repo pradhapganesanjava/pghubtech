@@ -251,6 +251,249 @@
     }
   },
   "groups": {
+    "count-ways": {
+      "topic": {
+        "dp": {
+          "tldr": "Every problem here asks **how many**, and in every one the recursion's state *summarises* — so the DFS that would enumerate becomes a memo that counts. One skeleton: `ways(state) = Σ ways(next)` with `ways(done) = 1`.",
+          "points": [
+            "**State = exactly what the next choice depends on**, nothing more: `(i)` for a linear scan, `(r,c)` on a grid, `(i,j)` for two strings, `(i, last symbol)` for an adjacency rule.",
+            "**Transition is a SUM, never a max.** Counting adds every branch; optimising picks one. Same skeleton as the stock / paint-house DPs — different fold.",
+            "**Base case is 1, not 0** — a completed empty suffix is one valid way. `ways(done)=0` is the most common bug in this group.",
+            "**Memoisable because the state is small.** When the state would have to be *the set of things used so far*, no memo exists and the problem leaves this group (#980 counts, but backtracks).",
+            "Space follows the state width: keep the last row, or the last k scalars, not the whole table."
+          ],
+          "visual": "ways(i, s) = Σ ways(i-1, p)     over every p that may precede s\n             base: ways(0, ·) = 1\n\n  i=0   i=1   i=2\n   1  →  Σ  →  Σ       each column reads only the one before it\n   1  →  Σ  →  Σ       ⇒ one rolling row is enough",
+          "problems": [
+            {
+              "id": 62,
+              "title": "Unique Paths",
+              "tag": "grid · state (r,c)",
+              "note": "The plain case — two incoming edges, no constraint on either.",
+              "points": [
+                "`ways(r,c) = ways(r-1,c) + ways(r,c-1)`; seed `ways(0,0) = 1`.",
+                "**Every edge always legal** — this is the group with the rules switched off.",
+                "Closed form `C(m+n-2, m-1)` exists, which no other member here has.",
+                "**One rolling row**: `row[c] += row[c-1]`."
+              ]
+            },
+            {
+              "id": 63,
+              "title": "Unique Paths II",
+              "tag": "grid + blocked cells",
+              "note": "#62 with obstacles — the constraint sits on the **state**, not the transition.",
+              "points": [
+                "Same recurrence; a blocked cell is forced to **0** and that zero propagates.",
+                "**Trap**: the start itself can be blocked ⇒ answer 0, not 1.",
+                "Countable in place — the grid doubles as the table."
+              ]
+            },
+            {
+              "id": 70,
+              "title": "Climbing Stairs",
+              "tag": "1-D · 2 predecessors",
+              "note": "The degenerate member: state is nothing but the index.",
+              "points": [
+                "`ways(i) = ways(i-1) + ways(i-2)` — Fibonacci wearing a costume.",
+                "**Two scalars** replace the array entirely.",
+                "Everything else here is this plus one extra dimension or one extra rule."
+              ]
+            },
+            {
+              "id": 91,
+              "title": "Decode Ways",
+              "tag": "1-D · conditional edges",
+              "note": "Same 2-predecessor shape as #70, but each edge must be **earned** — the constraint is on the EDGE, not the state.",
+              "points": [
+                "1-digit edge needs `s[i] != '0'`; 2-digit edge needs `10 <= s[i-1..i] <= 26`.",
+                "**Both edges can vanish** ⇒ the count legitimately hits 0 and stays there.",
+                "`'0'` is the whole difficulty: valid only as the tail of `10` or `20`.",
+                "Contrast #70, where both edges are unconditional."
+              ],
+              "visual": "s = 2 2 6\n     ↑\n  '2'  → 1 way      '22' → +1     '226' → 3: 2|2|6, 22|6, 2|26\n  edges exist only where the digit(s) are in range"
+            },
+            {
+              "id": 115,
+              "title": "Distinct Subsequences",
+              "tag": "two strings · state (i,j)",
+              "note": "State widens to a **pair** of indices; it is LCS with `max` swapped for `+`.",
+              "points": [
+                "Match ⇒ **both** branches summed: take `dp[i-1][j-1]` + skip `dp[i-1][j]`.",
+                "Mismatch ⇒ skip only.",
+                "**Base `dp[i][0] = 1`** — the empty target is built exactly one way.",
+                "The clearest proof in this group that counting and optimising share one table."
+              ],
+              "visual": "        ''  b   a   b\n   ''    1   0   0   0\n   b     1   1   0   0        match  ⇒ diag + up\n   a     1   1   1   0        differ ⇒ up\n   b     1   2   1   1"
+            },
+            {
+              "id": 377,
+              "title": "Combination Sum IV",
+              "tag": "ordered · target loop OUTER",
+              "note": "Counts **sequences** — (1,2) and (2,1) are two different answers.",
+              "points": [
+                "`for t in 1..target: for n in nums: dp[t] += dp[t-n]`.",
+                "**Misnamed**: it counts permutations, not combinations.",
+                "Pairs with #518 — identical loops, opposite nesting."
+              ],
+              "visual": "target outer, nums inner\n  t: 1 → 2 → 3 …        every order of the same multiset counted"
+            },
+            {
+              "id": 518,
+              "title": "Coin Change II",
+              "tag": "unordered · coin loop OUTER",
+              "note": "The exact **mirror** of #377 — same two loops, nesting swapped.",
+              "points": [
+                "`for c in coins: for t in c..target: dp[t] += dp[t-c]`.",
+                "Fixing a coin **before** sweeping the target is what collapses permutations into combinations.",
+                "**Read #377 and #518 side by side** and ordered-vs-unordered stops being something to memorise."
+              ],
+              "visual": "coin outer, target inner\n  coin 1 fully absorbed → then coin 2 …   each multiset counted once"
+            },
+            {
+              "id": 790,
+              "title": "Domino and Tromino Tiling",
+              "tag": "state machine · jagged frontier",
+              "note": "The state is not the width filled but the **shape of the frontier**.",
+              "points": [
+                "Frontier is either **flush** or **overhanging by one square** — hence extra states.",
+                "The tromino is what creates the jag; drop it and this collapses to #70.",
+                "Shares the `state-machine-dp` micro with the stock problems — same skeleton, **sum instead of max**."
+              ],
+              "visual": "flush        overhang\n ██│          ██┐\n ██│          ██┘   two frontier shapes ⇒ two running counts"
+            },
+            {
+              "id": 1137,
+              "title": "N-th Tribonacci Number",
+              "tag": "1-D · 3 predecessors",
+              "note": "#70 with one more term — the only variance is the **arity of the sum**.",
+              "points": [
+                "`ways(i) = ways(i-1) + ways(i-2) + ways(i-3)`.",
+                "**Three rolling scalars** instead of two.",
+                "Useful as the control: nothing here is conditional, 2-D, or stateful."
+              ]
+            },
+            {
+              "id": 1220,
+              "title": "Count Vowels Permutation",
+              "tag": "adjacency rule · state (i, last)",
+              "note": "State is `(length, last vowel)`; the answer is the **number of walks of length n** in a 5-node graph.",
+              "points": [
+                "**Nothing is ever generated** — with `n ≤ 2·10⁴` the count dwarfs any enumeration, hence mod 1e9+7.",
+                "Invert the rules to *who may precede me* and five lookups become **five additions**.",
+                "`a←e,i,u · e←a,i · i←e,o · o←i · u←i,o`.",
+                "**O(n) time, O(1) space** — five counters rewritten per step.",
+                "Same shape as #935 Knight Dialer and #552 — only the graph changes."
+              ],
+              "visual": "rules as edges          who precedes me\n  a → e                   a ← e, i, u\n  e → a, i                e ← a, i\n  i → a,e,o,u             i ← e, o\n  o → i, u                o ← i\n  u → a                   u ← i, o"
+            }
+          ]
+        }
+      },
+      "ds": {
+        "array": {
+          "tldr": "The array **is** the table. Each state reads only the previous index (or row), so it collapses to a rolling row or a handful of scalars.",
+          "points": [
+            "`dp[i]` holds *ways to reach i* — a count, not a cost, so cells accumulate rather than minimise.",
+            "Index arithmetic carries the rule: `i-1`/`i-2` for step counts, `i-coin` for knapsack, last-symbol for an adjacency table.",
+            "The rolling reduction is mechanical once you know the deepest look-back — same move as the 2D→1D note in Point2Rem."
+          ],
+          "problems": [
+            {
+              "id": 62,
+              "title": "Unique Paths",
+              "tag": "one row",
+              "note": "A single row swept left→right.",
+              "points": [
+                "`row[c] += row[c-1]` **is** the entire loop body.",
+                "`up` is the pre-overwrite value, `left` the post — see the 2D→1D Point2Rem note."
+              ]
+            },
+            {
+              "id": 377,
+              "title": "Combination Sum IV",
+              "tag": "1-D over target",
+              "note": "The array is indexed by the **remaining target**.",
+              "points": [
+                "`dp[t] = Σ dp[t-num]`; `dp[0] = 1` is the seed that makes it count.",
+                "Length is `target+1`, unrelated to `len(nums)`."
+              ]
+            },
+            {
+              "id": 518,
+              "title": "Coin Change II",
+              "tag": "1-D over target · coin outer",
+              "note": "The same array as #377 — the **outer loop** is what changes what a cell means.",
+              "points": [
+                "Mid-sweep, `dp[t]` means *ways using the coins processed so far*.",
+                "Ascending target sweep is deliberate: a coin **is** reusable here."
+              ]
+            },
+            {
+              "id": 790,
+              "title": "Domino and Tromino Tiling",
+              "tag": "a few scalars",
+              "note": "The array never materialises.",
+              "points": [
+                "Two or three running values, one per **frontier shape**.",
+                "O(1) space falls out because the look-back is depth 1–2."
+              ]
+            },
+            {
+              "id": 1220,
+              "title": "Count Vowels Permutation",
+              "tag": "5 counters",
+              "note": "The 'array' is five vowel counters rewritten each step.",
+              "points": [
+                "**O(n) time, O(1) space** — the state is the alphabet, not the string.",
+                "Each step is five additions over the inverted rule set."
+              ]
+            }
+          ]
+        },
+        "matrices": {
+          "tldr": "The grid doubles as the DP table — you can count in place, since a cell is read only by its right and lower neighbours.",
+          "problems": [
+            {
+              "id": 63,
+              "title": "Unique Paths II",
+              "tag": "in-place on the grid",
+              "note": "The obstacles are already in the input; overwrite each cell with its way-count and a blocked cell simply stays 0.",
+              "points": [
+                "The obstacles are already in the input — **overwrite each cell** with its way-count.",
+                "A blocked cell simply stays `0` and poisons everything downstream of it.",
+                "**Row 0 / column 0 stop early** at the first obstacle — a classic off-by-one source."
+              ]
+            }
+          ],
+          "points": [
+            "The grid **is** the table: a cell is read only by its right and lower neighbours, so counting in place is safe.",
+            "Obstacles are data, not control flow — a blocked cell is just a `0` that propagates.",
+            "**O(1) extra space**, unlike the string DPs which need a separate table."
+          ]
+        },
+        "string": {
+          "tldr": "Counting across two strings: the state is a pair of indices and the transition asks *do these two characters match*, rather than *which side is longer*.",
+          "problems": [
+            {
+              "id": 115,
+              "title": "Distinct Subsequences",
+              "tag": "char × char",
+              "note": "`dp[i][j]` = ways to build `t[:j]` out of `s[:i]`. Match ⇒ take + skip, summed; mismatch ⇒ skip only.",
+              "points": [
+                "`dp[i][j]` = ways to build `t[:j]` out of `s[:i]`.",
+                "**Match ⇒ take + skip, summed**; mismatch ⇒ skip only.",
+                "`dp[i][0] = 1` for every `i` — the empty target has exactly one construction."
+              ]
+            }
+          ],
+          "points": [
+            "State is a **pair of indices**, one per string — the table is `|s| × |t|`.",
+            "The transition asks *do these two characters match*, never *which side is longer*.",
+            "**Sum where LCS takes a max** — same table, different fold.",
+            "Reduces to one rolling row, but the diagonal must be **stashed before overwrite**."
+          ]
+        }
+      }
+    },
     "subarray": {
       "micros": {
         "map": { "name": "Map-Backed Window (Frequency / Last-Index)", "when": "Longest / shortest contiguous window constrained by the CONTENT of the window — no repeats, at most K distinct, exactly K distinct — where the constraint can't be tracked by a scalar and needs a per-key map.", "mechanism": "Slide `right`; maintain `map[char] → count` (or → last index). While the map violates the constraint (size > K, or count[c] > 1), advance `left`, decrementing and deleting keys at zero. Record the best window each step. O(n) — each element enters and leaves once; map size bounds the space at O(k) (alphabet or distinct-limit)." },
