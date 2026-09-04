@@ -283,7 +283,10 @@
                  padding: 14px 22px 10px 26px; border-bottom: 1px solid var(--border);
                  background: var(--bg2); cursor: pointer; user-select: none;
                  transition: padding .15s ease; }
-  .detail-head-title { flex: 1; min-width: 0; }
+  /* The title itself stays selectable — you copy a micro id far more often
+     than you toggle the drawer width. user-select:none survives on the
+     surrounding chrome so a double-click THERE still toggles cleanly. */
+  .detail-head-title { flex: 1; min-width: 0; user-select: text; cursor: text; }
   .detail-head-title h2 { margin: 4px 0 0; font-size: 19px; transition: font-size .15s ease; }
   .detail-head-title .detail-eyebrow { margin: 0; }
   .detail-head-title .detail-id { margin-bottom: 0; }
@@ -367,6 +370,65 @@
   .group-micro-name { font-weight: 600; font-size: 13px; flex: 1; }
   .group-micro-hd .cnt { color: var(--text2); font-size: 11px; }
   .group-micro-when { font-size: 12.5px; line-height: 1.5; color: var(--text); margin: 7px 0 0; }
+
+  /* ── Micro deep-dive: boxed, colour-coded sections ──────────────────────
+     Each section owns a hue so the eye lands on the right box without
+     reading the heading: green = when, indigo = how, amber = watch out.
+     Tints are rgba over the theme background, so both themes work. */
+  .md-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .md-chip {
+    font: 700 11px/1 ui-monospace, Menlo, monospace; padding: 5px 9px;
+    border-radius: 999px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .md-chip--time  { background: rgba(99,102,241,.14);  color: #6366f1; border-color: rgba(99,102,241,.3); }
+  .md-chip--space { background: rgba(16,185,129,.14);  color: #10b981; border-color: rgba(16,185,129,.3); }
+  .md-chip--count { background: rgba(127,127,127,.14); color: var(--text2); border-color: var(--border); }
+
+  .md-sec {
+    margin: 0 0 10px; padding: 9px 12px; border-radius: 7px;
+    border: 1px solid var(--border); border-left-width: 3px;
+    background: var(--bg3);
+  }
+  .md-sec-hd {
+    font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    text-transform: uppercase; letter-spacing: .07em; color: var(--text2);
+    margin: 0 0 7px;
+  }
+  .md-sec--when  { border-left-color: #10b981; background: rgba(16,185,129,.07); }
+  .md-sec--how   { border-left-color: #6366f1; background: rgba(99,102,241,.07); }
+  .md-sec--watch { border-left-color: #f59e0b; background: rgba(245,158,11,.08); }
+  .md-sec--vs    { border-left-color: #a78bfa; }
+  .md-sec--viz, .md-sec--code { border-left-color: var(--border); }
+  .md-sec--probs { border-left-color: #6366f1; }
+
+  .md-line { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--text); }
+  .md-muted { color: var(--text2); }
+  .md-bullets { margin: 0; padding-left: 18px; }
+  .md-bullets li { font-size: 12.5px; line-height: 1.65; color: var(--text); margin: 4px 0; }
+  /* The "— consequence" half of a bullet, on its own line: same idea, lower
+     voice, so the bullet reads as claim-then-why instead of one long clause. */
+  .md-b-tail { display: block; margin-top: 2px; padding-left: 9px;
+               border-left: 2px solid var(--border); color: var(--text2); font-size: 12px; }
+  .md-sec code { background: rgba(127,127,127,.16); padding: 1px 5px; border-radius: 3px;
+                 font: 600 11.5px/1.4 ui-monospace, Menlo, monospace; }
+  .md-sec strong { color: var(--text); font-weight: 700; }
+
+  /* One row per problem: the id is a chip so the eye can jump down the
+     column, the note sits beside it rather than after a dash. */
+  .md-probs { list-style: none; margin: 0; padding: 0; }
+  .md-prob { display: flex; gap: 8px; align-items: baseline; padding: 4px 0;
+             border-bottom: 1px solid var(--border); }
+  .md-prob:last-child { border-bottom: none; }
+  .md-prob-id {
+    flex-shrink: 0; font: 700 11px/1 ui-monospace, Menlo, monospace;
+    color: #6366f1; background: rgba(99,102,241,.12); border-radius: 4px;
+    padding: 3px 6px; text-decoration: none;
+  }
+  .md-prob-id:hover { background: rgba(99,102,241,.26); }
+  .md-prob-body { min-width: 0; }
+  .md-prob-note { font-size: 12.5px; line-height: 1.55; color: var(--text2); }
+  .md-prob-bullets { margin: 3px 0 0; }
+  .md-prob-bullets li { font-size: 12px; color: var(--text2); margin: 2px 0; }
   .group-micro-mech { font-size: 12px; line-height: 1.45; color: var(--text2); margin: 5px 0 0; }
   .combo-block { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; }
   .combo-block.combo-ingroup { background: rgba(var(--primary-rgb), .07); border: 1px solid var(--border); }
@@ -462,7 +524,7 @@
     <div class="detail-backdrop" onclick="closeMicroDetail()"></div>
     <aside class="detail-drawer" role="dialog" aria-labelledby="detail-title">
       <div class="detail-resize" title="Drag to resize"></div>
-      <div class="detail-head" id="detail-head" ondblclick="toggleDrawerWidth()" title="Double-click to toggle width">
+      <div class="detail-head" id="detail-head" ondblclick="onDrawerHeadDblClick(event)" title="Double-click the header (beside the title) to toggle width">
         <div class="detail-head-title" id="detail-head-title"></div>
         <button class="detail-close" onclick="closeMicroDetail()" aria-label="Close">×</button>
       </div>
@@ -1736,40 +1798,130 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
     <h2 id="detail-title">${m.name}</h2>
     <div class="detail-id"><code>${m.id}</code></div>`
 
+  // Bulleted `deep` content when the catalog carries it. Otherwise fall back to
+  // the one-line summary — but most of those are ALREADY structured: 132 of the
+  // 183 micros separate their steps with ";". Honouring that turns a run-on
+  // sentence into bullets with no re-authoring.
+  const semiSplit = str => {
+    const out = []; let buf = '', depth = 0
+    for (const ch of String(str)) {
+      if (ch === '(') depth++
+      else if (ch === ')') depth--
+      if (ch === ';' && depth === 0) { out.push(buf); buf = ''; continue }
+      buf += ch
+    }
+    out.push(buf)
+    return out.map(x => x.trim().replace(/\.$/, '')).filter(Boolean)
+  }
+  // Complexities and array subscripts read as code even when nobody wrote the
+  // backticks — dp[r][c], a[read], O(m·n).
+  const autoCode = str => String(str)
+    .replace(/(^|[^`\w])(O\((?:[^()]|\([^()]*\))*\))/g, '$1`$2`')
+    .replace(/(^|[^`\w.])([a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]`]{1,14}\])+)/g, '$1`$2`')
+  // A bullet still carries up to three things: "vs X", a parenthetical, and a
+  // consequence after an em-dash. Anchor the "vs X" in bold and drop the
+  // consequence onto its own dimmer line so the eye gets one idea per line.
+  const dashSplit = str => {
+    let depth = 0
+    for (let i = 0; i < str.length - 2; i++) {
+      const ch = str[i]
+      if (ch === '(') depth++
+      else if (ch === ')') depth--
+      else if (depth === 0 && ch === ' ' && str[i + 1] === '—' && str[i + 2] === ' ')
+        return [str.slice(0, i), str.slice(i + 3)]
+    }
+    return [str]
+  }
+  const fmtBullet = raw => {
+    let t = autoCode(String(raw).trim())
+    t = t.replace(/^vs\s+(`?[\w][\w-]*`?)/i, '**vs $1**')
+    const parts = t.length > 90 ? dashSplit(t) : [t]
+    return parts.length > 1
+      ? `${mdLite(parts[0])}<span class="md-b-tail">${mdLite(parts[1])}</span>`
+      : mdLite(t)
+  }
+  const bullets = arr => `<ul class="md-bullets">${arr.map(b => `<li>${fmtBullet(b)}</li>`).join('')}</ul>`
+  // The longest entries (tree-reroot at 367 chars) carry no semicolons — they
+  // number their steps in prose. Split those on sentence boundaries, but only
+  // before a capital or a "(1)", and never after a known abbreviation.
+  const sentSplit = str => String(str)
+    .split(/(?<!\b(?:e\.g|i\.e|vs|cf|approx))\.\s+(?=[A-Z(])/)
+    .map(x => x.trim().replace(/\.$/, '')).filter(Boolean)
+  const body = (arr, fallback) => {
+    if (arr && arr.length) return bullets(arr)
+    // Semicolons first, then sentence boundaries WITHIN each part — a segment
+    // like "…up/left) — forces the reverse pass. Equivalent to multi-source
+    // BFS…" is two ideas and must not share a bullet.
+    let parts = semiSplit(fallback).flatMap(x => sentSplit(x))
+    return parts.length > 1 ? bullets(parts) : `<p class="md-line">${mdLite(autoCode(fallback))}</p>`
+  }
+  const sec  = (mod, icon, label, inner) => inner
+    ? `<section class="md-sec md-sec--${mod}"><div class="md-sec-hd">${icon} ${label}</div>${inner}</section>` : ''
+  const deep = m.deep || {}
+  // Cost is authored as "O(n) time, O(1) space." — split it so each half is a
+  // chip. Split only at paren depth 0: "O(log min(m, n))" carries a comma of
+  // its own and must stay one chip.
+  const splitCost = str => {
+    const out = []; let buf = '', depth = 0
+    for (const ch of str) {
+      if (ch === '(') depth++
+      else if (ch === ')') depth--
+      if (ch === ',' && depth === 0) { out.push(buf); buf = ''; continue }
+      buf += ch
+    }
+    out.push(buf)
+    return out.map(x => x.trim()).filter(Boolean)
+  }
+  const costChips = splitCost(String(m.cost || '').replace(/\.$/, ''))
+    .map((c, i) => `<span class="md-chip md-chip--${i ? 'space' : 'time'}">${escHtml(c)}</span>`).join('')
+
   const html = `
-    <div class="detail-section">
-      <h4>When</h4><p>${m.when}</p>
-    </div>
-    <div class="detail-section">
-      <h4>How</h4><p>${m.how}</p>
-    </div>
-    <div class="detail-section">
-      <h4>Cost</h4><p>${m.cost}</p>
-    </div>
-    <div class="detail-section">
-      <h4>Often confused with</h4><p>${m.contrast}</p>
+    <div class="md-chips">
+      ${costChips}
+      <span class="md-chip md-chip--count">${ids.length} problem${ids.length !== 1 ? 's' : ''}</span>
     </div>
 
-    ${visual ? `
-    <div class="detail-section">
-      <h4>Visual</h4>
-      <pre class="detail-visual">${escHtml(visual)}</pre>
-    </div>` : ''}
+    ${sec('when', '🎯', 'When to reach for it', body(deep.when, m.when))}
+    ${sec('how',  '⚙️', 'How it works',        body(deep.how,  m.how))}
+    ${visual ? sec('viz', '🖼', 'Shape', `<pre class="detail-visual">${escHtml(visual)}</pre>`) : ''}
+    ${pseudo
+      ? sec('code', '⌨️', 'Pseudo-code', `<pre class="detail-pseudo">${escHtml(pseudo)}</pre>`)
+      : sec('code', '⌨️', 'Pseudo-code', `<p class="md-line md-muted"><em>Not yet added — see <code>patterns-pseudo.json</code>.</em></p>`)}
+    ${(deep.gotchas && deep.gotchas.length)
+      ? sec('watch', '⚠️', 'Easy to get wrong', bullets(deep.gotchas)) : ''}
+    ${sec('vs', '🔀', 'Often confused with', body(deep.contrast, m.contrast))}
 
-    ${pseudo ? `
-    <div class="detail-section">
-      <h4>Pseudo-code</h4>
-      <pre class="detail-pseudo">${escHtml(pseudo)}</pre>
-    </div>` : `
-    <div class="detail-section detail-section--missing">
-      <h4>Pseudo-code</h4>
-      <p><em>Not yet added for this micro — see <code>patterns-pseudo.json</code> to contribute.</em></p>
-    </div>`}
-
-    <div class="detail-section">
-      <h4>${ids.length} problem${ids.length !== 1 ? 's' : ''} solvable with this pattern</h4>
-      <ul class="detail-problem-list">${allProblems || '<li><em>No anchors yet.</em></li>'}</ul>
-    </div>
+    ${sec('probs', '📌', `${ids.length} problem${ids.length !== 1 ? 's' : ''} solvable with this pattern`,
+      `<ul class="md-probs">${ids.map(id => {
+        const note = notes[id]
+        // A note may be authored multi-line: the first line is the lede, the
+        // rest become bullets. Keeps a long note scannable instead of one
+        // flowing paragraph, without needing a new data shape.
+        let lines = String(note || '').split('\n').map(x => x.trim()).filter(Boolean)
+        // Single-line legacy notes are prose but structured: "Name. step. step;
+        // step." Peel the leading title, then split the rest like a how-string,
+        // so 662 of the 717 existing notes become scannable without rewriting.
+        if (lines.length === 1) {
+          const head = lines[0].match(/^([^.]{1,44})\.\s+([\s\S]+)$/)
+          const title = head ? head[1] : null
+          const rest  = head ? head[2] : lines[0]
+          let parts = sentSplit(rest)
+          parts = parts.length > 1 ? parts.flatMap(x => semiSplit(x)) : semiSplit(rest)
+          lines = (parts.length > 1 && title) ? [`**${title}**`, ...parts]
+                : (parts.length > 1)         ? parts
+                : lines
+        }
+        const rest  = lines.slice(1)
+        return `<li class="md-prob">
+          <a class="md-prob-id" href="adshub?id=${id}" onclick="onAnchorClick(event, ${id})">#${id}</a>
+          ${lines.length
+            ? `<div class="md-prob-body">
+                 <span class="md-prob-note">${mdLite(lines[0])}</span>
+                 ${rest.length ? `<ul class="md-bullets md-prob-bullets">${rest.map(b => `<li>${mdLite(b)}</li>`).join('')}</ul>` : ''}
+               </div>`
+            : `<span class="md-prob-note md-muted"><em>no note yet</em></span>`}
+        </li>`
+      }).join('')}</ul>`)}
     ${noteSectionHtml('micro/' + m.id, m.name)}
   `
 
@@ -1778,6 +1930,14 @@ function openMicroDetail(microId, parentId, embeddedUnderDsId) {
   const panel = document.getElementById('micro-detail-panel')
   panel.hidden = false
   document.body.classList.add('detail-open')
+}
+
+// Double-click toggles the drawer width, EXCEPT on the title block — there a
+// double-click must do what it does everywhere else: select the word, so the
+// micro id / name can be copied.
+function onDrawerHeadDblClick(ev) {
+  if (ev.target.closest('.detail-head-title')) return
+  toggleDrawerWidth()
 }
 
 function closeMicroDetail() {

@@ -973,6 +973,8 @@ anchor_id,tag
 549,pat_ds::tree::dp::tree-dp
 552,pat_group::count-ways
 552,pat_group::count-ways::transition-rule
+552,pat_ds::array::dp::state-machine-dp
+552,pat_topic::dp::state-machine-dp
 556,pat_ds::array::backtrack::next-permutation-algo
 559,pat_ds::tree::core::post-order-depth
 560,pat_ds::array::core::prefix-sum-hashmap
@@ -1338,6 +1340,8 @@ anchor_id,tag
 934,pat_group::shortest-path::zero-one-bfs
 935,pat_group::count-ways
 935,pat_group::count-ways::transition-rule
+935,pat_ds::array::dp::state-machine-dp
+935,pat_topic::dp::state-machine-dp
 938,pat_ds::bst::core::bst-insert-delete
 940,pat_group::count-ways
 943,pat_topic::dp::bitmask-dp
@@ -1526,6 +1530,8 @@ anchor_id,tag
 1220,pat_group::count-ways::transition-rule
 1223,pat_group::count-ways
 1223,pat_group::count-ways::transition-rule
+1223,pat_ds::array::dp::state-machine-dp
+1223,pat_topic::dp::state-machine-dp
 1228,pat_topic::math::sum-formulas
 1228,pat_topic::math::digit-number-construct
 1229,pat_ds::array::two-pointers::tp-merge-walk
@@ -1655,6 +1661,8 @@ anchor_id,tag
 1408,pat_ds::string::core::rolling-hash
 1416,pat_group::count-ways
 1416,pat_group::count-ways::transition-rule
+1416,pat_ds::array::dp::state-machine-dp
+1416,pat_topic::dp::state-machine-dp
 1423,pat_topic::sliding-window::sw-fixed
 1423,pat_ds::array::sliding-window::sw-fixed
 1423,pat_group::subarray
