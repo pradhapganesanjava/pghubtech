@@ -14,9 +14,10 @@ import { LLM } from '../lib/llm'
 import { generateToDoHierarchy } from '../lib/todoGen'
 import DartView from './DartView'
 import NotesView from './NotesView'
+import ThoughtsView from './ThoughtsView'
 import type { ToDoDraft } from '../lib/todoGen'
 
-type SubTab = 'todo' | 'activity' | 'dart' | 'notes'
+type SubTab = 'todo' | 'activity' | 'dart' | 'notes' | 'thoughts'
 
 export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) {
   const [tab, setTab] = useState<SubTab>(initialTab ?? 'dart')
@@ -46,6 +47,10 @@ export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) 
           className={`utils-tab${tab === 'notes' ? ' active' : ''}`}
           onClick={() => setTab('notes')}
         >📓 Notes</button>
+        <button
+          className={`utils-tab${tab === 'thoughts' ? ' active' : ''}`}
+          onClick={() => setTab('thoughts')}
+        >💭 Thoughts</button>
       </div>
 
       {/* Every tab below is a full-height, self-scrolling layout, so the body
@@ -55,6 +60,7 @@ export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) 
         {tab === 'activity' && <ActivityPanel />}
         {tab === 'dart'     && <DartView />}
         {tab === 'notes'    && <NotesView />}
+        {tab === 'thoughts' && <ThoughtsView />}
       </div>
     </div>
   )

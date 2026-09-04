@@ -112,6 +112,13 @@ export interface DartThought {
 // capped so the left-nav tree can never grow past four levels.
 export const MAX_PATH_DEPTH = 4
 
+// Canonical top-level groups. The classifier is told to file under one of
+// these unless a thought genuinely fits none, which is what stops a subject
+// from scattering — business thoughts landing half in Career and half in
+// Other, say. Sub-groups below the root stay free-form. Add a root here to
+// make it a first-class home for future thoughts.
+export const THOUGHT_ROOTS = ['Business', 'Career', 'Learning'] as const
+
 export function normalisePath(raw: string): string {
   return (raw || '')
     .split('::')

@@ -12,7 +12,7 @@
 
 import { LLM } from './llm'
 import { parseLooseJson } from './looseJson'
-import { MAX_PATH_DEPTH, THOUGHT_BUCKETS, normalisePath } from '../adapters/dartRepo'
+import { MAX_PATH_DEPTH, THOUGHT_BUCKETS, THOUGHT_ROOTS, normalisePath } from '../adapters/dartRepo'
 import type { ThoughtBucket } from '../adapters/dartRepo'
 
 export interface RefinedThought {
@@ -48,13 +48,22 @@ Return ONLY a JSON object, no prose, no code fence:
 nothing fits.
 
 **path** — where this belongs in a topic tree, "::"-delimited, Title Case,
-AT MOST ${MAX_PATH_DEPTH} levels (fewer is better; 2–3 is usual).
+AT MOST ${MAX_PATH_DEPTH} levels (fewer is better; 2-3 is usual).
+
+The FIRST level must be one of these roots unless the thought genuinely fits none:
+  Business - companies, markets, strategy, entrepreneurship, how work gets
+             judged, results vs hype, positioning a product or a business.
+  Career   - this person's own role, employment, standing, personal growth.
+  Learning - how to study, read, remember, practise, understand.
+A thought ABOUT business belongs under Business even when the writer draws a
+lesson for their own work from it. Use Career only when the subject is their
+own job or standing. (Roots in code: ${THOUGHT_ROOTS.join(', ')}.)
+
 ${existingPaths.length > 0
-  ? `Reuse one of these existing paths when the thought belongs with them — extend
-one with a new leaf rather than inventing a parallel branch:
+  ? `Existing paths - reuse one when the thought belongs with it, or extend one
+with a new leaf rather than inventing a parallel branch:
 ${existingPaths.map(p => `  ${p}`).join('\n')}`
-  : 'There are no existing paths yet; create a sensible top-level group.'}
-Only start a new top-level group when the thought genuinely does not fit any above.
+  : 'No paths in use yet; pick a root above and add one sub-group.'}
 
 **summary** — one line, max 90 characters, in their own words, recognisable in a list.
 
