@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addThought, deleteThought, loadThoughts, updateThought,
-  MAX_PATH_DEPTH, THOUGHT_BUCKETS,
+  dartConfig, loadDartConfig, MAX_PATH_DEPTH,
 } from '../adapters/dartRepo'
 import type { DartThought, ThoughtBucket } from '../adapters/dartRepo'
 import { isoDate } from '../lib/dartPlan'
@@ -50,7 +50,13 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
   const [busyId, setBusyId]     = useState<string | null>(null)
   const boxRef = useRef<HTMLTextAreaElement>(null)
 
+  // Buckets are sheet data, so the config load has to land before the bucket
+  // chips and the classifier can be trusted.
+  const [buckets, setBuckets] = useState<string[]>(dartConfig().thoughtBuckets)
   useEffect(() => {
+    loadDartConfig()
+      .then(c => setBuckets(c.thoughtBuckets))
+      .catch(() => { /* defaults stand */ })
     loadThoughts()
       .then(list => { setThoughts(list); setLoading(false) })
       .catch(e => { setLoading(false); toast(`Load failed: ${(e as Error).message}`, 'error') })
@@ -64,7 +70,7 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
   async function process(raw: string): Promise<Omit<DartThought, 'id' | 'createdAt' | 'updatedAt'>> {
     const base = {
       date: isoDate(new Date()), raw, rawOriginal: raw,
-      bucket: 'Other' as ThoughtBucket, summary: firstLine(raw),
+      bucket: (buckets[buckets.length - 1] ?? 'Other') as ThoughtBucket, summary: firstLine(raw),
       highlights: [] as string[], path: UNFILED, rich: '',
     }
     if (!LLM.isConfigured()) {
@@ -292,7 +298,7 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
               </span>
             </div>
             <ThoughtCard
-              t={selected} busy={busyId === selected.id}
+              t={selected} buckets={buckets} busy={busyId === selected.id}
               rawOpen={openRaw.has(selected.id)} origOpen={openOrig.has(selected.id)}
               onToggleRaw={() => toggle(setOpenRaw, selected.id)}
               onToggleOrig={() => toggle(setOpenOrig, selected.id)}
@@ -308,7 +314,7 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
               <button className={`dart-fchip${bucketFilter === 'all' ? ' active' : ''}`} onClick={() => setBF('all')}>
                 All <span className="dart-fchip-n">{thoughts.length}</span>
               </button>
-              {THOUGHT_BUCKETS.map(b => (
+              {buckets.map(b => (
                 <button
                   key={b} className={`dart-fchip${bucketFilter === b ? ' active' : ''}`}
                   onClick={() => setBF(b)}
@@ -353,10 +359,10 @@ function ThoughtsPanel({ toast }: { toast: Toast }) {
 // One thought, rendered in full. Used by the single view; kept separate so the
 // index stays a cheap list of titles rather than a wall of rich cards.
 function ThoughtCard({
-  t, busy, rawOpen, origOpen,
+  t, buckets, busy, rawOpen, origOpen,
   onToggleRaw, onToggleOrig, onBucket, onPath, onReprocess, onDelete,
 }: {
-  t: DartThought; busy: boolean; rawOpen: boolean; origOpen: boolean
+  t: DartThought; buckets: string[]; busy: boolean; rawOpen: boolean; origOpen: boolean
   onToggleRaw: () => void; onToggleOrig: () => void
   onBucket: (b: ThoughtBucket) => void; onPath: () => void
   onReprocess: () => void; onDelete: () => void
@@ -369,7 +375,7 @@ function ThoughtCard({
           className="dart-bucket-select" value={t.bucket}
           onChange={e => onBucket(e.target.value as ThoughtBucket)}
         >
-          {THOUGHT_BUCKETS.map(b => <option key={b} value={b}>{b}</option>)}
+          {buckets.map(b => <option key={b} value={b}>{b}</option>)}
         </select>
         <button className="th-path-btn" onClick={onPath} title="Change tree path">
           {(t.path || UNFILED).split('::').join(' › ')}
