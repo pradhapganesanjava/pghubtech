@@ -342,7 +342,11 @@
     "80":  "Remove Dup Sorted II (≤2). write tracks position; copy if write<2 OR a[read]!=a[write-2].",
     "283": "Move Zeroes. write=0; for read: if a[read]!=0 copy; finally pad with zeros (or swap as you go).",
     "75":  "Sort Colors. Dutch National Flag: 3 pointers (lo, mid, hi); on 0 swap mid↔lo and ++both; on 1 ++mid; on 2 swap mid↔hi and --hi.",
-    "228": "Summary Ranges. Walk; when a[i]!=a[i-1]+1 close current range, start new. Single-pass O(n)."
+    "228": "Summary Ranges. Walk; when a[i]!=a[i-1]+1 close current range, start new. Single-pass O(n).",
+    "163": "Missing Ranges. The read-sweep of #228 emitting the GAPS instead of the runs — compare each element to prev+1 and close a range when they differ. Nothing is written back into the input.",
+    "362": "Design Hit Counter. The write is circular: bucket = t % 300, and a stale bucket is overwritten rather than cleared. In-place reuse of a fixed buffer, not compaction.",
+    "484": "Find Permutation. Build 1..n, then reverse each maximal 'D' run in place — the write is a segment reversal rather than a per-element copy.",
+    "624": "Maximum Distance in Arrays. One sweep carrying the best min/max so far. Read-pointer only, nothing written back — the loosest fit on this card."
   },
 
   "rotate-reverse": {
@@ -842,7 +846,7 @@
   },
 
   "bs-partition-2sorted": {
-    "4": "Median 2 Sorted Arrays. Binary-search partition i in smaller array; j = (m+n+1)/2 − i; check maxLeft ≤ minRight."
+    "4": "Median 2 Sorted Arrays.\nThe **sole anchor** — the micro was reverse-engineered from this one problem, so the mechanics above *are* the solution.\n#4-specific: `k` is pinned to the middle, so `half` is a constant rather than a parameter.\nThe general **k-th element** across two sorted arrays is the standard follow-up — same cut, `k` passed in.\nConstraints force it: `m, n ≤ 1000` looks mergeable, but the stated `O(log(m+n))` does not."
   },
 
   "sort-and-sweep": {
