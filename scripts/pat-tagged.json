@@ -469,7 +469,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subset-selection"
+      "pat_group::subset-selection",
+      "pat_group::sum::subset"
     ]
   },
   {
@@ -485,7 +486,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subset-selection"
+      "pat_group::subset-selection",
+      "pat_group::sum::subset"
     ]
   },
   {
@@ -768,7 +770,10 @@
     "pat_topic": [
       "pat_topic::dp::dp-2d-grid"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::grid-paths"
+    ]
   },
   {
     "id": "63",
@@ -781,7 +786,10 @@
     "pat_topic": [
       "pat_topic::dp::dp-2d-grid"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::grid-paths"
+    ]
   },
   {
     "id": "64",
@@ -850,7 +858,9 @@
     "pat_topic": [
       "pat_topic::dp::rolling-state-fixed-window"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
   },
   {
     "id": "71",
@@ -1098,7 +1108,9 @@
     "pat_topic": [
       "pat_topic::dp::rolling-state-fixed-window"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
   },
   {
     "id": "92",
@@ -1376,7 +1388,8 @@
       "pat_topic::dp::dp-2-strings"
     ],
     "pat_group": [
-      "pat_group::subsequence"
+      "pat_group::subsequence",
+      "pat_group::count-ways"
     ]
   },
   {
@@ -1981,6 +1994,21 @@
     "pat_group": []
   },
   {
+    "id": "166",
+    "title": "Fraction to Recurring Decimal",
+    "difficulty": "Medium",
+    "topics": "Hash Table; Math; String",
+    "pat_ds": [
+      "pat_ds::string::hash::seen-set",
+      "pat_ds::string::math::digit-number-construct"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::seen-set",
+      "pat_topic::math::digit-number-construct"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "167",
     "title": "Two Sum II - Input Array Is Sorted",
     "difficulty": "Medium",
@@ -2408,7 +2436,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subset-selection"
+      "pat_group::subset-selection",
+      "pat_group::sum::subset"
     ]
   },
   {
@@ -2776,11 +2805,13 @@
     "topics": "Array; Sorting",
     "pat_ds": [
       "pat_ds::array::greedy::sort-and-sweep",
-      "pat_ds::array::interval::interval-sort-start-overlap"
+      "pat_ds::array::interval::interval-sort-start-overlap",
+      "pat_ds::array::interval::sweep-line-delta"
     ],
     "pat_topic": [
       "pat_topic::greedy::sort-and-sweep",
-      "pat_topic::interval::interval-sort-start-overlap"
+      "pat_topic::interval::interval-sort-start-overlap",
+      "pat_topic::interval::sweep-line-delta"
     ],
     "pat_group": [
       "pat_group::scheduling"
@@ -2792,10 +2823,12 @@
     "difficulty": "Medium",
     "topics": "Array; Two Pointers; Greedy; Sorting; Heap (Priority Queue); Prefix Sum",
     "pat_ds": [
-      "pat_ds::array::greedy::sort-and-sweep"
+      "pat_ds::array::greedy::sort-and-sweep",
+      "pat_ds::array::interval::sweep-line-delta"
     ],
     "pat_topic": [
-      "pat_topic::greedy::sort-and-sweep"
+      "pat_topic::greedy::sort-and-sweep",
+      "pat_topic::interval::sweep-line-delta"
     ],
     "pat_group": [
       "pat_group::scheduling"
@@ -3420,7 +3453,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::parens-rewrite"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "317",
@@ -4018,7 +4053,9 @@
       "pat_topic::dp::knapsack-unbounded"
     ],
     "pat_group": [
-      "pat_group::sum"
+      "pat_group::sum",
+      "pat_group::count-ways",
+      "pat_group::count-ways::target-sum"
     ]
   },
   {
@@ -4108,6 +4145,17 @@
     ]
   },
   {
+    "id": "393",
+    "title": "UTF-8 Validation",
+    "difficulty": "Medium",
+    "topics": "Array; Bit Manipulation",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation"
+    ]
+  },
+  {
     "id": "394",
     "title": "Decode String",
     "difficulty": "Medium",
@@ -4169,7 +4217,9 @@
     "pat_topic": [
       "pat_topic::stack-topic::parens-rewrite"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::subsequence"
+    ]
   },
   {
     "id": "403",
@@ -4313,7 +4363,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subset-selection"
+      "pat_group::subset-selection",
+      "pat_group::sum::subset"
     ]
   },
   {
@@ -4829,7 +4880,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subset-selection"
+      "pat_group::subset-selection",
+      "pat_group::sum::subset"
     ]
   },
   {
@@ -4934,7 +4986,10 @@
     "pat_topic": [
       "pat_topic::dp::knapsack-unbounded"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::target-sum"
+    ]
   },
   {
     "id": "523",
@@ -4990,7 +5045,8 @@
     "difficulty": "Medium",
     "topics": "Array; Math; Binary Search; Prefix Sum; Randomized",
     "pat_ds": [
-      "pat_ds::array::math::sum-formulas"
+      "pat_ds::array::math::sum-formulas",
+      "pat_ds::array::binary-search::bs-textbook"
     ],
     "pat_topic": [],
     "pat_group": []
@@ -5016,6 +5072,23 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "532",
+    "title": "K-diff Pairs in an Array",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Two Pointers; Binary Search; Sorting",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter",
+      "pat_ds::array::hash::complement-lookup"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter",
+      "pat_topic::hash::complement-lookup"
+    ],
+    "pat_group": [
+      "pat_group::sum"
+    ]
   },
   {
     "id": "540",
@@ -5104,6 +5177,18 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "552",
+    "title": "Student Attendance Record II",
+    "difficulty": "Hard",
+    "topics": "Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::transition-rule"
+    ]
   },
   {
     "id": "556",
@@ -5195,6 +5280,18 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "576",
+    "title": "Out of Boundary Paths",
+    "difficulty": "Medium",
+    "topics": "Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::grid-paths"
+    ]
   },
   {
     "id": "581",
@@ -5353,6 +5450,19 @@
     "pat_group": []
   },
   {
+    "id": "630",
+    "title": "Course Schedule III",
+    "difficulty": "Hard",
+    "topics": "Array; Greedy; Sorting; Heap (Priority Queue)",
+    "pat_ds": [
+      "pat_ds::array::greedy::greedy-end-sorted"
+    ],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
+  },
+  {
     "id": "632",
     "title": "Smallest Range Covering Elements from K Lists",
     "difficulty": "Hard",
@@ -5375,6 +5485,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "639",
+    "title": "Decode Ways II",
+    "difficulty": "Hard",
+    "topics": "String; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
   },
   {
     "id": "641",
@@ -5531,6 +5652,22 @@
     "pat_group": []
   },
   {
+    "id": "659",
+    "title": "Split Array into Consecutive Subsequences",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Greedy; Heap (Priority Queue)",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::rearrange",
+      "pat_group::rearrange::k-consecutive"
+    ]
+  },
+  {
     "id": "662",
     "title": "Maximum Width of Binary Tree",
     "difficulty": "Medium",
@@ -5665,6 +5802,18 @@
     ]
   },
   {
+    "id": "688",
+    "title": "Knight Probability in Chessboard",
+    "difficulty": "Medium",
+    "topics": "Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::grid-paths"
+    ]
+  },
+  {
     "id": "689",
     "title": "Maximum Sum of 3 Non-Overlapping Subarrays",
     "difficulty": "Hard",
@@ -5732,7 +5881,8 @@
     ],
     "pat_group": [
       "pat_group::sum",
-      "pat_group::subset-selection"
+      "pat_group::subset-selection",
+      "pat_group::sum::subset"
     ]
   },
   {
@@ -6354,6 +6504,22 @@
       "pat_ds::array::dp::state-machine-dp"
     ],
     "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
+  },
+  {
+    "id": "791",
+    "title": "Custom Sort String",
+    "difficulty": "Medium",
+    "topics": "Hash Table; String; Sorting",
+    "pat_ds": [
+      "pat_ds::string::core::custom-order-compare",
+      "pat_ds::string::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
     "pat_group": []
   },
   {
@@ -6609,6 +6775,22 @@
     "pat_group": []
   },
   {
+    "id": "846",
+    "title": "Hand of Straights",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Greedy; Sorting",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::rearrange",
+      "pat_group::rearrange::k-consecutive"
+    ]
+  },
+  {
     "id": "847",
     "title": "Shortest Path Visiting All Nodes",
     "difficulty": "Hard",
@@ -6683,6 +6865,21 @@
       "pat_group::subarray",
       "pat_group::subarray::two-pointer"
     ]
+  },
+  {
+    "id": "863",
+    "title": "All Nodes Distance K in Binary Tree",
+    "difficulty": "Medium",
+    "topics": "Hash Table; Tree; Depth-First Search; Breadth-First Search; Binary Tree",
+    "pat_ds": [
+      "pat_ds::tree::dfs::dfs-template",
+      "pat_ds::tree::bfs::bfs-level-order"
+    ],
+    "pat_topic": [
+      "pat_topic::dfs::dfs-template",
+      "pat_topic::bfs::bfs-level-order"
+    ],
+    "pat_group": []
   },
   {
     "id": "864",
@@ -7091,6 +7288,18 @@
     ]
   },
   {
+    "id": "935",
+    "title": "Knight Dialer",
+    "difficulty": "Medium",
+    "topics": "Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::transition-rule"
+    ]
+  },
+  {
     "id": "938",
     "title": "Range Sum of BST",
     "difficulty": "Easy",
@@ -7100,6 +7309,17 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "940",
+    "title": "Distinct Subsequences II",
+    "difficulty": "Hard",
+    "topics": "String; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
   },
   {
     "id": "943",
@@ -7234,7 +7454,9 @@
       "pat_topic::sorting::quickselect",
       "pat_topic::divide-conquer::dc-quickselect"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::rearrange"
+    ]
   },
   {
     "id": "974",
@@ -7680,6 +7902,23 @@
     ]
   },
   {
+    "id": "1094",
+    "title": "Car Pooling",
+    "difficulty": "Medium",
+    "topics": "Array; Sorting; Heap (Priority Queue); Simulation; Prefix Sum",
+    "pat_ds": [
+      "pat_ds::array::prefix-sum::difference-array",
+      "pat_ds::array::interval::sweep-line-delta"
+    ],
+    "pat_topic": [
+      "pat_topic::prefix-sum::difference-array",
+      "pat_topic::interval::sweep-line-delta"
+    ],
+    "pat_group": [
+      "pat_group::scheduling"
+    ]
+  },
+  {
     "id": "1099",
     "title": "Two Sum Less Than K",
     "difficulty": "Easy",
@@ -7913,7 +8152,9 @@
     "pat_topic": [
       "pat_topic::dp::rolling-state-fixed-window"
     ],
-    "pat_group": []
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
   },
   {
     "id": "1139",
@@ -7963,6 +8204,18 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1155",
+    "title": "Number of Dice Rolls With Target Sum",
+    "difficulty": "Medium",
+    "topics": "Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::target-sum"
+    ]
   },
   {
     "id": "1157",
@@ -8204,6 +8457,34 @@
     "pat_group": []
   },
   {
+    "id": "1220",
+    "title": "Count Vowels Permutation",
+    "difficulty": "Hard",
+    "topics": "Dynamic Programming",
+    "pat_ds": [
+      "pat_ds::array::dp::state-machine-dp"
+    ],
+    "pat_topic": [
+      "pat_topic::dp::state-machine-dp"
+    ],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::transition-rule"
+    ]
+  },
+  {
+    "id": "1223",
+    "title": "Dice Roll Simulation",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::transition-rule"
+    ]
+  },
+  {
     "id": "1228",
     "title": "Missing Number In Arithmetic Progression",
     "difficulty": "Easy",
@@ -8434,6 +8715,17 @@
     ]
   },
   {
+    "id": "1269",
+    "title": "Number of Ways to Stay in the Same Place After Some Steps",
+    "difficulty": "Hard",
+    "topics": "Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
+  },
+  {
     "id": "1272",
     "title": "Remove Interval",
     "difficulty": "Medium",
@@ -8454,6 +8746,22 @@
     ],
     "pat_topic": [],
     "pat_group": []
+  },
+  {
+    "id": "1282",
+    "title": "Group the People Given the Group Size They Belong To",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Greedy",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::rearrange",
+      "pat_group::rearrange::bucket-chunk"
+    ]
   },
   {
     "id": "1283",
@@ -8524,6 +8832,34 @@
       "pat_topic::math::sum-formulas"
     ],
     "pat_group": []
+  },
+  {
+    "id": "1296",
+    "title": "Divide Array in Sets of K Consecutive Numbers",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Greedy; Sorting",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::rearrange",
+      "pat_group::rearrange::k-consecutive"
+    ]
+  },
+  {
+    "id": "1301",
+    "title": "Number of Paths with Max Score",
+    "difficulty": "Hard",
+    "topics": "Array; Dynamic Programming; Matrix",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::grid-paths"
+    ]
   },
   {
     "id": "1306",
@@ -8677,6 +9013,17 @@
     "pat_group": [
       "pat_group::subarray",
       "pat_group::subarray::two-pointer"
+    ]
+  },
+  {
+    "id": "1344",
+    "title": "Angle Between Hands of a Clock",
+    "difficulty": "Medium",
+    "topics": "Math",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::simulation"
     ]
   },
   {
@@ -8839,6 +9186,18 @@
     "pat_topic": [],
     "pat_group": [
       "pat_group::pattern-matching"
+    ]
+  },
+  {
+    "id": "1416",
+    "title": "Restore The Array",
+    "difficulty": "Hard",
+    "topics": "String; Dynamic Programming",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::transition-rule"
     ]
   },
   {
@@ -9440,6 +9799,21 @@
     ]
   },
   {
+    "id": "1636",
+    "title": "Sort Array by Increasing Frequency",
+    "difficulty": "Easy",
+    "topics": "Array; Hash Table; Sorting",
+    "pat_ds": [
+      "pat_ds::array::sorting::bucket-sort-freq",
+      "pat_ds::array::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::sorting::bucket-sort-freq",
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "1639",
     "title": "Number of Ways to Form a Target String Given a Dictionary",
     "difficulty": "Hard",
@@ -9931,6 +10305,17 @@
     ]
   },
   {
+    "id": "1866",
+    "title": "Number of Ways to Rearrange Sticks With K Sticks Visible",
+    "difficulty": "Hard",
+    "topics": "Math; Dynamic Programming; Combinatorics",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways"
+    ]
+  },
+  {
     "id": "1871",
     "title": "Jump Game VII",
     "difficulty": "Medium",
@@ -9979,6 +10364,19 @@
     ],
     "pat_topic": [
       "pat_topic::binary-search::bs-on-answer-compound"
+    ],
+    "pat_group": []
+  },
+  {
+    "id": "1910",
+    "title": "Remove All Occurrences of a Substring",
+    "difficulty": "Medium",
+    "topics": "String; Stack; Simulation",
+    "pat_ds": [
+      "pat_ds::string::stack-topic::parens-rewrite"
+    ],
+    "pat_topic": [
+      "pat_topic::stack-topic::parens-rewrite"
     ],
     "pat_group": []
   },
@@ -10062,6 +10460,19 @@
       "pat_group::simulation",
       "pat_group::simulation::board-validate"
     ]
+  },
+  {
+    "id": "1962",
+    "title": "Remove Stones to Minimize the Total",
+    "difficulty": "Medium",
+    "topics": "Array; Greedy; Heap (Priority Queue)",
+    "pat_ds": [
+      "pat_ds::array::heap::top-k"
+    ],
+    "pat_topic": [
+      "pat_topic::heap::top-k"
+    ],
+    "pat_group": []
   },
   {
     "id": "1970",
@@ -10519,6 +10930,19 @@
     ]
   },
   {
+    "id": "2337",
+    "title": "Move Pieces to Obtain a String",
+    "difficulty": "Medium",
+    "topics": "Two Pointers; String",
+    "pat_ds": [
+      "pat_ds::string::two-pointers::tp-merge-walk"
+    ],
+    "pat_topic": [
+      "pat_topic::two-pointers::tp-merge-walk"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "2348",
     "title": "Number of Zero-Filled Subarrays",
     "difficulty": "Medium",
@@ -10598,6 +11022,18 @@
     "pat_group": [
       "pat_group::subarray",
       "pat_group::subarray::two-pointer"
+    ]
+  },
+  {
+    "id": "2400",
+    "title": "Number of Ways to Reach a Position After Exactly k Steps",
+    "difficulty": "Medium",
+    "topics": "Math; Dynamic Programming; Combinatorics",
+    "pat_ds": [],
+    "pat_topic": [],
+    "pat_group": [
+      "pat_group::count-ways",
+      "pat_group::count-ways::grid-paths"
     ]
   },
   {
@@ -10926,6 +11362,22 @@
     "pat_topic": [],
     "pat_group": [
       "pat_group::subarray"
+    ]
+  },
+  {
+    "id": "2610",
+    "title": "Convert an Array Into a 2D Array With Conditions",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": [
+      "pat_group::rearrange",
+      "pat_group::rearrange::bucket-chunk"
     ]
   },
   {
@@ -11550,6 +12002,19 @@
     ]
   },
   {
+    "id": "3355",
+    "title": "Zero Array Transformation I",
+    "difficulty": "Medium",
+    "topics": "Array; Prefix Sum",
+    "pat_ds": [
+      "pat_ds::array::prefix-sum::difference-array"
+    ],
+    "pat_topic": [
+      "pat_topic::prefix-sum::difference-array"
+    ],
+    "pat_group": []
+  },
+  {
     "id": "3364",
     "title": "Minimum Positive Sum Subarray",
     "difficulty": "Easy",
@@ -11562,6 +12027,25 @@
     ]
   },
   {
+    "id": "3371",
+    "title": "Identify the Largest Outlier in an Array",
+    "difficulty": "Medium",
+    "topics": "Array; Hash Table; Counting; Enumeration",
+    "pat_ds": [
+      "pat_ds::array::hash::freq-counter",
+      "pat_ds::array::hash::complement-lookup",
+      "pat_ds::array::math::sum-formulas"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter",
+      "pat_topic::hash::complement-lookup",
+      "pat_topic::math::sum-formulas"
+    ],
+    "pat_group": [
+      "pat_group::sum"
+    ]
+  },
+  {
     "id": "3381",
     "title": "Maximum Subarray Sum With Length Divisible by K",
     "difficulty": "Medium",
@@ -11571,6 +12055,19 @@
     "pat_group": [
       "pat_group::subarray"
     ]
+  },
+  {
+    "id": "3389",
+    "title": "Minimum Operations to Make Character Frequencies Equal",
+    "difficulty": "Hard",
+    "topics": "Hash Table; String; Dynamic Programming; Counting; Enumeration",
+    "pat_ds": [
+      "pat_ds::string::hash::freq-counter"
+    ],
+    "pat_topic": [
+      "pat_topic::hash::freq-counter"
+    ],
+    "pat_group": []
   },
   {
     "id": "3392",

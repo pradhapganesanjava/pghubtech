@@ -540,6 +540,7 @@ const GROUPS = [
   { id: 'stream',       icon: '🌊', name: 'Stream',         intro: 'Online / streaming — maintain a running statistic (median, k-th largest, moving average) over an unbounded arriving sequence as elements come in, without rescanning. Usually two heaps, a bounded heap, or a moving window.' },
   { id: 'partition',    icon: '✂️', name: 'Partition',      intro: 'Split a sequence into contiguous pieces optimizing or satisfying a constraint — minimize the largest piece, count valid splits, partition by a predicate. Usually binary-search-on-answer (with a greedy feasibility check) or partition DP.' },
   { id: 'rearrange',    icon: '🔀', name: 'Rearrange / Split into Groups', intro: 'REORDER a collection so its elements fall into groups satisfying some shape. The groups are SETS, not segments: the original order is destroyed and no element keeps its index — which is what separates this from Partition, where the pieces are contiguous runs and order is preserved. Two shapes recur. TWO-SIDED, split around a pivot: Lomuto / Hoare, quickselect when you only need the side holding rank K, Dutch-flag three-way for a few fixed buckets, or a stable two-pointer sweep when relative order inside a group must survive. MANY GROUPS of a fixed shape: count the values and consume greedily — k consecutive values per group, k of a kind, and so on. Recognise the family when the answer is "which elements" or "can it be done", never "in what order": the groups need no internal order, so a full sort is doing work the answer never reads.' },
+  { id: 'count-ways',   icon: '🔢', name: 'Count Ways',     intro: 'Count HOW MANY — strings, paths, tilings, decodings — under a constraint. The recursion&rsquo;s state summarises (an index plus a little context), so the DFS that would enumerate becomes a memo that sums: ways(state) = &Sigma; ways(next), base 1. When the state would have to remember the SET used so far it cannot memoise, and the problem is backtracking instead.' },
   { id: 'min-change',   icon: '🔧', name: 'Minimum Change',  intro: 'Fewest removals / deletions / changes to make a collection CONSISTENT — non-overlapping, all-unique, equalized, or a valid shape. The answer is the operation count; usually greedy (sort + sweep) or DP.' },
   { id: 'pattern-matching', icon: '🔎', name: 'Pattern Matching', intro: 'Match a string/sequence against a pattern, or locate a pattern in text — exact substring search (KMP / Z-algorithm), regex / wildcard matching (DP or trie), and structural pattern↔word isomorphism.' },
   { id: 'shortest-path', icon: '🛣️', name: 'Shortest Path',  intro: 'Pick the shortest-path algorithm by the edge weights — all-equal → BFS; {0,1} → 0-1 BFS; non-negative → Dijkstra; negatives / bounded hops → Bellman-Ford; all-pairs on a small dense graph → Floyd-Warshall.' },
@@ -2145,12 +2146,14 @@ function comboDetailHtml(g, kind, dimId) {
   const inG   = (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g][kind] && GROUP_NOTES.groups[g][kind][dimId]) || ''
   const gen   = (GROUP_NOTES.general && GROUP_NOTES.general[kind] && GROUP_NOTES.general[kind][dimId]) || ''
   const openTab = (p.tab === 'topic') ? 'topic' : 'ds'
-  // Problems FIRST — the concrete list the user clicked in for — then the
-  // (often long) write-up below, so the problems are never buried.
+  // General → this group → these problems. One widening-to-narrowing read every
+  // time: what the technique is, why THESE problems sit together under it, then
+  // how each one differs. (Problems used to lead; that put the concrete list
+  // first but made the order flip meaning depending on what was authored.)
   return `
-    ${renderProblemSolutions(g, kind, dimId, inG)}
-    ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
     ${renderNoteBlock(`${p.icon} ${p.name} — in general`, gen, 'combo-general')}
+    ${renderNoteBlock(`${gMeta.icon} ${gMeta.name} × ${p.name}`, inG, 'combo-ingroup') || '<p class="combo-tldr" style="color:var(--text3)">No summary yet.</p>'}
+    ${renderProblemSolutions(g, kind, dimId, inG)}
     <a class="topic-ds-open" href="#${openTab}/${p.id}"
        onclick="event.preventDefault(); closeMicroDetail(); selectPattern('${p.id}')">↗ open the full ${p.icon} ${p.name} page</a>
     ${noteSectionHtml('group/' + g + '/' + kind + '/' + dimId, gMeta.name + ' × ' + p.name)}
