@@ -1,0 +1,85 @@
+{
+  "62": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::grid-paths"
+  ],
+  "63": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::grid-paths"
+  ],
+  "70": [
+    "pat_group::count-ways"
+  ],
+  "91": [
+    "pat_group::count-ways"
+  ],
+  "115": [
+    "pat_group::count-ways"
+  ],
+  "377": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::target-sum"
+  ],
+  "518": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::target-sum"
+  ],
+  "552": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::transition-rule"
+  ],
+  "576": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::grid-paths"
+  ],
+  "639": [
+    "pat_group::count-ways"
+  ],
+  "688": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::grid-paths"
+  ],
+  "790": [
+    "pat_group::count-ways"
+  ],
+  "935": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::transition-rule"
+  ],
+  "940": [
+    "pat_group::count-ways"
+  ],
+  "1137": [
+    "pat_group::count-ways"
+  ],
+  "1155": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::target-sum"
+  ],
+  "1220": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::transition-rule"
+  ],
+  "1223": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::transition-rule"
+  ],
+  "1269": [
+    "pat_group::count-ways"
+  ],
+  "1301": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::grid-paths"
+  ],
+  "1416": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::transition-rule"
+  ],
+  "1866": [
+    "pat_group::count-ways"
+  ],
+  "2400": [
+    "pat_group::count-ways",
+    "pat_group::count-ways::grid-paths"
+  ]
+}
