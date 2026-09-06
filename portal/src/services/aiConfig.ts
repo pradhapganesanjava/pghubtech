@@ -55,7 +55,10 @@ export function hydrateAiConfig(): Promise<void> {
   if (!inflight) {
     inflight = loadSettings()
       .then(applyAiSettings)
-      .catch(() => { /* offline or no access — local cache stands */ })
+      .catch(e => {
+        // eslint-disable-next-line no-console
+        console.warn('[aiConfig] hydration failed; local cache stands:', e)
+      })
       .finally(() => { inflight = null })
   }
   return inflight

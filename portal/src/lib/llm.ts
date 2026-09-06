@@ -1,6 +1,11 @@
 // Azure OpenAI client. Mirrors the surface used in pg-hub-ads.
 
 import { Config } from '../services/config'
+// Static, not a dynamic import(): a lazily-loaded chunk 404s on a deploy that
+// has not fully propagated, and a failed chunk made ensureConfigured() report
+// "not configured" — the exact bug it exists to fix. aiConfig pulls in
+// sheetsRepo → gauth/config only, so there is no cycle back to here.
+import { hydrateAiConfig } from '../services/aiConfig'
 
 export interface ChatMessage {
   role:    'user' | 'assistant' | 'system'
@@ -18,8 +23,7 @@ export const LLM = {
   // "not configured" just because of when it was opened.
   async ensureConfigured(): Promise<boolean> {
     if (this.isConfigured()) return true
-    const { hydrateAiConfig } = await import('../services/aiConfig')
-    await hydrateAiConfig()
+    try { await hydrateAiConfig() } catch { /* leaves isConfigured() false */ }
     return this.isConfigured()
   },
 

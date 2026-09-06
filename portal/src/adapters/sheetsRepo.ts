@@ -211,7 +211,15 @@ async function fetchSettings(): Promise<Record<string, string>> {
     rows.forEach(r => { if (r[0]) map[r[0]] = r[1] ?? '' })
     _settingsCache = map
     return map
-  } catch { return {} }
+  } catch (e) {
+    // Swallowed for callers — a missing Settings tab must not block sign-in —
+    // but never silently: every AI feature reads its credentials from here, so
+    // when this fails the whole app looks "not configured" for no visible
+    // reason. Say why, once, in the console.
+    // eslint-disable-next-line no-console
+    console.warn('[settings] could not read the Settings tab:', e)
+    return {}
+  }
 }
 
 export function loadSettings(): Promise<Record<string, string>> {
