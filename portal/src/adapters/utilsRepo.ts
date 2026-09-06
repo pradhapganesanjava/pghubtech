@@ -19,7 +19,9 @@ const LESSONS_TAB      = 'Lessons'
 const TODO_COMMENTS_TAB = 'ToDoComments'
 const TODO_HEADERS    = ['id','parent_id','title','done','position','created_at','updated_at','description'] as const
 const ACT_HEADERS     = ['id','date','kind','time','content','created_at'] as const
-const LESSONS_HEADERS = ['id','problem','not_worked','worked','source','created_at','updated_at'] as const
+// `path` appended at the END so an existing sheet keeps working — old rows
+// read back unfiled.
+const LESSONS_HEADERS = ['id','problem','not_worked','worked','source','created_at','updated_at','path'] as const
 const TODO_COMMENT_HEADERS = ['id','todo_id','content','created_at','updated_at'] as const
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -61,9 +63,12 @@ export interface Lesson {
   problem:    string
   notWorked:  string
   worked:     string
-  source:     string         // 'manual' | 'ai:YYYY-MM-DD..YYYY-MM-DD'
+  source:     string         // 'manual' | 'ai:YYYY-MM-DD..YYYY-MM-DD' | 'ai:YYYY-MM-DD'
   createdAt:  string
   updatedAt:  string
+  // '::'-delimited tag path, same convention (and depth cap) as Thoughts, so
+  // lessons can be browsed as a tree rather than one flat list. '' = unfiled.
+  path:       string
 }
 
 // ── Plumbing ─────────────────────────────────────────────────────────────────
@@ -395,7 +400,7 @@ export async function deleteActivity(id: string): Promise<void> {
 
 export async function loadLessons(): Promise<Lesson[]> {
   await ensureTab(LESSONS_TAB, LESSONS_HEADERS)
-  const rows = await readRows(LESSONS_TAB, 'A2:G')
+  const rows = await readRows(LESSONS_TAB, 'A2:H')
   return rows
     .filter(r => r[0])
     .map(r => ({
@@ -406,12 +411,13 @@ export async function loadLessons(): Promise<Lesson[]> {
       source:    r[4] ?? 'manual',
       createdAt: r[5] ?? '',
       updatedAt: r[6] ?? '',
+      path:      r[7] ?? '',
     }))
     .sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt))
 }
 
 export async function addLesson(input: {
-  problem: string; notWorked: string; worked: string; source?: string
+  problem: string; notWorked: string; worked: string; source?: string; path?: string
 }): Promise<Lesson> {
   await ensureTab(LESSONS_TAB, LESSONS_HEADERS)
   const now = new Date().toISOString()
@@ -423,6 +429,7 @@ export async function addLesson(input: {
     source:    input.source ?? 'manual',
     createdAt: now,
     updatedAt: now,
+    path:      (input.path ?? '').trim(),
   }
   await appendRow(LESSONS_TAB, 'G', [
     l.id, l.problem, l.notWorked, l.worked, l.source, l.createdAt, l.updatedAt,
@@ -435,9 +442,9 @@ export async function updateLesson(l: Lesson): Promise<Lesson> {
   const idx = await findRowByCol0(LESSONS_TAB, l.id)
   if (idx < 0) throw new Error('Lesson row not found')
   const updated: Lesson = { ...l, updatedAt: new Date().toISOString() }
-  await writeRow(LESSONS_TAB, `A${idx}:G${idx}`, [
+  await writeRow(LESSONS_TAB, `A${idx}:H${idx}`, [
     updated.id, updated.problem, updated.notWorked, updated.worked,
-    updated.source, updated.createdAt, updated.updatedAt,
+    updated.source, updated.createdAt, updated.updatedAt, updated.path,
   ])
   return updated
 }

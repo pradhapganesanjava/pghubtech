@@ -47,3 +47,16 @@ export function downloadCsv(csv: string, filename: string): void {
   document.body.removeChild(a)
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
+// Trigger a browser download for arbitrary text (JSON backups, exports).
+export function downloadText(text: string, filename: string, mime = 'application/json'): void {
+  const blob = new Blob([text], { type: `${mime};charset=utf-8` })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
