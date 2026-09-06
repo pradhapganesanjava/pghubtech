@@ -22,13 +22,13 @@ const THEMES = [
 
 // Settings is reachable via the avatar menu, so it's no longer in the top nav.
 const NAVS = [
-  { id: 'home',   label: 'Home'   },
-  { id: 'browse', label: 'Browse' },
-  { id: 'docs',   label: 'Docs'   },
+  { id: 'ads-hub', label: 'AdsHub' },
+  // Home and Browse are sub-tabs of Anki now — one subject, one tab.
+  { id: 'anki',   label: 'Anki'   },
+  { id: 'docs',   label: 'Pages'  },
   // Notes now lives as a tab inside Utils.
   { id: 'utils',  label: 'Utils'  },
   // { id: 'ads', label: 'Ads' },  // temporarily hidden (pghubads.web.app) — may remove later
-  { id: 'ads-hub', label: 'AdsHub' },
 ]
 
 export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen, onToggleAI }: Props) {
@@ -68,12 +68,12 @@ export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen,
       <div className="topbar-left">
         <span
           className="logo"
-          onClick={() => onNav('home')}
+          onClick={() => onNav('landing')}
           role="button"
           tabIndex={0}
-          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNav('home') } }}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNav('landing') } }}
           style={{ cursor: 'pointer' }}
-          title="Go to Home"
+          title="Go to the landing page"
         >PG Hub Tech</span>
         <nav className="topbar-nav">
           {NAVS.map(n => (
