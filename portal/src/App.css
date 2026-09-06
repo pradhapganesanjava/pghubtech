@@ -1138,26 +1138,83 @@ body.resizing-h * {
 .tb-topics.active { filter: none; opacity: 1; }
 .browse-toolbar .tb-search { width: 220px; }
 
-/* ─── Toolbar overflow (⋯) — collapses on MOBILE only ──────────────
-   Refresh / difficulty / add / export are grouped in the markup so one
-   trigger can hold them under 768px. Above that the two wrappers are
-   `display: contents`, which erases their boxes and leaves the buttons as
-   flex items of .browse-toolbar — i.e. the desktop row is unchanged. The
-   grouping does move `search` after them in DOM order, so `order` puts it
-   back between the difficulty pill and ＋. */
-.tb-overflow, .tb-overflow-items { display: contents; }
-.tb-overflow-trigger { display: none; }
-@media (min-width: 769px) {
-  .browse-toolbar .adshub-diff-pills     { order: 0; }
-  .browse-toolbar .tb-refresh            { order: 1; }
-  .browse-toolbar .adshub-diff-menu-wrap { order: 2; }
-  .browse-toolbar .tb-search             { order: 3; }
-  .browse-toolbar .tb-add                { order: 4; }
-  .browse-toolbar .tb-export             { order: 5; }
-  .browse-toolbar .tb-topics             { order: 5; }
-  .browse-toolbar .tb-count              { order: 6; }
-  .browse-toolbar .applied-filter-chips  { order: 7; }
+/* ─── Toolbar overflow (⋯) — at every width ────────────────────────
+   Refresh, search, the difficulty filter, add, export and the topics toggle
+   all live behind one trigger. They used to sit inline and collapse only
+   under 480px; the row they made was long, and none of them is touched often
+   enough to earn permanent space. What stays on the row is what you read
+   rather than press: the mode pills, the filter count, and the applied-filter
+   chips.
+
+   The panel is positioned, so .tb-overflow is the containing block. */
+.tb-overflow { display: inline-flex; position: relative; }
+.tb-overflow-trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; height: var(--ctl-h, 32px); padding: 0 10px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text2); font-size: 17px; line-height: 1;
+  cursor: pointer; touch-action: manipulation;
 }
+.tb-overflow-trigger:hover { border-color: var(--primary); color: var(--primary); }
+/* Lit when something inside is filtering — a difficulty, ✨ Custom, or a
+   search term. Without it, hiding the search box would hide the fact that a
+   query is narrowing the list. */
+.tb-overflow-trigger.has-active {
+  background: rgba(var(--primary-rgb), .14);
+  border-color: var(--primary); color: var(--primary);
+}
+/* Panel. Collapsed by default; .open is toggled from AdsHubView. */
+.tb-overflow-items {
+  display: none;
+  /* Anchored LEFT: the ⋯ sits at the start of its row, so a right-anchored
+     panel would grow off the left edge on a narrow screen. */
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+  flex-direction: column; align-items: stretch; gap: 6px;
+  min-width: 230px; padding: 8px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+}
+.tb-overflow-items.open { display: flex; }
+/* Icon-only buttons get a readable label inside the panel. display:flex is
+   required — these are plain buttons, so justify-content would otherwise be
+   inert and the labels would centre. */
+.tb-overflow-items > button {
+  display: flex; align-items: center; justify-content: flex-start; gap: 7px;
+  width: 100%; height: 34px; text-align: left;
+}
+.tb-overflow-items .tb-refresh::after { content: ' Refresh'; font-size: 13px; }
+.tb-overflow-items .tb-add::after     { content: ' Add problem'; font-size: 13px; }
+.tb-overflow-items .tb-export::after  { content: ' Export CSV'; font-size: 13px; }
+.tb-overflow-items .tb-topics::after  { content: ' Topics: off'; font-size: 13px; }
+.tb-overflow-items .tb-topics.active::after { content: ' Topics: on'; }
+/* The search box is the one control that is not a button; it fills the panel
+   row like the difficulty dropdown does.
+
+   order:-1 puts it above ↻. Refresh is rendered first in the markup because it
+   is the only control shared with the modes that have no panel, so the order
+   is set here rather than by reshuffling the JSX around that condition. */
+.tb-overflow-items .tb-search { width: 100%; height: 34px; box-sizing: border-box; order: -1; }
+/* The difficulty control is itself a dropdown — let it fill the panel row and
+   open as a normal block beneath its trigger rather than floating. */
+.tb-overflow-items .adshub-diff-menu-wrap { width: 100%; }
+.tb-overflow-items .adshub-diff-menu-wrap > button { width: 100%; justify-content: space-between; }
+.tb-overflow-items .adshub-diff-menu { position: static; margin-top: 6px; min-width: 0; width: 100%; }
+
+/* Lineage / Patterns modes hold only refresh, so skip the ⋯ entirely and
+   leave that button inline exactly as before. */
+.tb-overflow--single, .tb-overflow--single .tb-overflow-items { display: contents; }
+.tb-overflow--single .tb-overflow-items > button { width: auto; height: auto; }
+/* The panel captions its icons ("↻ Refresh"); inline, ↻ is a square icon
+   button and the caption would spill out of it. The captions used to exist
+   only under 480px, so this suppression lived there too — it belongs here now
+   that they are the default. */
+.tb-overflow--single .tb-refresh::after { content: none; }
+
+.browse-toolbar .adshub-diff-pills    { order: 0; }
+.browse-toolbar .mobile-filter-btn    { order: 1; }
+.browse-toolbar .tb-overflow          { order: 2; }
+.browse-toolbar .tb-count             { order: 3; }
+.browse-toolbar .applied-filter-chips { order: 4; }
 /* Cards + detail split */
 .browse-cards-split {
   flex: 1; min-height: 0; min-width: 0;
@@ -2270,56 +2327,7 @@ body.resizing-h * {
   .browse-toolbar { padding: 8px 12px; gap: 6px; row-gap: 8px; align-items: center; }
   .browse-toolbar > .col-search { width: 100% !important; flex: 1; }
 
-  /* ── Toolbar overflow (⋯) ──────────────────────────────────────────
-     Row 1 becomes: [mode pills] [☰ Filters] [⋯] [n / total]; row 2 is the
-     search box; row 3 (only when filters are on) is the chip strip. Before
-     this, refresh / difficulty / ＋ / ⬇ each wrapped independently and left
-     ragged half-filled rows. */
-  .tb-overflow { display: inline-flex; position: relative; }
-  .tb-overflow-trigger {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 36px; height: 32px; padding: 0 10px;
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text2); font-size: 17px; line-height: 1;
-    cursor: pointer; touch-action: manipulation;
-  }
-  .tb-overflow-trigger.has-active {
-    background: rgba(var(--primary-rgb), .14);
-    border-color: var(--primary); color: var(--primary);
-  }
-  /* Panel. Collapsed by default; .open is toggled from AdsHubView. */
-  .tb-overflow-items {
-    display: none;
-    /* Anchored LEFT: the ⋯ sits at the start of its row, so a right-anchored
-       panel would grow off the left edge of the screen. */
-    position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
-    flex-direction: column; align-items: stretch; gap: 6px;
-    min-width: 190px; padding: 8px;
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.28);
-  }
-  .tb-overflow-items.open { display: flex; }
-  /* Icon-only buttons get a readable label inside the panel. */
-  /* display:flex is required — these are plain buttons, so justify-content
-     would otherwise be inert and the labels would centre. */
-  .tb-overflow-items > button {
-    display: flex; align-items: center; justify-content: flex-start; gap: 7px;
-    width: 100%; height: 34px; text-align: left;
-  }
-  .tb-overflow-items .tb-refresh::after { content: ' Refresh'; font-size: 13px; }
-  .tb-overflow-items .tb-add::after     { content: ' Add problem'; font-size: 13px; }
-  .tb-overflow-items .tb-export::after  { content: ' Export CSV'; font-size: 13px; }
-  .tb-overflow-items .tb-topics::after  { content: ' Topics: off'; font-size: 13px; }
-  .tb-overflow-items .tb-topics.active::after { content: ' Topics: on'; }
-  /* The difficulty control is itself a dropdown — let it fill the panel row
-     and open as a normal block beneath its trigger rather than floating. */
-  .tb-overflow-items .adshub-diff-menu-wrap { width: 100%; }
-  .tb-overflow-items .adshub-diff-menu-wrap > button { width: 100%; justify-content: space-between; }
-  .tb-overflow-items .adshub-diff-menu { position: static; margin-top: 6px; min-width: 0; width: 100%; }
-
-  /* Lineage / Patterns modes hold only refresh, so skip the ⋯ entirely and
-     leave that button inline exactly as before. */
-  .tb-overflow--single, .tb-overflow--single .tb-overflow-items { display: contents; }
+  /* The ⋯ panel is now the default at every width — see .tb-overflow above. */
 
   /* Chips take their own full row instead of trailing the count. */
   .browse-toolbar .applied-filter-chips { flex-basis: 100%; align-items: center; }
@@ -5326,12 +5334,15 @@ body.resizing-h * {
   .recall-hd      { padding: 6px 10px; }
 
   /* .mobile-filter-btn is left out on purpose — it defaults to
-     display:none here, and this rule would light it up. */
+     display:none here, and this rule would light it up.
+
+     Only ↻ is still laid out inline, and only in the modes where the ⋯ is
+     skipped (.tb-overflow--single). add / export / topics now live solely
+     inside the ⋯ panel, where they are full-width rows with captions — these
+     compact metrics out-specify the panel's own rule and would squeeze them
+     back into 26px squares with the caption spilling out. */
   .browse-toolbar .adshub-diff-pill,
-  .browse-toolbar .tb-refresh,
-  .browse-toolbar .tb-add,
-  .browse-toolbar .tb-export,
-  .browse-toolbar .tb-topics,
+  .browse-toolbar .tb-overflow--single .tb-refresh,
   .recall-hd .adshub-diff-pill,
   .recall-hd .bci-edit-btn,
   .recall-hd .recall-new-btn,
@@ -5345,7 +5356,7 @@ body.resizing-h * {
   /* Icon-only controls: exact squares, so the run reads as equal tiles
      instead of short wide slabs. width AND min-width, because two of them
      ship a min-width of their own. */
-  .browse-toolbar .tb-refresh,
+  .browse-toolbar .tb-overflow--single .tb-refresh,
   .recall-hd .bci-edit-btn,
   .recall-hd .recall-new-btn,
   .recall-hd .detail-close-btn {
@@ -5357,8 +5368,10 @@ body.resizing-h * {
   }
   /* 14px glyphs leave no breathing room in a 26px box. */
   .recall-hd .bci-edit-btn.bci-edit-btn-hd { font-size: 13px; }
-  /* Inputs match the buttons, so the row has one box height throughout. */
-  .browse-toolbar .col-search { box-sizing: border-box; height: var(--ctl-h); padding: 0 10px; }
+  /* Inputs match the buttons, so the row has one box height throughout.
+     Direct child only: the search box lives in the ⋯ panel now, which sets
+     its own comfortable height rather than the 26px toolbar metric. */
+  .browse-toolbar > .col-search { box-sizing: border-box; height: var(--ctl-h); padding: 0 10px; }
 }
 /* Same alignment at touch size. 32px matches the ⋯ trigger, which is the
    one control in these rows already sized for a thumb. */
@@ -5425,7 +5438,6 @@ body.resizing-h * {
      leaves that panel as display:contents — so the caption was matching the
      INLINE button too. ~90px of button for one icon is what pushed it off
      the pills' row in the first place; inline it stays a bare icon. */
-  .tb-overflow--single .tb-refresh::after { content: none; }
   /* Narrower than ~360px the pills genuinely don't fit, and .browse-toolbar
      wraps rather than shrinks — flex only shrinks WITHIN a line, so the icon
      would hop to a row of its own again. Capping the strip's width leaves
