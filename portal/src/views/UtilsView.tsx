@@ -553,10 +553,14 @@ function ToDoPanel() {
   // the model revises what exists instead of proposing a parallel copy of it.
   async function runGenerate(withList = false) {
     if (!genCtx.trim() || genBusy) return
-    if (!LLM.isConfigured()) {
-      setGenErr('Configure Azure OpenAI in Settings → AI Assistant.'); return
-    }
     setGenBusy(true); setGenErr(''); setGenRaw('')
+    // Pull the credentials from the Settings tab if Config is still cold,
+    // rather than telling the user to go and open Settings themselves.
+    if (!(await LLM.ensureConfigured())) {
+      setGenErr('Configure Azure OpenAI in Settings → AI Assistant.')
+      setGenBusy(false)
+      return
+    }
     try {
       const listText = genTarget ? outlineOf(subtreeOf(genTarget.id)) : todoOutline
       const prompt = withList && listText
@@ -1504,7 +1508,7 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
   async function tagUntagged() {
     const todo = lessons.filter(l => !l.path)
     if (todo.length === 0 || tagBusy) return
-    if (!LLM.isConfigured()) {
+    if (!(await LLM.ensureConfigured())) {
       toast('Configure Azure OpenAI in Settings → AI Assistant.', 'error')
       return
     }
@@ -2122,7 +2126,7 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
 
   // ── Generate lessons from a date range via LLM ───────────────────────
   async function generateLessons() {
-    if (!LLM.isConfigured()) {
+    if (!(await LLM.ensureConfigured())) {
       toast('Configure Azure OpenAI in Settings → AI Assistant.', 'error')
       return
     }

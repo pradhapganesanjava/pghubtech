@@ -12,6 +12,17 @@ export const LLM = {
     return !!(Config.azureEndpoint && Config.azureApiKey)
   },
 
+  // Async guard for call sites that can await: if the credentials are not in
+  // Config yet, read them from the Settings tab and look again. Covers a boot
+  // fetch that failed or had not finished, so a feature is never permanently
+  // "not configured" just because of when it was opened.
+  async ensureConfigured(): Promise<boolean> {
+    if (this.isConfigured()) return true
+    const { hydrateAiConfig } = await import('../services/aiConfig')
+    await hydrateAiConfig()
+    return this.isConfigured()
+  },
+
   _url(): string {
     const ep  = Config.azureEndpoint.replace(/\/$/, '')
     const dep = Config.azureDeployment
@@ -32,7 +43,9 @@ export const LLM = {
   // naturally ('stop'). The Ask AI panel uses this to surface a truncation
   // banner and offer Retry.
   async chatWithMeta(messages: ChatMessage[], maxTokens = 4000): Promise<{ content: string; finishReason: string }> {
-    if (!this.isConfigured()) {
+    // Last line of defence: a direct chat() call on a cold Config hydrates
+    // rather than throwing at the user.
+    if (!this.isConfigured() && !(await this.ensureConfigured())) {
       throw new Error('Azure OpenAI is not configured — open Settings to add the endpoint and API key.')
     }
     const res = await fetch(this._url(), {

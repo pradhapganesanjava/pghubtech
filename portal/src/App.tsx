@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { GAuth } from './lib/gauth'
 import { Config } from './services/config'
 import { checkAccess, ensureHeaders, loadSettings, saveSetting, UnauthorizedError } from './adapters/sheetsRepo'
+import { applyAiSettings } from './services/aiConfig'
 import { ToastProvider } from './components/Toast'
 import TopBar from './components/TopBar'
 import SheetSetupModal from './components/SheetSetupModal'
@@ -53,6 +54,9 @@ export default function App() {
               setTheme(settings.theme)
               Config.theme = settings.theme
             }
+            // The same fetch already has the AI credentials in it; without this
+            // every AI feature claims "not configured" until Settings is opened.
+            applyAiSettings(settings)
             setAuthState('authenticated')
           })
           .catch(e => {
@@ -136,6 +140,7 @@ export default function App() {
           setTheme(settings.theme)
           Config.theme = settings.theme
         }
+        applyAiSettings(settings)
         setAuthState('authenticated')
       }
     } catch (e) {

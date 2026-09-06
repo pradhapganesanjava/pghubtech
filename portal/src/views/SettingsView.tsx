@@ -6,21 +6,10 @@ import type { AnkiTemplate, AnkiField } from '../adapters/ankiRepo'
 import { LLM } from '../lib/llm'
 import { TTS } from '../lib/tts'
 import { useToast } from '../components/Toast'
-
-// Sheet-key ↔ Config-field mapping for the AI assistant settings. Saving the
-// AI panel writes one row per non-empty field to the Settings tab.
-const AI_KEYS = {
-  endpoint:    'ai_endpoint',
-  apiKey:      'ai_api_key',
-  deployment:  'ai_deployment',
-  apiVersion:  'ai_api_version',
-  ttsEndpoint: 'ai_tts_endpoint',
-  ttsApiKey:   'ai_tts_api_key',
-  ttsDeploy:   'ai_tts_deployment',
-  ttsVersion:  'ai_tts_api_version',
-  ttsVoice:    'ai_tts_voice',
-  audioOn:     'ai_audio_on',
-} as const
+// Sheet-key ↔ Config-field mapping for the AI assistant settings, shared with
+// the boot-time hydration in App so the two can never drift. Saving the AI
+// panel writes one row per non-empty field to the Settings tab.
+import { AI_KEYS } from '../services/aiConfig'
 
 const TTS_VOICES = [
   { id: 'alloy',   label: 'Alloy'   },

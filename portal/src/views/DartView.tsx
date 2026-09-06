@@ -133,7 +133,7 @@ async function condense(
   raw: string, fallbackTitle: string,
 ): Promise<{ title: string; notes: string; mood: LogMood }> {
   const fallback = { title: fallbackTitle, notes: '', mood: 'good' as LogMood }
-  if (!LLM.isConfigured() || raw.trim().split(/\s+/).length < 12) return fallback
+  if (raw.trim().split(/\s+/).length < 12 || !(await LLM.ensureConfigured())) return fallback
   try {
     const reply = await LLM.chat([
       { role: 'system', content: [
@@ -182,7 +182,7 @@ function spanMinutes(span: { start: string; end: string }): number {
 async function extractLesson(
   raw: string,
 ): Promise<{ problem: string; worked: string; notWorked: string; path: string } | null> {
-  if (!LLM.isConfigured() || raw.trim().split(/\s+/).length < 8) return null
+  if (raw.trim().split(/\s+/).length < 8 || !(await LLM.ensureConfigured())) return null
   try {
     const reply = await LLM.chat([
       { role: 'system', content: [
