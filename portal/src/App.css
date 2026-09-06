@@ -110,7 +110,14 @@ body {
   color: var(--primary);
 }
 .tb-pill:active { transform: translateY(1px); }
-.tb-pill-icon { font-size: 15px; line-height: 1; }
+/* Was a 15px emoji — small, multicoloured per platform, and read as
+   decoration. Now the drawn mark, and larger because the "AI" word next to it
+   is gone: the logo already says it. Its palette is its own, so it does not
+   take the pill's colour. */
+.tb-pill-icon { width: 22px; height: 22px; display: block; flex-shrink: 0; object-fit: contain; }
+/* A hint of the logo's colours behind it, so the control reads as active
+   chrome rather than a sticker. */
+.ai-launch-btn.active { box-shadow: 0 0 0 1px rgba(37,99,235,.45), 0 2px 10px rgba(239,68,68,.28); }
 .tb-pill-lbl  { font-size: 13px; letter-spacing: .02em; }
 
 /* AI launcher specifics — active = filled */
@@ -2319,7 +2326,7 @@ body.resizing-v * {
   .topbar { padding: 0 10px; gap: 8px; }
   .topbar .logo { font-size: 15px; letter-spacing: -0.3px; }
   .tb-pill { height: 36px; padding: 0 10px; gap: 6px; }
-  .tb-pill-icon { font-size: 14px; }
+  .tb-pill-icon { width: 20px; height: 20px; }
 
   /* Settings + main padding tighter */
   .panel { padding: 14px 14px; }
@@ -6273,6 +6280,30 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 
 /* Completion ring beside the date */
 .dart-ringwrap { margin-left: auto; position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+/* The log button sits immediately left of the ring and takes over pushing the
+   pair to the right, so the two stay adjacent instead of splitting across the
+   header. */
+.dart-logbtn + .dart-ringwrap { margin-left: 8px; }
+.dart-logbtn {
+  margin-left: auto; flex-shrink: 0;
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer;
+  transition: color .12s, border-color .12s, background .12s;
+}
+.dart-logbtn:hover { color: var(--primary); border-color: var(--primary); background: rgba(var(--primary-rgb), .08); }
+.dart-logbtn.active {
+  color: var(--primary); border-color: var(--primary);
+  background: rgba(var(--primary-rgb), .14);
+}
+/* Same mark as the Ask AI pill — the button's own 64px circle provides the
+   shape, so the icon is just the sparkle. */
+.dart-logbtn-mark { width: 26px; height: 26px; display: block; object-fit: contain; }
+.dart-logbtn-lbl {
+  font: 700 9.5px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  text-transform: uppercase; letter-spacing: .06em;
+}
 .dart-ring { display: block; }
 .dart-ring-bg { fill: none; stroke: var(--bg3); stroke-width: 6; }
 .dart-ring-fg {
@@ -6394,6 +6425,7 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
    A capture box, not a fixture: collapsed to one line until you need it, so it
    never competes with the day's actual list. */
 .dart-quick { margin: 0 0 10px; }
+.dart-quick:not(.open) { display: none; }   /* the trigger lives in the header now */
 /* Was a dashed grey outline and read as disabled chrome. It is the primary
    capture action on this page, so it gets solid weight and the accent tint —
    still one line tall, but unmistakably a button. */
@@ -7218,4 +7250,60 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 @media (max-width: 720px) {
   .scratch-picker { max-width: 96px; }
   .scratch-grip { height: 10px; }   /* a finger needs more than 6px */
+}
+
+
+/* ── ToDo · Current ─────────────────────────────────────────────────────────
+   What you are working on now, lifted out of the tree and pinned on top. The
+   flag lives on the item in the sheet, so this list is the same on every
+   device and survives a reload. */
+.todo3-current {
+  flex-shrink: 0; margin: 0 0 6px;
+  border: 1px solid rgba(var(--primary-rgb), .35); border-radius: 8px;
+  background: rgba(var(--primary-rgb), .07);
+}
+.todo3-current-hd {
+  display: flex; align-items: center; gap: 6px; padding: 5px 9px;
+  border-bottom: 1px solid rgba(var(--primary-rgb), .2);
+}
+.todo3-current-title {
+  font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--primary);
+}
+.todo3-current-n { margin-left: auto; font-size: 10.5px; color: var(--text2); }
+.todo3-current-list { list-style: none; margin: 0; padding: 4px; max-height: 34vh; overflow-y: auto; }
+.todo3-current-row { display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 5px; }
+.todo3-current-row:hover { background: var(--bg3); }
+.todo3-current-btn {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+  background: transparent; border: none; cursor: pointer; text-align: left; padding: 3px 2px;
+}
+.todo3-current-name {
+  font-size: 12.5px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.todo3-current-btn.sel .todo3-current-name { color: var(--primary); font-weight: 600; }
+/* Which list it came from — a pinned leaf on its own says little. */
+.todo3-current-path {
+  font-size: 10.5px; color: var(--text2); opacity: .8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.todo3-current-x {
+  flex-shrink: 0; background: transparent; border: none; cursor: pointer;
+  color: var(--text2); font-size: 10px; padding: 3px 5px; border-radius: 4px;
+}
+.todo3-current-x:hover { color: var(--danger); background: var(--bg2); }
+
+/* Pin control on a tree row — dim until used, accent once pinned. */
+.todo3-pin { color: var(--text2); opacity: .65; }
+.todo3-pin:hover { opacity: 1; color: var(--primary); }
+.todo3-pin.on { opacity: 1; color: var(--primary); }
+
+
+/* The AI mark inline in a label or button. Sized in em so it follows whatever
+   text it sits beside, and nudged down to sit on the baseline rather than
+   riding above it. */
+.ai-inline {
+  width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.22em;
+  object-fit: contain; flex-shrink: 0;
 }

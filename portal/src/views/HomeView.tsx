@@ -6,7 +6,7 @@ import {
   loadSRSMap, getAllSRS, isDue, computeNextSRS, setSRSRecord, previewIntervals,
 } from '../adapters/srsRepo'
 import type { SRSRecord } from '../adapters/srsRepo'
-import { getCardFrontHtml, getCardBackHtml, getCardFrontText } from '../utils/cardHelpers'
+import { getCardFrontHtml, getCardBackHtml } from '../utils/cardHelpers'
 import { sanitizeHtml } from '../lib/sanitize'
 import { resolveDriveImagesInHtml } from '../lib/drive'
 import { GAuth } from '../lib/gauth'

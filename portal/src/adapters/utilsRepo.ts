@@ -17,7 +17,9 @@ const TODO_TAB         = 'ToDo'
 const ACTIVITY_TAB     = 'Activity'
 const LESSONS_TAB      = 'Lessons'
 const TODO_COMMENTS_TAB = 'ToDoComments'
-const TODO_HEADERS    = ['id','parent_id','title','done','position','created_at','updated_at','description'] as const
+// `current` appended at the END so an existing sheet keeps working — old rows
+// read back as not-current.
+const TODO_HEADERS    = ['id','parent_id','title','done','position','created_at','updated_at','description','current'] as const
 const ACT_HEADERS     = ['id','date','kind','time','content','created_at'] as const
 // `path` appended at the END so an existing sheet keeps working — old rows
 // read back unfiled.
@@ -35,6 +37,10 @@ export interface ToDoItem {
   createdAt:   string
   updatedAt:   string
   description: string   // long-form info / what the item means
+  // Pinned to the Current section — what you are actually working on now.
+  // Stored here rather than in localStorage so the focus list survives a new
+  // browser and follows you between devices, like everything else in the tab.
+  current:     boolean
 }
 
 export interface ToDoComment {
@@ -182,7 +188,7 @@ async function deleteRowsByIds(name: string, ids: string[]): Promise<void> {
 
 export async function loadToDos(): Promise<ToDoItem[]> {
   await ensureTab(TODO_TAB, TODO_HEADERS)
-  const rows = await readRows(TODO_TAB, 'A2:H')
+  const rows = await readRows(TODO_TAB, 'A2:I')
   return rows
     .filter(r => r[0])
     .map(r => ({
@@ -194,6 +200,7 @@ export async function loadToDos(): Promise<ToDoItem[]> {
       createdAt:   r[5] ?? '',
       updatedAt:   r[6] ?? '',
       description: r[7] ?? '',
+      current:     (r[8] ?? '').toLowerCase() === 'true',
     }))
 }
 
@@ -211,10 +218,12 @@ export async function addToDo(parentId: string, title: string, description = '')
     createdAt:   now,
     updatedAt:   now,
     description: description.trim(),
+    current:     false,
   }
-  await appendRow(TODO_TAB, 'H', [
+  await appendRow(TODO_TAB, 'I', [
     item.id, item.parentId, item.title, String(item.done),
     String(item.position), item.createdAt, item.updatedAt, item.description,
+    String(item.current),
   ])
   return item
 }
@@ -258,18 +267,20 @@ export async function appendToDoTreeBatch(
         createdAt:   now,
         updatedAt:   now,
         description: (d.description ?? '').trim(),
+        current:     false,
       }
       out.push(item)
       rows.push([
         item.id, item.parentId, item.title, String(item.done),
         String(item.position), item.createdAt, item.updatedAt, item.description,
+        String(item.current),
       ])
       if (d.children && d.children.length > 0) walk(d.children, item.id)
     }
   }
   walk(drafts, rootParentId)
   await GAuth.fetch(
-    `${BASE}/${sid()}/values/${encodeURIComponent(`${TODO_TAB}!A:H`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    `${BASE}/${sid()}/values/${encodeURIComponent(`${TODO_TAB}!A:I`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     { method: 'POST', headers: auth(true), body: JSON.stringify({ values: rows }) },
   ).then(r => expectOk(r, 'Append ToDos batch'))
   return out
@@ -280,9 +291,10 @@ export async function updateToDo(item: ToDoItem): Promise<void> {
   const idx = await findRowByCol0(TODO_TAB, item.id)
   if (idx < 0) throw new Error('ToDo row not found')
   const updated = { ...item, updatedAt: new Date().toISOString() }
-  await writeRow(TODO_TAB, `A${idx}:H${idx}`, [
+  await writeRow(TODO_TAB, `A${idx}:I${idx}`, [
     updated.id, updated.parentId, updated.title, String(updated.done),
     String(updated.position), updated.createdAt, updated.updatedAt, updated.description ?? '',
+    String(!!updated.current),
   ])
 }
 

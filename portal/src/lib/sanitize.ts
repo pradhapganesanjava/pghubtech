@@ -10,7 +10,11 @@ import DOMPurify from 'dompurify'
 const ALLOWED_URI_REGEXP =
   /^(?:(?:https?|mailto|ftp|tel|sms|blob):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
 
-const CONFIG: DOMPurify.Config = {
+// v3 ships no DOMPurify namespace — take the option type from sanitize itself
+// so this stays correct if the signature changes.
+type PurifyConfig = NonNullable<Parameters<typeof DOMPurify.sanitize>[1]>
+
+const CONFIG: PurifyConfig = {
   ADD_DATA_URI_TAGS: ['img'],
   // Anchors may opt into target="_blank". DOMPurify drops `target` by default,
   // but problem descriptions link out to LeetCode / GfG and must not navigate
@@ -35,7 +39,9 @@ DOMPurify.addHook('afterSanitizeAttributes', node => {
 
 export function sanitizeHtml(html: string | null | undefined): string {
   if (!html) return ''
-  return DOMPurify.sanitize(html, CONFIG) as string
+  // Returns TrustedHTML when the browser supports Trusted Types; both
+  // stringify identically for our callers.
+  return DOMPurify.sanitize(html, CONFIG) as unknown as string
 }
 
 // True if the URL's scheme is safe to use as a hyperlink target. Used by the

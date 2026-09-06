@@ -987,12 +987,6 @@ export default function NotesView() {
   )
 }
 
-function fmtDate(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString()
-}
 
 function fmtRelative(iso: string): string {
   if (!iso) return ''

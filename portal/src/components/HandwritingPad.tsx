@@ -457,7 +457,7 @@ function ReactPad({ page, pageKey, tool, color, size, onCommit, onErase }: PadPr
       // Salvage any stroke whose pointerup the iPad swallowed.
       if (activeRef.current && activeRef.current.points.length) onCommitR.current(activeRef.current)
       activeRef.current = null; endRaf()
-      try { el.setPointerCapture(e.pointerId) } catch {}
+      try { el?.setPointerCapture(e.pointerId) } catch { /* capture is best-effort */ }
       const [x, y] = logical(e)
       if (t === 'eraser') { onEraseR.current(x, y); return }
       activeRef.current = { tool: 'pen', color: colorRef.current, size: sizeRef.current, points: [[x, y, e.pressure || 0.5]] }

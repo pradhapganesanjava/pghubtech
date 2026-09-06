@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import RichEditor from './RichEditor'
 import { sanitizeHtml } from '../lib/sanitize'
-import { fetchDriveFile, resolveDriveImagesInHtml } from '../lib/drive'
+import { resolveDriveImagesInHtml } from '../lib/drive'
 import { inlineImagesToDataUri, blobToDataUri } from '../lib/driveImages'
 import { GAuth } from '../lib/gauth'
 import { getPatternNote, savePatternNote, deletePatternNote } from '../adapters/patternNotesRepo'
