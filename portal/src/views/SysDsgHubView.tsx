@@ -1,4 +1,4 @@
-// SysDsgHub — a separate repo (PGSysdsgHub) rendered in place.
+// SysDsgHub — a separate repo (SysDsgHub, published at /PGHubSysDsg) rendered in place.
 //
 // It ships as its own GitHub Pages site but lives on the SAME ORIGIN as this
 // portal (pradhapganesanjava.github.io), so an iframe here shares localStorage
@@ -14,7 +14,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
 
-const SRC    = 'https://pradhapganesanjava.github.io/PGSysdsgHub/'
+// Trailing slash on purpose: GitHub Pages 301s /PGHubSysDsg to /PGHubSysDsg/,
+// and paying for that redirect inside an iframe on every open is avoidable.
+// Only the PATH changed when this moved — the origin is the same, so the
+// frame-src entry in index.html and the trusted origin in the child app's
+// parent-auth.js both still hold.
+// Case matters: Pages serves this path case-sensitively, so /pghubsysdsg/ is
+// a 404 while /PGHubSysDsg/ is the live site.
+const SRC    = 'https://pradhapganesanjava.github.io/PGHubSysDsg/'
 const ORIGIN = new URL(SRC).origin
 
 export default function SysDsgHubView() {
