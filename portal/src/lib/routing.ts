@@ -13,7 +13,7 @@
 //   /pghubtech/utils        → utils
 //   /pghubtech/ads          → ads
 //   /pghubtech/adshub       → ads-hub  (also matches AdsHub, ADSHUB — case-insensitive)
-//   /pghubtech/sysdsghub    → sysdsg-hub (the PGSysdsgHub app, framed in place)
+//   /pghubtech/sysdsghub    → sysdsg-hub (the /PGHubSysDsg app, framed in place)
 //   /pghubtech/ai-skills    → ai-skills
 //   /pghubtech/settings     → settings
 //
