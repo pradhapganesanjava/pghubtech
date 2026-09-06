@@ -51,7 +51,7 @@ export default function App() {
       } else {
         checkAccess()
           .then(async () => {
-            const settings = await loadSettings().catch(() => ({}))
+            const settings = await loadSettings().catch((): Record<string, string> => ({}))
             if (settings.theme) {
               setTheme(settings.theme)
               Config.theme = settings.theme
@@ -137,7 +137,7 @@ export default function App() {
         setAuthState('needs-sheet')
       } else {
         await ensureHeaders()
-        const settings = await loadSettings().catch(() => ({}))
+        const settings = await loadSettings().catch((): Record<string, string> => ({}))
         if (settings.theme) {
           setTheme(settings.theme)
           Config.theme = settings.theme
@@ -153,7 +153,9 @@ export default function App() {
   function handleSignOut() {
     GAuth.signOut()
     setAuthState('unauthenticated')
-    setView('home')
+    // Signing out returns to the entry point, which is the landing page now —
+    // leaving it on 'home' would drop the next sign-in straight into the queue.
+    setView('landing')
   }
 
   async function handleSheetConfigured(sheetId: string) {

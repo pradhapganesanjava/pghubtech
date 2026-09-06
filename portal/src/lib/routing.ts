@@ -3,8 +3,9 @@
 // The app lives under Vite's base path (import.meta.env.BASE_URL — '/pghubtech/'
 // in production and dev). Each tab maps to a path segment under that base:
 //
-//   /pghubtech/             → home (default)
-//   /pghubtech/start        → landing (the brand click)
+//   /pghubtech/             → landing (default — the signpost)
+//   /pghubtech/start        → landing (alias, e.g. the brand click)
+//   /pghubtech/home         → home (Anki's queue)
 //   /pghubtech/anki         → anki (Home + Browse live here as sub-tabs)
 //   /pghubtech/home         → home
 //   /pghubtech/browse       → browse
@@ -61,12 +62,19 @@ function relativeTo(base: string, pathname: string): string {
 
 export function viewFromPath(pathname: string, base = import.meta.env.BASE_URL): View {
   const rel = relativeTo(base, pathname).replace(/^\/+|\/+$/g, '').toLowerCase()
-  if (!rel) return 'home'
-  return VIEWS_BY_PATH[rel] ?? 'home'
+  // The bare base is the landing page — the signpost, not a tab. An unknown
+  // path lands there too: a signpost is a better answer to "where am I?" than
+  // dropping someone into the review queue.
+  if (!rel) return 'landing'
+  return VIEWS_BY_PATH[rel] ?? 'landing'
 }
 
 export function pathForView(view: View, base = import.meta.env.BASE_URL): string {
   const b = base.endsWith('/') ? base : base + '/'
-  if (view === 'home') return b
+  // Landing owns the bare base, so its canonical URL is the site root; /start
+  // stays a working alias. Home is a tab like any other and carries its own
+  // segment — without this it would write the root URL and then resolve back
+  // to landing on the next reload.
+  if (view === 'landing') return b
   return b + PATHS_BY_VIEW[view]
 }
