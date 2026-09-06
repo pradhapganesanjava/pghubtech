@@ -13,6 +13,7 @@ import EphemeralAIChat from '../components/EphemeralAIChat'
 import { LLM } from '../lib/llm'
 import { generateToDoHierarchy } from '../lib/todoGen'
 import { lessonLines } from '../lib/lessonFmt'
+import AiMark from '../components/AiMark'
 import { downloadText } from '../lib/csvExport'
 import { briefOf, keywordTitle, tidyRootTitle } from '../lib/todoTitle'
 import { loadFilters, saveFilters } from '../lib/persistedFilters'
@@ -114,7 +115,7 @@ function ToDoPanel() {
     () => loadFilters(TODO_GEN_KEY, { ctx: '', byRoot: {} as Record<string, string> }).byRoot ?? {},
   )
 
-  // Actions (left) column starts hidden — strip with ▸ / ＋ / ✨ icons.
+  // Actions (left) column starts hidden — strip with ▸ / ＋ / AI icons.
   const [actionsCollapsed, setActionsCollapsed] = useState(true)
   // Middle list column expanded (hides detail pane).
   const [listExpanded, setListExpanded] = useState(false)
@@ -263,6 +264,25 @@ function ToDoPanel() {
       setSelectedId(created.id)
     } catch (e) { toast(`Add failed: ${(e as Error).message}`, 'error') }
     finally { setBusy(false) }
+  }
+
+  // Current = what you are working on now, pinned above the tree. Persisted on
+  // the item itself (a sheet column), so the focus list survives a reload, a
+  // new browser and a different device — not localStorage.
+  const currentItems = useMemo(
+    () => items.filter(t => t.current && !t.done)
+              .sort((a, b) => a.position - b.position),
+    [items],
+  )
+
+  async function toggleCurrent(t: ToDoItem) {
+    const next = { ...t, current: !t.current }
+    setItems(prev => prev.map(x => x.id === t.id ? next : x))   // optimistic
+    try { await updateToDo(next) }
+    catch (e) {
+      setItems(prev => prev.map(x => x.id === t.id ? t : x))    // put it back
+      toast(`Could not update: ${(e as Error).message}`, 'error')
+    }
   }
 
   async function toggleDone(t: ToDoItem) {
@@ -483,7 +503,10 @@ function ToDoPanel() {
     try {
       let n = 0
       for (const t of untidyRoots) {
-        const updated = await updateToDo({ ...t, title: tidyRootTitle(t.title) })
+        // updateToDo resolves void — build the new item here rather than
+        // storing its return, which would put `void` in the items array.
+        const updated: ToDoItem = { ...t, title: tidyRootTitle(t.title) }
+        await updateToDo(updated)
         setItems(prev => prev.map(x => x.id === t.id ? updated : x))
         n++
       }
@@ -668,6 +691,12 @@ function ToDoPanel() {
     const isRoot = t.parentId === ''
     return (
       <span className="todo3-actions">
+        <button
+          className={`todo3-pin${t.current ? ' on' : ''}`}
+          onClick={e => { e.stopPropagation(); toggleCurrent(t) }}
+          title={t.current ? 'Remove from Current' : 'Move to Current'}
+          aria-pressed={t.current}
+        >▲</button>
         {isRoot && (
           <>
             <button
@@ -824,7 +853,7 @@ function ToDoPanel() {
             className="notes-strip-btn"
             onClick={() => setActionsCollapsed(false)}
             title="Open AI Generate"
-          >✨</button>
+          ><AiMark className="ai-inline" /></button>
         </div>
       ) : (
         <div className="todo3-actions-col" style={{ width: col1Width }}>
@@ -871,7 +900,8 @@ function ToDoPanel() {
                 title={genTarget
                   ? `Revise "${genTarget.title}" using its current items`
                   : 'Generate a new list under a new root'}
-              >{genBusy ? 'Generating…' : genTarget ? '♻ Regenerate' : '✨ Generate'}</button>
+              >{genBusy ? 'Generating…' : genTarget ? '♻ Regenerate'
+                 : <><AiMark className="ai-inline" /> Generate</>}</button>
             </div>
             {genErr && <div className="login-error">{genErr}</div>}
             {genErr && genRaw && (
@@ -998,11 +1028,50 @@ function ToDoPanel() {
             </div>
           </div>
         )}
+        {currentItems.length > 0 && (
+          <div className="todo3-current">
+            <div className="todo3-current-hd">
+              <span className="todo3-current-title">▶ Current</span>
+              <span className="todo3-current-n">{currentItems.length}</span>
+            </div>
+            <ul className="todo3-current-list">
+              {currentItems.map(t => {
+                // pathOf includes the item itself; the row shows the title
+                // separately, so the breadcrumb is everything above it.
+                const path = pathOf(t, itemsById).slice(0, -1).join(' / ')
+                return (
+                  <li key={t.id} className="todo3-current-row">
+                    <input
+                      type="checkbox" checked={t.done} title="Mark done"
+                      onChange={e => { e.stopPropagation(); toggleDone(t) }}
+                    />
+                    <button
+                      className={`todo3-current-btn${selectedId === t.id ? ' sel' : ''}`}
+                      onClick={() => setSelectedId(t.id)}
+                      title={path ? `${path} / ${t.title}` : t.title}
+                    >
+                      <span className="todo3-current-name">{t.title}</span>
+                      {path && <span className="todo3-current-path">{path}</span>}
+                    </button>
+                    <button
+                      className="todo3-current-x"
+                      onClick={() => toggleCurrent(t)}
+                      title="Remove from Current"
+                    >✕</button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
         <div className="todo3-list-body">
           {loading ? (
             <div className="col-empty">Loading…</div>
           ) : items.length === 0 ? (
-            <div className="col-empty">No tasks yet — use ＋ Add new or ✨ Generate.</div>
+            <div className="col-empty">
+              No tasks yet — use ＋ Add new or <AiMark className="ai-inline" /> Generate.
+            </div>
           ) : viewMode === 'tree' ? (
             renderTree('', 0) ?? <div className="col-empty">No matches</div>
           ) : (
@@ -1621,7 +1690,7 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
               <button
                 className="rf-btn-cancel"
                 onClick={() => { setGenOpen(o => !o); setEditingLessonId(null) }}
-              >✨ Generate from range</button>
+              ><AiMark className="ai-inline" /> Generate from range</button>
             </div>
               {lessonPaths.unfiled > 0 && (
                 <button
@@ -1684,7 +1753,9 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
             {!lessonsLoaded ? (
               <div className="col-empty">Loading…</div>
             ) : lessons.length === 0 ? (
-              <div className="col-empty">No lessons yet. Use ＋ New lesson or ✨ Generate.</div>
+              <div className="col-empty">
+                No lessons yet. Use ＋ New lesson or <AiMark className="ai-inline" /> Generate.
+              </div>
             ) : shownLessons.length === 0 ? (
               <div className="col-empty">No lessons under that tag.</div>
             ) : (
@@ -1713,7 +1784,9 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
                       )}
                       <div className="lessons-row-meta">
                         {l.path && <span className="lessons-row-path">{l.path.replace(/::/g, ' › ')}</span>}
-                        {l.source.startsWith('ai:') ? `✨ ${l.source.slice(3)}` : 'manual'}
+                        {l.source.startsWith('ai:')
+                          ? <><AiMark className="ai-inline" /> {l.source.slice(3)}</>
+                          : 'manual'}
                       </div>
                     </button>
                   </li>
@@ -1817,7 +1890,9 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
                 />
               )
             ) : (
-              <div className="mgmt-empty">Select a lesson on the left to view it, or use ＋ New / ✨ Generate.</div>
+              <div className="mgmt-empty">
+                Select a lesson on the left to view it, or use ＋ New / <AiMark className="ai-inline" /> Generate.
+              </div>
             )}
           </div>
         </div>
@@ -1981,7 +2056,7 @@ function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
               className={`bci-edit-btn bci-edit-btn-hd${aiOpen ? ' active' : ''}`}
               onClick={() => setAiOpen(o => !o)}
               title={aiOpen ? 'Close Ask AI' : 'Ask AI about this day'}
-            >✨ AI</button>
+            ><AiMark className="ai-inline" /> AI</button>
             {viewMode === 'view' ? (
               <button
                 className="bci-edit-btn bci-edit-btn-hd"
@@ -2725,7 +2800,9 @@ function LessonPreview({
       <LessonBox tone="good" icon="✓"  label="What worked"          text={lesson.worked} />
       <div className="lesson-preview-meta">
         <span className={`lesson-chip${lesson.source.startsWith('ai:') ? ' ai' : ''}`}>
-          {lesson.source.startsWith('ai:') ? `✨ ${lesson.source.slice(3)}` : '✍️ manual'}
+          {lesson.source.startsWith('ai:')
+            ? <><AiMark className="ai-inline" /> {lesson.source.slice(3)}</>
+            : '✍️ manual'}
         </span>
         {lesson.createdAt && <span className="lesson-chip">created {lesson.createdAt.slice(0, 10)}</span>}
         {lesson.updatedAt && lesson.updatedAt !== lesson.createdAt && (
