@@ -7,6 +7,7 @@ import TopBar from './components/TopBar'
 import SheetSetupModal from './components/SheetSetupModal'
 import DocsView from './views/DocsView'
 import AnkiView from './views/AnkiView'
+import SysDsgHubView from './views/SysDsgHubView'
 import LandingView from './views/LandingView'
 import UtilsView from './views/UtilsView'
 import AISkillsView from './views/AISkillsView'
@@ -222,6 +223,7 @@ export default function App() {
         )}
         {view === 'ads'      && <AdsView />}
         {view === 'ads-hub'  && <AdsHubView />}
+        {view === 'sysdsg-hub' && <SysDsgHubView />}
         {view === 'ai-skills' && <AISkillsView />}
         {view === 'settings' && (
           <SettingsView
@@ -239,6 +241,16 @@ export default function App() {
 
         {/* Mobile bottom nav */}
         <nav className="bottom-nav">
+          {/* Ads tab temporarily hidden (pghubads.web.app) — may remove later */}
+          <button className={`bn-btn${view === 'ads-hub'  ? ' active' : ''}`} onClick={() => setView('ads-hub')}>
+            <span className="bn-icon">🧠</span><span className="bn-label">AdsHub</span>
+          </button>
+          <button
+            className={`bn-btn${view === 'sysdsg-hub' ? ' active' : ''}`}
+            onClick={() => setView('sysdsg-hub')}
+          >
+            <span className="bn-icon">🏛</span><span className="bn-label">SysDsg</span>
+          </button>
           <button
             className={`bn-btn${view === 'anki' || view === 'home' || view === 'browse' ? ' active' : ''}`}
             onClick={() => setView('anki')}
@@ -250,10 +262,6 @@ export default function App() {
           </button>
           <button className={`bn-btn${view === 'utils' || view === 'notes' ? ' active' : ''}`} onClick={() => setView('utils')}>
             <span className="bn-icon">🧰</span><span className="bn-label">Utils</span>
-          </button>
-          {/* Ads tab temporarily hidden (pghubads.web.app) — may remove later */}
-          <button className={`bn-btn${view === 'ads-hub'  ? ' active' : ''}`} onClick={() => setView('ads-hub')}>
-            <span className="bn-icon">🧠</span><span className="bn-label">AdsHub</span>
           </button>
           {/* Settings is reachable via the avatar dropdown in the top bar
               (same place on desktop and mobile), so it's no longer in the

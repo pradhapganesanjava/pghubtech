@@ -22,6 +22,10 @@ const DESTS: Dest[] = [
     sub: ['Tags · Companies · MyList · Point2Rem'],
   },
   {
+    view: 'sysdsg-hub', icon: '🏛', title: 'SysDsgHub',
+    blurb: 'System design practice — a separate app, opened in place.',
+  },
+  {
     view: 'anki', icon: '🧠', title: 'Anki',
     blurb: 'The cards themselves — today’s queue, and the whole archive to search.',
     sub: ['Home — what is due now', 'Browse — every card, filtered'],
