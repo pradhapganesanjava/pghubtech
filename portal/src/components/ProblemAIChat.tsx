@@ -125,7 +125,7 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
     rec.lang             = 'en-US'
     rec.interimResults   = false
     rec.continuous       = true
-    rec.onresult = e => {
+    rec.onresult = (e: SpeechRecognitionEventLike) => {
       // Only consume results we haven't applied yet (resultIndex
       // forward) — continuous mode emits a growing list.
       let text = ''
@@ -150,7 +150,7 @@ export default function ProblemAIChat({ slug, problemTitle, problemHtml, notesPl
         setListen(false)
       }
     }
-    rec.onerror = e => {
+    rec.onerror = (e: SpeechRecognitionErrorEventLike) => {
       // 'no-speech' fires on prolonged silence; not a hard error —
       // onend will fire next and we'll restart.
       if ((e as any).error && (e as any).error !== 'no-speech') {

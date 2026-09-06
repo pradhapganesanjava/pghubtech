@@ -140,7 +140,7 @@ function EditField({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function NoteDetailPanel({
-  note, template, rec, lastSeen, onClose, onNoteSaved,
+  note, template, lastSeen, onClose, onNoteSaved,
   existingTags = [],
   expanded, onToggleExpand,
 }: Props) {
