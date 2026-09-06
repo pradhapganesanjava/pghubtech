@@ -3,6 +3,12 @@
 //   ☀️ Today    the day as a checklist: the fixed routine blocks plus whatever
 //               today's goals ask for, with a must-do / could-do call on each.
 //   🎯 Goals    start → tentative end, a frequency, and a time target per period.
+//   💡 Lessons  what worked / what did not, kept as reusable practice.
+//
+// Lessons is injected as `lessonsPanel` rather than imported: it lives in
+// UtilsView, which imports THIS file, so a direct import would close a cycle.
+// (Logging happens on Today now — the ＋ Log box writes straight against the
+// day's items, so the separate Activity Log tab was retired.)
 //   💭 Thoughts free-typed notes, auto-sorted into buckets and reviewable later.
 //
 // Everything persists to the DART spreadsheet in the Drive folder
@@ -10,6 +16,7 @@
 // asks for, and whether it is a must) live in lib/dartPlan.ts.
 
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   addBlock, addGoal, addLogEntry, addRoutine,
   deleteBlock, deleteGoal, deleteLogEntries, deleteRoutine,
@@ -17,22 +24,26 @@ import {
   updateBlock, updateGoal, updateRoutine,
 } from '../adapters/dartRepo'
 import type {
-  DartBlock, DartGoal, DartLogEntry, DartRoutine,
+  DartBlock, DartGoal, DartLogEntry, DartRoutine, LogMood,
   GoalFrequency, GoalPriority,
 } from '../adapters/dartRepo'
 import {
-  fmtMins, fmtUnits, goalTask, goalTasksFor, goalWindow, isoDate, parseIso,
+  bestMatch, clockMinutes, fmtMins, fmtUnits, goalTask, goalTasksFor, goalWindow,
+  isoDate, parseClock, parseEffort, parseIso, shortTitle, splitFragments,
 } from '../lib/dartPlan'
+import type { MatchTarget } from '../lib/dartPlan'
 import type { GoalTask } from '../lib/dartPlan'
 import { useToast } from '../components/Toast'
+import { LLM } from '../lib/llm'
+import { addLesson } from '../adapters/utilsRepo'
 import ConsistencyGrid from '../components/ConsistencyGrid'
 
-type DartSubTab = 'today' | 'goals'
+type DartSubTab = 'today' | 'goals' | 'lessons'
 
 const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-export default function DartView() {
+export default function DartView({ lessonsPanel }: { lessonsPanel?: ReactNode } = {}) {
   const { toast } = useToast()
   const [tab, setTab] = useState<DartSubTab>('today')
 
@@ -74,9 +85,19 @@ export default function DartView() {
           className={`activity-subtab${tab === 'goals' ? ' active' : ''}`}
           onClick={() => setTab('goals')}
         >🎯 Goals</button>
+        {lessonsPanel && (
+          <button
+            className={`activity-subtab${tab === 'lessons' ? ' active' : ''}`}
+            onClick={() => setTab('lessons')}
+          >💡 Lessons</button>
+        )}
       </div>
 
-      {error ? (
+      {tab === 'lessons' ? (
+        // Straight through: Lessons loads from its own store, so it must not
+        // sit behind DART's spreadsheet load or its error state.
+        lessonsPanel
+      ) : error ? (
         <div className="dart-error">
           Could not open the DART store in Drive/PGHubTechDART — {error}
         </div>
@@ -99,6 +120,115 @@ type Toast = ReturnType<typeof useToast>['toast']
 
 // ── Today ────────────────────────────────────────────────────────────────────
 
+// A dictated ramble carries a real title and real substance, but the local
+// parser can only trim — it cannot decide that "collected gathered all the
+// materials to prepare for the next intuit interview" is *Intuit interview
+// prep*. That judgement is the one thing worth an API call, and only for
+// unplanned work long enough to have a shape (matched items already have a
+// title: the routine's own).
+//
+// Fails soft in every direction: not configured, network down, bad JSON — the
+// locally parsed title stands and nothing blocks the save.
+async function condense(
+  raw: string, fallbackTitle: string,
+): Promise<{ title: string; notes: string; mood: LogMood }> {
+  const fallback = { title: fallbackTitle, notes: '', mood: 'good' as LogMood }
+  if (!LLM.isConfigured() || raw.trim().split(/\s+/).length < 12) return fallback
+  try {
+    const reply = await LLM.chat([
+      { role: 'system', content: [
+        'You clean up one line of dictated work-log text.',
+        'Return STRICT JSON only — first character "{", last "}". No prose, no fences.',
+        '{ "title": "", "bullets": [], "mood": "good" }',
+        'title:   3–6 words naming the WORK done. Title case. No duration, no filler,',
+        '         no "I". If the speaker corrected themselves ("X I mean Y"), Y wins.',
+        'bullets: 1–3 short lines of substance actually stated — what was gathered,',
+        '         prepared, fixed, decided. Never invent detail. Never restate the title.',
+        '         Omit the duration; it is recorded separately.',
+        'mood:    "good" when the speaker sounds satisfied it was worth the time,',
+        '         "waste" when they call it wasted / regret it, "mixed" when unsure',
+        '         or when they say more was still needed. Default "good".',
+      ].join('\n') },
+      { role: 'user', content: raw },
+    ], 300)
+    const m = reply.match(/\{[\s\S]*\}/)
+    if (!m) return fallback
+    const j = JSON.parse(m[0]) as { title?: string; bullets?: string[]; mood?: string }
+    const title = String(j.title ?? '').trim()
+    const notes = (Array.isArray(j.bullets) ? j.bullets : [])
+      .map(b => String(b ?? '').trim()).filter(Boolean).slice(0, 3).join('\n')
+    const mood = (['good','mixed','waste'].includes(String(j.mood)) ? j.mood : 'good') as LogMood
+    return { title: title || fallbackTitle, notes, mood }
+  } catch {
+    return fallback
+  }
+}
+
+// A stated window is itself a duration — "six to nine" is 180 minutes even if
+// the speaker never says "three hours".
+function spanMinutes(span: { start: string; end: string }): number {
+  const a = clockMinutes(span.start), b = clockMinutes(span.end)
+  return a !== null && b !== null && b > a ? b - a : 0
+}
+
+// A day's log often carries the thing worth keeping: the approach that finally
+// worked, the trick that unblocked it, the route that wasted an hour. That is a
+// LESSON, not a log line — it outlives the date.
+//
+// Run once over the whole dictation rather than per fragment, so "tried X, gave
+// up, Y worked" is read as one story. Returns null when the text is pure
+// activity reporting, which is the common case — the prompt is explicit that
+// inventing a lesson is worse than returning none.
+async function extractLesson(
+  raw: string,
+): Promise<{ problem: string; worked: string; notWorked: string; path: string } | null> {
+  if (!LLM.isConfigured() || raw.trim().split(/\s+/).length < 8) return null
+  try {
+    const reply = await LLM.chat([
+      { role: 'system', content: [
+        'You read one day of work-log dictation and decide whether it contains a',
+        'REUSABLE lesson — a strategy, approach or trick that helped finish the',
+        'work, or one that clearly did not.',
+        'Return STRICT JSON only, first character "{", last "}". No prose, no fences.',
+        '{ "has_lesson": false, "problem": "", "worked": [], "not_worked": [], "path": "" }',
+        'has_lesson: true ONLY when the speaker names something they would want to',
+        '            do again (or avoid) next time. Plain activity reporting',
+        '            ("spent 3h on prep") is NOT a lesson.',
+        'problem:    the situation it applies to, one short line under 80 chars.',
+        'worked:     the approach/trick that helped, as an ARRAY of short bullets.',
+        'not_worked: the approach that failed or wasted time, same array form.',
+        'Every bullet: one idea, under 80 characters, no trailing period. Split a',
+        'long thought into two bullets rather than writing one long line. [] if none.',
+        'path:       1-3 "::"-separated tags filing it for later, broad → narrow,',
+        '            lowercase, e.g. "interview::prep" or "debugging::tooling".',
+        'Never invent. A wrong lesson is worse than no lesson — when unsure, false.',
+      ].join('\n') },
+      { role: 'user', content: raw },
+    ], 400)
+    const m = reply.match(/\{[\s\S]*\}/)
+    if (!m) return null
+    const j = JSON.parse(m[0]) as Record<string, unknown>
+    if (j.has_lesson !== true) return null
+    // Bullets are stored one per line; a model that answers with a plain string
+    // instead of an array still works.
+    const asLines = (v: unknown): string => (Array.isArray(v) ? v : [v])
+      .map(x => String(x ?? '').trim().replace(/[.;]$/, ''))
+      .filter(Boolean).join('\n')
+    const problem   = String(j.problem ?? '').trim()
+    const worked    = asLines(j.worked)
+    const notWorked = asLines(j.not_worked)
+    // A lesson with no substance on either axis is noise.
+    if (!problem || (!worked && !notWorked)) return null
+    // Same shape and depth cap as a Thought path.
+    const path = String(j.path ?? '').toLowerCase()
+      .split('::').map(x => x.trim().replace(/\s+/g, '-')).filter(Boolean)
+      .slice(0, 4).join('::')
+    return { problem, worked, notWorked, path }
+  } catch {
+    return null
+  }
+}
+
 function TodayPanel({
   blocks, routines, goals, log, setBlocks, setRoutines, setLog, toast,
 }: {
@@ -114,6 +244,9 @@ function TodayPanel({
   // Only the opened card shows bars and the log controls — everything else
   // stays a glanceable headline.
   const [openId, setOpenId] = useState<string | null>(null)
+  // Quick log: collapsed by default — it is a capture box, not a fixture.
+  const [quickOpen, setQuickOpen] = useState(false)
+  const [quickText, setQuickText] = useState('')
   const todayIso            = isoDate(new Date())
 
   const activeRoutines = useMemo(() => routines.filter(r => r.active), [routines])
@@ -166,6 +299,128 @@ function TodayPanel({
   const mustTasks = openTasks.filter(t => t.status === 'must')
 
   const d = parseIso(date)
+
+  const adhocEntries = useMemo(() => dayLog.filter(e => e.kind === 'adhoc'), [dayLog])
+
+  // Entries that stated a wall-clock window, in order — the timeline's rows.
+  const timeline = useMemo(() => dayLog
+    .filter(e => e.startTime)
+    .map(e => ({ e, from: clockMinutes(e.startTime) ?? 0, to: clockMinutes(e.endTime) ?? null }))
+    .sort((a, b) => a.from - b.from), [dayLog])
+  const timelineMins = timeline.reduce(
+    (s, r) => s + (r.to !== null && r.to > r.from ? r.to - r.from : r.e.minutes), 0)
+
+  // Free text in, day updated. Each fragment either names something the day
+  // already asks for — logged against THAT item — or it does not, and becomes
+  // an unplanned entry that lives on this date alone.
+  async function runQuickLog() {
+    const text = quickText.trim()
+    if (!text || busy) return
+    setBusy('quick')
+    const targets: MatchTarget[] = [
+      ...activeRoutines.map(r => ({ kind: 'routine' as const, id: r.id, title: r.title })),
+      ...tasks.map(t => ({ kind: 'goal' as const, id: t.goal.id, title: t.goal.title })),
+    ]
+    const added: DartLogEntry[] = []
+    let matched = 0, unplanned = 0, skipped = 0, ignored = 0
+    try {
+      // A dictated REFLECTION is full of commas and contains no activities, so
+      // splitting it produced one junk row per clause. A fragment only earns a
+      // log row when it carries an effort signal (duration, count, clock) or
+      // names something the day asks for. Everything else is prose, and prose
+      // belongs in a lesson, not the day's ledger.
+      const frags = splitFragments(text).map(frag => {
+        const eff  = parseEffort(frag)
+        const span = parseClock(frag)
+        const hit  = eff.text ? bestMatch(eff.text, targets) : null
+        const mins = eff.minutes || spanMinutes(span)
+        return { frag, eff, span, hit, mins, isActivity: !!(mins || eff.units || hit) }
+      })
+      const activities = frags.filter(f => f.isActivity)
+      ignored = frags.length - activities.length
+
+      // Nothing measurable at all ⇒ log nothing. The text still goes through
+      // lesson extraction below, which is where a reflection actually belongs.
+      const HARD_CAP = 8
+      for (const { frag, eff, span, hit, mins } of activities.slice(0, HARD_CAP)) {
+        const { text: what, units } = eff
+        if (hit?.kind === 'routine') {
+          // Already ticked ⇒ leave it be rather than double-logging the day.
+          if (doneRoutineIds.has(hit.id)) { skipped++; continue }
+          const r = activeRoutines.find(x => x.id === hit.id)!
+          added.push(await addLogEntry(
+            date, 'routine', r.id, r.title, mins || r.minutes, 0, '', span.start, span.end))
+          matched++
+        } else if (hit?.kind === 'goal') {
+          const g = tasks.find(t => t.goal.id === hit.id)!
+          added.push(await addLogEntry(
+            date, 'goal', g.goal.id, g.goal.title, mins, units, '', span.start, span.end))
+          matched++
+        } else {
+          const { title, notes, mood } = await condense(frag, what)
+          added.push(await addLogEntry(
+            date, 'adhoc', '', title, mins, units, notes, span.start, span.end, mood))
+          unplanned++
+        }
+      }
+      if (activities.length > HARD_CAP) ignored += activities.length - HARD_CAP
+      if (added.length) setLog(prev => [...prev, ...added])
+      setQuickText('')
+
+      // Runs whether or not anything was logged — a pure reflection logs zero
+      // rows and is exactly the input most likely to carry a lesson.
+      // Best-effort: a failure here must not cost the entries already saved.
+      let learned = false
+      try {
+        const lesson = await extractLesson(text)
+        if (lesson) {
+          await addLesson({ ...lesson, source: `ai:${date}` })
+          learned = true
+        }
+      } catch { /* the log is saved; the lesson is a bonus */ }
+
+      const parts = [
+        matched   ? `${matched} matched` : '',
+        unplanned ? `${unplanned} unplanned` : '',
+        skipped   ? `${skipped} already done` : '',
+        learned   ? '1 lesson' : '',
+        ignored   ? `${ignored} not an activity` : '',
+      ].filter(Boolean)
+      toast(
+        parts.length ? parts.join(' · ') : 'Nothing to log',
+        added.length || learned ? 'success' : 'info',
+      )
+    } catch (e) {
+      toast(`Could not log: ${(e as Error).message}`, 'error')
+    } finally { setBusy(null) }
+  }
+
+  // Bulk escape hatch: a bad dictation can produce a screenful of rows, and
+  // removing them one ✕ at a time is worse than the mistake.
+  async function clearAdhoc() {
+    if (busy || adhocEntries.length === 0) return
+    setBusy('clear-adhoc')
+    try {
+      const ids = adhocEntries.map(e => e.id)
+      await deleteLogEntries(ids)
+      const gone = new Set(ids)
+      setLog(prev => prev.filter(e => !gone.has(e.id)))
+      toast(`Cleared ${ids.length} unplanned`, 'success')
+    } catch (e) {
+      toast(`Could not clear: ${(e as Error).message}`, 'error')
+    } finally { setBusy(null) }
+  }
+
+  async function removeAdhoc(entry: DartLogEntry) {
+    if (busy) return
+    setBusy(entry.id)
+    try {
+      await deleteLogEntries([entry.id])
+      setLog(prev => prev.filter(e => e.id !== entry.id))
+    } catch (e) {
+      toast(`Could not remove: ${(e as Error).message}`, 'error')
+    } finally { setBusy(null) }
+  }
 
   function shiftDay(delta: number) {
     const n = parseIso(date)
@@ -264,6 +519,79 @@ function TodayPanel({
           </div>
         </div>
 
+        {/* ── Quick log ──────────────────────────────────── */}
+        <section className={`dart-quick${quickOpen ? ' open' : ''}`}>
+          <button className="dart-quick-hd" onClick={() => setQuickOpen(o => !o)}>
+            <span className="dart-quick-caret">{quickOpen ? '▾' : '▸'}</span>
+            <span className="dart-quick-title">＋ Log what you did</span>
+          </button>
+          {quickOpen && (
+            <div className="dart-quick-body">
+              <textarea
+                className="dart-quick-input"
+                rows={2}
+                value={quickText}
+                onChange={e => setQuickText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runQuickLog() }}
+                placeholder="meditated 15m, read 20 min, chased a prod bug 1h30"
+              />
+              <div className="dart-quick-actions">
+                <span className="dart-quick-hint">
+                  Names something today asks for → ticked against it. Anything else → unplanned, this date only.
+                </span>
+                <button
+                  className="dart-quick-btn"
+                  disabled={busy === 'quick' || !quickText.trim()}
+                  onClick={runQuickLog}
+                >{busy === 'quick' ? '…' : 'Log'}</button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ── Unplanned (this date only) ─────────────────── */}
+        {adhocEntries.length > 0 && (
+          <section className="dart-section">
+            <div className="dart-section-hd">
+              <span className="dart-section-title">✳️ Unplanned</span>
+              <span className="dart-section-meta">
+                <b>{fmtMins(adhocEntries.reduce((s, e) => s + e.minutes, 0))}</b>
+              </span>
+              <span className="dart-blockcount">{adhocEntries.length}</span>
+              {adhocEntries.length > 1 && (
+                <button
+                  className="dart-clear-adhoc" disabled={busy === 'clear-adhoc'}
+                  onClick={clearAdhoc}
+                  title={`Remove all ${adhocEntries.length} unplanned entries for this date`}
+                >{busy === 'clear-adhoc' ? '…' : 'clear all'}</button>
+              )}
+            </div>
+            <div className="dart-section-sub">work the day never asked for — kept on this date only</div>
+            <ul className="dart-adhoc-list">
+              {adhocEntries.map(e => (
+                <li key={e.id} className="dart-adhoc">
+                  <div className="dart-adhoc-hd">
+                    <span className="dart-adhoc-title">{e.title}</span>
+                    <span className="dart-adhoc-mins">
+                      {e.minutes ? fmtMins(e.minutes) : ''}
+                      {e.units ? ` · ${fmtUnits(e.units, '')}` : ''}
+                    </span>
+                    <button
+                      className="dart-rchip-x" disabled={busy === e.id}
+                      onClick={() => removeAdhoc(e)} title="Remove"
+                    >✕</button>
+                  </div>
+                  {e.notes && (
+                    <ul className="dart-adhoc-notes">
+                      {e.notes.split('\n').filter(Boolean).map((n, i) => <li key={i}>{n}</li>)}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* ── Goal tasks ─────────────────────────────────── */}
         {tasks.length > 0 && (
           <section className="dart-section">
@@ -333,8 +661,54 @@ function TodayPanel({
         </div>
       </div>
 
-      {/* ── Side column: consistency ─────────────────────── */}
+      {/* ── Side column: timeline, then consistency ──────── */}
       <aside className="dart-side">
+        {/* Only entries that stated a clock window appear — a duration alone
+            has no position on a day, and guessing one would invent history. */}
+        <div className="dart-tl">
+          <div className="dart-tl-hd">
+            <span className="dart-tl-title">🕒 Timeline</span>
+            {timelineMins > 0 && <span className="dart-tl-total">{fmtMins(timelineMins)}</span>}
+          </div>
+          {timeline.length === 0 ? (
+            <div className="dart-tl-empty">
+              No times yet. Say <i>"from six to nine"</i> in the log box and it lands here.
+            </div>
+          ) : (
+            <ul className="dart-tl-list">
+              {timeline.map(({ e, from, to }, i) => {
+                const prev = timeline[i - 1]
+                // A gap only counts once both sides are anchored in clock time.
+                const gap  = prev?.to !== null && prev?.to !== undefined && from - prev.to >= 30
+                  ? from - prev.to : 0
+                const mood = e.kind === 'adhoc' ? e.mood : 'good'
+                return (
+                  <li key={e.id}>
+                    {gap > 0 && (
+                      <div className="dart-tl-gap" title="Unaccounted time">
+                        <span>{fmtMins(gap)} unaccounted</span>
+                      </div>
+                    )}
+                    <div className={`dart-tl-row mood-${mood}`}>
+                      <div className="dart-tl-when">
+                        <span className="dart-tl-t1">{e.startTime}</span>
+                        {e.endTime && <span className="dart-tl-t2">{e.endTime}</span>}
+                      </div>
+                      <div className="dart-tl-what">
+                        <span className="dart-tl-name" title={e.title}>{shortTitle(e.title)}</span>
+                        <span className="dart-tl-kind">
+                          {e.kind === 'adhoc' ? 'unplanned' : e.kind}
+                          {to !== null && to > from ? ` · ${fmtMins(to - from)}` : e.minutes ? ` · ${fmtMins(e.minutes)}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+
         <ConsistencyGrid
           log={log} routines={routines}
           selectedDate={date} onSelectDate={setDate}
