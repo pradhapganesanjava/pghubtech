@@ -1769,22 +1769,22 @@ export default function AdsHubView() {
             ☰ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
           </>}
-          {/* ── Low-frequency actions: refresh · difficulty · add · export ──
-              These four are grouped so they can collapse behind one ⋯ trigger
-              under 768px, where the toolbar was wrapping into a ragged stack.
-              On desktop .tb-overflow / .tb-overflow-items are `display: contents`,
-              so the buttons stay direct flex items of .browse-toolbar and the
-              desktop row is UNCHANGED — CSS `order` restores their original
-              positions around the search box (see App.css). */}
+          {/* ── Everything you press, behind one ⋯ ──────────────────────
+              Refresh, search, the difficulty filter, add, export and the
+              topics toggle. None is used often enough to hold permanent space,
+              and inline they made a long row. What stays outside is what you
+              read rather than press: the mode pills, the count, the chips.
+              Patterns / Lineage hold only refresh, so .tb-overflow--single
+              keeps that one inline via `display: contents` (see App.css). */}
           <div
             className={`tb-overflow${adsMode === 'browse' ? '' : ' tb-overflow--single'}`}
             ref={overflowRef}
           >
-            {/* Trigger is mobile-only, and only worth showing when it holds more
-                than the lone refresh button (i.e. in Browse). */}
+            {/* Shown when the group holds more than the lone refresh button —
+                i.e. in Browse. Elsewhere refresh stays inline instead. */}
             {adsMode === 'browse' && (
               <button
-                className={`tb-overflow-trigger${diff.length > 0 || customOnly ? ' has-active' : ''}`}
+                className={`tb-overflow-trigger${diff.length > 0 || customOnly || search.trim() ? ' has-active' : ''}`}
                 onClick={() => setOverflowOpen(o => !o)}
                 title="More actions"
                 aria-label="More actions"
@@ -1803,6 +1803,23 @@ export default function AdsHubView() {
                 title="Reload this page — problems, Point2Rem notes and recall cards"
               >{refreshing ? '…' : '↻'}</button>
               {adsMode === 'browse' && <>
+              <input
+                className="col-search tb-search"
+                placeholder="Search #id, title, tag, company…"
+                value={search}
+                onChange={e => handleSearchChange(e.target.value)}
+                onKeyDown={e => {
+                  // Enter opens the top filtered match (already auto-selected
+                  // when there's exactly one, but this gives a clear path when
+                  // there are multiple — the user picks the top result without
+                  // touching the list).
+                  if (e.key === 'Enter' && filtered.length > 0) {
+                    e.preventDefault()
+                    setSelected(filtered[0])
+                    setOverflowOpen(false)
+                  }
+                }}
+              />
           {/* Multi-select dropdown: difficulty + ✨ Custom in one pill so
               the toolbar stays compact. Empty diff ≡ All. Auto-applies on
               every checkbox toggle. Click outside (or the trigger again)
@@ -1880,22 +1897,6 @@ export default function AdsHubView() {
             </div>
           </div>
           {adsMode === 'browse' && <>
-          <input
-            className="col-search tb-search"
-            placeholder="Search #id, title, tag, company…  ↵ to open top match"
-            value={search}
-            onChange={e => handleSearchChange(e.target.value)}
-            onKeyDown={e => {
-              // Enter opens the top filtered match (already auto-selected
-              // when there's exactly one, but this gives a clear path when
-              // there are multiple — the user picks the top result without
-              // touching the list).
-              if (e.key === 'Enter' && filtered.length > 0) {
-                e.preventDefault()
-                setSelected(filtered[0])
-              }
-            }}
-          />
           <span className="tb-count">
             {filtered.length.toLocaleString()} / {problems.length.toLocaleString()}
           </span>
