@@ -14,7 +14,7 @@ import { LLM } from '../lib/llm'
 import { generateToDoHierarchy } from '../lib/todoGen'
 import { lessonLines } from '../lib/lessonFmt'
 import { downloadText } from '../lib/csvExport'
-import { tidyRootTitle } from '../lib/todoTitle'
+import { briefOf, keywordTitle, tidyRootTitle } from '../lib/todoTitle'
 import { loadFilters, saveFilters } from '../lib/persistedFilters'
 import DartView from './DartView'
 import NotesView from './NotesView'
@@ -1236,19 +1236,39 @@ function countDrafts(drafts: ToDoDraft[]): number {
   return n
 }
 
+// A generated plan is 100+ rows; read as full sentences it is a wall. Each row
+// shows the keywords plus a greyed half-line of what it means, and clicking it
+// expands the row to the full title and description — the detail is one click
+// away rather than always on screen.
+function DraftRow({ draft, depth }: { draft: ToDoDraft; depth: number }) {
+  const [open, setOpen] = useState(false)
+  const short = keywordTitle(draft.title)
+  const brief = briefOf(draft.description)
+  // Nothing was trimmed ⇒ expanding would show the same words twice.
+  const hasMore = short !== draft.title || !!draft.description
+
+  return (
+    <li className={`todo3-row${open ? ' draft-open' : ''}`}>
+      <div
+        className={`todo3-line draft-line${hasMore ? ' clickable' : ''}`}
+        onClick={hasMore ? () => setOpen(o => !o) : undefined}
+        title={hasMore ? (open ? 'Collapse' : 'Show the full task') : undefined}
+      >
+        <span className="todo3-title">{open ? draft.title : short}</span>
+        {!open && brief && <span className="draft-brief">{brief}</span>}
+        {hasMore && <span className="todo3-icon draft-caret">{open ? '▾' : 'ℹ'}</span>}
+      </div>
+      {open && draft.description && <p className="draft-desc">{draft.description}</p>}
+      {draft.children.length > 0 && renderDraftTree(draft.children, depth + 1)}
+    </li>
+  )
+}
+
 function renderDraftTree(drafts: ToDoDraft[], depth: number): React.ReactNode {
   if (drafts.length === 0) return null
   return (
     <ul className={depth === 0 ? 'todo3-list todo3-root' : 'todo3-list'}>
-      {drafts.map((d, i) => (
-        <li key={i} className="todo3-row">
-          <div className="todo3-line">
-            <span className="todo3-title">{d.title}</span>
-            {d.description && <span className="todo3-icon" title={d.description}>ℹ</span>}
-          </div>
-          {d.children.length > 0 && renderDraftTree(d.children, depth + 1)}
-        </li>
-      ))}
+      {drafts.map((d, i) => <DraftRow key={i} draft={d} depth={depth} />)}
     </ul>
   )
 }
