@@ -5,9 +5,9 @@ import { checkAccess, ensureHeaders, loadSettings, saveSetting, UnauthorizedErro
 import { ToastProvider } from './components/Toast'
 import TopBar from './components/TopBar'
 import SheetSetupModal from './components/SheetSetupModal'
-import HomeView from './views/HomeView'
-import BrowseView from './views/BrowseView'
 import DocsView from './views/DocsView'
+import AnkiView from './views/AnkiView'
+import LandingView from './views/LandingView'
 import UtilsView from './views/UtilsView'
 import AISkillsView from './views/AISkillsView'
 import AdsView from './views/AdsView'
@@ -197,7 +197,11 @@ export default function App() {
         {/* 'notes' is a legacy path that now resolves to the Utils view, so
             TopBar is told 'utils' for it rather than leaving the nav unlit. */}
         <TopBar
-          view={view === 'notes' ? 'utils' : view}
+          view={
+            view === 'notes' ? 'utils'
+            : view === 'home' || view === 'browse' ? 'anki'
+            : view
+          }
           onNav={v => setView(v as View)}
           theme={theme}
           onTheme={handleTheme}
@@ -206,8 +210,12 @@ export default function App() {
           onToggleAI={() => setAiOpen(o => !o)}
         />
 
-        {view === 'home'     && <HomeView />}
-        {view === 'browse'   && <BrowseView />}
+        {view === 'landing'  && <LandingView onNav={setView} />}
+        {/* /home and /browse still resolve — they open Anki on that sub-tab, so
+            existing links and bookmarks keep working. */}
+        {(view === 'anki' || view === 'home' || view === 'browse') && (
+          <AnkiView initialTab={view === 'browse' ? 'browse' : 'home'} />
+        )}
         {view === 'docs'     && <DocsView />}
         {(view === 'utils' || view === 'notes') && (
           <UtilsView initialTab={view === 'notes' ? 'notes' : undefined} />
@@ -231,14 +239,14 @@ export default function App() {
 
         {/* Mobile bottom nav */}
         <nav className="bottom-nav">
-          <button className={`bn-btn${view === 'home'     ? ' active' : ''}`} onClick={() => setView('home')}>
-            <span className="bn-icon">🏠</span><span className="bn-label">Home</span>
-          </button>
-          <button className={`bn-btn${view === 'browse'   ? ' active' : ''}`} onClick={() => setView('browse')}>
-            <span className="bn-icon">📋</span><span className="bn-label">Browse</span>
+          <button
+            className={`bn-btn${view === 'anki' || view === 'home' || view === 'browse' ? ' active' : ''}`}
+            onClick={() => setView('anki')}
+          >
+            <span className="bn-icon">🧠</span><span className="bn-label">Anki</span>
           </button>
           <button className={`bn-btn${view === 'docs'     ? ' active' : ''}`} onClick={() => setView('docs')}>
-            <span className="bn-icon">📄</span><span className="bn-label">Docs</span>
+            <span className="bn-icon">📄</span><span className="bn-label">Pages</span>
           </button>
           <button className={`bn-btn${view === 'utils' || view === 'notes' ? ' active' : ''}`} onClick={() => setView('utils')}>
             <span className="bn-icon">🧰</span><span className="bn-label">Utils</span>

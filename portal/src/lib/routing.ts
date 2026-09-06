@@ -4,6 +4,8 @@
 // in production and dev). Each tab maps to a path segment under that base:
 //
 //   /pghubtech/             → home (default)
+//   /pghubtech/start        → landing (the brand click)
+//   /pghubtech/anki         → anki (Home + Browse live here as sub-tabs)
 //   /pghubtech/home         → home
 //   /pghubtech/browse       → browse
 //   /pghubtech/docs         → docs
@@ -19,10 +21,14 @@
 // index.html.
 
 export type View =
-  | 'home' | 'browse' | 'docs' | 'notes' | 'utils'
+  | 'landing' | 'anki' | 'home' | 'browse' | 'docs' | 'notes' | 'utils'
   | 'ads' | 'ads-hub' | 'ai-skills' | 'settings'
 
 const PATHS_BY_VIEW: Record<View, string> = {
+  'landing':   'start',
+  'anki':      'anki',
+  // home / browse keep their own paths even though they are Anki sub-tabs now,
+  // so existing links land on the right sub-tab instead of 404-ing.
   'home':      'home',
   'browse':    'browse',
   'docs':      'docs',

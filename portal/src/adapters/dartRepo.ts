@@ -48,7 +48,9 @@ const ROUTINE_HEADERS = ['id','block_id','title','minutes','position','active','
 // target_units / unit_label and Log.units are appended at the END so a store
 // written before they existed still reads back cleanly (missing cells → 0/'').
 const GOAL_HEADERS    = ['id','title','notes','start_date','end_date','frequency','target_minutes','priority','active','created_at','updated_at','target_units','unit_label'] as const
-const LOG_HEADERS     = ['id','date','kind','ref_id','title','minutes','done_at','units'] as const
+// `notes` appended at the END so an existing store keeps working — old rows
+// simply read back with an empty notes cell.
+const LOG_HEADERS     = ['id','date','kind','ref_id','title','minutes','done_at','units','notes','start_time','end_time','mood'] as const
 const THOUGHT_HEADERS = ['id','date','raw','bucket','summary','highlights','created_at','updated_at','path','rich','raw_original'] as const
 const JOURNAL_HEADERS = ['id','date','raw','raw_original','wake_time','sleep_time','timeline','went_right','went_wrong','expected','reality','fixing','worked','summary','created_at','updated_at'] as const
 const JINSIGHT_HEADERS = ['id','from_date','to_date','label','days_covered','rich','created_at'] as const
@@ -92,13 +94,26 @@ export interface DartGoal {
   active: boolean; createdAt: string; updatedAt: string
 }
 
-export type LogKind = 'routine' | 'goal'
+// 'adhoc' = work the day never asked for. It carries its own title and lives
+// on the date only — it never becomes a routine or a goal.
+export type LogKind = 'routine' | 'goal' | 'adhoc'
 
 export interface DartLogEntry {
   id: string; date: string; kind: LogKind
   refId: string; title: string; minutes: number; doneAt: string
   units: number
+  // Detail behind the title — one bullet per line. Unplanned work dictated as
+  // a ramble keeps its substance here while the title stays scannable.
+  notes: string
+  // Wall-clock window, "HH:MM" 24h, '' when the entry never stated one. Only
+  // the timeline uses these; totals still come from `minutes`.
+  startTime: string
+  endTime:   string
+  // How the time felt, for timeline colour: worth it / mixed / wasted.
+  mood: LogMood
 }
+
+export type LogMood = 'good' | 'mixed' | 'waste'
 
 // Buckets are user-editable data now, so this is a plain string.
 export type ThoughtBucket = string
@@ -541,12 +556,14 @@ function parseLog(rows: string[][]): DartLogEntry[] {
   return rows.filter(r => r[0]).map(r => ({
     id: r[0], date: r[1] ?? '', kind: (r[2] as LogKind) || 'routine',
     refId: r[3] ?? '', title: r[4] ?? '', minutes: num(r[5]), doneAt: r[6] ?? '',
-    units: num(r[7]),
+    units: num(r[7]), notes: r[8] ?? '',
+    startTime: r[9] ?? '', endTime: r[10] ?? '',
+    mood: (['good','mixed','waste'].includes(r[11] ?? '') ? r[11] : 'good') as LogMood,
   }))
 }
 
 export async function loadLog(): Promise<DartLogEntry[]> {
-  return parseLog(await readRows(LOG_TAB, 'A2:H'))
+  return parseLog(await readRows(LOG_TAB, 'A2:L'))
 }
 
 // Everything from `from` to `to` inclusive (YYYY-MM-DD sorts lexically, so a
@@ -558,14 +575,17 @@ export async function loadLogInRange(from: string, to: string): Promise<DartLogE
 
 export async function addLogEntry(
   date: string, kind: LogKind, refId: string, title: string,
-  minutes: number, units = 0,
+  minutes: number, units = 0, notes = '',
+  startTime = '', endTime = '', mood: LogMood = 'good',
 ): Promise<DartLogEntry> {
   const e: DartLogEntry = {
-    id: uuid('dl'), date, kind, refId, title, minutes, units,
+    id: uuid('dl'), date, kind, refId, title, minutes, units, notes,
+    startTime, endTime, mood,
     doneAt: new Date().toISOString(),
   }
-  await appendRows(LOG_TAB, 'H', [[
+  await appendRows(LOG_TAB, 'L', [[
     e.id, e.date, e.kind, e.refId, e.title, String(e.minutes), e.doneAt, String(e.units),
+    e.notes, e.startTime, e.endTime, e.mood,
   ]])
   return e
 }

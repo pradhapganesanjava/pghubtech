@@ -9,6 +9,7 @@
 import { LLM } from './llm'
 import { ensureSkillBySlug, getSkillBySlug } from '../adapters/aiSkillsRepo'
 import { parseLooseJson } from './looseJson'
+import { deriveRootTitle } from './todoTitle'
 
 export interface ToDoDraft {
   title:       string
@@ -25,7 +26,7 @@ export const DEFAULT_TODO_GENERATE_PROMPT = [
   ``,
   `Schema:`,
   `{`,
-  `  "root_title":       "short label for the whole plan (≤ 60 chars) — names the goal the user is working toward",`,
+  `  "root_title":       "SHORT label for the whole plan — 3 to 6 words, under 42 chars, names the goal like a folder name, not a sentence. e.g. 'GraphQL fundamentals', 'Rust for backend work'",`,
   `  "root_description": "1-2 sentences summarising the plan's intent / scope, for the user's future self",`,
   `  "todos": [`,
   `    {`,
@@ -115,7 +116,9 @@ export async function generateToDoHierarchy(
   const rootDescription = typeof (parsed as any).root_description === 'string' ? (parsed as any).root_description.trim() : ''
   return {
     drafts,
-    rootTitle:       rootTitle       || deriveRootTitle(context),
+    // The prompt asks for <= 60 chars but nothing made it so; a model that
+    // ignores it produced the same run-on titles as the fallback did.
+    rootTitle:       rootTitle ? deriveRootTitle(rootTitle) : deriveRootTitle(context),
     rootDescription: rootDescription || `Generated from: ${context.trim().slice(0, 200)}`,
     raw:    reply,
     reason: 'ok',
@@ -123,10 +126,6 @@ export async function generateToDoHierarchy(
   }
 }
 
-function deriveRootTitle(context: string): string {
-  const first = context.trim().split(/\n+/)[0] ?? ''
-  return (first || 'Generated plan').slice(0, 60)
-}
 
 function normalize(t: any): ToDoDraft | null {
   if (!t || typeof t !== 'object') return null

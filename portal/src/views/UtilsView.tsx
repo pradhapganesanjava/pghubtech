@@ -12,13 +12,19 @@ import { useToast } from '../components/Toast'
 import EphemeralAIChat from '../components/EphemeralAIChat'
 import { LLM } from '../lib/llm'
 import { generateToDoHierarchy } from '../lib/todoGen'
+import { lessonLines } from '../lib/lessonFmt'
+import { downloadText } from '../lib/csvExport'
+import { tidyRootTitle } from '../lib/todoTitle'
+import { loadFilters, saveFilters } from '../lib/persistedFilters'
 import DartView from './DartView'
 import NotesView from './NotesView'
 import ThoughtsView from './ThoughtsView'
 import JournalView from './JournalView'
 import type { ToDoDraft } from '../lib/todoGen'
 
-type SubTab = 'todo' | 'activity' | 'dart' | 'notes' | 'thoughts' | 'journal'
+type SubTab = 'todo' | 'dart' | 'notes' | 'thoughts' | 'journal'
+
+const TODO_GEN_KEY = 'utils.todoGen'
 
 export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) {
   const [tab, setTab] = useState<SubTab>(initialTab ?? 'dart')
@@ -36,10 +42,6 @@ export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) 
           className={`utils-tab${tab === 'todo' ? ' active' : ''}`}
           onClick={() => setTab('todo')}
         >✓ ToDo</button>
-        <button
-          className={`utils-tab${tab === 'activity' ? ' active' : ''}`}
-          onClick={() => setTab('activity')}
-        >📅 Activity Log</button>
         <button
           className={`utils-tab${tab === 'dart' ? ' active' : ''}`}
           onClick={() => setTab('dart')}
@@ -62,8 +64,10 @@ export default function UtilsView({ initialTab }: { initialTab?: SubTab } = {}) 
           is always flush (no padding, overflow clipped at this level). */}
       <div className="utils-body utils-body-flush">
         {tab === 'todo'     && <ToDoPanel />}
-        {tab === 'activity' && <ActivityPanel />}
-        {tab === 'dart'     && <DartView />}
+        {/* Lessons is a DART sub-tab, beside Today and Goals. It is passed
+            down rather than imported there because this file imports DartView
+            — importing back would close the cycle. */}
+        {tab === 'dart'     && <DartView lessonsPanel={<ActivityPanel view="lessons" />} />}
         {tab === 'notes'    && <NotesView />}
         {tab === 'thoughts' && <ThoughtsView />}
         {tab === 'journal'  && <JournalView />}
@@ -91,13 +95,24 @@ function ToDoPanel() {
   const [bulkMoveOpen, setBulkMoveOpen]   = useState(false)
   const [bulkMoveParent, setBulkMoveParent] = useState('')
 
-  // AI generate
-  const [genCtx, setGenCtx]               = useState('')
+  // AI generate. The instruction is persisted: a hierarchy is rarely right on
+  // the first pass, and losing what you asked for means rewriting it from
+  // memory before you can tweak anything.
+  const [genCtx, setGenCtx]               = useState(
+    () => loadFilters(TODO_GEN_KEY, { ctx: '' }).ctx ?? '',
+  )
   const [genBusy, setGenBusy]             = useState(false)
   const [genErr, setGenErr]               = useState('')
   const [genDrafts, setGenDrafts]         = useState<ToDoDraft[] | null>(null)
   const [genRoot, setGenRoot]             = useState<{ title: string; description: string } | null>(null)
   const [genRaw, setGenRaw]               = useState('')   // raw LLM reply for debug surfacing
+  // Regenerating targets ONE root: its drafts land under that root instead of
+  // creating a parallel one. null ⇒ the old behaviour, a brand-new root.
+  const [genTarget, setGenTarget]         = useState<{ id: string; title: string } | null>(null)
+  // Instruction per root id — each list is its own thing to re-ask for.
+  const [genByRoot, setGenByRoot]         = useState<Record<string, string>>(
+    () => loadFilters(TODO_GEN_KEY, { ctx: '', byRoot: {} as Record<string, string> }).byRoot ?? {},
+  )
 
   // Actions (left) column starts hidden — strip with ▸ / ＋ / ✨ icons.
   const [actionsCollapsed, setActionsCollapsed] = useState(true)
@@ -409,15 +424,152 @@ function ToDoPanel() {
     } catch (e) { toast(`Delete failed: ${(e as Error).message}`, 'error') }
   }
 
+  useEffect(() => { saveFilters(TODO_GEN_KEY, { ctx: genCtx, byRoot: genByRoot }) }, [genCtx, genByRoot])
+
+  // The list as a nested structure — what you'd back up, hand to the AI, or
+  // paste somewhere else. Flat rows carry parentId; nobody wants to read that.
+  const subtreeOf = useMemo(() => (rootId: string): unknown[] => {
+    const kids = new Map<string, ToDoItem[]>()
+    for (const t of items) {
+      const arr = kids.get(t.parentId) ?? []
+      arr.push(t)
+      kids.set(t.parentId, arr)
+    }
+    kids.forEach(a => a.sort((x, y) => x.position - y.position))
+    const build = (parentId: string): unknown[] => (kids.get(parentId) ?? []).map(t => {
+      const children = build(t.id)
+      return {
+        title: t.title,
+        ...(t.description ? { description: t.description } : {}),
+        ...(t.done ? { done: true } : {}),
+        ...(children.length ? { children } : {}),
+      }
+    })
+    return build(rootId)
+  }, [items])
+
+  const outlineOf = (nodes: unknown[]): string => {
+    const walk = (ns: unknown[], depth: number): string[] => ns.flatMap(n => {
+      const o = n as { title: string; done?: boolean; children?: unknown[] }
+      return [
+        `${'  '.repeat(depth)}- ${o.title}${o.done ? ' [done]' : ''}`,
+        ...walk(o.children ?? [], depth + 1),
+      ]
+    })
+    return walk(nodes, 0).join('\n')
+  }
+
+  // One root's payload: its own subtree and its own stored instruction.
+  function rootExport(t: ToDoItem): string {
+    return JSON.stringify({
+      exported: new Date().toISOString().slice(0, 10),
+      root: t.title,
+      instruction: genByRoot[t.id] ?? '',
+      todos: subtreeOf(t.id),
+    }, null, 2)
+  }
+
+  // Roots generated before the title fix kept a raw instruction chopped at 60
+  // characters. Re-derive them, preserving the date stamp. Renames only — no
+  // item is added, moved or removed.
+  const untidyRoots = useMemo(
+    () => items.filter(t => t.parentId === '' && tidyRootTitle(t.title) !== t.title),
+    [items],
+  )
+
+  async function tidyRootNames() {
+    if (untidyRoots.length === 0 || busy) return
+    setBusy(true)
+    try {
+      let n = 0
+      for (const t of untidyRoots) {
+        const updated = await updateToDo({ ...t, title: tidyRootTitle(t.title) })
+        setItems(prev => prev.map(x => x.id === t.id ? updated : x))
+        n++
+      }
+      toast(`Renamed ${n} root${n === 1 ? '' : 's'}`, 'success')
+    } catch (e) {
+      toast(`Rename failed: ${(e as Error).message}`, 'error')
+    } finally { setBusy(false) }
+  }
+
+  async function copyRoot(t: ToDoItem) {
+    try {
+      await navigator.clipboard.writeText(rootExport(t))
+      toast(`Copied "${t.title}" as JSON`, 'success')
+    } catch (e) { toast(`Copy failed: ${(e as Error).message}`, 'error') }
+  }
+
+  function downloadRoot(t: ToDoItem) {
+    const slug = (t.title || 'todos').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
+    downloadText(rootExport(t), `${slug || 'todos'}-${new Date().toISOString().slice(0, 10)}.json`)
+  }
+
+  // Load this root's instruction into the Generate box and aim the next
+  // accept at it, so a regenerate revises this list rather than the whole tab.
+  function regenerateRoot(t: ToDoItem) {
+    setGenTarget({ id: t.id, title: t.title })
+    setGenCtx(genByRoot[t.id] ?? t.description ?? '')
+    setGenDrafts(null); setGenRoot(null); setGenErr('')
+    setActionsCollapsed(false)
+    toast(`Generate is now aimed at "${t.title}"`, 'info')
+  }
+
+  const todoTree = useMemo(() => {
+    const kids = new Map<string, ToDoItem[]>()
+    for (const t of items) {
+      const arr = kids.get(t.parentId) ?? []
+      arr.push(t)
+      kids.set(t.parentId, arr)
+    }
+    kids.forEach(a => a.sort((x, y) => x.position - y.position))
+    const build = (parentId: string): unknown[] => (kids.get(parentId) ?? []).map(t => {
+      const children = build(t.id)
+      return {
+        title: t.title,
+        ...(t.description ? { description: t.description } : {}),
+        ...(t.done ? { done: true } : {}),
+        ...(children.length ? { children } : {}),
+      }
+    })
+    return build('')
+  }, [items])
+
+  // Indented text — what the AI reads back when regenerating, and what pastes
+  // usefully into a message. JSON would spend its context on punctuation.
+  const todoOutline = useMemo(() => {
+    const walk = (nodes: unknown[], depth: number): string[] => nodes.flatMap(n => {
+      const o = n as { title: string; done?: boolean; children?: unknown[] }
+      return [
+        `${'  '.repeat(depth)}- ${o.title}${o.done ? ' [done]' : ''}`,
+        ...walk(o.children ?? [], depth + 1),
+      ]
+    })
+    return walk(todoTree, 0).join('\n')
+  }, [todoTree])
+
   // AI generation: take the context, ask for a hierarchy, preview, accept.
-  async function runGenerate() {
+  // `withList` re-runs the same instruction WITH the current list attached, so
+  // the model revises what exists instead of proposing a parallel copy of it.
+  async function runGenerate(withList = false) {
     if (!genCtx.trim() || genBusy) return
     if (!LLM.isConfigured()) {
       setGenErr('Configure Azure OpenAI in Settings → AI Assistant.'); return
     }
     setGenBusy(true); setGenErr(''); setGenRaw('')
     try {
-      const result = await generateToDoHierarchy(genCtx)
+      const listText = genTarget ? outlineOf(subtreeOf(genTarget.id)) : todoOutline
+      const prompt = withList && listText
+        ? [
+            genCtx.trim(),
+            '',
+            'CURRENT LIST — revise this rather than starting over. Keep items that',
+            'still apply (same wording), drop what the instruction no longer calls',
+            'for, and add what is missing:',
+            listText,
+          ].join('\n')
+        : genCtx
+      const result = await generateToDoHierarchy(prompt)
       setGenRaw(result.raw)
       if (result.reason === 'ok') {
         setGenDrafts(result.drafts)
@@ -450,10 +602,24 @@ function ToDoPanel() {
         description: genRoot.description,
         children:    genDrafts,
       }]
-      const created = await appendToDoTreeBatch(wrapped, '')
+      // Aimed at a root ⇒ the drafts belong INSIDE it; a fresh wrapper would
+      // leave two lists for the same thing.
+      const created = genTarget
+        ? await appendToDoTreeBatch(genDrafts, genTarget.id)
+        : await appendToDoTreeBatch(wrapped, '')
       setItems(prev => [...prev, ...created])
-      setGenDrafts(null); setGenRoot(null); setGenCtx('')
-      toast(`Created ${created.length} todo${created.length === 1 ? '' : 's'} under a new root`, 'success')
+      // Keep the instruction against whichever root this produced, so ♻ on it
+      // later asks the same question again.
+      const rootId = genTarget ? genTarget.id : created.find(c => c.parentId === '')?.id
+      if (rootId && genCtx.trim()) setGenByRoot(prev => ({ ...prev, [rootId]: genCtx.trim() }))
+      setGenDrafts(null); setGenRoot(null)
+      if (!genTarget) setGenCtx('')
+      toast(
+        genTarget
+          ? `Added ${created.length} under "${genTarget.title}"`
+          : `Created ${created.length} todo${created.length === 1 ? '' : 's'} under a new root`,
+        'success',
+      )
     } catch (e) { toast(`Save failed: ${(e as Error).message}`, 'error') }
     finally { setBusy(false) }
   }
@@ -493,8 +659,27 @@ function ToDoPanel() {
     const idx = siblings.findIndex(s => s.id === t.id)
     const canUp   = idx > 0
     const canDown = idx >= 0 && idx < siblings.length - 1
+    // Backup and regeneration are per LIST, and a list is a top-level item —
+    // offering them on every leaf would be noise.
+    const isRoot = t.parentId === ''
     return (
       <span className="todo3-actions">
+        {isRoot && (
+          <>
+            <button
+              onClick={e => { e.stopPropagation(); copyRoot(t) }}
+              title={`Copy "${t.title}" as JSON`}
+            >⧉</button>
+            <button
+              onClick={e => { e.stopPropagation(); downloadRoot(t) }}
+              title={`Download "${t.title}" as a JSON backup`}
+            >⬇</button>
+            <button
+              onClick={e => { e.stopPropagation(); regenerateRoot(t) }}
+              title={`Regenerate "${t.title}" from its own instruction`}
+            >♻</button>
+          </>
+        )}
         {manageMode && (
           <>
             <button
@@ -649,6 +834,14 @@ function ToDoPanel() {
           </div>
           <div className="todo3-action-stack">
             <button className="rf-btn-save" onClick={addTopLevel} disabled={busy}>＋ Add new</button>
+            {untidyRoots.length > 0 && (
+              <button
+                className="todo3-tidy-btn"
+                onClick={tidyRootNames}
+                disabled={busy}
+                title={untidyRoots.map(t => `${t.title}\n  → ${tidyRootTitle(t.title)}`).join('\n\n')}
+              >✂ Tidy {untidyRoots.length} root name{untidyRoots.length === 1 ? '' : 's'}</button>
+            )}
           </div>
           <div className="col-hd" style={{ marginTop: 12 }}>Generate</div>
           <div className="todo3-gen">
@@ -660,11 +853,22 @@ function ToDoPanel() {
               onChange={e => setGenCtx(e.target.value)}
               disabled={genBusy}
             />
-            <button
-              className="rf-btn-cancel"
-              onClick={runGenerate}
-              disabled={genBusy || !genCtx.trim()}
-            >{genBusy ? 'Generating…' : '✨ Generate'}</button>
+            {genTarget && (
+              <div className="todo3-gen-target">
+                <span>aimed at <b>{genTarget.title}</b></span>
+                <button onClick={() => setGenTarget(null)} title="Generate a new root instead">✕</button>
+              </div>
+            )}
+            <div className="todo3-gen-btns">
+              <button
+                className="rf-btn-cancel"
+                onClick={() => runGenerate(!!genTarget)}
+                disabled={genBusy || !genCtx.trim()}
+                title={genTarget
+                  ? `Revise "${genTarget.title}" using its current items`
+                  : 'Generate a new list under a new root'}
+              >{genBusy ? 'Generating…' : genTarget ? '♻ Regenerate' : '✨ Generate'}</button>
+            </div>
             {genErr && <div className="login-error">{genErr}</div>}
             {genErr && genRaw && (
               <details className="todo3-gen-raw">
@@ -1053,7 +1257,10 @@ function isoDate(d: Date): string {
 
 type ActivitySubTab = 'log' | 'lessons'
 
-function ActivityPanel() {
+// Rendered inside DART, once per view: 📅 Log Activity and 💡 Lessons are
+// DART sub-tabs now, so this panel no longer carries a switcher of its own —
+// the caller says which half it wants.
+function ActivityPanel({ view = 'log' }: { view?: ActivitySubTab } = {}) {
   const { toast } = useToast()
   const today = new Date(); today.setHours(0,0,0,0)
   const [cursor, setCursor]           = useState<Date>(new Date(today))
@@ -1072,9 +1279,11 @@ function ActivityPanel() {
   const [reminderDraft, setReminderDraft] = useState('')
   const [busy, setBusy]               = useState(false)
 
-  // Sub-tabs: "Log" (Calendar + Day editor) | "Lessons" (records list + detail)
-  const [subTab, setSubTab]           = useState<ActivitySubTab>('log')
+  // Which half this instance renders — fixed by the caller, not switchable here.
+  const subTab = view
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
+  const [lessonPath, setLessonPath] = useState('')      // '' = every lesson
+  const [tagBusy, setTagBusy] = useState(false)
   const [lessonListWidth, setLessonListWidth] = useState(320)   // px, draggable
   const lessonsWrapRef                = useRef<HTMLDivElement>(null)
   const isLessonDragging              = useRef(false)
@@ -1109,13 +1318,15 @@ function ActivityPanel() {
 
   // Load all activities (drives recent/reminder/priority + calendar markers).
   useEffect(() => {
+    if (subTab !== 'log') return    // the Lessons instance has no calendar to fill
     loadAllActivities()
       .then(setAllEntries)
       .catch(e => toast(`Load all activities failed: ${(e as Error).message}`, 'error'))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [subTab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load entries for the selected day.
   useEffect(() => {
+    if (subTab !== 'log') return
     setLoading(true)
     loadActivityForDate(selected)
       .then(list => {
@@ -1287,19 +1498,88 @@ function ActivityPanel() {
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId) ?? null
 
+  // Grouping is only useful once everything is filed, and lessons written
+  // before `path` existed have none. One call for the whole batch — asking per
+  // lesson would both cost more and invent a different vocabulary each time.
+  async function tagUntagged() {
+    const todo = lessons.filter(l => !l.path)
+    if (todo.length === 0 || tagBusy) return
+    if (!LLM.isConfigured()) {
+      toast('Configure Azure OpenAI in Settings → AI Assistant.', 'error')
+      return
+    }
+    setTagBusy(true)
+    try {
+      const existing = [...new Set(lessons.map(l => l.path).filter(Boolean))]
+      const reply = await LLM.chat([
+        { role: 'system', content: [
+          'File each lesson under a topic path so lessons can be grouped by area.',
+          'Return STRICT JSON only: { "paths": { "<id>": "<path>" } }. No prose, no fences.',
+          'A path is 1-3 "::"-separated tags, broad → narrow, lowercase, hyphenated.',
+          'REUSE an existing path verbatim whenever one fits — a near-duplicate tag',
+          'splits the group and defeats the point.',
+          existing.length ? `Existing paths: ${existing.join(', ')}` : 'No paths exist yet.',
+        ].join('\n') },
+        { role: 'user', content: todo
+          .map(l => `${l.id} :: ${l.problem} | worked: ${l.worked} | failed: ${l.notWorked}`)
+          .join('\n') },
+      ], 1200)
+      const m = reply.match(/\{[\s\S]*\}/)
+      const paths = m ? (JSON.parse(m[0]) as { paths?: Record<string, string> }).paths ?? {} : {}
+      let n = 0
+      for (const l of todo) {
+        const raw = String(paths[l.id] ?? '').toLowerCase()
+        const path = raw.split('::').map(x => x.trim().replace(/\s+/g, '-'))
+          .filter(Boolean).slice(0, 4).join('::')
+        if (!path) continue
+        const updated = await updateLesson({ ...l, path })
+        setLessons(prev => prev.map(x => x.id === l.id ? updated : x))
+        n++
+      }
+      toast(n ? `Tagged ${n} lesson${n === 1 ? '' : 's'}` : 'Nothing tagged', n ? 'success' : 'info')
+    } catch (e) {
+      toast(`Tagging failed: ${(e as Error).message}`, 'error')
+    } finally { setTagBusy(false) }
+  }
+
+  // Tag roots with counts. A lesson filed 'interview::prep' counts under both
+  // 'interview' and 'interview::prep', so picking a broad tag keeps the
+  // narrower ones in view — the point of a path over a flat label.
+  const lessonPaths = useMemo(() => {
+    const counts = new Map<string, number>()
+    let unfiled = 0
+    for (const l of lessons) {
+      if (!l.path) { unfiled++; continue }
+      const segs = l.path.split('::').filter(Boolean)
+      for (let i = 1; i <= segs.length; i++) {
+        const p = segs.slice(0, i).join('::')
+        counts.set(p, (counts.get(p) ?? 0) + 1)
+      }
+    }
+    return { list: [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)), unfiled }
+  }, [lessons])
+
+  const shownLessons = useMemo(() => {
+    if (!lessonPath) return lessons
+    if (lessonPath === '(unfiled)') return lessons.filter(l => !l.path)
+    return lessons.filter(l => l.path === lessonPath || l.path.startsWith(lessonPath + '::'))
+  }, [lessons, lessonPath])
+
+  // Read by area: one heading per tag path, unfiled last. Grouping beats a flat
+  // list once lessons accumulate — you look for "what did I learn about X".
+  const groupedLessons = useMemo(() => {
+    const by = new Map<string, Lesson[]>()
+    for (const l of shownLessons) {
+      const key = l.path || '(unfiled)'
+      const arr = by.get(key)
+      if (arr) arr.push(l); else by.set(key, [l])
+    }
+    return [...by.entries()].sort(([a], [b]) =>
+      a === '(unfiled)' ? 1 : b === '(unfiled)' ? -1 : a.localeCompare(b))
+  }, [shownLessons])
+
   return (
     <div className="activity-panel-wrap">
-      <div className="activity-subtabs">
-        <button
-          className={`activity-subtab${subTab === 'log' ? ' active' : ''}`}
-          onClick={() => setSubTab('log')}
-        >📋 Log</button>
-        <button
-          className={`activity-subtab${subTab === 'lessons' ? ' active' : ''}`}
-          onClick={() => setSubTab('lessons')}
-        >💡 Lessons</button>
-      </div>
-
       {subTab === 'lessons' ? (
         <div className="lessons-3pane browse-body-wrap" ref={lessonsWrapRef}>
           {/* ── Col 1 — Actions ─────────────────────────────── */}
@@ -1319,6 +1599,41 @@ function ActivityPanel() {
                 onClick={() => { setGenOpen(o => !o); setEditingLessonId(null) }}
               >✨ Generate from range</button>
             </div>
+              {lessonPaths.unfiled > 0 && (
+                <button
+                  className="rf-btn-cancel"
+                  disabled={tagBusy}
+                  onClick={tagUntagged}
+                  title="Ask AI to file every untagged lesson under a topic"
+                >{tagBusy ? 'Tagging…' : `🏷 Tag ${lessonPaths.unfiled} untagged`}</button>
+              )}
+              {lessonPaths.list.length + lessonPaths.unfiled > 0 && (
+                <div className="lessons-tags">
+                  <div className="lessons-tags-hd">Tags</div>
+                  <button
+                    className={`lessons-tag${lessonPath === '' ? ' sel' : ''}`}
+                    onClick={() => setLessonPath('')}
+                  >all<span className="lessons-tag-n">{lessons.length}</span></button>
+                  {lessonPaths.list.map(([p, n]) => (
+                    <button
+                      key={p}
+                      className={`lessons-tag${lessonPath === p ? ' sel' : ''}`}
+                      style={{ paddingLeft: 8 + (p.split('::').length - 1) * 10 }}
+                      onClick={() => setLessonPath(p === lessonPath ? '' : p)}
+                      title={p}
+                    >
+                      {p.split('::').pop()}<span className="lessons-tag-n">{n}</span>
+                    </button>
+                  ))}
+                  {lessonPaths.unfiled > 0 && (
+                    <button
+                      className={`lessons-tag unfiled${lessonPath === '(unfiled)' ? ' sel' : ''}`}
+                      onClick={() => setLessonPath(p => p === '(unfiled)' ? '' : '(unfiled)')}
+                    >unfiled<span className="lessons-tag-n">{lessonPaths.unfiled}</span></button>
+                  )}
+                </div>
+              )}
+
             {genOpen && (
               <div className="lessons-gen-form">
                 <label>From <input type="date" value={genFrom} onChange={e => setGenFrom(e.target.value)} /></label>
@@ -1346,21 +1661,40 @@ function ActivityPanel() {
               <div className="col-empty">Loading…</div>
             ) : lessons.length === 0 ? (
               <div className="col-empty">No lessons yet. Use ＋ New lesson or ✨ Generate.</div>
+            ) : shownLessons.length === 0 ? (
+              <div className="col-empty">No lessons under that tag.</div>
             ) : (
               <ul className="lessons-list">
-                {lessons.map(l => (
+                {groupedLessons.map(([group, items]) => (
+                  <li key={group} className="lessons-group">
+                    <div className="lessons-group-hd">
+                      <span className="lessons-group-name">
+                        {group === '(unfiled)' ? 'unfiled' : group.replace(/::/g, ' › ')}
+                      </span>
+                      <span className="lessons-group-n">{items.length}</span>
+                    </div>
+                    <ul className="lessons-sublist">
+                {items.map(l => (
                   <li key={l.id} className="lessons-item">
                     <button
                       className={`lessons-row-btn${selectedLessonId === l.id ? ' sel' : ''}`}
                       onClick={() => { setSelectedLessonId(l.id); setEditingLessonId(null) }}
                     >
                       <div className="lessons-row-q">{l.problem || '(no problem)'}</div>
-                      {l.worked && <div className="lessons-row-w">✓ {l.worked}</div>}
-                      {l.notWorked && <div className="lessons-row-x">✕ {l.notWorked}</div>}
+                      {l.worked && (
+                        <div className="lessons-row-w"><span className="lessons-row-mark">✓</span>{lessonLines(l.worked)[0]}</div>
+                      )}
+                      {l.notWorked && (
+                        <div className="lessons-row-x"><span className="lessons-row-mark">✕</span>{lessonLines(l.notWorked)[0]}</div>
+                      )}
                       <div className="lessons-row-meta">
+                        {l.path && <span className="lessons-row-path">{l.path.replace(/::/g, ' › ')}</span>}
                         {l.source.startsWith('ai:') ? `✨ ${l.source.slice(3)}` : 'manual'}
                       </div>
                     </button>
+                  </li>
+                ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
@@ -1392,7 +1726,7 @@ function ActivityPanel() {
                 </div>
                 <LessonEditor
                   key="new"
-                  initial={{ id: '', problem: '', notWorked: '', worked: '', source: 'manual', createdAt: '', updatedAt: '' }}
+                  initial={{ id: '', problem: '', notWorked: '', worked: '', source: 'manual', createdAt: '', updatedAt: '', path: '' }}
                   onCancel={() => setEditingLessonId(null)}
                   onSave={async draft => {
                     try {
@@ -2234,6 +2568,7 @@ function ActivityPreview({
 interface LessonDraftFields {
   problem: string; notWorked: string; worked: string
   source?: string
+  path?:   string
 }
 
 function LessonEditor({
@@ -2247,9 +2582,11 @@ function LessonEditor({
   const [problem,   setProblem]   = useState(initial.problem)
   const [notWorked, setNotWorked] = useState(initial.notWorked)
   const [worked,    setWorked]    = useState(initial.worked)
+  const [path,      setPath]      = useState(initial.path ?? '')
   const [busy, setBusy]           = useState(false)
   const dirty =
-    problem !== initial.problem || notWorked !== initial.notWorked || worked !== initial.worked
+    problem !== initial.problem || notWorked !== initial.notWorked ||
+    worked !== initial.worked || path !== (initial.path ?? '')
 
   return (
     <div className="lessons-editor">
@@ -2274,6 +2611,13 @@ function LessonEditor({
         onChange={e => setWorked(e.target.value)}
         placeholder="Strategy that helped accomplish the job"
       />
+      <label className="lessons-edit-lbl">Tags</label>
+      <input
+        className="rf-input"
+        value={path}
+        onChange={e => setPath(e.target.value)}
+        placeholder="interview::prep — broad to narrow, :: separated, max 4"
+      />
       <div className="lessons-edit-actions">
         <button className="rf-btn-cancel" onClick={onCancel} disabled={busy}>Cancel</button>
         <button
@@ -2281,7 +2625,11 @@ function LessonEditor({
           disabled={busy || (!dirty && !!initial.id)}
           onClick={async () => {
             setBusy(true)
-            try { await onSave({ problem, notWorked, worked, source: initial.source }) }
+            try {
+              const clean = path.toLowerCase().split('::')
+                .map(x => x.trim().replace(/\s+/g, '-')).filter(Boolean).slice(0, 4).join('::')
+              await onSave({ problem, notWorked, worked, source: initial.source, path: clean })
+            }
             finally { setBusy(false) }
           }}
         >{busy ? 'Saving…' : 'Save'}</button>
@@ -2297,6 +2645,24 @@ function LessonEditor({
         )}
       </div>
     </div>
+  )
+}
+
+function LessonBox({
+  tone, icon, label, text,
+}: { tone: 'ask' | 'bad' | 'good'; icon: string; label: string; text: string }) {
+  const lines = lessonLines(text)
+  return (
+    <section className={`lesson-box lesson-box--${tone}`}>
+      <div className="lesson-box-hd"><span className="lesson-box-icon">{icon}</span>{label}</div>
+      {lines.length === 0 ? (
+        <p className="lesson-box-empty">—</p>
+      ) : lines.length === 1 ? (
+        <p className="lesson-box-line">{lines[0]}</p>
+      ) : (
+        <ul className="lesson-box-list">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+      )}
+    </section>
   )
 }
 
@@ -2323,28 +2689,24 @@ function LessonPreview({
           title="Edit lesson"
         >✎</button>
       </div>
-      <section className="lesson-preview-section">
-        <h4>Problem / Expectation</h4>
-        <p className={lesson.problem ? 'multiline' : 'multiline activity-preview-dim'}>
-          {lesson.problem || '—'}
-        </p>
-      </section>
-      <section className="lesson-preview-section">
-        <h4>What did not work</h4>
-        <p className={lesson.notWorked ? 'multiline' : 'multiline activity-preview-dim'}>
-          {lesson.notWorked || '—'}
-        </p>
-      </section>
-      <section className="lesson-preview-section">
-        <h4>What worked</h4>
-        <p className={lesson.worked ? 'multiline' : 'multiline activity-preview-dim'}>
-          {lesson.worked || '—'}
-        </p>
-      </section>
+      {lesson.path && (
+        <div className="lesson-tagrow">
+          {lesson.path.split('::').filter(Boolean).map((seg, i) => (
+            <span key={i} className="lesson-tagseg">{seg}</span>
+          ))}
+        </div>
+      )}
+      <LessonBox tone="ask"  icon="🎯" label="Problem / Expectation" text={lesson.problem} />
+      <LessonBox tone="bad"  icon="✕"  label="What did not work"    text={lesson.notWorked} />
+      <LessonBox tone="good" icon="✓"  label="What worked"          text={lesson.worked} />
       <div className="lesson-preview-meta">
-        Source: {lesson.source.startsWith('ai:') ? `✨ ${lesson.source.slice(3)}` : 'manual'}
-        {lesson.createdAt && ` · created ${lesson.createdAt.slice(0, 10)}`}
-        {lesson.updatedAt && lesson.updatedAt !== lesson.createdAt && ` · updated ${lesson.updatedAt.slice(0, 10)}`}
+        <span className={`lesson-chip${lesson.source.startsWith('ai:') ? ' ai' : ''}`}>
+          {lesson.source.startsWith('ai:') ? `✨ ${lesson.source.slice(3)}` : '✍️ manual'}
+        </span>
+        {lesson.createdAt && <span className="lesson-chip">created {lesson.createdAt.slice(0, 10)}</span>}
+        {lesson.updatedAt && lesson.updatedAt !== lesson.createdAt && (
+          <span className="lesson-chip">updated {lesson.updatedAt.slice(0, 10)}</span>
+        )}
       </div>
     </div>
   )

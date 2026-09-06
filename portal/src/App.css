@@ -6355,6 +6355,233 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   font-size: 13px; cursor: pointer; transition: background .12s, border-color .12s;
 }
 .dart-rchip-btn:hover:not(:disabled) { background: var(--bg3); border-color: var(--primary); }
+
+/* ── Today · quick log ──────────────────────────────────────────────────────
+   A capture box, not a fixture: collapsed to one line until you need it, so it
+   never competes with the day's actual list. */
+.dart-quick { margin: 0 0 10px; }
+/* Was a dashed grey outline and read as disabled chrome. It is the primary
+   capture action on this page, so it gets solid weight and the accent tint —
+   still one line tall, but unmistakably a button. */
+.dart-quick-hd {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: rgba(var(--primary-rgb), .10);
+  border: 1px solid rgba(var(--primary-rgb), .45); border-radius: 8px;
+  padding: 9px 12px; cursor: pointer; color: var(--primary);
+  font-size: 13px; text-align: left;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+.dart-quick-hd:hover {
+  background: rgba(var(--primary-rgb), .18); border-color: var(--primary);
+  box-shadow: 0 1px 6px rgba(var(--primary-rgb), .18);
+}
+.dart-quick.open .dart-quick-hd { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
+.dart-quick-caret { font-size: 10px; opacity: .9; }
+.dart-quick-title { font-weight: 700; letter-spacing: .01em; }
+.dart-quick.open .dart-quick-body { border-color: rgba(var(--primary-rgb), .45); }
+.dart-quick-body {
+  border: 1px solid rgba(var(--primary-rgb), .45); border-top: none;
+  border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+  padding: 8px 10px 10px;
+}
+.dart-quick-input {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px;
+  font: 13px/1.5 inherit;
+}
+.dart-quick-input:focus { outline: none; border-color: var(--primary); }
+.dart-quick-actions { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+.dart-quick-hint { flex: 1; font-size: 11px; line-height: 1.45; color: var(--text2); }
+.dart-quick-btn {
+  flex-shrink: 0; background: var(--primary); color: var(--bg);
+  border: none; border-radius: 6px; padding: 6px 14px;
+  font-size: 12.5px; font-weight: 700; cursor: pointer;
+}
+.dart-quick-btn:disabled { opacity: .45; cursor: default; }
+
+/* Remove control on an unplanned chip — unplanned work is the one kind you
+   delete outright rather than un-ticking. */
+.dart-rchip-x {
+  flex-shrink: 0; background: transparent; border: none; cursor: pointer;
+  color: var(--text2); font-size: 10px; padding: 4px 5px; border-radius: 4px;
+}
+.dart-rchip-x:hover { color: var(--danger); background: var(--bg3); }
+
+/* Unplanned entries carry a title plus the substance behind it, so they are
+   stacked cards rather than the one-line chips a routine uses. */
+.dart-clear-adhoc {
+  margin-left: 8px; background: transparent; border: 1px solid var(--border);
+  border-radius: 5px; padding: 2px 8px; cursor: pointer;
+  color: var(--text2); font-size: 10.5px;
+}
+.dart-clear-adhoc:hover { color: var(--danger); border-color: var(--danger); }
+.dart-adhoc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dart-adhoc {
+  border: 1px solid var(--border); border-left: 3px solid var(--warning, #f59e0b);
+  border-radius: 8px; background: var(--bg); padding: 7px 10px;
+}
+.dart-adhoc-hd { display: flex; align-items: baseline; gap: 8px; }
+.dart-adhoc-title { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
+.dart-adhoc-mins { flex-shrink: 0; font-size: 11.5px; color: var(--text2); white-space: nowrap; }
+.dart-adhoc-notes { margin: 5px 0 0; padding-left: 16px; }
+.dart-adhoc-notes li { font-size: 12px; line-height: 1.55; color: var(--text2); margin: 2px 0; }
+
+/* ── Today · timeline ───────────────────────────────────────────────────────
+   Colour carries the judgement, not the label: green = time well spent,
+   amber = mixed, red = wasted. Gaps are drawn explicitly because unaccounted
+   time is the thing worth noticing. */
+.dart-tl { margin: 0 0 16px; }
+.dart-tl-hd { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
+.dart-tl-title { font-size: 12px; font-weight: 700; color: var(--text); }
+.dart-tl-total { margin-left: auto; font-size: 11px; color: var(--text2); }
+.dart-tl-empty { font-size: 11.5px; line-height: 1.5; color: var(--text2); }
+.dart-tl-list { list-style: none; margin: 0; padding: 0; }
+/* Two columns, the time one FIXED so every row's item starts on the same
+   line — the aside is only 260px, so a flex row let long titles push the
+   clock around and wrap. */
+.dart-tl-row {
+  display: grid; grid-template-columns: 46px 1fr; gap: 8px;
+  padding: 6px 8px; border-radius: 6px;
+  border-left: 3px solid var(--border); background: var(--bg3); margin: 3px 0;
+}
+.dart-tl-row.mood-good  { border-left-color: #10b981; background: rgba(16,185,129,.09); }
+.dart-tl-row.mood-mixed { border-left-color: #f59e0b; background: rgba(245,158,11,.09); }
+.dart-tl-row.mood-waste { border-left-color: #ef4444; background: rgba(239,68,68,.09); }
+.dart-tl-when {
+  display: flex; flex-direction: column; align-items: flex-start;
+  font: 700 10.5px/1.35 ui-monospace, Menlo, monospace;
+  color: var(--text2); white-space: nowrap;
+}
+/* End time sits under the start, dimmer — a range read top-to-bottom in 46px. */
+.dart-tl-t1 { color: var(--text); }
+.dart-tl-t2 { opacity: .65; }
+.dart-tl-t2::before { content: '↓ '; opacity: .7; }
+.dart-tl-what { min-width: 0; display: flex; flex-direction: column; }
+.dart-tl-name {
+  font-size: 12px; color: var(--text); font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dart-tl-kind { font-size: 10.5px; color: var(--text2); }
+.dart-tl-gap {
+  display: flex; align-items: center; gap: 6px; margin: 2px 0 2px 10px;
+  font-size: 10.5px; color: var(--text2); font-style: italic;
+}
+/* ── Lessons · tag path ─────────────────────────────────────────────────────
+   Indent carries the hierarchy, so a nested tag reads as nested without
+   drawing a tree — the list is short enough that a full tree would be more
+   chrome than help. */
+/* ── Lessons · rich preview ─────────────────────────────────────────────────
+   Three axes, three colours: indigo asks what the situation was, red is the
+   route that failed, green the one that worked. Telling those two apart at a
+   glance is the entire job of a lesson, so the colour is the content. */
+.lesson-tagrow { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; align-items: center; }
+.lesson-tagseg {
+  font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  background: rgba(var(--primary-rgb), .12); color: var(--primary);
+}
+.lesson-tagseg + .lesson-tagseg::before { content: '› '; opacity: .6; }
+
+.lesson-box {
+  margin: 0 0 10px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border); border-left-width: 3px; background: var(--bg3);
+}
+.lesson-box--ask  { border-left-color: #6366f1; background: rgba(99,102,241,.07); }
+.lesson-box--bad  { border-left-color: #ef4444; background: rgba(239,68,68,.07); }
+.lesson-box--good { border-left-color: #10b981; background: rgba(16,185,129,.08); }
+.lesson-box-hd {
+  display: flex; align-items: center; gap: 6px; margin: 0 0 7px;
+  font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--text2);
+}
+.lesson-box-icon { font-size: 12px; }
+.lesson-box--bad  .lesson-box-icon { color: #ef4444; }
+.lesson-box--good .lesson-box-icon { color: #10b981; }
+.lesson-box-line, .lesson-box-list li {
+  font-size: 13px; line-height: 1.6; color: var(--text); margin: 0;
+}
+.lesson-box-list { margin: 0; padding-left: 18px; }
+.lesson-box-list li { margin: 4px 0; }
+.lesson-box-empty { margin: 0; font-size: 13px; color: var(--text2); }
+
+.lesson-preview-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.lesson-chip {
+  font-size: 10.5px; padding: 3px 9px; border-radius: 999px;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+}
+.lesson-chip.ai { background: rgba(var(--primary-rgb), .12); border-color: transparent; color: var(--primary); font-weight: 700; }
+
+/* List rows echo the same two colours so the list and the detail read alike. */
+.lessons-row-mark { font-weight: 700; margin-right: 5px; }
+.lessons-row-w .lessons-row-mark { color: #10b981; }
+.lessons-row-x .lessons-row-mark { color: #ef4444; }
+
+/* Grouped list: a sticky tag heading over its lessons, so scrolling always
+   tells you which area you are reading. */
+/* ToDo · export + regenerate */
+.todo3-gen-btns { display: flex; gap: 6px; }
+.todo3-gen-btns > button { flex: 1; }
+.todo3-tidy-btn {
+  margin-top: 6px; width: 100%; background: transparent;
+  border: 1px dashed var(--border); border-radius: 6px; padding: 5px 8px;
+  cursor: pointer; color: var(--text2); font-size: 11.5px;
+}
+.todo3-tidy-btn:hover:not(:disabled) { color: var(--primary); border-color: var(--primary); background: var(--bg3); }
+
+/* Which list the Generate box is aimed at — without it, ♻ on a row and the
+   button in the panel look unrelated. */
+.todo3-gen-target {
+  display: flex; align-items: center; gap: 6px; margin: 0 0 6px;
+  padding: 4px 8px; border-radius: 6px; font-size: 11.5px;
+  background: rgba(var(--primary-rgb), .12); color: var(--primary);
+}
+.todo3-gen-target b { font-weight: 700; }
+.todo3-gen-target button {
+  margin-left: auto; background: transparent; border: none; cursor: pointer;
+  color: inherit; font-size: 10px; padding: 2px 4px;
+}
+
+.lessons-group { list-style: none; margin: 0 0 10px; }
+.lessons-group-hd {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; margin: 0 0 2px;
+  position: sticky; top: 0; z-index: 1; background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.lessons-group-name {
+  font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lessons-group-n { margin-left: auto; font-size: 10.5px; color: var(--text2); }
+.lessons-sublist { list-style: none; margin: 0; padding: 0; }
+
+.lessons-tags { margin: 0 0 12px; display: flex; flex-direction: column; gap: 2px; }
+.lessons-tags-hd {
+  font: 700 10px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--text2);
+  margin: 0 0 5px;
+}
+.lessons-tag {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  background: transparent; border: none; border-radius: 5px;
+  padding: 4px 8px; cursor: pointer; text-align: left;
+  font-size: 12px; color: var(--text2);
+}
+.lessons-tag:hover { background: var(--bg3); color: var(--text); }
+.lessons-tag.sel { background: rgba(var(--primary-rgb), .14); color: var(--primary); font-weight: 600; }
+.lessons-tag.unfiled { font-style: italic; }
+.lessons-tag-n { margin-left: auto; font-size: 10.5px; opacity: .75; }
+.lessons-row-path {
+  display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(var(--primary-rgb), .12); color: var(--primary);
+  font-size: 10px; font-weight: 700;
+}
+
+.dart-tl-gap::before {
+  content: ''; width: 2px; align-self: stretch; min-height: 14px;
+  background: repeating-linear-gradient(var(--border) 0 3px, transparent 3px 6px);
+}
 .dart-rchip-btn:disabled { opacity: .5; cursor: default; }
 .dart-rchip-tick {
   width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px;
@@ -6821,4 +7048,35 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   .jr-tabs { margin: -12px -12px 12px; }
   .jr-vs { flex-direction: column; gap: 6px; }
   .jr-vs-arrow { display: none; }
+}
+
+
+/* ── Landing ────────────────────────────────────────────────────────────────
+   A signpost, not a dashboard: no counts, no fetches, nothing that can be
+   stale. Reached by clicking the brand. */
+.landing { padding: 48px 24px 64px; max-width: 900px; margin: 0 auto; }
+.landing-hd { text-align: center; margin: 0 0 32px; }
+.landing-title { margin: 0; font-size: 30px; letter-spacing: -.02em; color: var(--text); }
+.landing-sub { margin: 8px 0 0; font-size: 14px; color: var(--text2); }
+.landing-grid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.landing-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  text-align: left; padding: 18px 18px 20px; cursor: pointer;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; border-left: 3px solid rgba(var(--primary-rgb), .55);
+  transition: transform .12s, border-color .12s, box-shadow .12s;
+}
+.landing-card:hover {
+  transform: translateY(-2px); border-color: var(--primary);
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+}
+.landing-card-icon { font-size: 24px; line-height: 1; }
+.landing-card-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.landing-card-blurb { font-size: 12.5px; line-height: 1.55; color: var(--text2); }
+.landing-card-sub {
+  display: flex; flex-direction: column; gap: 2px; margin-top: 4px;
+  font-size: 11px; color: var(--text2); opacity: .8;
 }
