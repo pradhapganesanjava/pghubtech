@@ -16,6 +16,7 @@ import { fmtMins, isoDate, parseIso } from '../lib/dartPlan'
 import { bareJournal, consolidate, extractJournal, generateInsights } from '../lib/journalGen'
 import JournalCalendar, { WINDOWS } from '../components/JournalCalendar'
 import { useToast } from '../components/Toast'
+import AiMark from '../components/AiMark'
 import { LLM } from '../lib/llm'
 import { sanitizeHtml } from '../lib/sanitize'
 
@@ -147,7 +148,9 @@ export default function JournalView() {
           <button className={`activity-subtab${tab === 'patterns' ? ' active' : ''}`}
                   onClick={() => setTab('patterns')}>🔁 Patterns</button>
           <button className={`activity-subtab${tab === 'insights' ? ' active' : ''}`}
-                  onClick={() => setTab('insights')}>✨ Insights</button>
+                  onClick={() => setTab('insights')}>
+            <AiMark className="ai-inline" /> Insights
+          </button>
         </div>
 
         {loading ? <div className="col-empty">Loading…</div>
@@ -215,7 +218,9 @@ export default function JournalView() {
           <div className="jr-insights">
             <div className="jr-gen">
               <div className="jr-gen-hd">
-                <span className="dart-section-title">✨ Generate a report</span>
+                <span className="dart-section-title">
+                  <AiMark className="ai-inline" /> Generate a report
+                </span>
                 <span className="dart-section-meta">
                   {range.from} → {range.to} · <b>{inWindow.length}</b> entries
                 </span>

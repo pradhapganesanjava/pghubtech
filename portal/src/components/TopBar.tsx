@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
+import AiMark from './AiMark'
 
 interface Props {
   view:    string
@@ -128,12 +129,13 @@ export default function TopBar({
 
         {/* Ask AI launcher — banner-height pill */}
         <button
-          className={`tb-pill ai-launch-btn${aiOpen ? ' active' : ''}`}
+          className={`tb-pill tb-pill-icononly ai-launch-btn${aiOpen ? ' active' : ''}`}
           onClick={onToggleAI}
           title={aiOpen ? 'Close Ask AI' : 'Open Ask AI'}
         >
-          <span className="tb-pill-icon">✨</span>
-          <span className="tb-pill-lbl">AI</span>
+          {/* Mark only — the logo says "Ai", so the word beside it was saying
+              it twice. */}
+          <AiMark className="tb-pill-icon" />
         </button>
 
         {/* Avatar trigger + dropdown (hover OR click) */}

@@ -35,6 +35,7 @@ import type { MatchTarget } from '../lib/dartPlan'
 import type { GoalTask } from '../lib/dartPlan'
 import { useToast } from '../components/Toast'
 import { LLM } from '../lib/llm'
+import AiMark from '../components/AiMark'
 import { addLesson } from '../adapters/utilsRepo'
 import ConsistencyGrid from '../components/ConsistencyGrid'
 
@@ -485,6 +486,19 @@ function TodayPanel({
             {date !== todayIso && (
               <button className="dart-todaybtn" onClick={() => setDate(todayIso)}>Back to today</button>
             )}
+            {/* Same 64px round shape as the ring beside it, so the pair reads
+                as one unit: the ring reports the day, this one adds to it. */}
+            <button
+              className={`dart-logbtn${quickOpen ? ' active' : ''}`}
+              onClick={() => setQuickOpen(o => !o)}
+              title={quickOpen ? 'Close the log box' : 'Log what you did — AI sorts it against today'}
+              aria-label="Log what you did"
+              aria-expanded={quickOpen}
+            >
+              <AiMark className="dart-logbtn-mark" />
+              <span className="dart-logbtn-lbl">Log</span>
+            </button>
+
             <div className="dart-ringwrap" title={`${pct}% of what today asked`}>
               <Ring pct={pct} />
               <div className="dart-ringlbl"><b>{doneCount}</b>/{totalCount}</div>
@@ -520,11 +534,8 @@ function TodayPanel({
         </div>
 
         {/* ── Quick log ──────────────────────────────────── */}
+        {/* Opened from the round button in the day header above. */}
         <section className={`dart-quick${quickOpen ? ' open' : ''}`}>
-          <button className="dart-quick-hd" onClick={() => setQuickOpen(o => !o)}>
-            <span className="dart-quick-caret">{quickOpen ? '▾' : '▸'}</span>
-            <span className="dart-quick-title">＋ Log what you did</span>
-          </button>
           {quickOpen && (
             <div className="dart-quick-body">
               <textarea
