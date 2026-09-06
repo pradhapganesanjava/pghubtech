@@ -77,92 +77,69 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
   }, [])
 
-  // Opening always starts a FRESH pad. A scratch pad is for the thought you
-  // are having now, not the one you had yesterday — and every earlier pad is
-  // one click away in the picker, so nothing is lost by not reopening it.
+  // Opening starts a blank, UNSAVED pad. Nothing is written to Drive until you
+  // press Save — clicking the button to glance at something should not leave a
+  // file behind, and the previous design created one on every open and then had
+  // to sweep the empties back up again.
   //
-  // The cost of that is an empty Drive file per idle open, so an auto-created
-  // pad that was never written in is deleted again on close (see below).
-  const autoCreated = useRef<string | null>(null)
+  // The cost is that an unsaved pad is lost on close. That is the trade a
+  // scratch pad makes: Save is what turns a jotting into something kept.
   useEffect(() => {
-    if (!open || padId) return
+    if (!open) return
     let cancelled = false
     ;(async () => {
       setBusy('Loading…'); setErr(null)
       try {
         const list = await listScratch()
-        const fresh = await createScratch()
-        if (cancelled) return
-        autoCreated.current = fresh.id
-        setPads([fresh, ...list])
-        setName(fresh.name)
-        setPadId(fresh.id)
-        setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
+        if (!cancelled) setPads(list)
       } catch (e) { if (!cancelled) setErr((e as Error).message) }
       finally { if (!cancelled) setBusy(null) }
     })()
+    // Clean sheet: no pad selected, default name, empty body.
+    setPadId(null)
+    setName(defaultScratchName())
+    setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
     return () => { cancelled = true }
-  }, [open, padId])
-
-  // Drop the auto-created pad if it is still blank. Called on close AND when
-  // the user navigates away from it — switching to an older pad or pressing ＋
-  // would otherwise strand an empty file in Drive, and the close-time check
-  // would by then be inspecting a different pad's content.
-  //
-  // Only auto-created pads are swept: one you made with ＋ is yours to keep,
-  // empty or not.
-  function sweepAuto() {
-    const id = autoCreated.current
-    if (!id) return
-    const blank = id === padId
-      && !dirty && !html.trim() && !(hwDoc?.pages.some(p => p.strokes.length))
-    autoCreated.current = null
-    if (!blank) return
-    setPads(prev => prev.filter(p => p.id !== id))
-    deleteScratch(id).catch(() => { /* a stray empty pad is not worth a toast */ })
-  }
+  }, [open])
 
   function switchPad(id: string) {
     if (id === padId) return
-    sweepAuto()
     void openPad(id)
   }
 
-  useEffect(() => {
-    if (open) return
-    sweepAuto()
-    setPadId(null)
-    setPads([])
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (current) setName(current.name) }, [current])
 
   // ── saving ────────────────────────────────────────────────────────────────
+  // Save is what CREATES the pad. Until it runs there is no Drive file, so an
+  // opened-and-abandoned pad costs nothing.
   async function save() {
-    if (!padId) return
     setBusy('Saving…'); setErr(null)
     try {
       // Read the pad's live strokes rather than state: the component owns them
       // and only reports on demand.
       const doc = tab === 'draw' && padRef.current ? padRef.current.getDoc() : hwDoc
       const drawing = doc && doc.pages.some(p => p.strokes.length) ? hwDocToBlockHtml(doc) : ''
-      await saveScratch(padId, [html, drawing].filter(Boolean).join('\n'))
+      const body = [html, drawing].filter(Boolean).join('\n')
+      if (padId) {
+        await saveScratch(padId, body)
+        setPads(prev => prev.map(p => p.id === padId
+          ? { ...p, modifiedTime: new Date().toISOString() } : p))
+      } else {
+        const created = await createScratch(name.trim() || defaultScratchName(), body)
+        setPadId(created.id)
+        setPads(prev => [created, ...prev])
+      }
       if (doc) setHwDoc(doc)
       setDirty(false)
-      setPads(prev => prev.map(p => p.id === padId
-        ? { ...p, modifiedTime: new Date().toISOString() } : p))
     } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
   }
 
-  async function addPad() {
-    sweepAuto()               // do not strand the blank pad this open created
-    setBusy('Creating…'); setErr(null)
-    try {
-      const p = await createScratch(defaultScratchName())
-      setPads(prev => [p, ...prev])
-      setName(p.name)
-      setPadId(p.id); setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
-    } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
+  // ＋ is "start over", not "create a file" — same as opening the pad.
+  function addPad() {
+    setPadId(null)
+    setName(defaultScratchName())
+    setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
   }
 
   async function removePad() {
@@ -180,7 +157,10 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
 
   async function commitName() {
     const next = name.trim()
-    if (!padId || !current || !next || next === current.name) { setName(current?.name ?? ''); return }
+    // Not saved yet ⇒ nothing to rename; the typed name is simply what the file
+    // will be called when Save creates it.
+    if (!padId) { if (!next) setName(defaultScratchName()); return }
+    if (!current || !next || next === current.name) { setName(current?.name ?? ''); return }
     try {
       await renameScratch(padId, next)
       setPads(prev => prev.map(p => p.id === padId ? { ...p, name: next } : p))
@@ -294,10 +274,17 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         <span className="scratch-state">
           {err ? <span className="scratch-err" title={err}>⚠ {err}</span>
                : busy ? busy
-               : dirty ? 'Unsaved' : 'Saved'}
+               : dirty ? 'Unsaved'
+               // A blank pad has never been saved; calling it "Saved" would
+               // claim a file exists when none does.
+               : padId ? 'Saved' : 'New'}
         </span>
 
-        <button className="scratch-btn scratch-save" onClick={save} disabled={!padId || !!busy}
+        {/* Enabled without a padId: on a fresh pad Save is what CREATES it.
+            Gated on having something to save, so an untouched pad cannot spawn
+            an empty file by a stray click. */}
+        <button className="scratch-btn scratch-save" onClick={save}
+          disabled={!!busy || (!padId && !dirty)}
           title="Save (⌘S)">Save</button>
         <button
           className="scratch-btn"
