@@ -9,6 +9,8 @@ interface Props {
   onSignOut: () => void
   aiOpen:    boolean
   onToggleAI: () => void
+  scratchOpen:    boolean
+  onToggleScratch: () => void
 }
 
 const THEMES = [
@@ -32,7 +34,10 @@ const NAVS = [
   // { id: 'ads', label: 'Ads' },  // temporarily hidden (pghubads.web.app) — may remove later
 ]
 
-export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen, onToggleAI }: Props) {
+export default function TopBar({
+  view, onNav, theme, onTheme, onSignOut, aiOpen, onToggleAI,
+  scratchOpen, onToggleScratch,
+}: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const closeTimer = useRef<number | null>(null)
@@ -90,6 +95,37 @@ export default function TopBar({ view, onNav, theme, onTheme, onSignOut, aiOpen,
       </div>
 
       <div className="topbar-right">
+        {/* Portal target for view-owned header controls (currently HomeView's
+            audio reader). A slot rather than props: the reader is driven by
+            that view's card state, and threading audioMode / currentNote /
+            answerVisible up through App just to render two buttons here would
+            couple the top bar to the review loop. */}
+        <div id="tb-audio-slot" className="tb-slot" />
+
+        {/* Scratch Pad launcher. Icon only — it sits beside AI and a second
+            worded pill would crowd the bar on narrow screens. */}
+        <button
+          className={`tb-pill tb-pill-icononly scratch-launch-btn${scratchOpen ? ' active' : ''}`}
+          onClick={onToggleScratch}
+          title={scratchOpen ? 'Close Scratch Pad' : 'Scratch Pad'}
+          aria-label="Scratch Pad"
+        >
+          {/* A pencil mid-stroke on a circle — drawn here rather than pulled
+              from an icon set: a licensed asset would put an attribution
+              obligation on the app for a 17px mark. currentColor means it
+              follows the pill's hover and active states, which a bitmap or an
+              emoji cannot. The arc is deliberately open where the pencil
+              crosses it, so the two read as one action rather than two shapes. */}
+          <svg
+            className="scratch-mark" viewBox="0 0 24 24" aria-hidden="true"
+            fill="none" stroke="currentColor" strokeWidth="1.7"
+            strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M17.4 6.3a8.4 8.4 0 1 0 3 6.4" />
+            <path d="M20.6 4.2 13 11.8l-2.6.9.9-2.6 7.6-7.6a1.2 1.2 0 0 1 1.7 1.7z" />
+          </svg>
+        </button>
+
         {/* Ask AI launcher — banner-height pill */}
         <button
           className={`tb-pill ai-launch-btn${aiOpen ? ' active' : ''}`}
