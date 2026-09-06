@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import type { AnkiNote, AnkiTemplate } from '../adapters/ankiRepo'
 import { loadAnkiTemplates, loadAllNotes } from '../adapters/ankiRepo'
 import {
@@ -303,6 +304,15 @@ export default function HomeView() {
 
   const displayNote = resolvedNote ?? currentNote
 
+  // The audio pill lives in the top bar. Resolved in an effect because the
+  // slot belongs to TopBar's DOM, which is committed before this runs.
+  //
+  // MUST stay above the loading-screen return below: hooks after an early
+  // return only run on some renders, which is "Rendered more hooks than during
+  // the previous render".
+  const [audioSlot, setAudioSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => { setAudioSlot(document.getElementById('tb-audio-slot')) }, [])
+
   // ── Loading screen ─────────────────────────────────────────────────────────
   if (!dataLoaded) {
     return (
@@ -319,6 +329,7 @@ export default function HomeView() {
 
   const hasAnyFilters = selectedTags.length > 0 || selectedDecks.length > 0
 
+
   return (
     <div className="review-body">
       {/* Floating Audio mode controls — anchored top-right of the viewport,
@@ -326,7 +337,8 @@ export default function HomeView() {
           while a card is in view; when audio mode is ON, the chunk reader
           (Q first, then A when Show Answer is clicked) sits right next to
           the toggle in the same pill. */}
-      {!isDone && currentNote && currentTmpl && (
+      {!isDone && currentNote && currentTmpl && (() => {
+        const pill = (
         <div className="audio-reader-float">
           <button
             className={`audio-reader-btn audio-toggle${audioMode ? ' active' : ''}`}
@@ -351,7 +363,11 @@ export default function HomeView() {
             />
           ))}
         </div>
-      )}
+        )
+        // Fall back to the old floating position if the slot is missing —
+        // better a pill in the corner than a reader that vanishes.
+        return audioSlot ? createPortal(pill, audioSlot) : pill
+      })()}
 
       {/* Mobile-only backdrop — tap closes the tag drawer */}
       {!leftCollapsed && (

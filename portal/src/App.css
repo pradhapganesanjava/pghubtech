@@ -999,6 +999,14 @@ body.resizing-h * {
   user-select: none !important;
 }
 
+/* Vertical twin, for the scratch pad's top-edge grip. Without the global
+   cursor + select lock, dragging over the editor selects its text instead. */
+body.resizing-v,
+body.resizing-v * {
+  cursor: ns-resize !important;
+  user-select: none !important;
+}
+
 .col-tags {
   width: 210px;
   flex-shrink: 0; min-height: 0;
@@ -2363,6 +2371,8 @@ body.resizing-h * {
    positioning). Hosts the on/off toggle always while reviewing a card;
    when audio mode is ON, the chunk reader sits inside the same pill so
    all audio controls live in one spot. */
+/* Fixed-position fallback, used only when the top-bar slot is absent. In the
+   header it is a sibling of the other pills and must not float. */
 .audio-reader-float {
   position: fixed;
   top: 60px; right: 16px;
@@ -2373,6 +2383,18 @@ body.resizing-h * {
   background: var(--bg2); border: 1px solid var(--border);
   box-shadow: 0 6px 18px rgba(0,0,0,.25);
 }
+
+/* ── In the top bar ────────────────────────────────────────────────────────
+   The slot is empty and zero-width until a card is in view, so the header
+   does not reserve a gap on every other page. */
+.tb-slot { display: inline-flex; align-items: center; }
+.tb-slot .audio-reader-float {
+  position: static; top: auto; right: auto; z-index: auto;
+  max-width: none; box-shadow: none;
+  padding: 3px 8px; gap: 4px;
+  background: rgba(127,127,127,.10); border-color: var(--border);
+}
+.tb-slot .audio-reader-btn { font-size: 13px; }
 .audio-reader-float .audio-reader {
   /* When the reader sits inside the float pill, drop its own pill chrome
      so the two controls read as one unit. */
@@ -7124,4 +7146,76 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   margin: 3px 0 6px 22px; padding-left: 9px;
   border-left: 2px solid var(--border);
   font-size: 12px; line-height: 1.55; color: var(--text2);
+}
+
+
+/* ── Scratch Pad ────────────────────────────────────────────────────────────
+   Docks to the bottom and stops there: no backdrop, no scroll lock, no focus
+   trap. The page behind stays readable and clickable, because the point is to
+   jot something down ABOUT what is on screen. */
+.scratch-pad {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: flex; flex-direction: column;
+  /* Height is inline state — dragged, or set by the maximise toggle. No CSS
+     transition: an animated height fights a pointer drag and feels laggy. */
+  background: var(--bg); border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 28px rgba(0,0,0,.28);
+}
+/* The grip IS the top border: a 6px target with a visible 2px accent line, so
+   it reads as a handle rather than a decoration. */
+.scratch-grip {
+  flex-shrink: 0; height: 6px; margin-bottom: -2px; cursor: ns-resize;
+  background: var(--primary); opacity: .55;
+  transition: opacity .12s;
+  touch-action: none;          /* let the pointer drag rather than scroll */
+}
+.scratch-grip:hover { opacity: 1; }
+
+/* One row: name, modes, actions. Wraps rather than overflowing when the
+   window is too narrow to hold them side by side. */
+.scratch-hd {
+  display: flex; align-items: center; gap: 5px; flex-shrink: 0; flex-wrap: wrap;
+  padding: 5px 8px; border-bottom: 1px solid var(--border); background: var(--bg2);
+}
+.scratch-hd-icon { color: var(--primary); font-size: 14px; }
+.scratch-name {
+  flex: 1 1 120px; min-width: 90px; background: transparent;
+  border: 1px solid transparent; border-radius: 5px; padding: 3px 6px;
+  color: var(--text); font-size: 12.5px; font-weight: 600;
+}
+.scratch-name:hover  { border-color: var(--border); }
+.scratch-name:focus  { outline: none; border-color: var(--primary); background: var(--bg); }
+.scratch-picker {
+  flex-shrink: 1; max-width: 150px; min-width: 70px; background: var(--bg); color: var(--text2);
+  border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px; font-size: 12px;
+}
+.scratch-btn {
+  flex-shrink: 0; background: transparent; border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 7px; cursor: pointer;
+  color: var(--text2); font-size: 11.5px; line-height: 1.4;
+}
+.scratch-btn:hover:not(:disabled) { color: var(--primary); border-color: var(--primary); background: var(--bg3); }
+.scratch-btn:disabled { opacity: .4; cursor: default; }
+.scratch-save { color: var(--primary); border-color: rgba(var(--primary-rgb), .5); font-weight: 700; }
+.scratch-close:hover { color: var(--danger); border-color: var(--danger); }
+/* Saved / Unsaved / error — quiet, but never hidden: this pad autosaves and
+   you should be able to tell at a glance whether your last line is safe. */
+.scratch-state { flex-shrink: 0; font-size: 10.5px; color: var(--text2); min-width: 46px; text-align: right; }
+.scratch-err   { color: var(--danger); }
+
+/* Inline in the header now. Icon-width pills so four modes cost ~120px
+   instead of a whole row. */
+.scratch-tabs { display: flex; gap: 4px; flex-shrink: 0; margin: 0 4px; }
+.scratch-tabs .adshub-diff-pill { padding: 4px 8px; font-size: 11.5px; }
+.scratch-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px; }
+.scratch-html { width: 100%; min-height: 100%; box-sizing: border-box; resize: none; }
+
+/* Icon-only variant of the top-bar pill, for the Scratch Pad launcher. */
+.tb-pill-icononly { padding-left: 9px; padding-right: 9px; }
+.scratch-launch-btn .scratch-mark { width: 17px; height: 17px; display: block; }
+.scratch-launch-btn.active { color: var(--primary); }
+
+@media (max-width: 720px) {
+  .scratch-picker { max-width: 96px; }
+  .scratch-grip { height: 10px; }   /* a finger needs more than 6px */
 }

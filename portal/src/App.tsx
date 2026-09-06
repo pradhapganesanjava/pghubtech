@@ -16,6 +16,7 @@ import AdsView from './views/AdsView'
 import AdsHubView from './views/AdsHubView'
 import SettingsView from './views/SettingsView'
 import AskAIPanel from './components/AskAIPanel'
+import ScratchPadPanel from './components/ScratchPad'
 import { viewFromPath, pathForView, type View } from './lib/routing'
 import './App.css'
 
@@ -39,6 +40,7 @@ export default function App() {
   const [theme, setTheme]         = useState<string>(Config.theme)
   const [loginError, setLoginError] = useState('')
   const [aiOpen, setAiOpen]       = useState(false)
+  const [scratchOpen, setScratchOpen] = useState(false)
 
   // On mount: try to restore a session
   useEffect(() => {
@@ -214,6 +216,8 @@ export default function App() {
           onSignOut={handleSignOut}
           aiOpen={aiOpen}
           onToggleAI={() => setAiOpen(o => !o)}
+          scratchOpen={scratchOpen}
+          onToggleScratch={() => setScratchOpen(o => !o)}
         />
 
         {view === 'landing'  && <LandingView onNav={setView} />}
@@ -243,6 +247,9 @@ export default function App() {
 
         {/* Ask AI floating panel — visible on every view */}
         <AskAIPanel open={aiOpen} onClose={() => setAiOpen(false)} />
+
+        {/* Scratch Pad — docks to the bottom, page behind stays usable */}
+        <ScratchPadPanel open={scratchOpen} onClose={() => setScratchOpen(false)} />
 
         {/* Mobile bottom nav */}
         <nav className="bottom-nav">
