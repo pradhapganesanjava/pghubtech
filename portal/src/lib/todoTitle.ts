@@ -40,3 +40,31 @@ export function tidyRootTitle(existing: string): string {
   const tidied = deriveRootTitle(body)
   return m ? `${tidied} · ${m[2]}` : tidied
 }
+
+// A list row is scanned, not read. Keep the leading verb and the distinctive
+// nouns, drop the trailing qualifiers that every sibling repeats ("… and key
+// components", "… for the target use case"), and cap it.
+export function keywordTitle(title: string, maxWords = 6): string {
+  let t = String(title || '').trim()
+    // Tails that add no information once the parent is visible.
+    .replace(/\s+(?:for|in|of|to|with|across|around)\s+(?:the|your|our|each|a|an)\s+[\w\s-]{0,32}$/i, '')
+    .replace(/\s+and\s+(?:key|core|basic|associated|related)\s+[\w-]+$/i, '')
+    .replace(/[\s,;:.]+$/, '')
+  const w = t.split(/\s+/).filter(Boolean)
+  if (w.length > maxWords) t = w.slice(0, maxWords).join(' ') + '…'
+  return t
+}
+
+// The greyed half-line beside a row: enough to know what it means without
+// opening it. Sentence one, clipped.
+export function briefOf(description: string, max = 64): string {
+  const first = String(description || '')
+    .split(/(?<!\b(?:e\.g|i\.e|vs))\.\s+/)[0]
+    .replace(/[\s.]+$/, '')
+    .trim()
+  if (!first) return ''
+  if (first.length <= max) return first
+  const cut = first.slice(0, max)
+  const sp  = cut.lastIndexOf(' ')
+  return (sp > max * 0.5 ? cut.slice(0, sp) : cut) + '…'
+}
