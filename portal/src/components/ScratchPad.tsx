@@ -21,6 +21,9 @@ import type { ScratchPad as Pad } from '../adapters/scratchRepo'
 
 type Tab = 'rich' | 'html' | 'preview' | 'draw'
 
+/** Share of the window a pad takes when opened, and what ▾ restores to. */
+const DEFAULT_FRACTION = 0.65
+
 /** Everything except the handwriting block — the rich-text half of a body. */
 function textOf(body: string): string {
   const d = new DOMParser().parseFromString(`<!doctype html><body>${body}</body>`, 'text/html')
@@ -37,7 +40,10 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   const [pads, setPads]       = useState<Pad[]>([])
   const [padId, setPadId]     = useState<string | null>(null)
   const [name, setName]       = useState('')
-  const [tab, setTab]         = useState<Tab>('rich')
+  // A blank pad opens in Draw: this is a scratch pad, and the usual reason to
+  // open one mid-thought is to sketch. Typing is one click away; an existing
+  // pad still opens in whichever mode its content implies (see openPad).
+  const [tab, setTab]         = useState<Tab>('draw')
   const [html, setHtml]       = useState('')
   const [hwDoc, setHwDoc]     = useState<HwDoc | null>(null)
   const [dirty, setDirty]     = useState(false)
@@ -46,9 +52,12 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   // Height in px, dragged or toggled. Kept in px rather than vh so the drag
   // maps 1:1 to the pointer; clamped on every write so a resized window can
   // never leave the pad taller than the viewport.
+  // 65% of the window by default — enough to draw or write in without the pad
+  // feeling like a status bar. Key is versioned (…_h2) so the new default
+  // actually reaches anyone who had already dragged the old 42% one.
   const [height, setHeight]   = useState(() => {
-    const saved = Number(localStorage.getItem('pghtech_scratch_h'))
-    return saved > 0 ? saved : Math.round(window.innerHeight * 0.42)
+    const saved = Number(localStorage.getItem('pghtech_scratch_h2'))
+    return saved > 0 ? saved : Math.round(window.innerHeight * DEFAULT_FRACTION)
   })
   const dragging = useRef(false)
   const padRef = useRef<HandwritingPadHandle>(null)
@@ -88,7 +97,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         setPads([fresh, ...list])
         setName(fresh.name)
         setPadId(fresh.id)
-        setHtml(''); setHwDoc(null); setTab('rich'); setDirty(false)
+        setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
       } catch (e) { if (!cancelled) setErr((e as Error).message) }
       finally { if (!cancelled) setBusy(null) }
     })()
@@ -152,7 +161,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
       const p = await createScratch(defaultScratchName())
       setPads(prev => [p, ...prev])
       setName(p.name)
-      setPadId(p.id); setHtml(''); setHwDoc(null); setTab('rich'); setDirty(false)
+      setPadId(p.id); setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
     } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
   }
 
@@ -197,7 +206,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   // Persist across opens — the size you chose is a preference, not a per-visit
   // accident.
   useEffect(() => {
-    try { localStorage.setItem('pghtech_scratch_h', String(Math.round(height))) } catch { /* private mode */ }
+    try { localStorage.setItem('pghtech_scratch_h2', String(Math.round(height))) } catch { /* private mode */ }
   }, [height])
 
   // Keep it legal when the window itself shrinks.
@@ -237,7 +246,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         onPointerMove={gripMove}
         onPointerUp={gripUp}
         onPointerCancel={gripUp}
-        onDoubleClick={() => setHeight(h => (h >= maxH() - 2 ? Math.round(window.innerHeight * 0.42) : maxH()))}
+        onDoubleClick={() => setHeight(h => (h >= maxH() - 2 ? Math.round(window.innerHeight * DEFAULT_FRACTION) : maxH()))}
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize scratch pad"
@@ -292,7 +301,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
           title="Save (⌘S)">Save</button>
         <button
           className="scratch-btn"
-          onClick={() => setHeight(isMax ? Math.round(window.innerHeight * 0.42) : maxH())}
+          onClick={() => setHeight(isMax ? Math.round(window.innerHeight * DEFAULT_FRACTION) : maxH())}
           title={isMax ? 'Restore' : 'Maximise'}
           aria-label={isMax ? 'Restore' : 'Maximise'}
         >{isMax ? '▾' : '▴'}</button>
