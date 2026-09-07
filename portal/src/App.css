@@ -140,10 +140,12 @@ body {
   border: 1px solid var(--border); flex-shrink: 0;
 }
 .avatar-menu-wrap { position: relative; }
-.avatar-trigger { padding-left: 6px; padding-right: 12px; }
-.avatar-trigger-lbl { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.avatar-trigger-caret { font-size: 10px; color: var(--text2); transition: transform .15s; }
-.avatar-menu-wrap.open .avatar-trigger-caret { transform: rotate(180deg); }
+/* The picture fills the circle rather than sitting inside it with a ring of
+   background showing, so the trigger reads as the avatar itself. */
+.avatar-trigger { overflow: hidden; }
+.avatar-trigger .avatar-img,
+.avatar-trigger .avatar-chip { width: 100%; height: 100%; border: none; }
+.avatar-menu-wrap.open .avatar-trigger { border-color: var(--primary); }
 
 .avatar-menu {
   position: absolute;
@@ -2680,7 +2682,7 @@ body.resizing-v * {
     width: auto !important; height: auto !important;
     max-width: none; max-height: none;
   }
-  .tb-pill-lbl, .avatar-trigger-lbl { display: none; }
+  .tb-pill-lbl { display: none; }
   .tb-pill { padding: 0 10px; height: 36px; }
 }
 
@@ -7240,10 +7242,43 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 .scratch-tabs { display: flex; gap: 4px; flex-shrink: 0; margin: 0 4px; }
 .scratch-tabs .adshub-diff-pill { padding: 4px 8px; font-size: 11.5px; }
 .scratch-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px; }
+
+/* Floating scroll control — right edge, vertically centred over the writing
+   area. Semi-transparent at rest so it never hides what is under it, solid on
+   hover. Sits above the canvas but is not part of it, so a stroke that starts
+   on the button does not draw. */
+.scratch-scroll {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  z-index: 3; display: flex; flex-direction: column; gap: 4px;
+}
+.scratch-scroll button {
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text2); font-size: 10px; line-height: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  opacity: .55; transition: opacity .12s, color .12s, border-color .12s;
+  touch-action: manipulation;   /* no double-tap zoom on a repeated press */
+}
+.scratch-scroll button:hover { opacity: 1; color: var(--primary); border-color: var(--primary); }
+.scratch-scroll button:active { transform: translateY(1px); }
+
+@media (max-width: 720px) {
+  /* Bigger targets, and clear of the right thumb rest. */
+  .scratch-scroll { right: 8px; }
+  .scratch-scroll button { width: 36px; height: 36px; opacity: .75; }
+}
 .scratch-html { width: 100%; min-height: 100%; box-sizing: border-box; resize: none; }
 
 /* Icon-only variant of the top-bar pill, for the Scratch Pad launcher. */
-.tb-pill-icononly { padding-left: 9px; padding-right: 9px; }
+/* Icon-only pills are circles, not shortened lozenges: equal width and
+   height, no padding, and the icon centred by the flex rules on .tb-pill. The
+   header now holds three of them (AI, scratch pad, avatar) and they only read
+   as a set if they are the same shape and size. */
+.tb-pill-icononly {
+  width: 40px; height: 40px; padding: 0; border-radius: 50%;
+  justify-content: center; gap: 0; flex-shrink: 0;
+}
 .scratch-launch-btn .scratch-mark { width: 17px; height: 17px; display: block; }
 .scratch-launch-btn.active { color: var(--primary); }
 

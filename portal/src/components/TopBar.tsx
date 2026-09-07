@@ -146,15 +146,19 @@ export default function TopBar({
           onMouseLeave={scheduleClose}
         >
           <button
-            className="tb-pill avatar-trigger"
+            className="tb-pill tb-pill-icononly avatar-trigger"
             onClick={() => setMenuOpen(o => !o)}
             title={user?.email ?? 'Account'}
+            aria-label={user?.name ? `Account — ${user.name}` : 'Account'}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
           >
+            {/* Picture only. The name is in the menu this opens, and the
+                title attribute carries the account for a hover check, so
+                repeating it in the bar was spending width to say it twice. */}
             {user?.picture
-              ? <img className="avatar-img" src={user.picture} alt={user.name} referrerPolicy="no-referrer" />
+              ? <img className="avatar-img" src={user.picture} alt="" referrerPolicy="no-referrer" />
               : <span className="avatar-chip">{user?.name?.[0]?.toUpperCase() ?? '·'}</span>}
-            <span className="tb-pill-lbl avatar-trigger-lbl">{user?.name?.split(' ')[0] ?? 'Me'}</span>
-            <span className="avatar-trigger-caret">▾</span>
           </button>
 
           {menuOpen && (
