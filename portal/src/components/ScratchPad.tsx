@@ -218,25 +218,54 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     document.body.classList.remove('resizing-v')
   }
 
+  // Which element actually scrolls. In Rich / HTML / Preview it is the body,
+  // but in Draw the body is exactly the pad's height and the overflow lives in
+  // HandwritingPad's own .hw-canvas-wrap — the canvas is 1000:1400, so on a
+  // narrow screen it is far taller than the pane. Measuring only the body
+  // therefore reported "nothing to scroll" in Draw, which is the default mode
+  // and the whole of the mobile experience.
+  //
+  // That wrapper also sets touch-action: none so the canvas can capture
+  // strokes, meaning a finger cannot scroll it at all — these buttons are the
+  // only way to move the page there.
+  const scroller = useCallback((): HTMLElement | null => {
+    const root = bodyRef.current
+    if (!root) return null
+    if (root.scrollHeight > root.clientHeight + 4) return root
+    const inner = root.querySelector<HTMLElement>('.hw-canvas-wrap')
+    if (inner && inner.scrollHeight > inner.clientHeight + 4) return inner
+    return null
+  }, [])
+
   // Re-measure whenever the content or the pad's size could have changed. A
-  // drawing grows as you draw, so this also watches the element itself rather
+  // drawing grows as you draw, so this watches the elements themselves rather
   // than only React's renders.
   useEffect(() => {
     const el = bodyRef.current
     if (!open || !el) return
-    const measure = () => setScrollable(el.scrollHeight > el.clientHeight + 4)
+    const measure = () => setScrollable(!!scroller())
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     if (el.firstElementChild) ro.observe(el.firstElementChild)
+    const inner = el.querySelector<HTMLElement>('.hw-canvas-wrap')
+    if (inner) { ro.observe(inner); inner.addEventListener('scroll', measure, { passive: true }) }
     el.addEventListener('scroll', measure, { passive: true })
-    return () => { ro.disconnect(); el.removeEventListener('scroll', measure) }
-  }, [open, tab, html, height, padId])
+    // The canvas mounts a tick after the tab switch, so measure once more when
+    // layout has settled rather than only on the frame that swapped it in.
+    const t = window.setTimeout(measure, 120)
+    return () => {
+      ro.disconnect()
+      window.clearTimeout(t)
+      el.removeEventListener('scroll', measure)
+      inner?.removeEventListener('scroll', measure)
+    }
+  }, [open, tab, html, height, padId, scroller])
 
   // A page at a time would overshoot handwriting; ~45% keeps a couple of lines
   // of context on screen either side of the jump.
   function scrollBody(dir: -1 | 1) {
-    const el = bodyRef.current
+    const el = scroller()
     if (!el) return
     el.scrollBy({ top: dir * Math.max(80, el.clientHeight * 0.45), behavior: 'smooth' })
   }
