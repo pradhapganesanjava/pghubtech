@@ -61,6 +61,10 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   })
   const dragging = useRef(false)
   const padRef = useRef<HandwritingPadHandle>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  // Whether the body actually overflows — no point floating scroll buttons
+  // over content that already fits.
+  const [scrollable, setScrollable] = useState(false)
 
   const current = pads.find(p => p.id === padId) ?? null
 
@@ -214,6 +218,29 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     document.body.classList.remove('resizing-v')
   }
 
+  // Re-measure whenever the content or the pad's size could have changed. A
+  // drawing grows as you draw, so this also watches the element itself rather
+  // than only React's renders.
+  useEffect(() => {
+    const el = bodyRef.current
+    if (!open || !el) return
+    const measure = () => setScrollable(el.scrollHeight > el.clientHeight + 4)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    if (el.firstElementChild) ro.observe(el.firstElementChild)
+    el.addEventListener('scroll', measure, { passive: true })
+    return () => { ro.disconnect(); el.removeEventListener('scroll', measure) }
+  }, [open, tab, html, height, padId])
+
+  // A page at a time would overshoot handwriting; ~45% keeps a couple of lines
+  // of context on screen either side of the jump.
+  function scrollBody(dir: -1 | 1) {
+    const el = bodyRef.current
+    if (!el) return
+    el.scrollBy({ top: dir * Math.max(80, el.clientHeight * 0.45), behavior: 'smooth' })
+  }
+
   if (!open) return null
 
   return (
@@ -295,7 +322,16 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         <button className="scratch-btn scratch-close" onClick={onClose} title="Close Scratch Pad" aria-label="Close Scratch Pad">✕</button>
       </header>
 
-      <div className="scratch-body">
+      {scrollable && (
+        // Floated over the pad, not in the toolbar: while writing, your hand is
+        // already at the page, and a control at the top would cost a round trip.
+        <div className="scratch-scroll">
+          <button onClick={() => scrollBody(-1)} title="Scroll up" aria-label="Scroll up">▲</button>
+          <button onClick={() => scrollBody(1)} title="Scroll down" aria-label="Scroll down">▼</button>
+        </div>
+      )}
+
+      <div className="scratch-body" ref={bodyRef}>
         {tab === 'rich' && (
           <RichEditor value={html} onChange={v => { setHtml(v); setDirty(true) }} allowHtmlEmbed />
         )}
