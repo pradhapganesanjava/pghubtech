@@ -9,6 +9,7 @@ import SheetSetupModal from './components/SheetSetupModal'
 import DocsView from './views/DocsView'
 import AnkiView from './views/AnkiView'
 import SysDsgHubView from './views/SysDsgHubView'
+import TechHubView from './views/TechHubView'
 import LandingView from './views/LandingView'
 import UtilsView from './views/UtilsView'
 import AISkillsView from './views/AISkillsView'
@@ -235,6 +236,7 @@ export default function App() {
         {view === 'ads'      && <AdsView />}
         {view === 'ads-hub'  && <AdsHubView />}
         {view === 'sysdsg-hub' && <SysDsgHubView />}
+        {view === 'tech-hub' && <TechHubView />}
         {view === 'ai-skills' && <AISkillsView />}
         {view === 'settings' && (
           <SettingsView
@@ -264,6 +266,12 @@ export default function App() {
             onClick={() => setView('sysdsg-hub')}
           >
             <span className="bn-icon">🏛</span><span className="bn-label">SysDsg</span>
+          </button>
+          <button
+            className={`bn-btn${view === 'tech-hub' ? ' active' : ''}`}
+            onClick={() => setView('tech-hub')}
+          >
+            <span className="bn-icon">🧰</span><span className="bn-label">Tech</span>
           </button>
           <button
             className={`bn-btn${view === 'anki' || view === 'home' || view === 'browse' ? ' active' : ''}`}
