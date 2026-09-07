@@ -27,6 +27,7 @@ const THEMES = [
 const NAVS = [
   { id: 'ads-hub', label: 'AdsHub' },
   { id: 'sysdsg-hub', label: 'SysDsgHub' },
+  { id: 'tech-hub', label: 'Tech' },
   // Home and Browse are sub-tabs of Anki now — one subject, one tab.
   { id: 'anki',   label: 'Anki'   },
   { id: 'docs',   label: 'Pages'  },

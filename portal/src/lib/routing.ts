@@ -15,6 +15,7 @@
 //   /pghubtech/ads          → ads
 //   /pghubtech/adshub       → ads-hub  (also matches AdsHub, ADSHUB — case-insensitive)
 //   /pghubtech/sysdsghub    → sysdsg-hub (the /PGHubSysDsg app, framed in place)
+//   /pghubtech/tech         → tech-hub (the /PGHubTechnologies app, framed in place)
 //   /pghubtech/ai-skills    → ai-skills
 //   /pghubtech/settings     → settings
 //
@@ -24,7 +25,7 @@
 
 export type View =
   | 'landing' | 'anki' | 'home' | 'browse' | 'docs' | 'notes' | 'utils'
-  | 'sysdsg-hub'
+  | 'sysdsg-hub' | 'tech-hub'
   | 'ads' | 'ads-hub' | 'ai-skills' | 'settings'
 
 const PATHS_BY_VIEW: Record<View, string> = {
@@ -40,6 +41,7 @@ const PATHS_BY_VIEW: Record<View, string> = {
   'ads':       'ads',
   'ads-hub':   'adshub',
   'sysdsg-hub': 'sysdsghub',
+  'tech-hub':  'tech',
   'ai-skills': 'ai-skills',
   'settings':  'settings',
 }
