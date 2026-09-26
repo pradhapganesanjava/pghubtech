@@ -21,8 +21,23 @@ import type { ScratchPad as Pad } from '../adapters/scratchRepo'
 
 type Tab = 'rich' | 'html' | 'preview' | 'draw'
 
+/** Where the pad docks. Bottom is the original — a strip under the page. */
+type Dock = 'bottom' | 'left' | 'right'
+const DOCK_KEY   = 'pghtech_scratch_dock'
+const DOCK_ORDER: Dock[] = ['bottom', 'left', 'right']
+const DOCK_META: Record<Dock, { icon: string; label: string }> = {
+  bottom: { icon: '▭', label: 'Bottom' },
+  left:   { icon: '◧', label: 'Left' },
+  right:  { icon: '◨', label: 'Right' },
+}
+
 /** Share of the window a pad takes when opened, and what ▾ restores to. */
 const DEFAULT_FRACTION = 0.65
+/** Side docks are measured across, not down, so they get their own share. */
+const DEFAULT_W_FRACTION = 0.42
+/** Below this the window is too narrow to give a side dock a usable column, so
+ *  the dock choice is ignored and the pad goes back to the bottom. */
+const SIDE_DOCK_MIN_VW = 720
 
 /** Everything except the handwriting block — the rich-text half of a body. */
 function textOf(body: string): string {
@@ -59,6 +74,23 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     const saved = Number(localStorage.getItem('pghtech_scratch_h2'))
     return saved > 0 ? saved : Math.round(window.innerHeight * DEFAULT_FRACTION)
   })
+  // Side docks are sized across instead of down, and the two sizes are kept
+  // apart: the height you like for a bottom strip says nothing about the width
+  // you want for a column, and collapsing them into one number means every
+  // dock switch resizes the pad to something you never chose.
+  const [width, setWidth] = useState(() => {
+    const saved = Number(localStorage.getItem('pghtech_scratch_w'))
+    return saved > 0 ? saved : Math.round(window.innerWidth * DEFAULT_W_FRACTION)
+  })
+  const [dock, setDock] = useState<Dock>(() => {
+    const v = localStorage.getItem(DOCK_KEY)
+    return v === 'left' || v === 'right' ? v : 'bottom'
+  })
+  const [narrow, setNarrow] = useState(() => window.innerWidth <= SIDE_DOCK_MIN_VW)
+  // The dock actually in force. A phone keeps the preference on file but shows
+  // the pad at the bottom, because a 300px-wide column is not somewhere you can
+  // write.
+  const side = !narrow && dock !== 'bottom'
   const dragging = useRef(false)
   const padRef = useRef<HandwritingPadHandle>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -183,22 +215,44 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   })
 
   const MIN_H = 180
+  const MIN_W = 300
   const maxH  = () => Math.max(MIN_H, window.innerHeight - 48)   // leave the top bar reachable
-  const clamp = (h: number) => Math.min(maxH(), Math.max(MIN_H, h))
-  const isMax = height >= maxH() - 2
+  const maxW  = () => Math.max(MIN_W, window.innerWidth  - 48)   // never swallow the page entirely
+  const clamp  = (h: number) => Math.min(maxH(), Math.max(MIN_H, h))
+  const clampW = (w: number) => Math.min(maxW(), Math.max(MIN_W, w))
+  const isMax = side ? width >= maxW() - 2 : height >= maxH() - 2
 
   // Persist across opens — the size you chose is a preference, not a per-visit
   // accident.
   useEffect(() => {
     try { localStorage.setItem('pghtech_scratch_h2', String(Math.round(height))) } catch { /* private mode */ }
   }, [height])
-
-  // Keep it legal when the window itself shrinks.
   useEffect(() => {
-    function onResize() { setHeight(h => clamp(h)) }
+    try { localStorage.setItem('pghtech_scratch_w', String(Math.round(width))) } catch { /* private mode */ }
+  }, [width])
+
+  // Keep it legal when the window itself shrinks, and re-decide whether a side
+  // dock still fits.
+  useEffect(() => {
+    function onResize() {
+      setHeight(h => clamp(h))
+      setWidth(w => clampW(w))
+      setNarrow(window.innerWidth <= SIDE_DOCK_MIN_VW)
+    }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+
+  const nextDock = DOCK_ORDER[(DOCK_ORDER.indexOf(dock) + 1) % DOCK_ORDER.length]
+  function cycleDock() {
+    setDock(nextDock)
+    try { localStorage.setItem(DOCK_KEY, nextDock) } catch { /* private mode */ }
+  }
+
+  function toggleMax() {
+    if (side) setWidth(isMax ? Math.round(window.innerWidth * DEFAULT_W_FRACTION) : maxW())
+    else      setHeight(isMax ? Math.round(window.innerHeight * DEFAULT_FRACTION) : maxH())
+  }
 
   // Drag the top edge. Pointer capture keeps the drag alive over the iframe or
   // any other element the cursor crosses.
@@ -206,16 +260,21 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     e.preventDefault()
     e.currentTarget.setPointerCapture(e.pointerId)
     dragging.current = true
-    document.body.classList.add('resizing-v')
+    document.body.classList.add(side ? 'resizing-h' : 'resizing-v')
   }
   function gripMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!dragging.current) return
-    setHeight(clamp(window.innerHeight - e.clientY))
+    // The grip always sits on the edge facing the page, so the drag measures
+    // from the opposite side of the window in every dock.
+    if (!side)                 setHeight(clamp(window.innerHeight - e.clientY))
+    else if (dock === 'left')  setWidth(clampW(e.clientX))
+    else                       setWidth(clampW(window.innerWidth - e.clientX))
   }
   function gripUp(e: React.PointerEvent<HTMLDivElement>) {
     dragging.current = false
     try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* already gone */ }
     document.body.classList.remove('resizing-v')
+    document.body.classList.remove('resizing-h')
   }
 
   // Which element actually scrolls. In Rich / HTML / Preview it is the body,
@@ -273,18 +332,23 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   if (!open) return null
 
   return (
-    <section className="scratch-pad" style={{ height }} aria-label="Scratch Pad">
-      {/* Drag handle on the top edge — the whole border is the target, not a
-          few pixels of it. */}
+    <section
+      className={`scratch-pad dock-${side ? dock : 'bottom'}`}
+      style={side ? { width } : { height }}
+      aria-label="Scratch Pad"
+    >
+      {/* Drag handle on the edge facing the page — the whole border is the
+          target, not a few pixels of it. Bottom dock grips its top edge; a side
+          dock grips its inner edge, which is the same gesture turned 90°. */}
       <div
-        className="scratch-grip"
+        className={`scratch-grip${side ? ' scratch-grip-v' : ''}`}
         onPointerDown={gripDown}
         onPointerMove={gripMove}
         onPointerUp={gripUp}
         onPointerCancel={gripUp}
-        onDoubleClick={() => setHeight(h => (h >= maxH() - 2 ? Math.round(window.innerHeight * DEFAULT_FRACTION) : maxH()))}
+        onDoubleClick={toggleMax}
         role="separator"
-        aria-orientation="horizontal"
+        aria-orientation={side ? 'vertical' : 'horizontal'}
         aria-label="Resize scratch pad"
         title="Drag to resize · double-click to maximise"
       />
@@ -342,12 +406,28 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         <button className="scratch-btn scratch-save" onClick={save}
           disabled={!!busy || (!padId && !dirty)}
           title="Save (⌘S)">Save</button>
+        {/* One button rather than three: the header already wraps on a narrow
+            window, and cycling bottom → left → right is two taps at worst. The
+            glyph shows where the pad IS, the tooltip where it goes next. */}
         <button
           className="scratch-btn"
-          onClick={() => setHeight(isMax ? Math.round(window.innerHeight * DEFAULT_FRACTION) : maxH())}
+          onClick={cycleDock}
+          disabled={narrow}
+          title={narrow
+            ? 'Side docks need a wider window — the pad stays at the bottom here'
+            : `Dock: ${DOCK_META[dock].label} — click for ${DOCK_META[nextDock].label}`}
+          aria-label={`Dock position: ${DOCK_META[dock].label}. Click for ${DOCK_META[nextDock].label}`}
+        >{DOCK_META[side ? dock : 'bottom'].icon}</button>
+        <button
+          className="scratch-btn"
+          onClick={toggleMax}
           title={isMax ? 'Restore' : 'Maximise'}
           aria-label={isMax ? 'Restore' : 'Maximise'}
-        >{isMax ? '▾' : '▴'}</button>
+        >{
+          !side            ? (isMax ? '▾' : '▴')
+          : dock === 'left' ? (isMax ? '◂' : '▸')
+          :                   (isMax ? '▸' : '◂')
+        }</button>
         <button className="scratch-btn scratch-close" onClick={onClose} title="Close Scratch Pad" aria-label="Close Scratch Pad">✕</button>
       </header>
 
@@ -360,7 +440,13 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         </div>
       )}
 
-      <div className="scratch-body" ref={bodyRef}>
+      {/* In Draw the pane must BOUND the pad rather than grow to it. Left to
+          size itself the pad is as tall as its 1000x1400 page, so the body
+          became the scroller and carried the tools off the top of the window —
+          the very thing the floating cluster is there to avoid. With the pane
+          bounded, the overflow lands back in HandwritingPad's own
+          .hw-canvas-wrap, which is also what scroller() below prefers. */}
+      <div className={`scratch-body${tab === 'draw' ? ' is-draw' : ''}`} ref={bodyRef}>
         {tab === 'rich' && (
           <RichEditor value={html} onChange={v => { setHtml(v); setDirty(true) }} allowHtmlEmbed />
         )}
@@ -375,7 +461,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         {tab === 'draw' && (
           // Keyed on the pad so switching pads remounts with that pad's strokes
           // rather than carrying the previous one's over.
-          <HandwritingPad key={padId ?? 'none'} ref={padRef} initialDoc={hwDoc ?? undefined} />
+          <HandwritingPad key={padId ?? 'none'} ref={padRef} initialDoc={hwDoc ?? undefined} floatingTools />
         )}
       </div>
     </section>

@@ -42,6 +42,21 @@ export default function App() {
   const [loginError, setLoginError] = useState('')
   const [aiOpen, setAiOpen]       = useState(false)
   const [scratchOpen, setScratchOpen] = useState(false)
+  // Mobile chrome size. Both bars are navigation, and the reason to want either
+  // one bigger is the same — you are about to switch tabs — so one switch drives
+  // both. Compact by default: on a phone the two bars cost ~114px of a ~700px
+  // viewport, and switching tabs is the rare act while reading is the common
+  // one. Desktop ignores this entirely; the CSS only applies under 768px.
+  const [navCompact, setNavCompact] = useState(() => {
+    try { return localStorage.getItem('pghtech_nav_compact') !== '0' } catch { return true }
+  })
+  function toggleNavCompact() {
+    setNavCompact(c => {
+      const next = !c
+      try { localStorage.setItem('pghtech_nav_compact', next ? '1' : '0') } catch { /* private mode */ }
+      return next
+    })
+  }
 
   // On mount: try to restore a session
   useEffect(() => {
@@ -204,7 +219,7 @@ export default function App() {
   // ── Authenticated ──────────────────────────────────────────────────
   return (
     <ToastProvider>
-      <div className="layout">
+      <div className={`layout${navCompact ? ' nav-compact' : ''}`}>
         {/* 'notes' is a legacy path that now resolves to the Utils view, so
             TopBar is told 'utils' for it rather than leaving the nav unlit. */}
         <TopBar
@@ -257,6 +272,17 @@ export default function App() {
 
         {/* Mobile bottom nav */}
         <nav className="bottom-nav">
+          {/* Sheet-style handle on the nav's top edge — the one control that
+              resizes both bars. Centred so either thumb reaches it, and it
+              carries a chevron rather than only a bar so the direction of the
+              next tap is legible. */}
+          <button
+            className="bn-grip"
+            onClick={toggleNavCompact}
+            title={navCompact ? 'Bigger menus' : 'Smaller menus'}
+            aria-label={navCompact ? 'Expand the menu bars' : 'Shrink the menu bars'}
+            aria-expanded={!navCompact}
+          >{navCompact ? '▴' : '▾'}</button>
           {/* Ads tab temporarily hidden (pghubads.web.app) — may remove later */}
           <button className={`bn-btn${view === 'ads-hub'  ? ' active' : ''}`} onClick={() => setView('ads-hub')}>
             <span className="bn-icon">🧠</span><span className="bn-label">AdsHub</span>
