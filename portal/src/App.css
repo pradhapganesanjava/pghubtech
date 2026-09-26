@@ -16,6 +16,7 @@ html { transition: background-color .25s, color .25s; }
   --warning:     #f59e0b;
   --danger:      #ef4444;
   --radius:      12px;
+  --topbar-h:    56px;   /* .topbar's height — side-docked panels start below it */
   --shadow:      0 4px 20px rgba(0,0,0,.45);
 }
 
@@ -73,7 +74,7 @@ body {
 
 /* ─── TopBar ─────────────────────────────────────────────── */
 .topbar {
-  display: flex; align-items: center; padding: 0 24px; height: 56px;
+  display: flex; align-items: center; padding: 0 24px; height: var(--topbar-h);
   background: var(--bg2); border-bottom: 1px solid var(--border);
   gap: 16px; position: sticky; top: 0; z-index: 10;
 }
@@ -709,6 +710,20 @@ body {
   background: var(--bg2); border-top: 1px solid var(--border);
   padding: 4px 0 env(safe-area-inset-bottom);
 }
+/* The size handle rides on the nav's top edge, so the nav may not clip it. */
+.bn-grip {
+  position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+  width: 54px; height: 16px; padding: 0; z-index: 1;
+  display: none;                      /* mobile only — see the media query */
+  align-items: center; justify-content: center;
+  background: var(--bg2); color: var(--text2);
+  border: 1px solid var(--border); border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  font-size: 10px; line-height: 1; cursor: pointer;
+  touch-action: manipulation;
+}
+.bn-grip:hover { color: var(--primary); }
+.bn-grip:active { color: var(--primary); }
 .bn-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
   gap: 2px; padding: 8px 4px; background: transparent; border: none;
@@ -2042,7 +2057,29 @@ body.resizing-v * {
   }
   /* Reserve space under the fixed nav so the last bit of content isn't
      hidden behind it. The nav is ~58px tall plus the iOS safe area. */
-  .layout { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
+  /* 58px of nav + the 15px the size handle sticks up above it. */
+  .layout { padding-bottom: calc(73px + env(safe-area-inset-bottom)); }
+  .bn-grip { display: flex; }
+
+  /* ── Compact chrome (default on mobile; toggled by .bn-grip) ──────────────
+     Both bars shrink to a single row: the top bar keeps the brand and the
+     launchers, the bottom nav drops its word labels and keeps the icons — a
+     tab bar is recognised by its icons, and the labels were the taller half of
+     it. Together this gives ~38px of the viewport back to what you are reading.
+     Tapping the handle restores both to full size; the choice persists. */
+  /* Compact nav is ~30px; the handle adds the same 15px on top. */
+  .layout.nav-compact { padding-bottom: calc(46px + env(safe-area-inset-bottom)); }
+  /* Side-docked Scratch Pads measure from the top bar, so the token follows it
+     down rather than leaving a 18px gap. */
+  .layout.nav-compact { --topbar-h: 38px; }
+  .nav-compact .topbar { height: 38px; padding: 0 12px; gap: 10px; }
+  .nav-compact .topbar .logo { font-size: 13px; }
+  .nav-compact .topbar-right { gap: 6px; }
+  .nav-compact .tb-pill-icononly { width: 28px; height: 28px; }
+  .nav-compact .avatar-img, .nav-compact .avatar-chip { width: 22px; height: 22px; }
+  .nav-compact .bn-btn { padding: 4px 4px; gap: 0; }
+  .nav-compact .bn-icon { font-size: 17px; }
+  .nav-compact .bn-label { display: none; }
   .home-grid  { grid-template-columns: 1fr; }
   .stats-row  { grid-template-columns: repeat(3,1fr); gap: 10px; }
   .settings-grid { grid-template-columns: 1fr; }
@@ -4829,7 +4866,7 @@ body.resizing-v * {
 .adshub-add-form .adshub-add-full { grid-column: 1 / -1; }
 
 /* Handwriting pad (Apple Pencil) */
-.hw-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.hw-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative; }
 .hw-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
   padding: 6px; background: var(--bg3); border: 1px solid var(--border);
@@ -4884,6 +4921,54 @@ body.resizing-v * {
 }
 .hw-canvas-committed { z-index: 0; background: transparent; }
 .hw-canvas-live      { z-index: 1; background: transparent; }
+/* ── Floating tool cluster (opt-in via HandwritingPad's floatingTools) ───────
+   Collapsed it is one circle; open, the groups float over the page. Anchored
+   to .hw-wrap — which the host sizes to the visible pane — so the cluster
+   holds still while the page scrolls under it, instead of riding away with the
+   drawing the way a toolbar in the flow does.
+
+   Bottom-LEFT on purpose: the right edge belongs to the Scratch Pad's floating
+   scroll buttons, and a right hand resting on the page covers that side. */
+.hw-wrap-float .hw-canvas-wrap { border-top: 1px solid var(--border); border-radius: 6px; }
+.hw-fab {
+  position: absolute; left: 10px; bottom: 10px; z-index: 4;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  max-height: calc(100% - 20px);
+}
+.hw-fab-btn {
+  width: 44px; height: 44px; flex: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg2); border: 2px solid var(--border); color: var(--text);
+  font-size: 18px; line-height: 1; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,.28);
+  touch-action: manipulation;   /* no double-tap zoom on a quick open/close */
+  transition: border-color .12s, transform .12s;
+}
+.hw-fab-btn:hover { border-color: var(--primary); }
+.hw-fab-btn:active { transform: scale(.94); }
+.hw-fab.open .hw-fab-btn { background: var(--bg3); }
+.hw-fab-panel {
+  display: flex; flex-direction: column; gap: 6px;
+  min-height: 0; overflow: auto;        /* a short pad scrolls the cluster, not the page */
+  padding: 8px; border-radius: 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0,0,0,.32);
+  animation: hw-fab-in .12s ease-out;
+}
+.hw-fab-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.hw-fab .hw-pageno { min-width: 34px; }
+.hw-fab .hw-sep { align-self: auto; height: 20px; }
+@keyframes hw-fab-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .hw-fab-panel { animation: none; } }
+@media (max-width: 720px) {
+  /* Thumb-sized, and clear of the left edge. */
+  .hw-fab { left: 8px; bottom: 8px; }
+  .hw-fab-btn { width: 48px; height: 48px; font-size: 20px; }
+}
+
 .hw-mode-lbl { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); }
 .hw-mode-select { font-size: 11px; padding: 2px 4px; background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 4px; }
 
@@ -7188,12 +7273,33 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
    trap. The page behind stays readable and clickable, because the point is to
    jot something down ABOUT what is on screen. */
 .scratch-pad {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  position: fixed; z-index: 60;
   display: flex; flex-direction: column;
-  /* Height is inline state — dragged, or set by the maximise toggle. No CSS
-     transition: an animated height fights a pointer drag and feels laggy. */
-  background: var(--bg); border-top: 1px solid var(--border);
+  /* The size along the docked axis is inline state — dragged, or set by the
+     maximise toggle. No CSS transition: an animated size fights a pointer drag
+     and feels laggy. */
+  background: var(--bg);
+}
+/* Bottom — the original: a strip under the page, full width. */
+.scratch-pad.dock-bottom {
+  left: 0; right: 0; bottom: 0;
+  border-top: 1px solid var(--border);
   box-shadow: 0 -8px 28px rgba(0,0,0,.28);
+}
+/* Side docks are columns beside the page. They start below the top bar rather
+   than at y=0, for the same reason the bottom dock stops 48px short of it: the
+   nav has to stay reachable while the pad is open. */
+.scratch-pad.dock-left,
+.scratch-pad.dock-right { top: var(--topbar-h); bottom: 0; }
+.scratch-pad.dock-left {
+  left: 0;
+  border-right: 1px solid var(--border);
+  box-shadow: 8px 0 28px rgba(0,0,0,.28);
+}
+.scratch-pad.dock-right {
+  right: 0;
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 28px rgba(0,0,0,.28);
 }
 /* The grip IS the top border: a 6px target with a visible 2px accent line, so
    it reads as a handle rather than a decoration. */
@@ -7204,6 +7310,23 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   touch-action: none;          /* let the pointer drag rather than scroll */
 }
 .scratch-grip:hover { opacity: 1; }
+/* Same handle turned 90° for a side dock: it leaves the header's flow and
+   rides the full height of the inner edge, so the whole border is draggable
+   rather than a notch at one end of it. */
+.scratch-grip-v {
+  position: absolute; top: 0; bottom: 0; width: 6px;
+  height: auto; margin: 0; cursor: col-resize;
+}
+.dock-left  .scratch-grip-v { right: 0; }
+.dock-right .scratch-grip-v { left: 0; }
+/* Keep content clear of the grip it would otherwise sit under. */
+.dock-left  .scratch-hd, .dock-left  .scratch-body { padding-right: 12px; }
+.dock-right .scratch-hd, .dock-right .scratch-body { padding-left: 12px; }
+/* Both floating controls live on an edge, and in a side dock one of those edges
+   is now the resize grip. Step them inside it so a reach for the scroll button
+   or the tool cluster doesn't start a drag instead. */
+.dock-left  .scratch-scroll { right: 18px; }
+.dock-right .hw-fab { left: 18px; }
 
 /* One row: name, modes, actions. Wraps rather than overflowing when the
    window is too narrow to hold them side by side. */
@@ -7242,6 +7365,10 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
 .scratch-tabs { display: flex; gap: 4px; flex-shrink: 0; margin: 0 4px; }
 .scratch-tabs .adshub-diff-pill { padding: 4px 8px; font-size: 11.5px; }
 .scratch-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px; }
+/* Draw mode only: bound the pane so the pad's own canvas wrapper scrolls and
+   the floating tools stay put. The other three tabs keep the plain scrolling
+   body — their content is text, and it should scroll as a page does. */
+.scratch-body.is-draw { display: flex; flex-direction: column; overflow: hidden; padding: 6px 8px; }
 
 /* Floating scroll control — right edge, vertically centred over the writing
    area. Semi-transparent at rest so it never hides what is under it, solid on

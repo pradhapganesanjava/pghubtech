@@ -26,6 +26,7 @@ const CommittedPath = memo(function CommittedPath({ stroke }: { stroke: HwStroke
 
 export type DrawMode = 'react' | 'smooth' | 'immediate' | 'direct' | 'svg'
 const MODE_STORAGE = 'adshub.hw.mode'
+const BAR_STORAGE  = 'adshub.hw.bar'
 
 export interface HwStroke { tool: 'pen'; color: string; size: number; points: number[][] } // [x, y, pressure]
 export interface HwPage { strokes: HwStroke[] }
@@ -542,8 +543,14 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
   // removed, …). Used by controlled callers like the Notes drawing block; the
   // imperative getDoc() ref is still available for save-on-demand callers.
   onChange?: (doc: HwDoc) => void
+  // Float the controls over the page as one expandable circle instead of
+  // giving them a strip above it. Opt-in: it needs a host that bounds the
+  // pad's height (the Scratch Pad does), because the cluster anchors to the
+  // pad's box — in a host where the pad is as tall as its 1000x1400 page,
+  // "bottom of the pad" is a screenful below wherever you are drawing.
+  floatingTools?: boolean
 }>(
-  function HandwritingPad({ initialDoc, onChange }, ref) {
+  function HandwritingPad({ initialDoc, onChange, floatingTools = false }, ref) {
     const [pages, setPages] = useState<HwPage[]>(
       initialDoc?.pages?.length ? initialDoc.pages.map(p => ({ strokes: p.strokes ?? [] })) : [{ strokes: [] }],
     )
@@ -554,6 +561,25 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
     const [mode, setModeState] = useState<DrawMode>(() => (typeof localStorage !== 'undefined'
       && (localStorage.getItem(MODE_STORAGE) as DrawMode | null)) || 'react')
     function setMode(m: DrawMode) { setModeState(m); try { localStorage.setItem(MODE_STORAGE, m) } catch {} }
+    // Open/closed is a preference, not a per-visit accident: someone who wants
+    // the palette parked open while they work should not reopen it every time.
+    // No Escape handler here on purpose — the Scratch Pad already closes on
+    // Escape, and stealing that key would mean two different things happened
+    // depending on whether the cluster happened to be open.
+    const [barOpen, setBarOpen] = useState(() => {
+      try { return localStorage.getItem(BAR_STORAGE) !== '0' } catch { return true }
+    })
+    function toggleBar() {
+      setBarOpen(o => {
+        const next = !o
+        try { localStorage.setItem(BAR_STORAGE, next ? '1' : '0') } catch { /* private mode */ }
+        return next
+      })
+    }
+    // The engine picker and stroke counter are diagnostics, not drawing tools.
+    // They stay behind a toggle so the floating cluster is small enough to sit
+    // over a page without covering what you just wrote.
+    const [advOpen, setAdvOpen] = useState(false)
 
     const pagesRef = useRef(pages);   pagesRef.current = pages
     const idxRef   = useRef(pageIdx); idxRef.current = pageIdx
@@ -617,48 +643,119 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
 
     const padProps: PadProps = { page, pageKey, tool, color, size, onCommit, onErase }
 
+    // One definition per control group, shared by both layouts below, so the
+    // floating cluster and the classic bar can never drift apart.
+    const toolsGroup = (
+      <>
+        <button className={`hw-tool${tool === 'pen' ? ' active' : ''}`} onClick={() => setTool('pen')} title="Pen">✒️</button>
+        <button className={`hw-tool${tool === 'eraser' ? ' active' : ''}`} onClick={() => setTool('eraser')} title="Eraser">🩹</button>
+        <button className={`hw-tool${tool === 'pan' ? ' active' : ''}`} onClick={() => setTool('pan')} title="Pan / scroll (no drawing)">🖐</button>
+      </>
+    )
+    const colorsGroup = (
+      <>
+        {COLORS.map(c => (
+          <button key={c} className={`hw-swatch${color === c && tool === 'pen' ? ' active' : ''}`}
+            style={{ background: c }} onClick={() => { setColor(c); setTool('pen') }} title={c} />
+        ))}
+      </>
+    )
+    const sizesGroup = (
+      <>
+        {SIZES.map(s => (
+          <button key={s} className={`hw-size${size === s ? ' active' : ''}`} onClick={() => setSize(s)} title={`${s}px`}>
+            <span style={{ width: s + 2, height: s + 2 }} />
+          </button>
+        ))}
+      </>
+    )
+    const editGroup = (
+      <>
+        <button className="hw-tool" onClick={undo} title="Undo last stroke">↶</button>
+        <button className="hw-tool" onClick={clearPage} title="Clear page">✕</button>
+      </>
+    )
+    const pagesGroup = (
+      <>
+        <button className="hw-tool" onClick={() => setPageIdx(i => Math.max(0, i - 1))} disabled={pageIdx === 0} title="Previous page">◀</button>
+        <span className="hw-pageno">{pageIdx + 1}/{pages.length}</span>
+        <button className="hw-tool" onClick={() => setPageIdx(i => Math.min(pages.length - 1, i + 1))} disabled={pageIdx >= pages.length - 1} title="Next page">▶</button>
+        <button className="hw-tool" onClick={addPage} title="Add page">＋</button>
+        <button className="hw-tool" onClick={deletePage} title="Delete page">🗑</button>
+      </>
+    )
+    // Stroke counter lets you verify on iPad that commits are landing in state
+    // even when the paint is missing; the engine picker is there to compare
+    // modes on the same drawing.
+    const diagGroup = (
+      <>
+        <span className="hw-pageno" title="Strokes committed on this page">{page.strokes.length} strokes</span>
+        <label className="hw-mode-lbl" title="Drawing engine — try each on iPad and pick what feels best">
+          mode:
+          <select className="hw-mode-select" value={mode} onChange={e => setMode(e.target.value as DrawMode)}>
+            <option value="react">React (JSX-only SVG — recommended)</option>
+            <option value="smooth">Smooth (perfect-freehand + rAF + predicted)</option>
+            <option value="immediate">Immediate (perfect-freehand, no rAF)</option>
+            <option value="direct">Direct (lines, no rAF, no freehand)</option>
+            <option value="svg">SVG (browser composites)</option>
+          </select>
+        </label>
+      </>
+    )
+
     return (
-      <div className="hw-wrap">
-        <div className="hw-toolbar">
-          <button className={`hw-tool${tool === 'pen' ? ' active' : ''}`} onClick={() => setTool('pen')} title="Pen">✒️</button>
-          <button className={`hw-tool${tool === 'eraser' ? ' active' : ''}`} onClick={() => setTool('eraser')} title="Eraser">🩹</button>
-          <button className={`hw-tool${tool === 'pan' ? ' active' : ''}`} onClick={() => setTool('pan')} title="Pan / scroll (no drawing)">🖐</button>
-          <span className="hw-sep" />
-          {COLORS.map(c => (
-            <button key={c} className={`hw-swatch${color === c && tool === 'pen' ? ' active' : ''}`}
-              style={{ background: c }} onClick={() => { setColor(c); setTool('pen') }} title={c} />
-          ))}
-          <span className="hw-sep" />
-          {SIZES.map(s => (
-            <button key={s} className={`hw-size${size === s ? ' active' : ''}`} onClick={() => setSize(s)} title={`${s}px`}>
-              <span style={{ width: s + 2, height: s + 2 }} />
+      <div className={`hw-wrap${floatingTools ? ' hw-wrap-float' : ''}`}>
+        {floatingTools ? (
+          /* Collapsed, the whole toolbar is one circle wearing the live tool —
+             open, the groups fan out over the page. Anchored to the pad's own
+             box rather than to the drawing, so scrolling the page or zooming
+             leaves it where your hand last left it. */
+          <div className={`hw-fab${barOpen ? ' open' : ''}`}>
+            {barOpen && (
+              <div className="hw-fab-panel" role="toolbar" aria-label="Drawing tools">
+                <div className="hw-fab-row">{toolsGroup}</div>
+                <div className="hw-fab-row">{colorsGroup}</div>
+                <div className="hw-fab-row">
+                  {sizesGroup}
+                  <span className="hw-sep" />
+                  {editGroup}
+                </div>
+                <div className="hw-fab-row">{pagesGroup}</div>
+                <div className="hw-fab-row">
+                  <button className={`hw-tool${advOpen ? ' active' : ''}`} onClick={() => setAdvOpen(o => !o)}
+                    aria-expanded={advOpen} title="Stroke count and drawing engine">⋯</button>
+                  {advOpen && diagGroup}
+                </div>
+              </div>
+            )}
+            <button
+              className="hw-fab-btn"
+              onClick={toggleBar}
+              aria-expanded={barOpen}
+              aria-label={barOpen ? 'Hide drawing tools' : 'Show drawing tools'}
+              title={barOpen ? 'Hide tools' : 'Show tools'}
+              /* The ring carries the live colour, so a collapsed cluster still
+                 answers "what am I about to draw with?" without opening it. */
+              style={tool === 'pen' ? { borderColor: color } : undefined}
+            >
+              {barOpen ? '✕' : tool === 'pen' ? '✒️' : tool === 'eraser' ? '🩹' : '🖐'}
             </button>
-          ))}
-          <span className="hw-sep" />
-          <button className="hw-tool" onClick={undo} title="Undo last stroke">↶</button>
-          <button className="hw-tool" onClick={clearPage} title="Clear page">✕</button>
-          <span className="hw-sep" />
-          <button className="hw-tool" onClick={() => setPageIdx(i => Math.max(0, i - 1))} disabled={pageIdx === 0} title="Previous page">◀</button>
-          <span className="hw-pageno">{pageIdx + 1}/{pages.length}</span>
-          <button className="hw-tool" onClick={() => setPageIdx(i => Math.min(pages.length - 1, i + 1))} disabled={pageIdx >= pages.length - 1} title="Next page">▶</button>
-          <button className="hw-tool" onClick={addPage} title="Add page">＋</button>
-          <button className="hw-tool" onClick={deletePage} title="Delete page">🗑</button>
-          <span className="hw-sep" />
-          {/* Stroke counter — lets you verify on iPad that commits are
-              actually landing in state even when the paint is missing. */}
-          <span className="hw-pageno" title="Strokes committed on this page">{page.strokes.length} strokes</span>
-          <span className="hw-sep" />
-          <label className="hw-mode-lbl" title="Drawing engine — try each on iPad and pick what feels best">
-            mode:
-            <select className="hw-mode-select" value={mode} onChange={e => setMode(e.target.value as DrawMode)}>
-              <option value="react">React (JSX-only SVG — recommended)</option>
-              <option value="smooth">Smooth (perfect-freehand + rAF + predicted)</option>
-              <option value="immediate">Immediate (perfect-freehand, no rAF)</option>
-              <option value="direct">Direct (lines, no rAF, no freehand)</option>
-              <option value="svg">SVG (browser composites)</option>
-            </select>
-          </label>
-        </div>
+          </div>
+        ) : (
+          <div className="hw-toolbar">
+            {toolsGroup}
+            <span className="hw-sep" />
+            {colorsGroup}
+            <span className="hw-sep" />
+            {sizesGroup}
+            <span className="hw-sep" />
+            {editGroup}
+            <span className="hw-sep" />
+            {pagesGroup}
+            <span className="hw-sep" />
+            {diagGroup}
+          </div>
+        )}
         <div className="hw-canvas-wrap">
           {mode === 'react'     && <ReactPad     key={mode} {...padProps} />}
           {mode === 'smooth'    && <SmoothPad    key={mode} {...padProps} />}
