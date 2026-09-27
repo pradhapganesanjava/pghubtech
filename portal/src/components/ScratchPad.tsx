@@ -16,6 +16,8 @@ import type { HwDoc, HandwritingPadHandle } from './HandwritingPad'
 import {
   listScratch, createScratch, loadScratch, saveScratch,
   renameScratch, deleteScratch, defaultScratchName,
+  cachedScratchList, putScratchList, cachedScratchBody, putScratchBody,
+  dropScratchBody, lastScratchId, setLastScratchId,
 } from '../adapters/scratchRepo'
 import type { ScratchPad as Pad } from '../adapters/scratchRepo'
 
@@ -38,6 +40,11 @@ const DEFAULT_W_FRACTION = 0.42
 /** Below this the window is too narrow to give a side dock a usable column, so
  *  the dock choice is ignored and the pad goes back to the bottom. */
 const SIDE_DOCK_MIN_VW = 720
+
+/** Quiet period after the last edit before a save goes out. Long enough that a
+ *  sentence or a run of strokes is one request, short enough that closing the
+ *  lid a moment later has still caught it. */
+const AUTOSAVE_MS = 1600
 
 /** Everything except the handwriting block — the rich-text half of a body. */
 function textOf(body: string): string {
@@ -62,6 +69,10 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   const [html, setHtml]       = useState('')
   const [hwDoc, setHwDoc]     = useState<HwDoc | null>(null)
   const [dirty, setDirty]     = useState(false)
+  // Counts edits. `dirty` is a state ("there is something to save"); this is an
+  // event stream, which is what a debounce needs.
+  const [rev, setRev]         = useState(0)
+  const [autoSaving, setAutoSaving] = useState(false)
   const [busy, setBusy]       = useState<string | null>(null)
   const [err, setErr]         = useState<string | null>(null)
   // Height in px, dragged or toggled. Kept in px rather than vh so the drag
@@ -91,6 +102,16 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   // the pad at the bottom, because a 300px-wide column is not somewhere you can
   // write.
   const side = !narrow && dock !== 'bottom'
+  // Bumped on every deliberate pad change (open / new), never when a save merely
+  // gives the current pad an id. It keys the drawing pad, so autosave creating
+  // the Drive file no longer remounts it mid-stroke the way keying on padId did.
+  const [padSeq, setPadSeq] = useState(0)
+  // Latest values for the async paths (revalidation, the autosave timer) that
+  // would otherwise close over whatever was true when they were scheduled.
+  const dirtyRef = useRef(false)
+  const padIdRef = useRef<string | null>(null)
+  const lastBodyRef = useRef('')       // body as last loaded or saved
+  const savingRef = useRef(false)
   const dragging = useRef(false)
   const padRef = useRef<HandwritingPadHandle>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -98,20 +119,54 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   // over content that already fits.
   const [scrollable, setScrollable] = useState(false)
 
+  function markEdited() { setDirty(true); setRev(r => r + 1) }
+  const revRef = useRef(0)
+  revRef.current = rev
+
   const current = pads.find(p => p.id === padId) ?? null
+  dirtyRef.current = dirty
+  padIdRef.current = padId
 
   // ── loading ───────────────────────────────────────────────────────────────
-  const openPad = useCallback(async (id: string) => {
-    setBusy('Loading…'); setErr(null)
+  // Apply a body to the editor. Shared by the cache hit and the network reply so
+  // the two can never disagree about how a pad opens.
+  const applyBody = useCallback((id: string, body: string) => {
+    const doc  = parseHwDoc(body)
+    const text = textOf(body)
+    setPadId(id)
+    setHtml(text)
+    setHwDoc(doc)
+    setTab(doc && !text ? 'draw' : 'rich')
+    setDirty(false)
+    lastBodyRef.current = body
+    setPadSeq(n => n + 1)      // remount the drawing pad on THIS pad's strokes
+  }, [])
+
+  // Cache first, then revalidate. A cached body renders with no spinner at all;
+  // the Drive fetch still goes out and replaces it only if it actually differs
+  // and you have not started editing in the meantime — a background reply must
+  // never overwrite typing that began after it was requested.
+  const openPad = useCallback(async (id: string, knownMod?: string) => {
+    const hit = cachedScratchBody(id)
+    if (hit) applyBody(id, hit.html)
+    else setBusy('Loading…')
+    setErr(null)
+    setLastScratchId(id)
+    // A cache entry fetched at the modifiedTime Drive currently reports is known
+    // good; skip the round trip entirely.
+    if (hit && knownMod && hit.modifiedTime === knownMod) return
     try {
       const body = await loadScratch(id)
-      setPadId(id)
-      setHtml(textOf(body))
-      setHwDoc(parseHwDoc(body))
-      setTab(parseHwDoc(body) && !textOf(body) ? 'draw' : 'rich')
-      setDirty(false)
-    } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
-  }, [])
+      putScratchBody(id, body, knownMod ?? new Date().toISOString())
+      if (!dirtyRef.current && padIdRef.current === id && body !== lastBodyRef.current) {
+        applyBody(id, body)
+      }
+    } catch (e) {
+      // A cached pad on screen is still usable — say so quietly rather than
+      // replacing it with an error.
+      if (!hit) setErr((e as Error).message)
+    } finally { setBusy(null) }
+  }, [applyBody])
 
   // Opening starts a blank, UNSAVED pad. Nothing is written to Drive until you
   // press Save — clicking the button to glance at something should not leave a
@@ -123,24 +178,44 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return
     let cancelled = false
+
+    // Show the cached list at once so the picker is populated and the resume
+    // below can start without waiting on Drive.
+    const seeded = cachedScratchList()
+    if (seeded?.length) setPads(seeded)
+
+    // Resume straight from the cache while the list is still in flight.
+    const last = lastScratchId()
+    if (last) void openPad(last)
+    else { setPadId(null); setName(defaultScratchName()); setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false) }
+
     ;(async () => {
-      setBusy('Loading…'); setErr(null)
+      if (!seeded?.length) setBusy('Loading…')
+      setErr(null)
       try {
         const list = await listScratch()
-        if (!cancelled) setPads(list)
+        if (cancelled) return
+        setPads(list)
+        putScratchList(list)
+        // Fall back to the newest pad when there was nothing remembered, or the
+        // remembered one has since been deleted (possibly on another device).
+        // The valid-and-remembered case is already open or opening below, so
+        // this must not fire for it and start a second fetch.
+        const stillThere = !!last && list.some(p => p.id === last)
+        if (last && !stillThere) setLastScratchId(null)
+        if (!padIdRef.current && !dirtyRef.current && !stillThere && list[0]) {
+          void openPad(list[0].id, list[0].modifiedTime)
+        }
       } catch (e) { if (!cancelled) setErr((e as Error).message) }
       finally { if (!cancelled) setBusy(null) }
     })()
-    // Clean sheet: no pad selected, default name, empty body.
-    setPadId(null)
-    setName(defaultScratchName())
-    setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
+
     return () => { cancelled = true }
-  }, [open])
+  }, [open, openPad])
 
   function switchPad(id: string) {
     if (id === padId) return
-    void openPad(id)
+    void openPad(id, pads.find(p => p.id === id)?.modifiedTime)
   }
 
 
@@ -149,33 +224,105 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   // ── saving ────────────────────────────────────────────────────────────────
   // Save is what CREATES the pad. Until it runs there is no Drive file, so an
   // opened-and-abandoned pad costs nothing.
-  async function save() {
-    setBusy('Saving…'); setErr(null)
+  // Compose the body from whatever the editor currently holds. Strokes come off
+  // the pad's ref rather than state: the component owns them and only reports on
+  // demand.
+  function composeBody(): { body: string; doc: HwDoc | null } {
+    const doc = tab === 'draw' && padRef.current ? padRef.current.getDoc() : hwDoc
+    const drawing = doc && doc.pages.some(p => p.strokes.length) ? hwDocToBlockHtml(doc) : ''
+    return { body: [html, drawing].filter(Boolean).join('\n'), doc }
+  }
+
+  // `silent` is the autosave path: it must not drive `busy`, which gates the
+  // Save button and the ⌘S shortcut — a background write is not a reason to take
+  // the controls away.
+  async function persist(silent = false): Promise<void> {
+    // One write at a time. A caller that arrives mid-flight is not dropped: the
+    // finally below notices the edit counter moved and schedules another pass.
+    if (savingRef.current) return
+    const startedAt = revRef.current
+    const { body, doc } = composeBody()
+    // Never let an autosave conjure a file out of an untouched pad. This is the
+    // one thing the old open-blank behaviour got right, and it still holds: a
+    // pad exists on Drive because you put something in it.
+    if (!padId && !body.trim()) return
+    savingRef.current = true
+    if (silent) setAutoSaving(true); else setBusy('Saving…')
+    setErr(null)
     try {
-      // Read the pad's live strokes rather than state: the component owns them
-      // and only reports on demand.
-      const doc = tab === 'draw' && padRef.current ? padRef.current.getDoc() : hwDoc
-      const drawing = doc && doc.pages.some(p => p.strokes.length) ? hwDocToBlockHtml(doc) : ''
-      const body = [html, drawing].filter(Boolean).join('\n')
-      if (padId) {
-        await saveScratch(padId, body)
-        setPads(prev => prev.map(p => p.id === padId
+      let id = padId
+      if (id) {
+        await saveScratch(id, body)
+        setPads(prev => prev.map(p => p.id === id
           ? { ...p, modifiedTime: new Date().toISOString() } : p))
       } else {
         const created = await createScratch(name.trim() || defaultScratchName(), body)
+        id = created.id
         setPadId(created.id)
+        setLastScratchId(created.id)
         setPads(prev => [created, ...prev])
       }
+      lastBodyRef.current = body
+      putScratchBody(id, body, new Date().toISOString())
       if (doc) setHwDoc(doc)
       setDirty(false)
-    } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      savingRef.current = false
+      if (silent) setAutoSaving(false); else setBusy(null)
+      // Edits that landed while this write was in flight need their own pass.
+      // Comparing counters rather than reading `dirty` matters: setDirty(false)
+      // above has not reached a render yet, so dirtyRef would still say true
+      // here and this would never stop rescheduling itself.
+      if (revRef.current !== startedAt) setRev(r => r + 1)
+    }
   }
 
+  const save = () => { void persist(false) }
+
+  // Held in a ref so the timer below spends the newest closure. Scheduling
+  // captures `tab` among other things, and switching Draw → Rich inside the
+  // debounce window would otherwise compose the body from a stale doc.
+  const persistRef = useRef(persist)
+  persistRef.current = persist
+
+  // Debounced on an edit counter rather than on `dirty`: dirty stays true for
+  // the whole run of edits, so it would fire once and never reschedule.
+  useEffect(() => {
+    if (!rev) return
+    const t = window.setTimeout(() => { void persistRef.current(true) }, AUTOSAVE_MS)
+    return () => window.clearTimeout(t)
+  }, [rev])
+
+  // Closing the panel cancels the pending timer, so flush first — otherwise the
+  // last 1.6 seconds of work is the one thing autosave loses.
+  useEffect(() => {
+    if (open) return
+    if (dirtyRef.current) void persistRef.current(true)
+  }, [open])
+
+  // Same for the app going to the background, which on a phone is how a session
+  // usually ends. `hidden` is the last event that reliably fires.
+  useEffect(() => {
+    function flush() {
+      if (document.visibilityState === 'hidden' && dirtyRef.current) void persistRef.current(true)
+    }
+    document.addEventListener('visibilitychange', flush)
+    return () => document.removeEventListener('visibilitychange', flush)
+  }, [])
+
   // ＋ is "start over", not "create a file" — same as opening the pad.
+  // ＋ is the ONLY way to a blank pad now that opening resumes. Still creates
+  // nothing on Drive until there is something in it — see persist().
   function addPad() {
     setPadId(null)
+    setLastScratchId(null)
     setName(defaultScratchName())
     setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false)
+    setRev(0)
+    lastBodyRef.current = ''
+    setPadSeq(n => n + 1)
   }
 
   async function removePad() {
@@ -184,10 +331,13 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     setBusy('Deleting…'); setErr(null)
     try {
       await deleteScratch(padId)
+      dropScratchBody(padId)
+      setLastScratchId(null)
       const rest = pads.filter(p => p.id !== padId)
       setPads(rest)
-      if (rest.length) await openPad(rest[0].id)
-      else { setPadId(null); setHtml(''); setHwDoc(null) }
+      putScratchList(rest)
+      if (rest.length) await openPad(rest[0].id, rest[0].modifiedTime)
+      else { setPadId(null); setHtml(''); setHwDoc(null); lastBodyRef.current = ''; setPadSeq(n => n + 1) }
     } catch (e) { setErr((e as Error).message) } finally { setBusy(null) }
   }
 
@@ -394,6 +544,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         <span className="scratch-state">
           {err ? <span className="scratch-err" title={err}>⚠ {err}</span>
                : busy ? busy
+               : autoSaving ? 'Saving…'
                : dirty ? 'Unsaved'
                // A blank pad has never been saved; calling it "Saved" would
                // claim a file exists when none does.
@@ -448,11 +599,11 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
           .hw-canvas-wrap, which is also what scroller() below prefers. */}
       <div className={`scratch-body${tab === 'draw' ? ' is-draw' : ''}`} ref={bodyRef}>
         {tab === 'rich' && (
-          <RichEditor value={html} onChange={v => { setHtml(v); setDirty(true) }} allowHtmlEmbed />
+          <RichEditor value={html} onChange={v => { setHtml(v); markEdited() }} allowHtmlEmbed />
         )}
         {tab === 'html' && (
           <textarea className="rf-textarea scratch-html" value={html} spellCheck={false}
-            onChange={e => { setHtml(e.target.value); setDirty(true) }}
+            onChange={e => { setHtml(e.target.value); markEdited() }}
             placeholder="<p>Paste or write raw HTML…</p>" />
         )}
         {tab === 'preview' && (
@@ -469,11 +620,11 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
           // skips its own initial mount, so opening a saved drawing does not
           // announce itself as an edit.
           <HandwritingPad
-            key={padId ?? 'none'}
+            key={padSeq}
             ref={padRef}
             initialDoc={hwDoc ?? undefined}
             floatingTools
-            onChange={() => setDirty(true)}
+            onChange={markEdited}
           />
         )}
       </div>
