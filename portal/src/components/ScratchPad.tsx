@@ -461,7 +461,20 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         {tab === 'draw' && (
           // Keyed on the pad so switching pads remounts with that pad's strokes
           // rather than carrying the previous one's over.
-          <HandwritingPad key={padId ?? 'none'} ref={padRef} initialDoc={hwDoc ?? undefined} floatingTools />
+          //
+          // onChange only flips the dirty flag — it does NOT lift the strokes
+          // into state. save() reads them live off the ref, and re-rendering
+          // this component on every committed stroke would fight the paint
+          // path HandwritingPad goes to some length to keep cheap. The pad
+          // skips its own initial mount, so opening a saved drawing does not
+          // announce itself as an edit.
+          <HandwritingPad
+            key={padId ?? 'none'}
+            ref={padRef}
+            initialDoc={hwDoc ?? undefined}
+            floatingTools
+            onChange={() => setDirty(true)}
+          />
         )}
       </div>
     </section>
