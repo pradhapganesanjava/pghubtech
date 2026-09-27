@@ -34,6 +34,9 @@ const BAR_STORAGE  = 'adshub.hw.bar'
 // exported (baked SVG, PNG pages) exactly as they were at 1x. That is what makes
 // "zoom in, write, save, see the original" hold without a single conversion.
 const ZOOM_STEPS = [1, 1.25, 1.5, 2, 2.5, 3, 4]
+const MIN_ZOOM = ZOOM_STEPS[0]
+const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1]
+const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z))
 
 // A canvas mode at 4x on a wide screen would ask for a backing store big enough
 // to be refused (iOS caps canvas area, and Smooth mode allocates two of them).
@@ -609,34 +612,124 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
     // because it is driven by scroll events rather than by React.
     const [vp, setVp] = useState({ sl: 0, st: 0, cw: 1, ch: 1, sw: 1, sh: 1 })
 
-    const zoomIdx = ZOOM_STEPS.indexOf(zoom)
-    const canZoomIn  = zoomIdx >= 0 && zoomIdx < ZOOM_STEPS.length - 1
-    const canZoomOut = zoomIdx > 0
+    // Pinch hands us arbitrary scales, so the buttons step to the next listed
+    // stop past wherever you are rather than indexing into the list.
+    const canZoomIn  = zoom < MAX_ZOOM - 1e-3
+    const canZoomOut = zoom > MIN_ZOOM + 1e-3
     function stepZoom(dir: -1 | 1) {
-      const i = ZOOM_STEPS.indexOf(zoom)
-      const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, Math.max(0, (i < 0 ? 0 : i) + dir))]
-      if (next !== zoom) setZoom(next)
-    }
-    function resetView() {
-      setZoom(1)
-      wrapRef.current?.scrollTo({ left: 0, top: 0 })
+      const next = dir === 1
+        ? ZOOM_STEPS.find(z => z > zoom + 1e-3) ?? MAX_ZOOM
+        : [...ZOOM_STEPS].reverse().find(z => z < zoom - 1e-3) ?? MIN_ZOOM
+      if (next !== zoom) requestZoom(next)
     }
 
-    // Keep whatever was in the middle of the pane in the middle of the pane
-    // across a zoom change. Without this, zooming in jumps to wherever the
-    // scroll offsets happened to land and you lose the line you were on.
-    const prevZoom = useRef(zoom)
+    // Hold a point still across a zoom change: the pane centre for the buttons,
+    // the pinch midpoint for a gesture. The fraction has to be measured BEFORE
+    // the new width lands and re-applied after, so the caller records it and the
+    // layout effect below spends it — reading scrollWidth on both sides of the
+    // division cancels out and silently does nothing.
+    const pendingAnchor = useRef<{ fx: number; fy: number; ax: number; ay: number } | null>(null)
+    const pendingReset  = useRef(false)
+    function requestZoom(next: number, anchor?: { x: number; y: number }) {
+      const el = wrapRef.current
+      if (el) {
+        const r  = el.getBoundingClientRect()
+        const ax = anchor ? anchor.x - r.left : el.clientWidth  / 2
+        const ay = anchor ? anchor.y - r.top  : el.clientHeight / 2
+        pendingAnchor.current = {
+          fx: (el.scrollLeft + ax) / Math.max(1, el.scrollWidth),
+          fy: (el.scrollTop  + ay) / Math.max(1, el.scrollHeight),
+          ax, ay,
+        }
+      }
+      setZoom(next)
+    }
+    function resetView() {
+      pendingAnchor.current = null
+      // Already at 1x: no re-render is coming, so scroll here instead of waiting
+      // for an effect that will not run.
+      if (zoom === MIN_ZOOM) { wrapRef.current?.scrollTo({ left: 0, top: 0 }); return }
+      pendingReset.current = true
+      setZoom(MIN_ZOOM)
+    }
+
     useLayoutEffect(() => {
       const el = wrapRef.current
-      const before = prevZoom.current
-      prevZoom.current = zoom
-      if (!el || before === zoom) return
-      const fx = (el.scrollLeft + el.clientWidth  / 2) / Math.max(1, el.scrollWidth)
-      const fy = (el.scrollTop  + el.clientHeight / 2) / Math.max(1, el.scrollHeight)
-      // Read AFTER the browser has applied the new --hw-zoom width.
-      el.scrollLeft = fx * el.scrollWidth  - el.clientWidth  / 2
-      el.scrollTop  = fy * el.scrollHeight - el.clientHeight / 2
+      const p  = pendingAnchor.current
+      pendingAnchor.current = null
+      if (!el) return
+      if (pendingReset.current) { pendingReset.current = false; el.scrollTo({ left: 0, top: 0 }); return }
+      if (!p) return
+      el.scrollLeft = p.fx * el.scrollWidth  - p.ax
+      el.scrollTop  = p.fy * el.scrollHeight - p.ay
     }, [zoom])
+
+    // ── Pinch ────────────────────────────────────────────────────────────────
+    // Two fingers is unambiguously a pinch here: a Pencil arrives as a `pen`
+    // pointer and a palm as a single `touch`, and every pad already drops touch
+    // pointers, so nothing about writing can be mistaken for this gesture.
+    //
+    // The listener sits on the scrolling pane, in the CAPTURE phase, so it runs
+    // before the canvas's own touch blockers (which are also capture-phase, but
+    // on a descendant). stopPropagation then keeps the gesture away from them
+    // entirely — the blockers stay exactly as strict as they were for the
+    // single-pointer path they exist to protect.
+    const zoomRef = useRef(zoom); zoomRef.current = zoom
+    const requestZoomRef = useRef(requestZoom); requestZoomRef.current = requestZoom
+    useEffect(() => {
+      const el = wrapRef.current
+      if (!el) return
+      const opts: AddEventListenerOptions = { capture: true, passive: false }
+      let start: { d: number; zoom: number; mid: { x: number; y: number } } | null = null
+
+      const dist = (t: TouchList) =>
+        Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+      const mid = (t: TouchList) => ({
+        x: (t[0].clientX + t[1].clientX) / 2,
+        y: (t[0].clientY + t[1].clientY) / 2,
+      })
+
+      function onStart(e: TouchEvent) {
+        if (e.touches.length < 2) return
+        start = { d: dist(e.touches), zoom: zoomRef.current, mid: mid(e.touches) }
+        e.preventDefault(); e.stopPropagation()
+      }
+      function onMove(e: TouchEvent) {
+        if (!start || e.touches.length < 2) return
+        e.preventDefault(); e.stopPropagation()
+        const m = mid(e.touches)
+        // Two-finger drag pans as well as scales. A pinch that only zoomed would
+        // leave you at 300% with no way to move but the tool switch or the lens.
+        el!.scrollLeft -= m.x - start.mid.x
+        el!.scrollTop  -= m.y - start.mid.y
+        start.mid = m
+        const next = clampZoom(start.zoom * (dist(e.touches) / Math.max(1, start.d)))
+        if (Math.abs(next - zoomRef.current) > 0.005) requestZoomRef.current(next, m)
+      }
+      function onEnd(e: TouchEvent) {
+        if (e.touches.length < 2) start = null
+      }
+
+      // iOS fires its proprietary gesture events for a two-finger pinch on top
+      // of the touch stream. touch-action: none should already stop Safari
+      // zooming the page, but the canvas only blocks these on itself — a pinch
+      // landing on the pane's padding would otherwise reach the browser.
+      const block = (e: Event) => e.preventDefault()
+      const GESTURES = ['gesturestart', 'gesturechange', 'gestureend']
+
+      el.addEventListener('touchstart',  onStart, opts)
+      el.addEventListener('touchmove',   onMove,  opts)
+      el.addEventListener('touchend',    onEnd,   opts)
+      el.addEventListener('touchcancel', onEnd,   opts)
+      GESTURES.forEach(g => el.addEventListener(g, block, opts))
+      return () => {
+        el.removeEventListener('touchstart',  onStart, opts)
+        el.removeEventListener('touchmove',   onMove,  opts)
+        el.removeEventListener('touchend',    onEnd,   opts)
+        el.removeEventListener('touchcancel', onEnd,   opts)
+        GESTURES.forEach(g => el.removeEventListener(g, block, opts))
+      }
+    }, [])
 
     // Track the pane's scroll + size so the lens can show where you are. rAF
     // coalesced: a pan fires scroll far faster than there is anything new to say.
@@ -662,7 +755,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
         el.removeEventListener('scroll', schedule)
         ro.disconnect()
       }
-    }, [zoom])
+    }, [])
 
     // Drag anywhere in the lens to pan there — the rectangle is the handle, but
     // a tap outside it should also go there rather than doing nothing.
