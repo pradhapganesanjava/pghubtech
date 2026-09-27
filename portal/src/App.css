@@ -4905,14 +4905,25 @@ body.resizing-v * {
 .hw-canvas-wrap {
   flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px;
   background: var(--bg3); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 6px 6px;
-  display: flex; justify-content: center;
+  /* Block, not flex, and the page centres itself with margin:auto. A centred
+     flex item that outgrows its container puts its left edge at a negative
+     scroll offset no gesture can reach; `justify-content: safe center` fixes
+     that but is unreliable in Safari, which is the browser this pad exists
+     for. An auto margin on a block simply resolves to 0 once the child is
+     wider, leaving the whole page reachable at every zoom. */
+  display: block;
 }
 /* Two stacked canvases: committed (bottom, static) + live (top, per-frame).
    Same exact size; the live one is the one that receives pointer events. */
 .hw-canvas-stack {
   position: relative;
-  width: 100%; max-width: 760px; aspect-ratio: 1000 / 1400; height: auto;
-  align-self: flex-start;
+  /* --hw-zoom is set on the scrolling pane. aspect-ratio carries the height, so
+     one variable scales the page for every render mode and 1 reproduces the
+     un-zoomed layout exactly. */
+  width: calc(100% * var(--hw-zoom, 1));
+  max-width: calc(760px * var(--hw-zoom, 1));
+  margin: 0 auto;
+  aspect-ratio: 1000 / 1400; height: auto;
   background: #fff; border: 1px solid var(--border); border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,.12);
 }
@@ -4967,6 +4978,41 @@ body.resizing-v * {
   /* Thumb-sized, and clear of the left edge. */
   .hw-fab { left: 8px; bottom: 8px; }
   .hw-fab-btn { width: 48px; height: 48px; font-size: 20px; }
+}
+
+/* ── Lens ────────────────────────────────────────────────────────────────────
+   A thumbnail of the whole page with the visible window drawn on it, shown
+   only once zoom means the page no longer fits. Top-right: the tool cluster
+   owns bottom-left and the Scratch Pad's scroll buttons own the right edge's
+   middle, so this is the one free corner. */
+.hw-lens {
+  position: absolute; right: 10px; z-index: 4;
+  width: 68px; aspect-ratio: 1000 / 1400;
+  background: #fff; border: 1px solid var(--border); border-radius: 4px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.28);
+  overflow: hidden; cursor: crosshair;
+  opacity: .82; transition: opacity .12s;
+  touch-action: none;   /* dragging the lens pans the page, never scrolls it */
+}
+.hw-lens:hover { opacity: 1; }
+/* Floating layout has no bar at the top, so the lens takes that corner — clear
+   of the tool cluster at bottom-left and the pad's scroll buttons at the right
+   edge's middle. With the classic bar it anchors to the bottom instead, which is
+   the corner the toolbar is not in. */
+.hw-wrap-float .hw-lens { top: 10px; }
+.hw-wrap:not(.hw-wrap-float) .hw-lens { bottom: 10px; }
+.hw-lens-page { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hw-lens-view {
+  position: absolute; box-sizing: border-box;
+  border: 1.5px solid var(--primary);
+  background: rgba(var(--primary-rgb), .18);
+  border-radius: 2px; pointer-events: none;
+}
+@media (max-width: 720px) {
+  /* Thumb-draggable, and further from the edge than a 68px box needs to be. */
+  .hw-lens { width: 58px; right: 8px; }
+  .hw-wrap-float .hw-lens { top: 8px; }
+  .hw-wrap:not(.hw-wrap-float) .hw-lens { bottom: 8px; }
 }
 
 .hw-mode-lbl { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); }
