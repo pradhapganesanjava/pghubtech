@@ -147,7 +147,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
   // and you have not started editing in the meantime — a background reply must
   // never overwrite typing that began after it was requested.
   const openPad = useCallback(async (id: string, knownMod?: string) => {
-    const hit = cachedScratchBody(id)
+    const hit = await cachedScratchBody(id)
     if (hit) applyBody(id, hit.html)
     else setBusy('Loading…')
     setErr(null)
@@ -179,18 +179,18 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
     if (!open) return
     let cancelled = false
 
-    // Show the cached list at once so the picker is populated and the resume
-    // below can start without waiting on Drive.
-    const seeded = cachedScratchList()
-    if (seeded?.length) setPads(seeded)
-
-    // Resume straight from the cache while the list is still in flight.
+    // The resume pointer is a synchronous read, so the pad starts opening in the
+    // same tick the panel does — before the cached list or Drive have answered.
     const last = lastScratchId()
     if (last) void openPad(last)
     else { setPadId(null); setName(defaultScratchName()); setHtml(''); setHwDoc(null); setTab('draw'); setDirty(false) }
 
     ;(async () => {
-      if (!seeded?.length) setBusy('Loading…')
+      // Cached list first: it populates the picker without waiting on Drive.
+      const seeded = await cachedScratchList()
+      if (cancelled) return
+      if (seeded?.length) setPads(seeded)
+      else setBusy('Loading…')
       setErr(null)
       try {
         const list = await listScratch()
@@ -199,7 +199,7 @@ export default function ScratchPadPanel({ open, onClose }: Props) {
         putScratchList(list)
         // Fall back to the newest pad when there was nothing remembered, or the
         // remembered one has since been deleted (possibly on another device).
-        // The valid-and-remembered case is already open or opening below, so
+        // The valid-and-remembered case is already open or opening (above), so
         // this must not fire for it and start a second fetch.
         const stillThere = !!last && list.some(p => p.id === last)
         if (last && !stillThere) setLastScratchId(null)

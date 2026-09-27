@@ -13,6 +13,7 @@
 // just a Drive rename.
 
 import { GAuth } from '../lib/gauth'
+import { idbGet, idbPut, idbDel } from '../lib/idb'
 import {
   getOrCreateFolder,
   uploadFileToDrive,
@@ -94,73 +95,81 @@ export async function deleteScratch(id: string): Promise<void> {
 
 // ── Local cache ──────────────────────────────────────────────────────────────
 // A pad is one Drive file, and Drive is a round trip away. Reopening the pad you
-// had open a minute ago should not stare at a spinner, so the list and the last
-// few bodies are mirrored to localStorage and rendered immediately while the
-// real fetch revalidates behind them.
+// had open a minute ago should not stare at a spinner, so the list and the recent
+// bodies are mirrored locally and rendered immediately while the real fetch
+// revalidates behind them.
 //
-// Bounded on purpose. A pad with a drawing carries stroke JSON plus baked SVG
-// and can run to hundreds of KB, and localStorage is a ~5 MB cliff shared with
-// everything else the app keeps there — so oversized bodies are simply not
-// cached (they still load from Drive, just without the head start), and only the
-// few most recent are kept. Every write is guarded: a cache that cannot be
-// written is a missing optimisation, never an error the user should see.
+// This lives in IndexedDB rather than localStorage. A pad with a drawing carries
+// stroke JSON plus baked SVG and runs to hundreds of KB; against localStorage's
+// ~5 MB shared cliff that meant refusing to cache exactly the pads slowest to
+// load. IndexedDB has room, so there is no per-body ceiling any more — only a cap
+// on how many pads are kept, because a pad opened once last year should not be
+// held forever.
+//
+// Reads are therefore async. That is a microtask and a few ms against a network
+// round trip, so it is still the difference between a spinner and no spinner.
 
-const LS_LIST = 'pghtech_scratch_list'
-const LS_BODY = 'pghtech_scratch_body'
-const LS_LAST = 'pghtech_scratch_last'
+const STORE = 'scratch'
+const K_LIST  = 'list'
+const K_INDEX = 'index'                        // { [id]: { at, modifiedTime } }
+const bodyKey = (id: string) => `body:${id}`
 
-/** Bodies past this are left uncached rather than risking the whole quota. */
-const CACHE_MAX_BYTES = 400_000
 /** How many bodies to keep. The pad you want is nearly always the last one. */
-const CACHE_MAX_PADS = 3
+const CACHE_MAX_PADS = 20
 
 interface CachedBody { html: string; modifiedTime: string; at: number }
+type CacheIndex = Record<string, { at: number; modifiedTime: string }>
 
-function readJson<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) as T : null
-  } catch { return null }
-}
-function writeJson(key: string, value: unknown): void {
-  try { localStorage.setItem(key, JSON.stringify(value)) }
-  catch {
-    // Almost certainly the quota. Drop the bodies — the biggest thing here and
-    // the only part that is pure optimisation — and let the next write retry.
-    try { localStorage.removeItem(LS_BODY) } catch { /* nothing left to try */ }
-  }
-}
-
-export function cachedScratchList(): ScratchPad[] | null {
-  const v = readJson<ScratchPad[]>(LS_LIST)
-  return Array.isArray(v) ? v : null
+export function cachedScratchList(): Promise<ScratchPad[] | null> {
+  return idbGet<ScratchPad[]>(STORE, K_LIST).then(v => Array.isArray(v) ? v : null)
 }
 export function putScratchList(list: ScratchPad[]): void {
-  writeJson(LS_LIST, list)
+  void idbPut(STORE, K_LIST, list)
 }
 
-/** The cached body plus the modifiedTime it was fetched at, so a caller can
- *  tell a fresh cache hit from one the Drive list has already moved past. */
-export function cachedScratchBody(id: string): CachedBody | null {
-  const all = readJson<Record<string, CachedBody>>(LS_BODY)
-  return all?.[id] ?? null
+/** The cached body plus the modifiedTime it was fetched at, so a caller can tell
+ *  a fresh hit from one the Drive listing has already moved past. */
+export function cachedScratchBody(id: string): Promise<CachedBody | null> {
+  return idbGet<CachedBody>(STORE, bodyKey(id))
 }
+
+// Fire and forget. Eviction reads only the index — a few hundred bytes — rather
+// than every cached body, which is the whole reason the index exists.
 export function putScratchBody(id: string, html: string, modifiedTime: string): void {
-  if (html.length > CACHE_MAX_BYTES) { dropScratchBody(id); return }
-  const all = readJson<Record<string, CachedBody>>(LS_BODY) ?? {}
-  all[id] = { html, modifiedTime, at: Date.now() }
-  const ids = Object.keys(all).sort((a, b) => all[b].at - all[a].at)
-  for (const stale of ids.slice(CACHE_MAX_PADS)) delete all[stale]
-  writeJson(LS_BODY, all)
-}
-export function dropScratchBody(id: string): void {
-  const all = readJson<Record<string, CachedBody>>(LS_BODY)
-  if (!all || !(id in all)) return
-  delete all[id]
-  writeJson(LS_BODY, all)
+  void (async () => {
+    const at = Date.now()
+    await idbPut(STORE, bodyKey(id), { html, modifiedTime, at } satisfies CachedBody)
+    const index: CacheIndex = (await idbGet<CacheIndex>(STORE, K_INDEX)) ?? {}
+    index[id] = { at, modifiedTime }
+    const stale = Object.keys(index)
+      .sort((a, b) => index[b].at - index[a].at)
+      .slice(CACHE_MAX_PADS)
+    for (const old of stale) {
+      delete index[old]
+      await idbDel(STORE, bodyKey(old))
+    }
+    await idbPut(STORE, K_INDEX, index)
+  })()
 }
 
-/** The pad to reopen next time. Cleared when that pad is deleted. */
+export function dropScratchBody(id: string): void {
+  void (async () => {
+    await idbDel(STORE, bodyKey(id))
+    const index = await idbGet<CacheIndex>(STORE, K_INDEX)
+    if (!index || !(id in index)) return
+    delete index[id]
+    await idbPut(STORE, K_INDEX, index)
+  })()
+}
+
+// ── Which pad to reopen ──────────────────────────────────────────────────────
+// Stays in localStorage on purpose. It is one short string read on the resume
+// path before anything else can start, and it is the one value here that a
+// synchronous read genuinely buys something: the pad begins opening in the same
+// tick the panel does, rather than after a database handshake.
+
+const LS_LAST = 'pghtech_scratch_last'
+
 export function lastScratchId(): string | null {
   try { return localStorage.getItem(LS_LAST) } catch { return null }
 }
@@ -170,3 +179,10 @@ export function setLastScratchId(id: string | null): void {
     else    localStorage.removeItem(LS_LAST)
   } catch { /* private mode */ }
 }
+
+// The pre-IndexedDB cache. Nothing is migrated — it is a cache, and IndexedDB
+// refills on the next open — but the old keys held real space, so drop them.
+try {
+  localStorage.removeItem('pghtech_scratch_list')
+  localStorage.removeItem('pghtech_scratch_body')
+} catch { /* private mode */ }
