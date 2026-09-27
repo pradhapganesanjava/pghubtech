@@ -1,4 +1,4 @@
-import { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useLayoutEffect, useImperativeHandle, useRef, useState } from 'react'
 import { getStroke } from 'perfect-freehand'
 
 // A committed stroke is immutable — once it's in the strokes array its
@@ -27,6 +27,20 @@ const CommittedPath = memo(function CommittedPath({ stroke }: { stroke: HwStroke
 export type DrawMode = 'react' | 'smooth' | 'immediate' | 'direct' | 'svg'
 const MODE_STORAGE = 'adshub.hw.mode'
 const BAR_STORAGE  = 'adshub.hw.bar'
+
+// Zoom is presentation only. Strokes are stored in the 1000x1400 logical page
+// space and every pad maps input through getBoundingClientRect(), so scaling the
+// rendered page leaves both the coordinates that get committed and everything
+// exported (baked SVG, PNG pages) exactly as they were at 1x. That is what makes
+// "zoom in, write, save, see the original" hold without a single conversion.
+const ZOOM_STEPS = [1, 1.25, 1.5, 2, 2.5, 3, 4]
+
+// A canvas mode at 4x on a wide screen would ask for a backing store big enough
+// to be refused (iOS caps canvas area, and Smooth mode allocates two of them).
+// The device transform in ensureSize is derived from canvas.width, so a smaller
+// store simply renders softer rather than wrongly — cap the area and let the
+// SVG modes, which have no store at all, stay pin-sharp at every zoom.
+const MAX_CANVAS_PX = 12_000_000
 
 export interface HwStroke { tool: 'pen'; color: string; size: number; points: number[][] } // [x, y, pressure]
 export interface HwPage { strokes: HwStroke[] }
@@ -111,7 +125,11 @@ export function parseHwDoc(html: string): HwDoc | null {
 
 function ensureSize(canvas: HTMLCanvasElement) {
   const r = canvas.getBoundingClientRect()
-  const dpr = window.devicePixelRatio || 1
+  let dpr = window.devicePixelRatio || 1
+  // Scale the device ratio down rather than the element: the element's size is
+  // the zoom the user asked for, and only the pixels behind it are negotiable.
+  const area = r.width * r.height * dpr * dpr
+  if (area > MAX_CANVAS_PX) dpr *= Math.sqrt(MAX_CANVAS_PX / area)
   const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr))
   if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
   const ctx = canvas.getContext('2d')!
@@ -581,6 +599,85 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
     // over a page without covering what you just wrote.
     const [advOpen, setAdvOpen] = useState(false)
 
+    // ── Zoom + pan ───────────────────────────────────────────────────────────
+    // The pane scrolls; the page inside it grows. .hw-canvas-stack reads --hw-zoom
+    // for its width, so one variable scales all five render modes and none of them
+    // needs to know zoom exists.
+    const [zoom, setZoom] = useState(1)
+    const wrapRef = useRef<HTMLDivElement>(null)
+    // Viewport geometry, for the lens. Kept in state (not read during render)
+    // because it is driven by scroll events rather than by React.
+    const [vp, setVp] = useState({ sl: 0, st: 0, cw: 1, ch: 1, sw: 1, sh: 1 })
+
+    const zoomIdx = ZOOM_STEPS.indexOf(zoom)
+    const canZoomIn  = zoomIdx >= 0 && zoomIdx < ZOOM_STEPS.length - 1
+    const canZoomOut = zoomIdx > 0
+    function stepZoom(dir: -1 | 1) {
+      const i = ZOOM_STEPS.indexOf(zoom)
+      const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, Math.max(0, (i < 0 ? 0 : i) + dir))]
+      if (next !== zoom) setZoom(next)
+    }
+    function resetView() {
+      setZoom(1)
+      wrapRef.current?.scrollTo({ left: 0, top: 0 })
+    }
+
+    // Keep whatever was in the middle of the pane in the middle of the pane
+    // across a zoom change. Without this, zooming in jumps to wherever the
+    // scroll offsets happened to land and you lose the line you were on.
+    const prevZoom = useRef(zoom)
+    useLayoutEffect(() => {
+      const el = wrapRef.current
+      const before = prevZoom.current
+      prevZoom.current = zoom
+      if (!el || before === zoom) return
+      const fx = (el.scrollLeft + el.clientWidth  / 2) / Math.max(1, el.scrollWidth)
+      const fy = (el.scrollTop  + el.clientHeight / 2) / Math.max(1, el.scrollHeight)
+      // Read AFTER the browser has applied the new --hw-zoom width.
+      el.scrollLeft = fx * el.scrollWidth  - el.clientWidth  / 2
+      el.scrollTop  = fy * el.scrollHeight - el.clientHeight / 2
+    }, [zoom])
+
+    // Track the pane's scroll + size so the lens can show where you are. rAF
+    // coalesced: a pan fires scroll far faster than there is anything new to say.
+    useEffect(() => {
+      const el = wrapRef.current
+      if (!el) return
+      let raf: number | null = null
+      const read = () => {
+        raf = null
+        setVp({
+          sl: el.scrollLeft, st: el.scrollTop,
+          cw: el.clientWidth, ch: el.clientHeight,
+          sw: Math.max(1, el.scrollWidth), sh: Math.max(1, el.scrollHeight),
+        })
+      }
+      const schedule = () => { if (raf == null) raf = requestAnimationFrame(read) }
+      read()
+      el.addEventListener('scroll', schedule, { passive: true })
+      const ro = new ResizeObserver(schedule)
+      ro.observe(el)
+      return () => {
+        if (raf != null) cancelAnimationFrame(raf)
+        el.removeEventListener('scroll', schedule)
+        ro.disconnect()
+      }
+    }, [zoom])
+
+    // Drag anywhere in the lens to pan there — the rectangle is the handle, but
+    // a tap outside it should also go there rather than doing nothing.
+    function lensSeek(e: React.PointerEvent<HTMLDivElement>) {
+      const el = wrapRef.current
+      if (!el) return
+      const r = e.currentTarget.getBoundingClientRect()
+      const fx = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
+      const fy = Math.min(1, Math.max(0, (e.clientY - r.top)  / r.height))
+      el.scrollTo({
+        left: fx * el.scrollWidth  - el.clientWidth  / 2,
+        top:  fy * el.scrollHeight - el.clientHeight / 2,
+      })
+    }
+
     const pagesRef = useRef(pages);   pagesRef.current = pages
     const idxRef   = useRef(pageIdx); idxRef.current = pageIdx
 
@@ -684,6 +781,49 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
         <button className="hw-tool" onClick={deletePage} title="Delete page">🗑</button>
       </>
     )
+    const zoomGroup = (
+      <>
+        <button className="hw-tool" onClick={() => stepZoom(-1)} disabled={!canZoomOut} title="Zoom out">−</button>
+        <span className="hw-pageno" title="Zoom — the page and what you save are unchanged">{Math.round(zoom * 100)}%</span>
+        <button className="hw-tool" onClick={() => stepZoom(1)} disabled={!canZoomIn} title="Zoom in">+</button>
+        <button className="hw-tool" onClick={resetView} disabled={zoom === 1 && vp.st === 0 && vp.sl === 0}
+          title="Fit the whole page again">⤢</button>
+      </>
+    )
+    // Only worth drawing once there is more page than pane. At 1x you are
+    // already looking at the whole width, and the pad's own scroll buttons
+    // answer the only question left.
+    const lensOn = zoom > 1
+    const lens = lensOn ? (
+      <div
+        className="hw-lens"
+        onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); lensSeek(e) }}
+        onPointerMove={e => { if (e.buttons) lensSeek(e) }}
+        title="Where you are on the page — tap or drag to move"
+      >
+        <svg className="hw-lens-page" viewBox={`0 0 ${PAGE_W} ${PAGE_H}`} preserveAspectRatio="none" aria-hidden="true">
+          {/* Raw points at low detail, not perfect-freehand outlines: this is a
+              position map at ~70px wide, and re-running the outline solver for
+              every stroke on every pan would cost more than the whole pad. */}
+          {page.strokes.map((st, i) => (
+            <polyline
+              key={i} fill="none" stroke={st.color} strokeWidth={Math.max(6, st.size * 2)}
+              points={st.points.filter((_, k) => k % 4 === 0).map(pt => `${pt[0]},${pt[1]}`).join(' ')}
+            />
+          ))}
+        </svg>
+        <div
+          className="hw-lens-view"
+          style={{
+            left:   `${(vp.sl / vp.sw) * 100}%`,
+            top:    `${(vp.st / vp.sh) * 100}%`,
+            width:  `${Math.min(100, (vp.cw / vp.sw) * 100)}%`,
+            height: `${Math.min(100, (vp.ch / vp.sh) * 100)}%`,
+          }}
+        />
+      </div>
+    ) : null
+
     // Stroke counter lets you verify on iPad that commits are landing in state
     // even when the paint is missing; the engine picker is there to compare
     // modes on the same drawing.
@@ -720,6 +860,7 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
                   <span className="hw-sep" />
                   {editGroup}
                 </div>
+                <div className="hw-fab-row">{zoomGroup}</div>
                 <div className="hw-fab-row">{pagesGroup}</div>
                 <div className="hw-fab-row">
                   <button className={`hw-tool${advOpen ? ' active' : ''}`} onClick={() => setAdvOpen(o => !o)}
@@ -751,12 +892,19 @@ const HandwritingPad = forwardRef<HandwritingPadHandle, {
             <span className="hw-sep" />
             {editGroup}
             <span className="hw-sep" />
+            {zoomGroup}
+            <span className="hw-sep" />
             {pagesGroup}
             <span className="hw-sep" />
             {diagGroup}
           </div>
         )}
-        <div className="hw-canvas-wrap">
+        {lens}
+        <div
+          className="hw-canvas-wrap"
+          ref={wrapRef}
+          style={{ ['--hw-zoom' as string]: zoom }}
+        >
           {mode === 'react'     && <ReactPad     key={mode} {...padProps} />}
           {mode === 'smooth'    && <SmoothPad    key={mode} {...padProps} />}
           {mode === 'immediate' && <ImmediatePad key={mode} {...padProps} />}
