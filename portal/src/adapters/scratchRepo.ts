@@ -91,3 +91,82 @@ export async function renameScratch(id: string, name: string): Promise<void> {
 export async function deleteScratch(id: string): Promise<void> {
   await deleteDriveFile(token(), id)
 }
+
+// ── Local cache ──────────────────────────────────────────────────────────────
+// A pad is one Drive file, and Drive is a round trip away. Reopening the pad you
+// had open a minute ago should not stare at a spinner, so the list and the last
+// few bodies are mirrored to localStorage and rendered immediately while the
+// real fetch revalidates behind them.
+//
+// Bounded on purpose. A pad with a drawing carries stroke JSON plus baked SVG
+// and can run to hundreds of KB, and localStorage is a ~5 MB cliff shared with
+// everything else the app keeps there — so oversized bodies are simply not
+// cached (they still load from Drive, just without the head start), and only the
+// few most recent are kept. Every write is guarded: a cache that cannot be
+// written is a missing optimisation, never an error the user should see.
+
+const LS_LIST = 'pghtech_scratch_list'
+const LS_BODY = 'pghtech_scratch_body'
+const LS_LAST = 'pghtech_scratch_last'
+
+/** Bodies past this are left uncached rather than risking the whole quota. */
+const CACHE_MAX_BYTES = 400_000
+/** How many bodies to keep. The pad you want is nearly always the last one. */
+const CACHE_MAX_PADS = 3
+
+interface CachedBody { html: string; modifiedTime: string; at: number }
+
+function readJson<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) as T : null
+  } catch { return null }
+}
+function writeJson(key: string, value: unknown): void {
+  try { localStorage.setItem(key, JSON.stringify(value)) }
+  catch {
+    // Almost certainly the quota. Drop the bodies — the biggest thing here and
+    // the only part that is pure optimisation — and let the next write retry.
+    try { localStorage.removeItem(LS_BODY) } catch { /* nothing left to try */ }
+  }
+}
+
+export function cachedScratchList(): ScratchPad[] | null {
+  const v = readJson<ScratchPad[]>(LS_LIST)
+  return Array.isArray(v) ? v : null
+}
+export function putScratchList(list: ScratchPad[]): void {
+  writeJson(LS_LIST, list)
+}
+
+/** The cached body plus the modifiedTime it was fetched at, so a caller can
+ *  tell a fresh cache hit from one the Drive list has already moved past. */
+export function cachedScratchBody(id: string): CachedBody | null {
+  const all = readJson<Record<string, CachedBody>>(LS_BODY)
+  return all?.[id] ?? null
+}
+export function putScratchBody(id: string, html: string, modifiedTime: string): void {
+  if (html.length > CACHE_MAX_BYTES) { dropScratchBody(id); return }
+  const all = readJson<Record<string, CachedBody>>(LS_BODY) ?? {}
+  all[id] = { html, modifiedTime, at: Date.now() }
+  const ids = Object.keys(all).sort((a, b) => all[b].at - all[a].at)
+  for (const stale of ids.slice(CACHE_MAX_PADS)) delete all[stale]
+  writeJson(LS_BODY, all)
+}
+export function dropScratchBody(id: string): void {
+  const all = readJson<Record<string, CachedBody>>(LS_BODY)
+  if (!all || !(id in all)) return
+  delete all[id]
+  writeJson(LS_BODY, all)
+}
+
+/** The pad to reopen next time. Cleared when that pad is deleted. */
+export function lastScratchId(): string | null {
+  try { return localStorage.getItem(LS_LAST) } catch { return null }
+}
+export function setLastScratchId(id: string | null): void {
+  try {
+    if (id) localStorage.setItem(LS_LAST, id)
+    else    localStorage.removeItem(LS_LAST)
+  } catch { /* private mode */ }
+}
