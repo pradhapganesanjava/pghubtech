@@ -101,12 +101,9 @@ export async function refineThought(
 // The class vocabulary below is styled in App.css and is theme-aware. Letting
 // the model pick from a fixed set beats free-form inline styles: the output
 // stays consistent, readable in every theme, and safe through the sanitiser
-// (which strips style/script but keeps class).
-const RENDER_PROMPT = `You turn a person's thought into a compact, visual study card in HTML.
-
-Return ONLY an HTML fragment. No markdown, no code fence, no <html>/<body>.
-
-Use ONLY these tags:
+// (which strips style/script but keeps class). Shared with the Notes capture
+// renderer (lib/noteGen.ts) so both surfaces draw from one vocabulary.
+export const CARD_VOCAB = `Use ONLY these tags:
   h3 h4 p ul ol li strong em br div span table thead tbody tr th td blockquote
 
 Use ONLY these classes, exactly as named:
@@ -124,7 +121,13 @@ Use ONLY these classes, exactly as named:
   <div class="th-cycle">                a repeating loop (last item returns to first)
     <div class="th-flow-step">…</div><div class="th-flow-arrow">→</div><div class="th-flow-step">…</div>
   </div>
-  <div class="th-grid"><div class="th-card"><h4>…</h4>…</div></div>   side-by-side points
+  <div class="th-grid"><div class="th-card"><h4>…</h4>…</div></div>   side-by-side points`
+
+const RENDER_PROMPT = `You turn a person's thought into a compact, visual study card in HTML.
+
+Return ONLY an HTML fragment. No markdown, no code fence, no <html>/<body>.
+
+${CARD_VOCAB}
 
 Rules:
 - Lead with an <h3> naming the idea, then the substance. No preamble.

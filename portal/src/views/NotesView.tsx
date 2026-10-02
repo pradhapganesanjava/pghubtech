@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  addNode, createNote, deleteNode, deleteNote, listNotes, loadNodes,
-  renameNote, updateNode,
+  addCapture, addNode, createNote, deleteNode, deleteNote, linkCapture,
+  listNotes, loadCaptures, loadNodes, renameNote, updateNode,
 } from '../adapters/notesRepo'
-import type { Note, NoteNode } from '../adapters/notesRepo'
+import type { Note, NoteCapture, NoteNode } from '../adapters/notesRepo'
 import { blobToDataUri } from '../lib/driveImages'
 import PageBlocksEditor, {
-  parseBlocks, renderBlocksAsHtml, serializeBlocks,
+  newBlock, parseBlocks, renderBlocksAsHtml, serializeBlocks,
 } from '../components/PageBlocksEditor'
 import type { PageBlock } from '../components/PageBlocksEditor'
 import { sanitizeHtml } from '../lib/sanitize'
 import { useToast } from '../components/Toast'
+import { LLM } from '../lib/llm'
+import { cleanSpoken, fileNote, renderNote } from '../lib/noteGen'
+import { useDictation } from '../lib/useDictation'
 
 type SidebarMode = 'notes' | 'recent'
 
@@ -66,6 +69,15 @@ export default function NotesView() {
   const [editingNoteDraft, setEditNote]   = useState('')
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
   const [editingNodeDraft, setEditNode]   = useState('')
+
+  // AI capture — speak or type, cleaned, kept raw, then filed as a page.
+  const [captureOpen, setCaptureOpen] = useState(true)
+  const [capDraft, setCapDraft]       = useState('')
+  const [capSaving, setCapSaving]     = useState(false)
+  const [capStage, setCapStage]       = useState('')
+  const [captures, setCaptures]       = useState<NoteCapture[]>([])
+  const [rawOpen, setRawOpen]         = useState(false)
+  const dictation = useDictation(capDraft, setCapDraft, msg => toast(msg, 'error'))
 
   // ── Draggable dividers ─────────────────────────────────────────────────
   function handleLeftDividerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -136,6 +148,9 @@ export default function NotesView() {
     setDraftTitle(''); setBlocks([]); setDirty(false)
     setExpanded(new Set())
     setLoadingNote(true)
+    setCaptures([])
+    // Captures only feed the Raw Text toggle — never hold up opening the note.
+    loadCaptures(n.id).then(setCaptures).catch(() => { /* toggle stays hidden */ })
     try {
       const list = await loadNodes(n.id)
       setNodes(list)
@@ -166,6 +181,11 @@ export default function NotesView() {
     [activeNodeId, nodes],
   )
 
+  const activeCaptures = useMemo(
+    () => activeNodeId ? captures.filter(c => c.nodeId === activeNodeId) : [],
+    [activeNodeId, captures],
+  )
+
   // ── Open a node in the editor ────────────────────────────────────────────
   function openNode(node: NoteNode, forceEdit = false) {
     if (dirty && !window.confirm('Discard unsaved changes?')) return
@@ -176,6 +196,87 @@ export default function NotesView() {
     setPageMode(forceEdit ? 'edit' : 'view')
     setPageExpanded(false)
     setRightHidden(false)
+    setRawOpen(false)
+  }
+
+  // ── AI capture → raw kept → filed as a page ──────────────────────────────
+  async function saveCapture() {
+    const raw = capDraft.trim()
+    if (!openNote || !raw || capSaving) return
+    if (!LLM.isConfigured()) { toast('AI is not configured — add the Azure key in Settings.', 'error'); return }
+    if (dirty && !window.confirm('Discard unsaved changes on the open page?')) return
+    dictation.stop()
+    const note = openNote
+    setCapSaving(true)
+    try {
+      setCapStage('Cleaning up what you said…')
+      const cleaned = await cleanSpoken(raw).catch(() => raw)
+
+      // Raw lands on the Sheet before any filing, so nothing past here can lose it.
+      setCapStage('Saving the raw capture…')
+      const cap = await addCapture(note.id, raw, cleaned)
+      setCaptures(prev => [...prev, cap])
+      setCapDraft('')
+
+      setCapStage('Filing it in the tree…')
+      const filing = await fileNote(cleaned, note.name, nodes)
+      if (!filing) throw new Error('AI could not file it. The raw capture is saved in the captures tab.')
+
+      const target = filing.appendToId ? nodes.find(n => n.id === filing.appendToId) ?? null : null
+      const title  = target?.title || filing.page || 'Untitled'
+      setCapStage(target ? `Adding to “${title}”…` : 'Writing the page…')
+      const body = sanitizeHtml(await renderNote(cleaned, title, !!target).catch(() => ''))
+        || `<p>${escapeHtml(cleaned)}</p>`
+
+      const created: NoteNode[] = []
+      let page: NoteNode
+      if (target) {
+        const kept = parseBlocks(target.content)
+          .filter(b => (b.kind ?? 'content') !== 'content' || b.html.trim())
+        page = { ...target, content: serializeBlocks([...kept, newBlock(0, body)]) }
+        await updateNode(note.id, page)
+        page = { ...page, updatedAt: new Date().toISOString() }
+      } else {
+        // Walk the section path, reusing sections by title and making the rest.
+        let parentId = ''
+        for (const name of filing.sections) {
+          const hit = [...nodes, ...created].find(n =>
+            n.parentId === parentId && n.kind === 'section' &&
+            n.title.trim().toLowerCase() === name.toLowerCase())
+          if (hit) { parentId = hit.id; continue }
+          const sec = await addNode(note.id, parentId, name, 'section')
+          created.push(sec)
+          parentId = sec.id
+        }
+        page = await addNode(note.id, parentId, title, 'page', serializeBlocks([newBlock(0, body)]))
+      }
+
+      await linkCapture(note.id, cap.id, page.id)
+      setCaptures(prev => prev.map(c => c.id === cap.id ? { ...c, nodeId: page.id } : c))
+
+      const merged = [...nodes.filter(n => n.id !== page.id), ...created, page]
+      setNodes(merged)
+      // Reveal the path down to the page and open it.
+      const open = new Set(expanded)
+      for (let pid = page.parentId; pid;) {
+        open.add(pid)
+        pid = merged.find(n => n.id === pid)?.parentId ?? ''
+      }
+      setExpanded(open)
+      setActiveNodeId(page.id)
+      setDraftTitle(page.title)
+      setBlocks(parseBlocks(page.content))
+      setDirty(false)
+      setPageMode('view')
+      setRightHidden(false)
+      setRawOpen(false)
+      const where = [...filing.sections, title].join(' › ')
+      toast(target ? `Added to ${where}` : `Filed as ${where}`, 'success')
+    } catch (e) {
+      toast(`AI save failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setCapSaving(false); setCapStage('')
+    }
   }
 
   // ── Notes CRUD ───────────────────────────────────────────────────────────
@@ -792,6 +893,46 @@ export default function NotesView() {
                 title="Add top-level page"
               >＋ Page</button>
             </div>
+            <div className={`notes-capture${captureOpen ? ' open' : ''}`}>
+              <button
+                className="notes-capture-hd"
+                onClick={() => { if (captureOpen) dictation.stop(); setCaptureOpen(o => !o) }}
+                aria-expanded={captureOpen}
+                title={captureOpen ? 'Collapse' : 'Speak or type a note — AI cleans it, keeps the raw text, and files it as a page'}
+              >
+                <span>🎤 AI Note</span>
+                {!captureOpen && capDraft.trim() && <span className="notes-capture-pending">draft</span>}
+                <span className="notes-capture-caret">{captureOpen ? '▾' : '▸'}</span>
+              </button>
+              {captureOpen && (
+                <>
+                  <textarea
+                    className="dart-composer-box" rows={3} value={capDraft}
+                    placeholder="Speak or type it raw — cleaned, raw kept, filed as a page."
+                    onChange={e => setCapDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveCapture() }}
+                    disabled={capSaving}
+                  />
+                  <div className="notes-capture-foot">
+                    <span className="dart-hint">
+                      {capSaving && capStage ? capStage : '⌘/Ctrl + Enter · original always kept'}
+                    </span>
+                    <div className="notes-capture-actions">
+                      <button
+                        className={`dart-minibtn ai-mic-btn${dictation.listening ? ' listening' : ''}`}
+                        onClick={dictation.toggle}
+                        disabled={capSaving}
+                        aria-pressed={dictation.listening}
+                        title={dictation.listening ? 'Stop dictation' : 'Start voice dictation'}
+                      >{dictation.listening ? '⏺ Stop' : '🎤 Speak'}</button>
+                      <button className="mgmt-save-btn" disabled={!capDraft.trim() || capSaving} onClick={saveCapture}>
+                        {capSaving ? 'Processing…' : 'AI Save'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <div className="notes-search-row">
               <span className="notes-search-icon" title="Filter by section / page name">🏷</span>
               <input
@@ -903,6 +1044,13 @@ export default function NotesView() {
                 >{pageExpanded ? '⤡' : '⤢'}</button>
                 {pageMode === 'view' ? (
                   <>
+                    {activeCaptures.length > 0 && (
+                      <button
+                        className="dart-minibtn"
+                        onClick={() => setRawOpen(o => !o)}
+                        title="What was said, before AI turned it into this page"
+                      >{rawOpen ? 'Hide Raw Text' : 'Raw Text'}</button>
+                    )}
                     <button
                       className="rf-btn-save"
                       onClick={() => setPageMode('edit')}
@@ -968,10 +1116,26 @@ export default function NotesView() {
 
             <div className="notes-editor-body">
               {pageMode === 'view' ? (
-                <div
-                  className="page-render"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderBlocksAsHtml(blocks)) }}
-                />
+                <>
+                  <div
+                    className="page-render"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderBlocksAsHtml(blocks)) }}
+                  />
+                  {rawOpen && activeCaptures.map(c => (
+                    <div key={c.id} className="th-raw-wrap">
+                      <div className="th-raw-hd">
+                        <span>Cleaned capture · {new Date(c.createdAt).toLocaleString()}</span>
+                      </div>
+                      <pre className="dart-thought-raw">{c.cleaned}</pre>
+                      {c.rawOriginal !== c.cleaned && (
+                        <>
+                          <div className="th-raw-hd"><span>Original, exactly as captured</span></div>
+                          <pre className="dart-thought-raw original">{c.rawOriginal}</pre>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </>
               ) : (
                 <PageBlocksEditor
                   blocks={blocks}
@@ -1001,4 +1165,9 @@ function fmtRelative(iso: string): string {
   const days = Math.floor(hrs / 24)
   if (days < 7)   return `${days}d ago`
   return new Date(iso).toLocaleDateString()
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\n+/g, '</p><p>')
 }
