@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addCapture, addNode, createNote, deleteNode, deleteNote, linkCapture,
-  listNotes, loadCaptures, loadNodes, renameNote, updateNode,
+  listNotes, loadCaptures, loadNodes, newNodeId, renameNote, saveNodeChanges, updateNode,
 } from '../adapters/notesRepo'
 import type { Note, NoteCapture, NoteNode } from '../adapters/notesRepo'
 import { blobToDataUri } from '../lib/driveImages'
@@ -12,7 +12,8 @@ import type { PageBlock } from '../components/PageBlocksEditor'
 import { sanitizeHtml } from '../lib/sanitize'
 import { useToast } from '../components/Toast'
 import { LLM } from '../lib/llm'
-import { cleanSpoken, fileNote, renderNote } from '../lib/noteGen'
+import { cleanSpoken, planNote, renderNote } from '../lib/noteGen'
+import { applyPlan } from '../lib/notePlan'
 import { useDictation } from '../lib/useDictation'
 
 type SidebarMode = 'notes' | 'recent'
@@ -77,6 +78,8 @@ export default function NotesView() {
   const [capStage, setCapStage]       = useState('')
   const [captures, setCaptures]       = useState<NoteCapture[]>([])
   const [rawOpen, setRawOpen]         = useState(false)
+  // What the last AI save did to the tree — shown under the capture box.
+  const [capResult, setCapResult]     = useState<{ log: string[]; skipped: string[] } | null>(null)
   const dictation = useDictation(capDraft, setCapDraft, msg => toast(msg, 'error'))
 
   // ── Draggable dividers ─────────────────────────────────────────────────
@@ -182,7 +185,7 @@ export default function NotesView() {
   )
 
   const activeCaptures = useMemo(
-    () => activeNodeId ? captures.filter(c => c.nodeId === activeNodeId) : [],
+    () => activeNodeId ? captures.filter(c => c.nodeId.split(',').includes(activeNodeId)) : [],
     [activeNodeId, captures],
   )
 
@@ -208,6 +211,7 @@ export default function NotesView() {
     dictation.stop()
     const note = openNote
     setCapSaving(true)
+    setCapResult(null)
     try {
       setCapStage('Cleaning up what you said…')
       const cleaned = await cleanSpoken(raw).catch(() => raw)
@@ -218,60 +222,62 @@ export default function NotesView() {
       setCaptures(prev => [...prev, cap])
       setCapDraft('')
 
-      setCapStage('Filing it in the tree…')
-      const filing = await fileNote(cleaned, note.name, nodes)
-      if (!filing) throw new Error('AI could not file it. The raw capture is saved in the captures tab.')
+      setCapStage('Planning where it all goes…')
+      let plan = await planNote(cleaned, note.name, nodes).catch(() => null)
+      // No usable plan still files the whole capture — into Inbox.
+      if (!plan || plan.segments.length === 0) plan = { segments: [{ key: 'a', text: cleaned }], ops: [] }
+      const applied = applyPlan(nodes, plan, newNodeId)
+      const byId = new Map(applied.nodes.map(n => [n.id, n]))
 
-      const target = filing.appendToId ? nodes.find(n => n.id === filing.appendToId) ?? null : null
-      const title  = target?.title || filing.page || 'Untitled'
-      setCapStage(target ? `Adding to “${title}”…` : 'Writing the page…')
-      const body = sanitizeHtml(await renderNote(cleaned, title, !!target).catch(() => ''))
-        || `<p>${escapeHtml(cleaned)}</p>`
+      setCapStage(`Writing ${applied.fills.length} page${applied.fills.length === 1 ? '' : 's'}…`)
+      const texts = new Map(plan.segments.map(sg => [sg.key, sg.text]))
+      const bodies = await Promise.all(applied.fills.map(async f => {
+        const text = texts.get(f.segment) ?? ''
+        const html = sanitizeHtml(await renderNote(text, byId.get(f.nodeId)!.title, f.append).catch(() => ''))
+        return html || `<p>${escapeHtml(text)}</p>`
+      }))
+      applied.fills.forEach((f, i) => {
+        const n = byId.get(f.nodeId)!
+        const kept = parseBlocks(n.content).filter(bl => (bl.kind ?? 'content') !== 'content' || bl.html.trim())
+        byId.set(n.id, { ...n, content: serializeBlocks([...kept, newBlock(0, bodies[i])]) })
+      })
 
-      const created: NoteNode[] = []
-      let page: NoteNode
-      if (target) {
-        const kept = parseBlocks(target.content)
-          .filter(b => (b.kind ?? 'content') !== 'content' || b.html.trim())
-        page = { ...target, content: serializeBlocks([...kept, newBlock(0, body)]) }
-        await updateNode(note.id, page)
-        page = { ...page, updatedAt: new Date().toISOString() }
-      } else {
-        // Walk the section path, reusing sections by title and making the rest.
-        let parentId = ''
-        for (const name of filing.sections) {
-          const hit = [...nodes, ...created].find(n =>
-            n.parentId === parentId && n.kind === 'section' &&
-            n.title.trim().toLowerCase() === name.toLowerCase())
-          if (hit) { parentId = hit.id; continue }
-          const sec = await addNode(note.id, parentId, name, 'section')
-          created.push(sec)
-          parentId = sec.id
-        }
-        page = await addNode(note.id, parentId, title, 'page', serializeBlocks([newBlock(0, body)]))
-      }
+      setCapStage('Saving…')
+      const now     = new Date().toISOString()
+      const created = applied.created.map(id => byId.get(id)!)
+      const changed = [...new Set([...applied.changed, ...applied.fills.map(f => f.nodeId)])]
+        .filter(id => !applied.created.includes(id))
+        .map(id => ({ ...byId.get(id)!, updatedAt: now }))
+      await saveNodeChanges(note.id, created, changed)
 
-      await linkCapture(note.id, cap.id, page.id)
-      setCaptures(prev => prev.map(c => c.id === cap.id ? { ...c, nodeId: page.id } : c))
+      const pageIds = [...new Set(applied.fills.map(f => f.nodeId))]
+      await linkCapture(note.id, cap.id, pageIds)
+      setCaptures(prev => prev.map(c => c.id === cap.id ? { ...c, nodeId: pageIds.join(',') } : c))
 
-      const merged = [...nodes.filter(n => n.id !== page.id), ...created, page]
+      for (const c of changed) byId.set(c.id, c)
+      const merged = [...byId.values()]
       setNodes(merged)
-      // Reveal the path down to the page and open it.
+      // Reveal every page the capture touched, and open the first.
       const open = new Set(expanded)
-      for (let pid = page.parentId; pid;) {
-        open.add(pid)
-        pid = merged.find(n => n.id === pid)?.parentId ?? ''
+      for (const id of pageIds) {
+        for (let pid = byId.get(id)?.parentId ?? ''; pid;) {
+          open.add(pid)
+          pid = byId.get(pid)?.parentId ?? ''
+        }
       }
       setExpanded(open)
-      setActiveNodeId(page.id)
-      setDraftTitle(page.title)
-      setBlocks(parseBlocks(page.content))
-      setDirty(false)
-      setPageMode('view')
-      setRightHidden(false)
-      setRawOpen(false)
-      const where = [...filing.sections, title].join(' › ')
-      toast(target ? `Added to ${where}` : `Filed as ${where}`, 'success')
+      const first = byId.get(pageIds[0])
+      if (first) {
+        setActiveNodeId(first.id)
+        setDraftTitle(first.title)
+        setBlocks(parseBlocks(first.content))
+        setDirty(false)
+        setPageMode('view')
+        setRightHidden(false)
+        setRawOpen(false)
+      }
+      setCapResult({ log: applied.log, skipped: applied.skipped })
+      toast(`Filed into ${pageIds.length} page${pageIds.length === 1 ? '' : 's'}`, 'success')
     } catch (e) {
       toast(`AI save failed: ${(e as Error).message}`, 'error')
     } finally {
@@ -367,10 +373,22 @@ export default function NotesView() {
 
   async function handleDeleteNodeById(n: NoteNode) {
     if (!openNote) return
-    const kids = (childrenOf.get(n.id) ?? []).length
-    const msg  = kids > 0
-      ? `Delete "${n.title}" and its ${kids} child${kids === 1 ? '' : 'ren'}?`
-      : `Delete "${n.title}"?`
+    // deleteNode removes the whole subtree, so the confirm counts all of it,
+    // not just the direct children.
+    let sections = 0, pages = 0
+    const stack = [...(childrenOf.get(n.id) ?? [])]
+    while (stack.length) {
+      const k = stack.pop()!
+      if (k.kind === 'section') sections++; else pages++
+      stack.push(...(childrenOf.get(k.id) ?? []))
+    }
+    const parts = [
+      sections ? `${sections} section${sections === 1 ? '' : 's'}` : '',
+      pages    ? `${pages} page${pages === 1 ? '' : 's'}` : '',
+    ].filter(Boolean).join(' and ')
+    const msg = parts
+      ? `Delete ${n.kind} "${n.title}" and everything under it — ${parts}?\n\nThis can't be undone.`
+      : `Delete ${n.kind} "${n.title}"?`
     if (!window.confirm(msg)) return
     setBusy(true)
     try {
@@ -892,6 +910,12 @@ export default function NotesView() {
                 disabled={busy}
                 title="Add top-level page"
               >＋ Page</button>
+              <button
+                className={`notes-delete-toggle${deleteMode ? ' active' : ''}`}
+                onClick={() => setDeleteMode(d => !d)}
+                onDoubleClick={e => e.stopPropagation()}
+                title={deleteMode ? 'Hide delete buttons' : 'Show delete buttons on sections and pages'}
+              ><TrashIcon size={13} /></button>
             </div>
             <div className={`notes-capture${captureOpen ? ' open' : ''}`}>
               <button
@@ -930,6 +954,18 @@ export default function NotesView() {
                       </button>
                     </div>
                   </div>
+                  {capResult && (
+                    <div className="notes-capture-result">
+                      <div className="notes-capture-result-hd">
+                        <span>Last AI save</span>
+                        <button className="notes-search-clear" onClick={() => setCapResult(null)} title="Dismiss">✕</button>
+                      </div>
+                      <ul>{capResult.log.map((l, i) => <li key={i}>{l}</li>)}</ul>
+                      {capResult.skipped.length > 0 && (
+                        <ul className="skipped">{capResult.skipped.map((l, i) => <li key={i}>⚠ Skipped: {l}</li>)}</ul>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>

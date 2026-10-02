@@ -413,13 +413,58 @@ async function writeRange(noteId: string, range: string, values: string[][]): Pr
   ).then(r => expectOk(r, `Write ${range}`))
 }
 
+// ── Batch save (AI plan) ─────────────────────────────────────────────────────
+//
+// An AI capture can create, move, rename and append across many nodes at
+// once. One append for the new rows and one values:batchUpdate for the
+// changed ones, instead of a read-modify-write per node.
+
+export function newNodeId(): string { return uuid() }
+
+export async function saveNodeChanges(
+  noteId: string, created: NoteNode[], updated: NoteNode[],
+): Promise<void> {
+  await ensureNodesTab(noteId)
+  const now = new Date().toISOString()
+  if (created.length > 0) {
+    await GAuth.fetch(
+      `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:Z`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      {
+        method:  'POST',
+        headers: authHeaders(true),
+        body:    JSON.stringify({ values: created.map(nodeToRow) }),
+      },
+    ).then(r => expectOk(r, 'Append nodes'))
+  }
+  if (updated.length > 0) {
+    const r = await GAuth.fetch(
+      `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${NODES_TAB}!A:A`)}`,
+      { headers: authHeaders() },
+    )
+    const d = await expectOk(r, 'Find nodes') as { values?: string[][] }
+    const rowOf = new Map<string, number>()
+    ;(d.values ?? []).forEach((row, i) => { if (row[0]) rowOf.set(row[0], i + 1) })
+    const data = updated.map(n => {
+      const idx = rowOf.get(n.id)
+      if (!idx) throw new Error(`Node row not found: ${n.title}`)
+      return { range: `${NODES_TAB}!A${idx}:Z${idx}`, values: [nodeToRow({ ...n, updatedAt: now })] }
+    })
+    await GAuth.fetch(`${SHEETS_BASE}/${noteId}/values:batchUpdate`, {
+      method:  'POST',
+      headers: authHeaders(true),
+      body:    JSON.stringify({ valueInputOption: 'RAW', data }),
+    }).then(r2 => expectOk(r2, 'Update nodes'))
+  }
+}
+
 // ── Captures (spoken / typed input behind AI-filed pages) ────────────────────
 //
 //   captures tab   cols: id, node_id, raw_original, cleaned, created_at
 //
 // The AI capture flow writes the row BEFORE it files anything, so a failed
 // or wrong filing never loses what was said. `node_id` is filled in once the
-// capture lands on a page ('' = captured but not filed).
+// capture lands; one capture can feed several pages, so it holds a
+// comma-separated id list ('' = captured but not filed).
 
 const CAPTURES_HEADERS = ['id', 'node_id', 'raw_original', 'cleaned', 'created_at']
 // Same cell cap as page content; dictation never gets near it, but a pasted
@@ -428,7 +473,7 @@ const CAPTURE_CELL_MAX = 48_000
 
 export interface NoteCapture {
   id:          string
-  nodeId:      string
+  nodeId:      string   // comma-separated page ids
   rawOriginal: string   // exactly what was dictated or typed
   cleaned:     string   // fillers and repeats removed, same words
   createdAt:   string
@@ -470,7 +515,7 @@ export async function addCapture(
   return c
 }
 
-export async function linkCapture(noteId: string, captureId: string, nodeId: string): Promise<void> {
+export async function linkCapture(noteId: string, captureId: string, nodeIds: string[]): Promise<void> {
   const r = await GAuth.fetch(
     `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${CAPTURES_TAB}!A:A`)}`,
     { headers: authHeaders() },
@@ -478,5 +523,5 @@ export async function linkCapture(noteId: string, captureId: string, nodeId: str
   const d = await expectOk(r, 'Find capture') as { values?: string[][] }
   const idx = (d.values ?? []).findIndex(row => row[0] === captureId)
   if (idx < 0) throw new Error('Capture row not found')
-  await writeRange(noteId, `${CAPTURES_TAB}!B${idx + 1}`, [[nodeId]])
+  await writeRange(noteId, `${CAPTURES_TAB}!B${idx + 1}`, [[nodeIds.join(',')]])
 }
