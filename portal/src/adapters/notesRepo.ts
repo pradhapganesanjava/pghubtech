@@ -26,6 +26,7 @@ const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 export const NOTES_FOLDER = 'PGHubTechNotes'
 
 const NODES_TAB = 'nodes'
+const CAPTURES_TAB = 'captures'
 // `kind` is appended at the end so existing rows from earlier schema
 // versions still load (missing kind defaults to 'section' in rowToNode).
 const NODES_HEADERS = [
@@ -129,7 +130,7 @@ export async function createNote(name: string): Promise<Note> {
   await writeRange(spreadsheetId, `${NODES_TAB}!A2:I2`, [[
     seedId, '', 'Section 1', '', '0', '', now, now, 'section',
   ]])
-  _nodesTabEnsured.add(spreadsheetId)
+  _tabsEnsured.add(`${spreadsheetId}:${NODES_TAB}`)
 
   return {
     id:           spreadsheetId,
@@ -154,13 +155,18 @@ export async function deleteNote(noteId: string): Promise<void> {
 
 // ── Nodes (one tab, parent_id tree) ─────────────────────────────────────────
 
-const _nodesTabEnsured = new Set<string>()
+const _tabsEnsured = new Set<string>()
 
 // Notes created with an older schema (or hand-made Sheets in the folder)
 // won't have a `nodes` tab yet. Create it lazily so opening any note Just
 // Works. Idempotent + cached per noteId so we don't re-check on every call.
 async function ensureNodesTab(noteId: string): Promise<void> {
-  if (_nodesTabEnsured.has(noteId)) return
+  await ensureTab(noteId, NODES_TAB, NODES_HEADERS as unknown as string[], 'I')
+}
+
+async function ensureTab(noteId: string, tab: string, headers: string[], lastCol: string): Promise<void> {
+  const key = `${noteId}:${tab}`
+  if (_tabsEnsured.has(key)) return
   const r = await GAuth.fetch(`${SHEETS_BASE}/${noteId}?fields=sheets.properties.title`, {
     headers: authHeaders(),
   })
@@ -171,17 +177,17 @@ async function ensureNodesTab(noteId: string): Promise<void> {
   }
   const data = await r.json() as { sheets?: { properties?: { title?: string } }[] }
   const tabs = (data.sheets ?? []).map(s => s.properties?.title ?? '')
-  if (!tabs.includes(NODES_TAB)) {
+  if (!tabs.includes(tab)) {
     await GAuth.fetch(`${SHEETS_BASE}/${noteId}:batchUpdate`, {
       method:  'POST',
       headers: authHeaders(true),
       body:    JSON.stringify({
-        requests: [{ addSheet: { properties: { title: NODES_TAB } } }],
+        requests: [{ addSheet: { properties: { title: tab } } }],
       }),
-    }).then(r2 => expectOk(r2, 'Add nodes tab'))
-    await writeRange(noteId, `${NODES_TAB}!A1:I1`, [NODES_HEADERS as unknown as string[]])
+    }).then(r2 => expectOk(r2, `Add ${tab} tab`))
+    await writeRange(noteId, `${tab}!A1:${lastCol}1`, [headers])
   }
-  _nodesTabEnsured.add(noteId)
+  _tabsEnsured.add(key)
 }
 
 export async function loadNodes(noteId: string): Promise<NoteNode[]> {
@@ -405,4 +411,72 @@ async function writeRange(noteId: string, range: string, values: string[][]): Pr
       body:    JSON.stringify({ values }),
     },
   ).then(r => expectOk(r, `Write ${range}`))
+}
+
+// ── Captures (spoken / typed input behind AI-filed pages) ────────────────────
+//
+//   captures tab   cols: id, node_id, raw_original, cleaned, created_at
+//
+// The AI capture flow writes the row BEFORE it files anything, so a failed
+// or wrong filing never loses what was said. `node_id` is filled in once the
+// capture lands on a page ('' = captured but not filed).
+
+const CAPTURES_HEADERS = ['id', 'node_id', 'raw_original', 'cleaned', 'created_at']
+// Same cell cap as page content; dictation never gets near it, but a pasted
+// wall of text could.
+const CAPTURE_CELL_MAX = 48_000
+
+export interface NoteCapture {
+  id:          string
+  nodeId:      string
+  rawOriginal: string   // exactly what was dictated or typed
+  cleaned:     string   // fillers and repeats removed, same words
+  createdAt:   string
+}
+
+export async function loadCaptures(noteId: string): Promise<NoteCapture[]> {
+  await ensureTab(noteId, CAPTURES_TAB, CAPTURES_HEADERS, 'E')
+  const r = await GAuth.fetch(
+    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${CAPTURES_TAB}!A2:E`)}`,
+    { headers: authHeaders() },
+  )
+  const d = await expectOk(r, 'Load captures') as { values?: string[][] }
+  return (d.values ?? [])
+    .filter(row => row[0])
+    .map(row => ({
+      id: row[0], nodeId: row[1] ?? '', rawOriginal: row[2] ?? '',
+      cleaned: row[3] || row[2] || '', createdAt: row[4] ?? '',
+    }))
+}
+
+export async function addCapture(
+  noteId: string, rawOriginal: string, cleaned: string,
+): Promise<NoteCapture> {
+  await ensureTab(noteId, CAPTURES_TAB, CAPTURES_HEADERS, 'E')
+  const c: NoteCapture = {
+    id: uuid(), nodeId: '',
+    rawOriginal: rawOriginal.slice(0, CAPTURE_CELL_MAX),
+    cleaned:     cleaned.slice(0, CAPTURE_CELL_MAX),
+    createdAt:   new Date().toISOString(),
+  }
+  await GAuth.fetch(
+    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${CAPTURES_TAB}!A:E`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    {
+      method:  'POST',
+      headers: authHeaders(true),
+      body:    JSON.stringify({ values: [[c.id, c.nodeId, c.rawOriginal, c.cleaned, c.createdAt]] }),
+    },
+  ).then(r => expectOk(r, 'Append capture'))
+  return c
+}
+
+export async function linkCapture(noteId: string, captureId: string, nodeId: string): Promise<void> {
+  const r = await GAuth.fetch(
+    `${SHEETS_BASE}/${noteId}/values/${encodeURIComponent(`${CAPTURES_TAB}!A:A`)}`,
+    { headers: authHeaders() },
+  )
+  const d = await expectOk(r, 'Find capture') as { values?: string[][] }
+  const idx = (d.values ?? []).findIndex(row => row[0] === captureId)
+  if (idx < 0) throw new Error('Capture row not found')
+  await writeRange(noteId, `${CAPTURES_TAB}!B${idx + 1}`, [[nodeId]])
 }
