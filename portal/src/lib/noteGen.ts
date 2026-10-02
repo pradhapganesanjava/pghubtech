@@ -1,26 +1,23 @@
-// Notes capture — the three AI passes that turn something spoken into a page
-// in the open note's section → page tree.
+// Notes capture — the AI passes that turn something spoken into pages in the
+// open note's section → page tree.
 //
 //   1. cleanSpoken()  removes the noise of speech, keeps the words. The result
 //                     is stored as the capture's raw text BEFORE anything else
 //                     runs, so the later passes can fail without losing it.
-//   2. fileNote()     picks where it goes: a section path (existing sections
-//                     reused, missing ones created) and a page — new, or an
-//                     existing page to append to. Small strict JSON.
-//   3. renderNote()   writes the page body in the notes format: headings,
-//                     bullets, highlights, callouts, flows.
+//   2. planNote()     splits the talk by topic and returns a JSON plan of tree
+//                     operations (create / append / move / rename) against the
+//                     current tree. lib/notePlan.ts validates and applies it.
+//   3. renderNote()   writes each segment's page body in the notes format:
+//                     headings, bullets, highlights, callouts, flows.
 //
-// Split for the same reason as thoughtGen: HTML inside a JSON string escapes
+// Plan and render are split for the same reason as thoughtGen: HTML inside a JSON string escapes
 // badly and truncates the whole payload when it runs long.
 
 import { LLM } from './llm'
 import { parseLooseJson } from './looseJson'
 import { CARD_VOCAB } from './thoughtGen'
 import type { NoteNode } from '../adapters/notesRepo'
-
-// Sections nest without limit in the UI; the model is held to a shallow path
-// so filing stays browsable.
-export const MAX_SECTION_DEPTH = 3
+import { parseBlocks, renderBlocksAsHtml } from '../components/PageBlocksEditor'
 
 // Conservative on purpose: this is the text kept as the record of what was
 // said. Same words, same order — only fillers, stutters and repeats go.
@@ -50,14 +47,32 @@ export async function cleanSpoken(raw: string): Promise<string> {
   return stripFence(reply) || raw
 }
 
-export interface NoteFiling {
-  sections:   string[]   // section titles from the root down; [] = top level
-  page:       string     // page title (new page) — ignored when appending
-  appendToId: string     // existing page id to append to, or ''
+// ── Planning ────────────────────────────────────────────────────────────────
+//
+// The model never touches the Sheet. It reads the current tree and returns a
+// plan — the talk split into segments, plus a list of operations — and
+// lib/notePlan.ts validates and applies it.
+
+export const MAX_TREE_DEPTH = 5   // root section … page, counted in levels
+
+export interface PlanSegment { key: string; text: string }
+
+export type PlanOp =
+  | { op: 'section'; ref: string; parent: string; title: string }
+  | { op: 'page';    ref: string; parent: string; title: string; segment: string }
+  | { op: 'append';  target: string; segment: string }
+  | { op: 'move';    node: string; parent: string }
+  | { op: 'rename';  node: string; title: string }
+
+export interface NotePlan { segments: PlanSegment[]; ops: PlanOp[] }
+
+function plainText(content: string): string {
+  return renderBlocksAsHtml(parseBlocks(content))
+    .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
-// Indented outline of the note so the model can see — and reuse — what is
-// there. Ids ride along so an append target is unambiguous.
+// Indented outline of the note, ids and kinds inline, with a short excerpt of
+// each page so the model can tell "continues this page" from "new subtopic".
 function outline(nodes: NoteNode[]): string {
   const kids = new Map<string, NoteNode[]>()
   for (const n of nodes) {
@@ -67,7 +82,12 @@ function outline(nodes: NoteNode[]): string {
   const lines: string[] = []
   const walk = (pid: string, depth: number) => {
     for (const n of (kids.get(pid) ?? []).sort((a, b) => a.position - b.position)) {
-      lines.push(`${'  '.repeat(depth)}[${n.kind} ${n.id}] ${n.title}`)
+      const pad = '  '.repeat(depth)
+      lines.push(`${pad}[${n.kind} ${n.id}] ${n.title}`)
+      if (n.kind === 'page') {
+        const ex = plainText(n.content).slice(0, 160)
+        if (ex) lines.push(`${pad}    “${ex}${ex.length === 160 ? '…' : ''}”`)
+      }
       walk(n.id, depth + 1)
     }
   }
@@ -75,50 +95,83 @@ function outline(nodes: NoteNode[]): string {
   return lines.join('\n')
 }
 
-function filePrompt(noteName: string, nodes: NoteNode[]): string {
+function planPrompt(noteName: string, nodes: NoteNode[]): string {
   const tree = outline(nodes)
-  return `You file a person's note into their notebook "${noteName}".
-The notebook is a tree of sections (folders) holding pages.
+  return `You are the librarian of a personal notebook called "${noteName}".
+It is a tree: SECTIONS are folders; PAGES hold content. A section can hold
+sections and pages; a page can hold only sub-pages.
+
+The person just spoke a note. It can be about anything — system design,
+technical topics, maths, psychology, study tips, experiences, lessons learned
+from experience, beliefs, assumptions, points to remember, slogans,
+affirmations — and ONE talk often covers SEVERAL unrelated topics. Your job:
+split it by topic and file every part where it belongs, restructuring the
+tree when that makes it cleaner.
 
 Return ONLY a JSON object, no prose, no code fence:
-{"sections":["Section","Sub-section"],"page":"Page Title","appendToId":""}
-
-**sections** — the section path from the top level down, Title Case,
-AT MOST ${MAX_SECTION_DEPTH} levels (1-2 is usual). REUSE existing section titles
-exactly as written when the note belongs there; only add a new section when
-nothing fits. [] puts the page at the top level.
-
-**page** — a short Title Case title naming what the note is about.
-
-**appendToId** — the id of an EXISTING page when the note clearly continues
-that same page's topic; otherwise "". Only ids that appear below are valid.
-
-${tree
-  ? `Current tree ([kind id] title, indented by nesting):\n${tree}`
-  : 'The notebook is empty — start a sensible first section.'}`
+{
+  "segments": [ {"key":"a","text":"..."} ],
+  "ops": [
+    {"op":"section","ref":"s1","parent":"ROOT","title":"System Design"},
+    {"op":"section","ref":"s2","parent":"s1","title":"Caching"},
+    {"op":"page","ref":"p1","parent":"s2","title":"Caching Decisions","segment":"a"},
+    {"op":"append","target":"<existing page id>","segment":"b"},
+    {"op":"move","node":"<existing id>","parent":"<section id | ref | ROOT>"},
+    {"op":"rename","node":"<existing id | ref>","title":"..."}
+  ]
 }
 
-export async function fileNote(
+SEGMENTS
+- Split the talk into one segment per distinct topic. Copy the person's
+  sentences into "text" — do not summarise or reword. Every sentence goes in
+  exactly one segment. One topic → one segment.
+
+HIERARCHY — build top-down, broad to specific
+- Level 1 is a broad ROOT DOMAIN (e.g. System Design, Technical, Mathematics,
+  Psychology, Study Tips, Experiences, Lessons Learned, Beliefs, Assumptions,
+  Points To Remember, Slogans, Affirmations). Then topic → subtopic → page.
+- At most ${MAX_TREE_DEPTH} levels including the page. Title Case, short titles.
+- REUSE an existing root/section when the topic belongs there, using its id as
+  "parent" — never create a duplicate or near-duplicate (match by meaning, not
+  just spelling). Create a new root or a new branch only when nothing fits.
+  A new topic beside an existing one becomes its SIBLING under the same parent.
+
+PAGES — new, append, or restructure
+- A topic with no page yet → "page" op under the right section.
+- More on exactly the same subtopic as an existing page → "append" to it.
+- A different angle on an existing page's topic → PROMOTE the topic: create a
+  section titled after that topic under the page's parent, "move" the existing
+  page into it, "rename" that page to its specific angle, and add the new
+  content as a sibling "page". Example: System Design › Caching has a page
+  "Decision Making"; a new talk adds another caching-decision point →
+  section "Decision Making" under Caching, move the old page into it and
+  rename it (e.g. "Read-Heavy Workloads"), new page beside it.
+- Never delete anything. Never move a section under a page.
+
+REFERENCES
+- "parent"/"target"/"node" take an existing id from the tree, a "ref" made by
+  an EARLIER op in this list, or "ROOT" for the top level.
+- Every segment is used by exactly one "page" or "append" op.
+
+${tree
+  ? `Current tree ([kind id] title; pages show a content excerpt):\n${tree}`
+  : 'The notebook is empty — start the right root domains.'}`
+}
+
+export async function planNote(
   cleaned: string, noteName: string, nodes: NoteNode[],
-): Promise<NoteFiling | null> {
+): Promise<NotePlan | null> {
   if (!LLM.isConfigured()) return null
   const reply = await LLM.chat([
-    { role: 'system', content: filePrompt(noteName, nodes) },
+    { role: 'system', content: planPrompt(noteName, nodes) },
     { role: 'user',   content: cleaned },
-  ], 800)
-  const p = parseLooseJson(reply) as {
-    sections?: unknown; page?: string; appendToId?: string
-  } | null
-  if (!p) return null
-  const appendToId = String(p.appendToId ?? '').trim()
-  return {
-    sections: Array.isArray(p.sections)
-      ? p.sections.map(s => String(s).trim()).filter(Boolean).slice(0, MAX_SECTION_DEPTH)
-      : [],
-    page:     String(p.page ?? '').trim().slice(0, 120),
-    // A hallucinated id is treated as "make a new page", never an error.
-    appendToId: nodes.some(n => n.id === appendToId && n.kind === 'page') ? appendToId : '',
-  }
+  ], 6000)   // segments copy the talk back, so leave room
+  const p = parseLooseJson(reply) as { segments?: unknown; ops?: unknown } | null
+  if (!p || !Array.isArray(p.segments) || !Array.isArray(p.ops)) return null
+  const segments = (p.segments as Record<string, unknown>[])
+    .map(s => ({ key: String(s?.key ?? '').trim(), text: String(s?.text ?? '').trim() }))
+    .filter(s => s.key && s.text)
+  return { segments, ops: p.ops as PlanOp[] }
 }
 
 const RENDER_PROMPT = `You turn a person's spoken note into a well-structured notebook page in HTML.
