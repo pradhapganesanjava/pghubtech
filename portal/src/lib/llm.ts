@@ -80,6 +80,12 @@ export const LLM = {
   // URL the caller can hand to <audio>. Falls back to the browser's
   // SpeechSynthesis when the Azure TTS deployment is missing — see lib/tts.ts.
   async ttsAzure(text: string): Promise<string> {
+    return URL.createObjectURL(await this.ttsAzureBlob(text))
+  },
+
+  // The audio itself, for a caller that hands it on rather than playing it —
+  // the framed SysDsgHub's voice practice (see views/SysDsgHubView.tsx).
+  async ttsAzureBlob(text: string): Promise<Blob> {
     const dep = Config.azureTtsDeployment
     if (!dep) throw new Error('Azure TTS deployment not configured')
     const ep  = (Config.azureTtsEndpoint || Config.azureEndpoint).replace(/\/$/, '')
@@ -100,7 +106,6 @@ export const LLM = {
       const err = await res.json().catch(() => ({})) as { error?: { message?: string } }
       throw new Error(err.error?.message || `TTS HTTP ${res.status}`)
     }
-    const blob = await res.blob()
-    return URL.createObjectURL(blob)
+    return res.blob()
   },
 }
