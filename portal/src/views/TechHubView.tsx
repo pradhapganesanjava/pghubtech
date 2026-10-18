@@ -15,6 +15,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
+import { handleFrameTts } from '../lib/frameTts'
 
 // Trailing slash on purpose: GitHub Pages 301s /PGHubTechnologies to
 // /PGHubTechnologies/, and paying for that redirect inside an iframe on every
@@ -71,7 +72,9 @@ export default function TechHubView() {
   useEffect(() => {
     function onMsg(e: MessageEvent) {
       if (e.origin !== ORIGIN) return
-      if ((e.data as { type?: string } | null)?.type === 'pghubtech:auth-request') sendAuth()
+      if ((e.data as { type?: string } | null)?.type === 'pghubtech:auth-request') return sendAuth()
+      // Voice practice in the frame speaks with our Azure TTS; see lib/frameTts.
+      handleFrameTts(e, frameRef.current, ORIGIN)
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -96,7 +99,9 @@ export default function TechHubView() {
         src={SRC}
         title="Tech Hub"
         onLoad={() => { setLoaded(true); sendAuth() }}
-        allow="clipboard-write; clipboard-read"
+        // microphone + autoplay: the hub's voice practice listens for your
+        // answers and plays the spoken review without a click per sentence.
+        allow="clipboard-write; clipboard-read; microphone; autoplay"
         style={{ visibility: loaded ? 'visible' : 'hidden' }}
       />
     </div>
