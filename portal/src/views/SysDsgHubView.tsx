@@ -13,6 +13,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { GAuth } from '../lib/gauth'
+import { LLM } from '../lib/llm'
 
 // Trailing slash on purpose: GitHub Pages 301s /PGHubSysDsg to /PGHubSysDsg/,
 // and paying for that redirect inside an iframe on every open is avoidable.
@@ -65,12 +66,33 @@ export default function SysDsgHubView() {
     )
   }
 
+  // Voice practice in the child speaks with OUR Azure TTS, so it gets the same
+  // deployment and voice as everything here, and the credentials this portal
+  // hydrates from the Sheet. The child sends text, we send back the audio
+  // bytes; the key never has to travel. Replies go only to the frame that
+  // asked, at its pinned origin.
+  async function speakFor(src: Window, id: string, text: string) {
+    try {
+      if (!(await LLM.ensureConfigured())) throw new Error('Azure OpenAI is not configured in PGHubTech Settings.')
+      const audio = await (await LLM.ttsAzureBlob(text)).arrayBuffer()
+      src.postMessage({ type: 'pghubtech:tts-result', id, audio }, ORIGIN, [audio])
+    } catch (err) {
+      src.postMessage({ type: 'pghubtech:tts-result', id, error: (err as Error).message || String(err) }, ORIGIN)
+    }
+  }
+
   // The child asks when it is ready, which avoids racing its bootstrap; the
   // onLoad push below covers a child that never asks.
   useEffect(() => {
     function onMsg(e: MessageEvent) {
       if (e.origin !== ORIGIN) return
-      if ((e.data as { type?: string } | null)?.type === 'pghubtech:auth-request') sendAuth()
+      const d = e.data as { type?: string; id?: string; text?: string } | null
+      if (d?.type === 'pghubtech:auth-request') return sendAuth()
+      // Speech is only for our own frame, never another same-origin window.
+      const src = frameRef.current?.contentWindow
+      if (!src || e.source !== src) return
+      if (d?.type === 'pghubtech:tts-hello') src.postMessage({ type: 'pghubtech:tts-hello' }, ORIGIN)
+      else if (d?.type === 'pghubtech:tts' && d.id && d.text) speakFor(src, d.id, d.text.slice(0, 4000))
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -95,7 +117,9 @@ export default function SysDsgHubView() {
         src={SRC}
         title="SysDsgHub"
         onLoad={() => { setLoaded(true); sendAuth() }}
-        allow="clipboard-write; clipboard-read"
+        // microphone + autoplay: the hub's voice practice listens for your
+        // answers and plays the spoken review without a click per sentence.
+        allow="clipboard-write; clipboard-read; microphone; autoplay"
         style={{ visibility: loaded ? 'visible' : 'hidden' }}
       />
     </div>
