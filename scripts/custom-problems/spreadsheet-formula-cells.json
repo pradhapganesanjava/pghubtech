@@ -1,0 +1,28 @@
+{
+  "slug": "custom-spreadsheet-formula-cells",
+  "frontend_id": "10104",
+  "title": "Spreadsheet with Formula Cells",
+  "difficulty": "Medium",
+  "topics": [
+    "Design",
+    "Graph",
+    "Topological Sort",
+    "Depth-First Search"
+  ],
+  "companies": [
+    "OpenAI",
+    "Harvey",
+    "Rippling"
+  ],
+  "tags": [
+    "pat_story::recompute-dependents::topo-sort",
+    "pat_story::recompute-dependents::dependency-graph-system",
+    "pat_story::refers-back-to-itself::cycle-3color",
+    "pat_ds::graph::core::topo-sort",
+    "pat_ds::graph::core::cycle-3color",
+    "pat_group::design",
+    "pat_group::design::dependency-graph-system"
+  ],
+  "leetcode_url": "https://www.hellointerview.com/blog/openai-coding-questions",
+  "description_html": "<div>\n  <p>Implement a spreadsheet whose cells hold either an integer or a formula that refers to other cells.</p>\n  <h3>Levels</h3>\n  <ol>\n    <li><strong>Part 1: values and formulas</strong><ul>\n      <li><code>set_cell(cell_id, expr)</code> where expr is an integer or a formula like \"=A1+B2-5\"</li>\n      <li><code>get_cell(cell_id)</code> returns the evaluated value</li>\n    </ul></li>\n    <li><strong>Part 2: fast reads</strong><ul>\n      <li>Make <code>set_cell</code> update every cell that depends on the changed one, so <code>get_cell</code> is O(1)</li>\n    </ul></li>\n    <li><strong>Part 3: bad input</strong><ul>\n      <li>Detect a circular reference and reject it (e.g. raise \"Circular reference detected\")</li>\n    </ul></li>\n  </ol>\n  <p><em>Progressive round: each level unlocks after the previous one passes. Write level 1 so later levels extend it rather than rewrite it.</em></p>\n  <p><em>Source: OpenAI (Hello Interview question list, candidate reports); Harvey (spreadsheet-style coding per prep guides); Rippling (payroll formula-cell variant). Candidate-reported; exact wording varies between reports.</em></p>\n</div>"
+}

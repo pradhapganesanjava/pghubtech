@@ -1,0 +1,21 @@
+{
+  "slug": "custom-resumable-iterator",
+  "frontend_id": "10105",
+  "title": "Resumable Iterator (multi-part)",
+  "difficulty": "Medium",
+  "topics": [
+    "Design",
+    "Iterator",
+    "Concurrency"
+  ],
+  "companies": [
+    "OpenAI"
+  ],
+  "tags": [
+    "pat_story::pause-and-resume::multi-stream-iterator",
+    "pat_group::design",
+    "pat_group::design::multi-stream-iterator"
+  ],
+  "leetcode_url": "https://www.1point3acres.com/interview/thread/1102588",
+  "description_html": "<div>\n  <p>Build an iterator whose position can be saved and restored, then extend it to more complex sources.</p>\n  <h3>Levels</h3>\n  <ol>\n    <li><strong>Part 1: list iterator</strong><ul>\n      <li>Iterate a list; <code>get_state()</code> / <code>set_state(state)</code> resume from a saved point</li>\n    </ul></li>\n    <li><strong>Part 2: multi-file iterator</strong><ul>\n      <li>Iterate across several files using a per-file iterator; empty files must be skipped; the state must resume mid-file</li>\n    </ul></li>\n    <li><strong>Part 3: async</strong><ul>\n      <li>An async version of the same iterator</li>\n    </ul></li>\n    <li><strong>Part 4: nested</strong><ul>\n      <li>Extend to 2D and 3D nested lists</li>\n    </ul></li>\n  </ol>\n  <p><em>Progressive round: each level unlocks after the previous one passes. Write level 1 so later levels extend it rather than rewrite it.</em></p>\n  <p><em>Source: 1point3acres OpenAI reports (\"Iterator Design Challenges\", six-part variant). Candidate-reported; exact wording varies between reports.</em></p>\n</div>"
+}

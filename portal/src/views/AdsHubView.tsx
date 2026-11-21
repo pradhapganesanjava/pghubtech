@@ -179,6 +179,7 @@ export function patternsHashForTag(tag: string): string | null {
   if (p.length < 2) return null
   const [ns, a, b, c] = p
   if (ns === 'pat_group') return b ? `group/${a}/${b}` : `group/${a}`
+  if (ns === 'pat_story') return b ? `story/${a}/${b}` : `story/${a}`
   if (ns === 'pat_topic') return b ? `topic/${a}/${b}` : `topic/${a}`
   if (ns === 'pat_ds') {
     if (!b) return `ds/${a}`

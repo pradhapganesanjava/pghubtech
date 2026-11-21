@@ -1,0 +1,28 @@
+{
+  "slug": "custom-banking-system-levels",
+  "frontend_id": "10100",
+  "title": "Banking System (4 levels)",
+  "difficulty": "Medium",
+  "topics": [
+    "Design",
+    "Hash Table",
+    "Heap (Priority Queue)",
+    "Sorting",
+    "Simulation"
+  ],
+  "companies": [
+    "Anthropic",
+    "eBay",
+    "Meta"
+  ],
+  "tags": [
+    "pat_story::top-n-by-total::top-k",
+    "pat_story::happens-later-at-time::event-driven-scheduling",
+    "pat_story::merge-two-records::uf-basic",
+    "pat_topic::heap::top-k",
+    "pat_topic::heap::event-driven-scheduling",
+    "pat_group::design"
+  ],
+  "leetcode_url": "https://prachub.com/interview-questions/banking-system-simulation",
+  "description_html": "<div>\n  <p>Implement an in-memory bank that processes a list of queries <code>[op, timestamp, args…]</code> and returns one string per query.</p>\n  <h3>Levels</h3>\n  <ol>\n    <li><strong>Level 1: accounts and balances</strong><ul>\n      <li><code>create_account(ts, account_id)</code> returns \"true\", or \"false\" if the id exists</li>\n      <li><code>deposit(ts, account_id, amount)</code> returns the new balance, or \"\" if the account is missing</li>\n      <li><code>get_balance(ts, account_id)</code></li>\n    </ul></li>\n    <li><strong>Level 2: transfers and top spenders</strong><ul>\n      <li><code>transfer(ts, source, target, amount)</code> returns the source's new balance; \"\" if either account is missing, they are the same, or funds are short</li>\n      <li><code>top_spenders(ts, n)</code> lists the top n accounts by total outgoing money as \"id(total)\", ties by id ascending; accounts with 0 are included</li>\n    </ul></li>\n    <li><strong>Level 3: payments with delayed cashback</strong><ul>\n      <li><code>pay(ts, account_id, amount)</code> debits now and returns \"payment1\", \"payment2\", … (one global counter)</li>\n      <li>2% cashback (floored) is credited exactly 86,400,000 ms after the payment</li>\n      <li><code>get_payment_status(ts, account_id, payment)</code> returns IN_PROGRESS or CASHBACK_RECEIVED</li>\n    </ul></li>\n    <li><strong>Level 4: merge accounts</strong><ul>\n      <li><code>merge_accounts(ts, a1, a2)</code>: balances and outgoing totals combine, a2's pending cashbacks move to a1, and a2 is removed</li>\n      <li>a2's old payments must still resolve when queried through a1</li>\n    </ul></li>\n  </ol>\n  <h3>Constraints / rules</h3>\n  <ul>\n    <li>Timestamps strictly increase; up to 10<sup>4</sup> queries; amounts up to 10<sup>9</sup>.</li>\n    <li>Every cashback due at or before the current timestamp must be applied before the operation runs.</li>\n  </ul>\n  <p><em>Progressive round: each level unlocks after the previous one passes. Write level 1 so later levels extend it rather than rewrite it.</em></p>\n  <p><em>Source: PracHub \"Banking System Simulation\" (Anthropic CodeSignal pre-screen); also reported as an eBay industry coding assessment and a Meta AI-enabled round. Candidate-reported; exact wording varies between reports.</em></p>\n</div>"
+}

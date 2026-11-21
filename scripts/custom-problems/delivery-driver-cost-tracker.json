@@ -1,0 +1,23 @@
+{
+  "slug": "custom-delivery-driver-cost-tracker",
+  "frontend_id": "10106",
+  "title": "Delivery Driver Cost & Payout Tracker",
+  "difficulty": "Medium",
+  "topics": [
+    "Design",
+    "Sorting",
+    "Line Sweep",
+    "Prefix Sum"
+  ],
+  "companies": [
+    "Rippling"
+  ],
+  "tags": [
+    "pat_story::settle-everything-before::sort-and-sweep",
+    "pat_story::same-time-bookings::sweep-line-delta",
+    "pat_topic::interval::sweep-line-delta",
+    "pat_group::design"
+  ],
+  "leetcode_url": "",
+  "description_html": "<div>\n  <p>Track the cost of delivery drivers who are paid by the hour.</p>\n  <h3>Levels</h3>\n  <ol>\n    <li><strong>Part 1: cost</strong><ul>\n      <li><code>add_driver(driver_id, hourly_rate)</code></li>\n      <li><code>record_delivery(driver_id, start_sec, end_sec)</code></li>\n      <li><code>get_total_cost()</code> = Σ rate × (end − start) / 3600, rounded to 2 dp</li>\n    </ul></li>\n    <li><strong>Part 2: payouts</strong><ul>\n      <li><code>pay_up_to(pay_time)</code> marks every delivery that ended at or before pay_time as paid</li>\n      <li><code>get_total_cost_unpaid()</code></li>\n    </ul></li>\n    <li><strong>Part 3: peak concurrency</strong><ul>\n      <li><code>get_max_simultaneous_drivers(...)</code> returns the most deliveries in progress at the same moment (reports differ on whether it takes a time window)</li>\n    </ul></li>\n  </ol>\n  <p><em>Progressive round: each level unlocks after the previous one passes. Write level 1 so later levels extend it rather than rewrite it.</em></p>\n  <p><em>Source: Candidate-reported Rippling coding round (prep-site write-ups, 2025–26). Candidate-reported; exact wording varies between reports.</em></p>\n</div>"
+}

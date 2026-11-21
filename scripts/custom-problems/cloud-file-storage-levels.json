@@ -1,0 +1,25 @@
+{
+  "slug": "custom-cloud-file-storage-levels",
+  "frontend_id": "10102",
+  "title": "Cloud File Storage (4 levels)",
+  "difficulty": "Medium",
+  "topics": [
+    "Design",
+    "Hash Table",
+    "Sorting",
+    "Heap (Priority Queue)"
+  ],
+  "companies": [
+    "Ramp",
+    "CloudKitchens"
+  ],
+  "tags": [
+    "pat_story::list-by-prefix::top-k",
+    "pat_story::capacity-per-owner",
+    "pat_story::undo-last-change",
+    "pat_topic::heap::top-k",
+    "pat_group::design"
+  ],
+  "leetcode_url": "https://prachub.com/interview-questions/design-an-in-memory-cloud-storage-service-with-users-backups-and-restore",
+  "description_html": "<div>\n  <p>Build an in-memory cloud storage service that maps file names (paths) to metadata. No real file system.</p>\n  <h3>Levels</h3>\n  <ol>\n    <li><strong>Level 1: files</strong><ul>\n      <li><code>add_file(name, size)</code> returns true, or false if it exists</li>\n      <li><code>get_file_size(name)</code></li>\n      <li><code>delete_file(name)</code></li>\n    </ul></li>\n    <li><strong>Level 2: largest files</strong><ul>\n      <li><code>get_n_largest(prefix, n)</code> returns up to n files under the prefix as \"name(size)\", by size descending, then name ascending</li>\n    </ul></li>\n    <li><strong>Level 3: users and capacity</strong><ul>\n      <li><code>add_user(user_id, capacity)</code></li>\n      <li><code>add_file_by(user_id, name, size)</code> succeeds only within the user's remaining capacity</li>\n      <li>Some versions add <code>merge_user(a, b)</code></li>\n    </ul></li>\n    <li><strong>Level 4: backup and restore</strong><ul>\n      <li><code>backup_user(user_id)</code> snapshots the user's files, replacing any earlier backup</li>\n      <li><code>restore_user(user_id)</code> brings them back; with no backup, the user's files are deleted; capacity is unchanged</li>\n    </ul></li>\n  </ol>\n  <p><em>Progressive round: each level unlocks after the previous one passes. Write level 1 so later levels extend it rather than rewrite it.</em></p>\n  <p><em>Source: Ramp CodeSignal OA (1point3acres) and PracHub cloud-storage write-ups (also CloudKitchens). Candidate-reported; exact wording varies between reports.</em></p>\n</div>"
+}
