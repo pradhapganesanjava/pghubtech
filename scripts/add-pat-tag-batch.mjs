@@ -9,8 +9,8 @@
  *   node scripts/add-pat-tag-batch.mjs            # dry-run
  *   node scripts/add-pat-tag-batch.mjs --write    # actually patches
  *
- * Edit the BATCH constant below to add more problems. After --write, follow
- * with build-patterns-csv to refresh the CSV and propagate to the UI.
+ * Edit the BATCH constant below to add more problems. After --write, reload
+ * AdsHub → 📐 Patterns: it reads pat_* tags live from the sheet.
  *
  * Tag format reminder:
  *   pat_ds::<ds>::core::<microId>            (DS-core micro)
@@ -812,7 +812,7 @@ async function main() {
     requestBody: { valueInputOption: 'RAW', data: requests },
   })
   console.log(`  ✓ Patched ${requests.length} rows.\n`)
-  console.log(`  Next: node scripts/build-patterns-csv.mjs --write\n`)
+  console.log(`  Done: AdsHub → 📐 Patterns reads pat_* tags live from the sheet; reload it to see them.\n`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

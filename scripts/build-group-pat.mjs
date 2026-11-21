@@ -15,7 +15,7 @@
  *
  * After review:
  *   node scripts/apply-pat-json.mjs scripts/group-pat.json --write
- *   node scripts/build-patterns-csv.mjs --write
+ *   (AdsHub → 📐 Patterns reads the new tags live from the sheet.)
  */
 import { readFile, writeFile } from 'fs/promises'
 import { dirname, join }       from 'path'

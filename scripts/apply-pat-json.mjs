@@ -10,7 +10,7 @@
  *   node scripts/apply-pat-json.mjs scripts/snowflake-pat.json           # dry-run
  *   node scripts/apply-pat-json.mjs scripts/snowflake-pat.json --write   # apply
  *
- * After --write:  node scripts/build-patterns-csv.mjs --write
+ * After --write, reload AdsHub → 📐 Patterns (it reads tags live from the sheet).
  */
 import { google }   from 'googleapis'
 import { readFile }  from 'fs/promises'
@@ -69,6 +69,6 @@ async function main() {
   if (!DO_WRITE) { console.log('  [dry-run] pass --write to apply.\n'); return }
   if (!requests.length) { console.log('  Nothing to write.\n'); return }
   await sheets.spreadsheets.values.batchUpdate({ spreadsheetId: sheetId, requestBody: { valueInputOption: 'RAW', data: requests } })
-  console.log(`  ✓ Patched ${requests.length} rows.\n  Next: node scripts/build-patterns-csv.mjs --write\n`)
+  console.log(`  ✓ Patched ${requests.length} rows.\n\n  Done: AdsHub → 📐 Patterns reads pat_* tags live from the sheet; reload it to see them.\n`)
 }
 main().catch(e => { console.error(e.message); process.exit(1) })

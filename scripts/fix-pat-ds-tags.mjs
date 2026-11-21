@@ -12,10 +12,10 @@
  *   node scripts/fix-pat-ds-tags.mjs --write    # actually patches the sheet
  *
  * Workflow when inferDs() changes:
- *   1. Edit inferDs() in seed-pat-tags.mjs (and mirror here, kept in sync).
+ *   1. Edit inferDs() below (the one-shot seed-pat-tags.mjs that held the
+ *      original copy is gone, so this is now the only one).
  *   2. node scripts/fix-pat-ds-tags.mjs --write
- *   3. node scripts/build-patterns-csv.mjs --write
- *   4. patterns.html picks up corrected anchors on next load.
+ *   3. Reload AdsHub → 📐 Patterns: it reads the corrected tags from the sheet.
  */
 
 import { google }              from 'googleapis'
@@ -35,7 +35,7 @@ const COL_ID     = 1   // B  frontend_id
 const COL_TOPICS = 4   // E
 const COL_TAGS   = 7   // H
 
-// Keep this in sync with seed-pat-tags.mjs's inferDs.
+// The only copy of inferDs (seed-pat-tags.mjs, which held the original, is gone).
 function inferDs(lcTopics) {
   const t = new Set(lcTopics.split(/[;\n]+/).map(s => s.trim()))
   // Data Stream problems are stream-of-numbers (array-shape) by INPUT —
@@ -176,7 +176,7 @@ async function main() {
     requestBody: { valueInputOption: 'RAW', data: writeRequests },
   })
   console.log(`\n  ✓ Patched ${writeRequests.length} rows.\n`)
-  console.log(`  Next: node scripts/build-patterns-csv.mjs --write\n`)
+  console.log(`  Done: AdsHub → 📐 Patterns reads pat_* tags live from the sheet; reload it to see them.\n`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

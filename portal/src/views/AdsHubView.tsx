@@ -577,6 +577,21 @@ export default function AdsHubView() {
   const sendPatternsTheme = () =>
     patternsFrameRef.current?.contentWindow?.postMessage({ type: 'pghub-theme', theme: currentTheme() }, '*')
 
+  // pat_* tags for the Patterns iframe, from the sheet rows this view already
+  // holds. patterns.html has no data file or sign-in of its own: it renders
+  // whatever arrives here. Sent when the frame says pghub-ready and whenever
+  // the rows change, so a tag edit in AdsHub shows up there live.
+  const patTagRows = useMemo(
+    () => problems.flatMap(p => p.tags.filter(t => t.startsWith('pat_')).map(t => [p.frontendId, t])),
+    [problems],
+  )
+  const sendPatternTags = (target?: MessageEventSource | null) => {
+    if (!problems.length) return   // rows still loading: the effect below sends once they land
+    const w = (target as Window | null | undefined) ?? patternsFrameRef.current?.contentWindow
+    w?.postMessage({ type: 'pghub-pat-tags', rows: patTagRows }, '*')
+  }
+  useEffect(() => { sendPatternTags() }, [patTagRows, adsMode])
+
   // Strip <img> from the inline preview the iframe renders (Drive media URLs
   // need an auth header so they won't load cross-frame; the editor panel shows
   // them fine). Replace with a small marker so text/code notes stay clean.
@@ -617,7 +632,7 @@ export default function AdsHubView() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (!d || typeof d !== 'object') return
-      if (d.type === 'pghub-ready') { sendPatternsTheme(); return }  // iframe attached its listener → (re)send theme
+      if (d.type === 'pghub-ready') { sendPatternsTheme(); sendPatternTags(e.source); return }  // iframe attached its listener → (re)send theme + tags
       // Pattern-note bridge (separate from Browse notes).
       if (d.type === 'pgnote-open' && typeof d.key === 'string') {
         setPatternNote({ key: d.key, title: typeof d.title === 'string' ? d.title : d.key })

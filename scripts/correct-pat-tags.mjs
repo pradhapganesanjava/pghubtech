@@ -205,7 +205,7 @@ async function main() {
     requestBody: { valueInputOption: 'RAW', data: writeRequests },
   })
   console.log(`  ✓ Patched ${writeRequests.length} rows.\n`)
-  console.log(`  Next: node scripts/build-patterns-csv.mjs --write\n`)
+  console.log(`  Done: AdsHub → 📐 Patterns reads pat_* tags live from the sheet; reload it to see them.\n`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
