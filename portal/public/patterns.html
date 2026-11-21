@@ -501,6 +501,7 @@
         <button id="tab-ds"    class="active" onclick="setTab('ds')">📦 Data Structure</button>
         <button id="tab-topic"           onclick="setTab('topic')">🧰 Topic</button>
         <button id="tab-group"           onclick="setTab('group')">🗂 Group By</button>
+        <button id="tab-story"           onclick="setTab('story')">📖 Story</button>
       </div>
       <!-- Search + view-toggle live on the same row to save vertical
            space. Search flex-grows; toggle stays a fixed cluster on the
@@ -581,9 +582,9 @@ const DS_TOPIC_LINKS = {
 // ── Group By: logical problem families ───────────────────────────────────
 // A THIRD grouping axis, orthogonal to DS (input shape) and Topic (technique):
 // the problem's SUBJECT MATTER. Tagged in the sheet as `pat_group::<id>` and
-// surfaced from patterns-data.csv. This list only supplies display metadata
+// surfaced from the sheet's tags. This list only supplies display metadata
 // (name / icon / blurb) + ordering; the actual membership (and which DS /
-// Topics each group touches) is derived entirely from the CSV, so adding a
+// Topics each group touches) is derived entirely from the tags, so adding a
 // new pat_group:: tag in the sheet makes the group appear automatically — a
 // group missing here just renders with a default icon.
 const GROUPS = [
@@ -614,8 +615,83 @@ const GROUPS = [
 function groupMeta(id) {
   return GROUPS.find(g => g.id === id) || { id, icon: '🗂', name: id.replace(/-/g, ' '), intro: '' }
 }
-// Group ids that actually have problems in the CSV, in GROUPS order, with any
-// CSV-only groups (not listed above) appended alphabetically.
+
+// ── Story cues (pat_story::<cue>[::<micro>]) ────────────────────────────────
+// The 4th entry point: a problem told as a STORY (or a feature request in a
+// progressive, level-by-level round) that hides the algorithm. The cue is the
+// wording you READ in the statement — never the technique — and the optional
+// <micro> leaf is the catalog micro it lands on once the story is stripped.
+// A progressive problem carries one cue per level. Membership comes from the
+// sheet's tags; this list only supplies name / icon / signals + ordering.
+const STORIES = [
+  { id: 'finish-within-limit',     icon: '⏳', name: 'Finish within a limit',        intro: '"…within D days", "…at speed k", "smallest capacity so that…". The question asks for the least or most of some setting that still makes the job feasible.' },
+  { id: 'spreads-each-minute',     icon: '🦠', name: 'Spreads each minute',          intro: 'Rots, burns, infects or floods its neighbours every tick. How long until everything is reached?' },
+  { id: 'nearest-from-every',      icon: '📍', name: 'Nearest X from every Y',       intro: 'For each desk, room or cell, how far is the nearest bathroom, gate or cake?' },
+  { id: 'must-come-before',        icon: '🧱', name: 'Must come before',             intro: 'Prerequisites, build order, recipes that need other recipes. Can it all be done, in what order, and how long does it take?' },
+  { id: 'belong-together',         icon: '🤝', name: 'Belong together',              intro: 'Accounts sharing an email, friends of friends, provinces. Which things end up in the same bucket?' },
+  { id: 'hop-between-routes',      icon: '🚌', name: 'Hop between routes',           intro: 'Buses, flights or transfers. The fewest rides or the cheapest trip with at most k stops.' },
+  { id: 'sweep-around-circle',     icon: '📷', name: 'Sweep around a circle',        intro: 'A camera or radar rotates with a fixed field of view. What is the most it can see at once? The wrap-around is the trap.' },
+  { id: 'same-time-bookings',      icon: '🗓️', name: 'Same-time bookings',           intro: 'Meetings, rooms, drivers on the road. The most that overlap at the same moment.' },
+  { id: 'jump-up-to-x',            icon: '🐸', name: 'Jump up to x',                 intro: 'Each spot lets you leap up to some distance. Can you reach the end, and in how few jumps?' },
+  { id: 'make-amount-from-pieces', icon: '🪙', name: 'Make an amount from pieces',   intro: 'Coins, stamps, ribbon lengths. The fewest pieces, or the number of ways, to hit an exact total.' },
+  { id: 'wait-after-action',       icon: '🧊', name: 'Wait after an action',         intro: 'Cooldown after selling, hold at most one, a fee per trade. What you may do next depends on what you just did.' },
+  { id: 'turn-the-wheels',         icon: '🔐', name: 'Turn the wheels',              intro: 'Lock dials, sliding puzzles, gene mutations. The fewest single moves from the start state to the target.' },
+  { id: 'value-as-of-time',        icon: '🕰️', name: 'Value as of time T',           intro: '"get(key, timestamp)", "snapshot / version", "restore to how it was at T". Reads look back in history.' },
+  { id: 'top-n-by-total',          icon: '🏆', name: 'Top N by running total',       intro: 'Top spenders, best sellers, most-played songs. A leaderboard over totals that keep changing, with a tie-break rule.' },
+  { id: 'happens-later-at-time',   icon: '⏰', name: 'Happens later, at time T',      intro: 'Cashback credited 24h after a payment, a scheduled transfer, a job that fires later. Something must happen at a future timestamp before the next operation reads state.' },
+  { id: 'expire-after-ttl',        icon: '⌛', name: 'Expires after a TTL',          intro: 'A record or session that disappears after ttl ms. Reads and scans must act as if it was never there.' },
+  { id: 'merge-two-records',       icon: '🔗', name: 'Merge two records',            intro: 'Merge two accounts or users. Their totals combine, and the old id\'s history must still resolve afterwards.' },
+  { id: 'list-by-prefix',          icon: '🔎', name: 'List by prefix, sorted',       intro: '"scan_by_prefix", "files under /dir", "the n largest under a path". Filter by a prefix, then order with a tie-break.' },
+  { id: 'capacity-per-owner',      icon: '🪣', name: 'Capacity per owner',           intro: 'Each user gets a storage or quota limit. An add succeeds only if it still fits under that owner\'s remaining capacity.' },
+  { id: 'undo-last-change',        icon: '↩️', name: 'Undo / roll back',             intro: 'begin / commit / rollback, undo, backup and restore. Changes must be reversible, possibly nested.' },
+  { id: 'recompute-dependents',    icon: '🧮', name: 'Changes ripple to dependents', intro: 'Spreadsheet cells with formulas. When one value changes, everything that refers to it must change too.' },
+  { id: 'refers-back-to-itself',   icon: '♻️', name: 'Refers back to itself',        intro: 'A1 = B1 + 1 and B1 = A1. The input can loop back, and you must reject or report it.' },
+  { id: 'pause-and-resume',        icon: '⏯️', name: 'Pause and resume',             intro: 'An iterator you can stop, save, restore and continue, across many files, some of them empty.' },
+  { id: 'settle-everything-before',icon: '🧾', name: 'Settle everything before T',   intro: '"pay_up_to(t)": mark every item that ended by t as done, then report what is still outstanding.' },
+  { id: 'most-recent-unique',      icon: '🎧', name: 'Most recent, no repeats',       intro: 'A user\'s last n distinct songs or pages. Replaying one moves it to the front and doesn\'t duplicate it.' },
+  { id: 'tiered-after-threshold',  icon: '📶', name: 'Rate changes past a threshold', intro: 'Volume discounts, tax brackets, "after $X the fee drops". The rate depends on how much came before.' },
+  { id: 'rules-added-later',       icon: '🧩', name: 'Rules added each level',       intro: 'Fees by country, then by tier, then disputes. Expense rules that keep growing. The skill is code that accepts the next rule without a rewrite.' },
+]
+function storyMeta(id) {
+  return STORIES.find(s => s.id === id) || { id, icon: '📖', name: id.replace(/-/g, ' '), intro: '' }
+}
+// Cues present in the tags, in STORIES order; unlisted cues appended A-Z.
+function visibleStories() {
+  const present = ANCHOR_DATA && ANCHOR_DATA.story ? Object.keys(ANCHOR_DATA.story) : []
+  const order = STORIES.map(s => s.id)
+  return [...order.filter(id => present.includes(id)),
+          ...present.filter(id => !order.includes(id)).sort()]
+}
+function storyProblemIds(c) {
+  const ids = (ANCHOR_DATA && ANCHOR_DATA.story && ANCHOR_DATA.story[c]) || []
+  return [...new Set(ids)].sort((a, b) => Number(a) - Number(b))
+}
+function storyMicros(c) {
+  const sm = (ANCHOR_DATA && ANCHOR_DATA.storyMicro && ANCHOR_DATA.storyMicro[c]) || {}
+  const out = {}
+  for (const [micro, ids] of Object.entries(sm)) out[micro] = [...new Set(ids)].sort((a, b) => Number(a) - Number(b))
+  return out
+}
+// Where a micro id is defined: a catalog pattern (opens the micro drawer) or a
+// Group By family's own engine (navigates to that group card). null = no
+// definition yet — a catalog gap worth filling.
+function microHome(mid) {
+  const p = PATTERNS.find(x => (x.micros || []).some(m => m.id === mid))
+  if (p) return { kind: 'pattern', pid: p.id, name: p.micros.find(m => m.id === mid).name }
+  const groups = (GROUP_NOTES && GROUP_NOTES.groups) || {}
+  for (const [gid, g] of Object.entries(groups)) {
+    if (g.micros && g.micros[mid]) return { kind: 'group', gid, name: g.micros[mid].name || mid }
+  }
+  return null
+}
+function openStoryMicro(mid) {
+  const h = microHome(mid)
+  if (!h) return
+  if (h.kind === 'pattern') { openMicroDetail(mid, h.pid); return }
+  location.hash = `group/${h.gid}/${mid}`
+}
+// Group ids that actually have tagged problems, in GROUPS order, with any
+// unlisted groups (not in GROUPS above) appended alphabetically.
 function visibleGroups() {
   // Alphabetical by display name (falls back to the id for unmetadata'd groups).
   const present = ANCHOR_DATA && ANCHOR_DATA.group ? Object.keys(ANCHOR_DATA.group) : []
@@ -657,12 +733,12 @@ function groupMicroDefs(g) {
   return (GROUP_NOTES.groups && GROUP_NOTES.groups[g] && GROUP_NOTES.groups[g].micros) || {}
 }
 
-// Prefer the CSV-derived list; fall back to the hand-coded DS_TOPIC_LINKS
+// Prefer the tag-derived list; fall back to the hand-coded DS_TOPIC_LINKS
 // constant (offline file:// or first-load before fetch resolves).
 //
 // EXCEPTION: an EXPLICITLY EMPTY hand-coded list (e.g. DS_TOPIC_LINKS.stack
 // = []) is an intentional input-purity decision — those DS pages should
-// stay pure even if the CSV derivation surfaces noise from inferDs
+// stay pure even if the tag derivation surfaces noise from inferDs
 // misclassifications. Respect the empty even when derived is populated.
 function linkedTopics(dsId) {
   const handCoded = DS_TOPIC_LINKS[dsId]
@@ -838,7 +914,7 @@ const TOPIC_DS_MICROS = {
 
 // Return the topic's micros filtered for embedding under a specific DS.
 // Preference order:
-//   1) CSV-derived allowlist (DERIVED.dsTopicMicros) — populated from
+//   1) Tag-derived allowlist (DERIVED.dsTopicMicros) — populated from
 //      every pat_ds::<ds>::<topic>::<micro> tag that exists in the sheet
 //   2) hand-coded TOPIC_DS_MICROS allowlist
 //   3) all the topic's micros (no allowlist → uniform fit)
@@ -854,12 +930,12 @@ function microsForEmbed(topicId, dsId) {
   return t.micros.filter(m => allowSet.has(m.id))
 }
 
-// ── Data file (CSV) ──────────────────────────────────────────────────────
-// Anchors used to live as inline `anchors: [...]` arrays on each micro.
-// They now live in /portal/public/patterns-data.csv so that adding a
-// problem in AdsHub + tagging it with `pat_*::*` flows through here on
-// the next CSV regen — no patterns.html edit needed. CSV columns:
-//   anchor_id, tag
+// ── Tags from the sheet ──────────────────────────────────────────────────
+// Anchors come from the `pat_*` tags on LCProblems rows in the Google Sheet.
+// This page has no data file and no sign-in of its own: the AdsHub host
+// already holds every row, and posts { type: 'pghub-pat-tags', rows:
+// [[frontendId, tag], …] } when this frame says pghub-ready and again
+// whenever its rows change (a tag edit in AdsHub shows up here live).
 // where tag ∈ {
 //   pat_ds::<dsId>::core::<microId>            (DS-core micro anchor)
 //   pat_topic::<topicId>::<microId>            (Topic micro, DS unknown)
@@ -868,33 +944,41 @@ function microsForEmbed(topicId, dsId) {
 //                                                renderer build DS-specific
 //                                                allowlists from data)
 // }
-// If the fetch fails (offline / not regenerated), we fall back to the
-// inline `m.anchors` arrays still present on each micro — UI keeps working.
+//   pat_group::<groupId>[::<microId>]          (problem family)
+//   pat_story::<cueId>[::<microId>]            (story cue → micro)
+// Until rows arrive (or when opened outside AdsHub) the DS / Topic tabs fall
+// back to the inline `m.anchors` arrays still present on each micro.
 let ANCHOR_DATA = null    // { coreAnchors[dsId][microId] = [ids],
                           //   topicAnchors[topicId][microId] = [ids],
                           //   dsTopicAnchors[dsId][topicId][microId] = [ids] }
 let PATTERN_NOTES = {}    // { microId: { lcId: "how the micro applies to this problem" } }
                           // Loaded from patterns-notes.json. Empty object if
                           // fetch fails — anchor chips just don't get a tooltip.
-let DERIVED = null        // computed from ANCHOR_DATA after CSV load —
+let DERIVED = null        // computed from ANCHOR_DATA once tag rows arrive —
                           // { dsTopics[ds] = [topicIds],          (replaces hand-coded DS_TOPIC_LINKS)
                           //   dsTopicMicros[ds][topic] = [micros],(replaces TOPIC_DS_MICROS)
                           //   topicDses[topic] = [dsIds]   }       (powers applicableDses)
                           // Linked/applicable helpers prefer DERIVED when present
                           // and fall back to the hand-coded constants below.
 
-async function loadAnchorData() {
-  try {
-    // Relative to where patterns.html is served. Cache-busted so a fresh
-    // CSV is picked up without manual reload juggling.
-    const r = await fetch('patterns-data.csv?ts=' + Date.now(), { cache: 'no-store' })
-    if (!r.ok) return null
-    const text = await r.text()
-    return parsePatternData(text)
-  } catch (e) {
-    console.warn('[patterns] CSV fetch failed, using inline anchors:', e)
-    return null
-  }
+// Tag rows that arrive before boot finishes loading the sidecars wait here;
+// boot applies them. After boot, rows apply (and re-render) immediately.
+let BOOTED = false
+let PENDING_TAG_ROWS = null
+function onTagRows(rows) {
+  if (!BOOTED) { PENDING_TAG_ROWS = rows; return }
+  setAnchorData(rows)
+  renderNav(); renderMain()
+}
+function setAnchorData(rows) {
+  ANCHOR_DATA = parsePatternRows(rows)
+  DERIVED     = computeDerivedMaps(ANCHOR_DATA)
+  logAnchorStats(rows.length)
+}
+// What the Group By / Story panes say while ANCHOR_DATA is still null.
+function tagsPendingText() {
+  return EMBEDDED ? 'Loading tags from the sheet…'
+                  : 'Tags load from the sheet — open this page from AdsHub → 📐 Patterns.'
 }
 
 // Per-(micro, LC-id) application notes — explains HOW the micro's strategy
@@ -950,20 +1034,18 @@ async function loadPatternVisuals() {
   } catch { return {} }
 }
 
-function parsePatternData(csvText) {
-  const lines = csvText.split('\n').filter(l => l.trim())
-  if (!lines.length) return null
-  // Header assumed: anchor_id,tag (we don't enforce — just skip line 1).
+function parsePatternRows(rows) {
+  if (!Array.isArray(rows)) return null
   //   group: groupId → [ids]                         (pat_group:: rows)
   //   byId:  id → { ds:Set<dsId>, topic:Set<topicId> } reverse map, lets the
   //          Group By tab report which DS / Topics each group's problems touch.
-  const out = { core: {}, topic: {}, dsTopic: {}, group: {}, groupMicro: {}, byId: {} }
+  const out = { core: {}, topic: {}, dsTopic: {}, group: {}, groupMicro: {}, story: {}, storyMicro: {}, byId: {} }
   const byId = (id) => (out.byId[id] = out.byId[id] || { ds: new Set(), topic: new Set() })
-  for (let i = 1; i < lines.length; i++) {
-    const m = lines[i].match(/^(\d+)\s*,\s*(?:"([^"]*)"|([^\n]*))$/)
-    if (!m) continue
-    const id  = m[1]
-    const tag = (m[2] ?? m[3] ?? '').trim()
+  for (const row of rows) {
+    if (!Array.isArray(row)) continue
+    const id  = String(row[0] ?? '').trim()
+    const tag = String(row[1] ?? '').trim()
+    if (!/^\d+$/.test(id) || !tag) continue
     const parts = tag.split('::')
     if (parts[0] === 'pat_ds' && parts.length === 4 && parts[2] === 'core') {
       // pat_ds::<ds>::core::<micro>
@@ -997,6 +1079,14 @@ function parsePatternData(csvText) {
       ;((out.group[group] = out.group[group] || [])).push(id)
       const gm = (out.groupMicro[group] = out.groupMicro[group] || {})
       ;((gm[micro] = gm[micro] || [])).push(id)
+    } else if (parts[0] === 'pat_story' && (parts.length === 2 || parts.length === 3)) {
+      // pat_story::<cue>[::<micro>]  — story wording → the micro it lands on.
+      const cue = parts[1]
+      ;((out.story[cue] = out.story[cue] || [])).push(id)
+      if (parts.length === 3) {
+        const sm = (out.storyMicro[cue] = out.storyMicro[cue] || {})
+        ;((sm[parts[2]] = sm[parts[2]] || [])).push(id)
+      }
     }
   }
   // De-dup every id list: a problem tagged with BOTH pat_topic::T::M and
@@ -1009,12 +1099,12 @@ function parsePatternData(csvText) {
       else if (v && typeof v === 'object') dedupArrays(v)
     }
   }
-  ;[out.core, out.topic, out.dsTopic, out.group, out.groupMicro].forEach(dedupArrays)
+  ;[out.core, out.topic, out.dsTopic, out.group, out.groupMicro, out.story, out.storyMicro].forEach(dedupArrays)
   return out
 }
 
-// Compute the cross-link maps PURELY from the data file. Adding a new tag
-// in the sheet (and re-running build-patterns-csv) now propagates to:
+// Compute the cross-link maps PURELY from the tag rows. Adding a new tag
+// in the sheet (AdsHub tag edit or a script) propagates to:
 //   • DS-tab tree:           which Topics show under each DS
 //   • DS-tab embed sections: which micros appear under each (DS, Topic)
 //   • Topic-tab "Applies to": which DSes appear under each Topic
@@ -1076,6 +1166,7 @@ let activeTab = 'ds'      // 'ds' | 'topic' | 'group' — filters which PATTERNS
 let activePatternId = null
 let activeMicroId = null
 let activeGroupId = null  // selected pat_group:: id when activeTab === 'group'
+let activeStoryId = null  // selected pat_story:: cue when activeTab === 'story'
 // Which L1 groups are expanded in the tree. Kept SEPARATE from
 // activePatternId so a group can be toggled open/closed independently of
 // which pattern is selected/shown in the main pane (re-clicking collapses).
@@ -1134,6 +1225,7 @@ function renderNav() {
   const list   = $('#navList')
   // Group By has its own (tree-only) nav — no flat view.
   if (activeTab === 'group') { list.className = 'nav-list'; list.innerHTML = ''; renderGroupNav(list, filter); return }
+  if (activeTab === 'story') { list.className = 'nav-list'; list.innerHTML = ''; renderStoryNav(list, filter); return }
   list.className = view === 'tree' ? 'nav-list' : 'flat-list'
   list.innerHTML = ''
   if (view === 'tree') renderTree(list, filter)
@@ -1333,7 +1425,7 @@ function renderGroupNav(root, filter) {
   if (!groups.length) {
     const empty = document.createElement('div')
     empty.className = 'tree-topics-hdr'
-    empty.textContent = ANCHOR_DATA ? 'No pat_group:: tags yet' : 'Loading…'
+    empty.textContent = ANCHOR_DATA ? 'No pat_group:: tags yet' : tagsPendingText()
     root.appendChild(empty)
     return
   }
@@ -1453,6 +1545,84 @@ function renderGroupNav(root, filter) {
   })
 }
 
+function renderStoryNav(root, filter) {
+  const cues = visibleStories()
+  if (!cues.length) {
+    const empty = document.createElement('div')
+    empty.className = 'tree-topics-hdr'
+    empty.textContent = ANCHOR_DATA ? 'No pat_story:: tags yet' : tagsPendingText()
+    root.appendChild(empty)
+    return
+  }
+  cues.forEach(cid => {
+    const meta = storyMeta(cid)
+    const ids  = storyProblemIds(cid)
+    const micros = storyMicros(cid)
+    if (filter) {
+      const hit = meta.name.toLowerCase().includes(filter)
+        || ids.some(id => String(id) === filter)
+        || Object.keys(micros).some(m => m.includes(filter))
+      if (!hit) return
+    }
+    const expanded = expandedIds.has('story:' + cid) || !!filter
+    const grp = document.createElement('div')
+    grp.className = 'tree-group'
+    const l1 = document.createElement('div')
+    l1.className = 'tree-l1' + (activeStoryId === cid ? ' active' : '') + (expanded ? ' expanded' : '')
+    l1.innerHTML = `
+      <span class="caret">▶</span>
+      <span class="ico">${meta.icon}</span>
+      <span class="lbl">${escHtml(meta.name)}</span>
+      <span class="count">${ids.length}</span>`
+    l1.onclick = () => {
+      if (isSelectingText()) return
+      const key = 'story:' + cid
+      if (expandedIds.has(key)) { expandedIds.delete(key); renderNav() }
+      else                      { expandedIds.add(key); selectStory(cid) }
+    }
+    grp.appendChild(l1)
+    const sub = document.createElement('div')
+    sub.className = 'tree-l2-wrap'
+    const mids = Object.keys(micros)
+    if (mids.length) {
+      const hdr = document.createElement('div')
+      hdr.className = 'tree-topics-hdr'
+      hdr.textContent = `Lands on (${mids.length})`
+      sub.appendChild(hdr)
+      mids.forEach(mid => {
+        const home = microHome(mid)
+        const a = document.createElement('a')
+        a.className = 'tree-topic-row tree-applies-row'
+        a.title = home ? home.name : mid + ' (no catalog entry yet)'
+        a.innerHTML = `
+          <span class="ico">${home ? '⚙' : '·'}</span>
+          <span class="lbl">${escHtml(home ? home.name : mid)}</span>
+          <span class="count">${micros[mid].length}</span>`
+        a.onclick = () => {
+          if (isSelectingText()) return
+          if (activeStoryId !== cid) selectStory(cid)
+          openStoryMicro(mid)
+        }
+        sub.appendChild(a)
+      })
+    }
+    grp.appendChild(sub)
+    root.appendChild(grp)
+  })
+}
+
+function selectStory(cid) {
+  activeTab       = 'story'
+  activeStoryId   = cid
+  activePatternId = null
+  activeMicroId   = null
+  expandedIds.add('story:' + cid)
+  syncTabButtons()
+  writeHash()
+  renderNav()
+  renderMain()
+}
+
 function selectGroup(gid) {
   activeTab       = 'group'
   activeGroupId   = gid
@@ -1493,6 +1663,8 @@ function writeHash() {
   let h = activeTab
   if (activeTab === 'group') {
     if (activeGroupId) h += '/' + activeGroupId
+  } else if (activeTab === 'story') {
+    if (activeStoryId) h += '/' + activeStoryId
   } else if (activePatternId) {
     h += '/' + activePatternId
     if (activeMicroId) h += '/' + activeMicroId.split('/')[1]
@@ -1508,6 +1680,7 @@ const DIFF_HINT = {  // Light-weight difficulty hint, just for the card colour. 
 function renderMain() {
   const main = $('#main')
   if (activeTab === 'group') { renderGroupMain(main); return }
+  if (activeTab === 'story') { renderStoryMain(main); return }
   if (!activePatternId) { renderHome(main); return }
   const p = PATTERNS.find(x => x.id === activePatternId)
   if (!p) { renderHome(main); return }
@@ -1650,13 +1823,14 @@ if (EMBEDDED) {
   window.addEventListener('message', e => {
     const d = e.data
     if (d && d.type === 'pghub-theme') applyPortalTheme(d.theme)
+    else if (d && d.type === 'pghub-pat-tags' && Array.isArray(d.rows)) onTagRows(d.rows)
     else if (d && d.type === 'pgnote-data' && d.key === currentNoteKey) {
       const slot = document.getElementById('mynote-body')
       if (slot) slot.innerHTML = d.hasNote ? d.html : '<span style="color:var(--text3)">No note yet — click ✏️ Edit / Add.</span>'
     }
   })
-  // Cover the race where the host posts the theme before this listener
-  // attaches: ask it to (re)send.
+  // Cover the race where the host posts the theme / tags before this
+  // listener attaches: ask it to (re)send both.
   try { window.parent.postMessage({ type: 'pghub-ready' }, '*') } catch {}
 }
 
@@ -2260,7 +2434,7 @@ function renderProblemSolutions(g, kind, dimId, inG) {
     <div class="anchor-list">${chips}</div></div>`
 }
 // Resolve a DS/Topic dimension id to a {id,name,icon,tab} meta (PATTERNS
-// entry, or a light fallback for CSV-only dims like 'simulation').
+// entry, or a light fallback for unlisted dims like 'simulation').
 function comboMeta(dimId) {
   return PATTERNS.find(x => x.id === dimId) || { id: dimId, name: dimId.replace(/-/g, ' '), icon: '•' }
 }
@@ -2335,7 +2509,7 @@ function openComboDetail(g, kind, dimId) {
 }
 
 function renderGroupMain(main) {
-  if (!ANCHOR_DATA) { main.innerHTML = `<h2>🗂 Group By</h2><p class="lede">Loading…</p>`; return }
+  if (!ANCHOR_DATA) { main.innerHTML = `<h2>🗂 Group By</h2><p class="lede">${tagsPendingText()}</p>`; return }
   if (!activeGroupId) { renderGroupHome(main); return }
   const meta = groupMeta(activeGroupId)
   const ids  = groupProblemIds(activeGroupId)
@@ -2393,7 +2567,78 @@ function renderGroupHome(main) {
           <div class="meta">${meta.intro.slice(0, 90)}${meta.intro.length > 90 ? '…' : ''}</div>
         </div>`
       }).join('')}
-    </div>` : `<p class="lede" style="color:var(--text3)">No <code>pat_group::</code> tags found in patterns-data.csv yet.</p>`}
+    </div>` : `<p class="lede" style="color:var(--text3)">No <code>pat_group::</code> tags in the sheet yet.</p>`}
+  `
+}
+
+// ── Story main pane ─────────────────────────────────────────────────────────
+// Cue header + signals (the prompt), then the micros it lands on (the answer),
+// each with its pseudo / visual sidecars and the problems behind it.
+function renderStoryMain(main) {
+  if (!ANCHOR_DATA) { main.innerHTML = `<h2>📖 Story</h2><p class="lede">${tagsPendingText()}</p>`; return }
+  if (!activeStoryId) { renderStoryHome(main); return }
+  const meta   = storyMeta(activeStoryId)
+  const ids    = storyProblemIds(activeStoryId)
+  const micros = storyMicros(activeStoryId)
+  const cards = Object.entries(micros).map(([mid, list]) => {
+    const home   = microHome(mid)
+    const name   = home ? home.name : mid.replace(/-/g, ' ')
+    const where  = !home ? '<span class="cnt" title="No catalog entry yet">gap</span>'
+      : home.kind === 'pattern' ? `<span class="cnt">${escHtml(storyParentName(home.pid))}</span>`
+      : `<span class="cnt">🗂 ${escHtml(groupMeta(home.gid).name)}</span>`
+    const pseudo = PATTERN_PSEUDO[mid]  ? `<pre class="combo-pseudo">${escHtml(PATTERN_PSEUDO[mid])}</pre>` : ''
+    const visual = PATTERN_VISUALS[mid] ? `<pre class="combo-visual">${escHtml(PATTERN_VISUALS[mid])}</pre>` : ''
+    const open   = home ? `<p class="group-micro-mech"><a href="#" onclick="event.preventDefault(); openStoryMicro('${escHtml(mid)}')">↗ Open the micro-pattern</a></p>` : ''
+    return `<div class="group-micro" id="sm-${escHtml(mid)}">
+      <div class="group-micro-hd">
+        <span class="group-micro-id">${escHtml(mid)}</span>
+        <span class="group-micro-name">${escHtml(name)}</span>
+        ${where}
+        <span class="cnt">${list.length}</span>
+      </div>${open}${visual}${pseudo}
+      ${groupAnchorChips(list)}
+    </div>`
+  }).join('')
+  main.innerHTML = `
+    <div class="breadcrumb">📖 Story</div>
+    <h2>${meta.icon} ${escHtml(meta.name)} <span class="hd-count">(${ids.length})</span></h2>
+    <p class="lede">${escHtml(meta.intro)}</p>
+    <p class="lede" style="margin-top:-2px;color:var(--text3)">
+      Before scrolling: strip the story to <em>input + ask + constraint</em> and name the pattern yourself.
+    </p>
+    ${cards ? `<h3>Lands on <span class="hd-count">(${Object.keys(micros).length})</span></h3>
+      <div class="group-micro-list">${cards}</div>` : ''}
+    <h3>All problems <span class="hd-count">(${ids.length})</span></h3>
+    ${groupAnchorChips(ids)}
+  `
+}
+function storyParentName(pid) {
+  const p = PATTERNS.find(x => x.id === pid)
+  return p ? `${(p.tab || 'ds') === 'ds' ? '📦' : '🧰'} ${p.name}` : pid
+}
+function renderStoryHome(main) {
+  const cues = visibleStories()
+  const totalProblems = new Set(cues.flatMap(c => storyProblemIds(c))).size
+  main.innerHTML = `
+    <h2>📐 Micro-Pattern Reference · 📖 Story</h2>
+    <p class="lede">${cues.length} story cue${cues.length === 1 ? '' : 's'} · ${totalProblems} problems tagged</p>
+    <p class="lede" style="margin-top:-8px">
+      The <strong>4th entry point</strong>: the statement is a story or a feature request
+      (often one level of a progressive round) and the algorithm is hidden. Each cue is the
+      <strong>wording you read</strong>; open it to see which micro-patterns it lands on.
+    </p>
+    ${cues.length ? `<div class="home-grid">
+      ${cues.map(cid => {
+        const meta = storyMeta(cid)
+        const ids  = storyProblemIds(cid)
+        return `
+        <div class="home-card" onclick="selectStory('${cid}')">
+          <h4>${meta.icon} ${escHtml(meta.name)}</h4>
+          <div class="micro-count">${ids.length} problem${ids.length === 1 ? '' : 's'} <span style="color:var(--text3);font-weight:400">· ${Object.keys(storyMicros(cid)).length} micro${Object.keys(storyMicros(cid)).length === 1 ? '' : 's'}</span></div>
+          <div class="meta">${escHtml(meta.intro.slice(0, 90))}${meta.intro.length > 90 ? '…' : ''}</div>
+        </div>`
+      }).join('')}
+    </div>` : `<p class="lede" style="color:var(--text3)">No <code>pat_story::</code> tags in the sheet yet.</p>`}
   `
 }
 
@@ -2424,6 +2669,23 @@ function applyHash() {
     if (parts[2]) {
       setTimeout(() => {
         const el = document.getElementById('gm-' + parts[2])
+        if (el) el.scrollIntoView({ block: 'start' })
+      }, 40)
+    }
+    return
+  }
+  // Story route: #story[/<cue>[/<micro>]] — what a pat_story:: tag links to.
+  if (parts[0] === 'story') {
+    activeTab       = 'story'
+    activeStoryId   = parts[1] || null
+    activePatternId = null
+    activeMicroId   = null
+    if (activeStoryId) expandedIds.add('story:' + activeStoryId)
+    syncTabButtons()
+    renderNav(); renderMain()
+    if (parts[2]) {
+      setTimeout(() => {
+        const el = document.getElementById('sm-' + parts[2])
         if (el) el.scrollIntoView({ block: 'start' })
       }, 40)
     }
@@ -2468,30 +2730,30 @@ function syncTabButtons() {
 }
 window.addEventListener('hashchange', applyHash)
 
-// Boot: try to fetch the CSV first (if served alongside this file). If the
-// fetch resolves, ANCHOR_DATA is populated and every renderMicroCard call
-// pulls live data; if it rejects (e.g. opening the html via file://) we
-// fall through to the inline `m.anchors` arrays still attached to each
-// micro — the UI stays functional offline.
-Promise.all([loadAnchorData(), loadPatternNotes(), loadPatternPseudo(), loadPatternVisuals(), loadGroupNotes()]).then(([data, notes, pseudo, visuals, groupNotes]) => {
-  ANCHOR_DATA     = data
-  DERIVED         = computeDerivedMaps(data)
+// Boot: load the per-micro sidecars (notes / pseudo / visuals / group notes),
+// then apply any tag rows the host already sent. If none have arrived yet,
+// the DS / Topic tabs render from the inline `m.anchors` arrays and Group By /
+// Story show tagsPendingText() until onTagRows() fills ANCHOR_DATA.
+function logAnchorStats(rowCount) {
+  const data = ANCHOR_DATA
+  if (!data) return
+  const coreCount  = Object.values(data.core   ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
+  const topicCount = Object.values(data.topic  ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
+  const dsTopCount = Object.values(data.dsTopic).reduce((s, ds) => s + Object.values(ds).reduce((a, t) => a + Object.values(t).reduce((x, ids) => x + ids.length, 0), 0), 0)
+  const dsLinks = Object.values(DERIVED?.dsTopics      || {}).reduce((s, a) => s + a.length, 0)
+  const tLinks  = Object.values(DERIVED?.topicDses     || {}).reduce((s, a) => s + a.length, 0)
+  console.info(`[patterns] ${rowCount} tag rows from the sheet — ${coreCount} DS-core, ${topicCount} topic, ${dsTopCount} DS-of-topic anchors  ·  derived: ${dsLinks} DS→topic edges, ${tLinks} topic→DS edges`)
+}
+Promise.all([loadPatternNotes(), loadPatternPseudo(), loadPatternVisuals(), loadGroupNotes()]).then(([notes, pseudo, visuals, groupNotes]) => {
   PATTERN_NOTES   = notes
   PATTERN_PSEUDO  = pseudo
   PATTERN_VISUALS = visuals
   GROUP_NOTES     = groupNotes || {}
   const noteCount = Object.values(notes).reduce((s, m) => s + Object.keys(m).length, 0)
   console.info(`[patterns] ${noteCount} per-problem application notes loaded`)
-  if (data) {
-    const coreCount  = Object.values(data.core   ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
-    const topicCount = Object.values(data.topic  ).reduce((s, o) => s + Object.values(o).reduce((a, b) => a + b.length, 0), 0)
-    const dsTopCount = Object.values(data.dsTopic).reduce((s, ds) => s + Object.values(ds).reduce((a, t) => a + Object.values(t).reduce((x, ids) => x + ids.length, 0), 0), 0)
-    const dsLinks = Object.values(DERIVED?.dsTopics      || {}).reduce((s, a) => s + a.length, 0)
-    const tLinks  = Object.values(DERIVED?.topicDses     || {}).reduce((s, a) => s + a.length, 0)
-    console.info(`[patterns] CSV loaded — ${coreCount} DS-core, ${topicCount} topic, ${dsTopCount} DS-of-topic anchors  ·  derived: ${dsLinks} DS→topic edges, ${tLinks} topic→DS edges`)
-  } else {
-    console.info('[patterns] no CSV found, using inline m.anchors arrays + hand-coded link maps')
-  }
+  BOOTED = true
+  if (PENDING_TAG_ROWS) { setAnchorData(PENDING_TAG_ROWS); PENDING_TAG_ROWS = null }
+  else if (!EMBEDDED) console.info('[patterns] not embedded — no sheet tags; using inline m.anchors arrays + hand-coded link maps')
   applyHash()
 })
 </script>
