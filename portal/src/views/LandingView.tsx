@@ -19,12 +19,7 @@ const DESTS: Dest[] = [
   {
     view: 'ads-hub', icon: '🎯', title: 'AdsHub',
     blurb: 'Problems, patterns and the points worth remembering.',
-    sub: ['Tags · Companies · MyList · Point2Rem'],
-  },
-  {
-    view: 'solve-path', icon: '🧭', title: 'Solve Path',
-    blurb: 'Grow from problems you already solve well, one new idea at a time.',
-    sub: ['Next to try · Prepare for a hard one'],
+    sub: ['Tags · Companies · MyList · Point2Rem', 'Lineage · Patterns · Recall · Solve Path'],
   },
   {
     view: 'sysdsg-hub', icon: '🏛', title: 'SysDsgHub',

@@ -26,7 +26,6 @@ const THEMES = [
 // Settings is reachable via the avatar menu, so it's no longer in the top nav.
 const NAVS = [
   { id: 'ads-hub', label: 'AdsHub' },
-  { id: 'solve-path', label: 'Solve Path' },
   { id: 'sysdsg-hub', label: 'SysDsgHub' },
   { id: 'tech-hub', label: 'Tech' },
   // Home and Browse are sub-tabs of Anki now — one subject, one tab.
