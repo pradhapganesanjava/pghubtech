@@ -7548,3 +7548,104 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.22em;
   object-fit: contain; flex-shrink: 0;
 }
+
+
+/* ── Solve Path (views/SolvePathView.tsx) ───────────────────────────────────
+   Comfort lanes → "Next to try" cards → "Prepare for…" plan. Theme tokens
+   only, so every theme (dark / light / soft / …) carries it. */
+.sp { padding: 24px 20px 80px; max-width: 1100px; margin: 0 auto; color: var(--text); }
+.sp-hd h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
+.sp-hd p  { margin: 6px 0 0; color: var(--text2); font-size: 13.5px; line-height: 1.55; }
+.sp-err { margin: 14px 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--danger); color: var(--danger); font-size: 13px; }
+.sp-sec { margin-top: 26px; }
+.sp-sec h2 { margin: 0 0 8px; font-size: 16px; }
+.sp-lede { margin: -2px 0 12px; color: var(--text2); font-size: 12.5px; line-height: 1.55; }
+.sp-dim { color: var(--text2); font-size: 12.5px; opacity: .85; }
+.sp-meta { color: var(--text2); font-size: 11.5px; margin-left: 4px; }
+.sp-num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sp-easy .sp-num, .sp-num.sp-easy { color: var(--success); }
+.sp-medium .sp-num, .sp-num.sp-medium { color: var(--warning); }
+.sp-hard .sp-num, .sp-num.sp-hard { color: var(--danger); }
+
+.sp-search { position: relative; max-width: 460px; }
+.sp-search input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px;
+}
+.sp-results {
+  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px);
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18); overflow: hidden;
+}
+.sp-result {
+  display: block; width: 100%; text-align: left; padding: 7px 10px; font-size: 13px;
+  background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); cursor: pointer;
+}
+.sp-result:last-child { border-bottom: 0; }
+.sp-result:hover { background: rgba(var(--primary-rgb), .1); }
+
+.sp-editor {
+  margin: 12px 0; padding: 12px; border-radius: 10px; background: var(--bg2);
+  border: 1px solid var(--border); border-left: 3px solid var(--primary);
+}
+.sp-editor-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sp-x { margin-left: auto; background: none; border: 0; color: var(--text2); cursor: pointer; font-size: 14px; }
+.sp-levels, .sp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.sp-level, .sp-actions button, .sp-card-actions button, .sp-reveal {
+  padding: 5px 10px; border-radius: 999px; font-size: 12.5px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sp-level.active { border-color: var(--primary); background: rgba(var(--primary-rgb), .16); font-weight: 600; }
+.sp-actions .sp-danger { color: var(--danger); }
+.sp-level:disabled, .sp-actions button:disabled { opacity: .55; cursor: default; }
+
+.sp-lanes { display: grid; gap: 10px; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.sp-lane { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 5px; min-height: 64px; }
+.sp-lane-hd { font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
+.sp-count { color: var(--text2); font-weight: 400; margin-left: 2px; }
+.sp-lane-empty { padding: 2px 0; }
+.sp-chip {
+  text-align: left; padding: 5px 8px; border-radius: 7px; font-size: 12.5px; cursor: pointer;
+  background: var(--bg3); border: 1px solid transparent; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-chip:hover { border-color: var(--border); }
+.sp-chip.active { border-color: var(--primary); }
+
+.sp-plink {
+  background: none; border: 0; padding: 0; color: var(--text); cursor: pointer;
+  font-size: 13px; text-align: left;
+}
+.sp-plink:hover { text-decoration: underline; text-decoration-color: var(--primary); }
+.sp-plink.sp-quiet { font-size: 12.5px; color: var(--text2); }
+
+.sp-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.sp-card {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px;
+  background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid rgba(var(--primary-rgb), .55);
+}
+.sp-card-top { font-weight: 600; }
+.sp-card-row { font-size: 12.5px; color: var(--text2); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.sp-new { color: var(--text); }
+.sp-reveal { align-self: flex-start; background: none; }
+.sp-card-actions { margin-top: auto; padding-top: 4px; }
+
+.sp-targets { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-targets .sp-chip { max-width: 320px; }
+.sp-plan { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--border); }
+.sp-path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.sp-path-step { display: inline-flex; align-items: center; gap: 6px; }
+.sp-arrow { color: var(--text2); }
+.sp-steps { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sp-step { padding: 8px 10px; border-radius: 8px; background: var(--bg3); }
+.sp-step.gap { border-left: 3px solid var(--warning); }
+.sp-step.known { border-left: 3px solid var(--success); }
+.sp-step-hd { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sp-idea { font-weight: 600; font-size: 13.5px; }
+.sp-topic { font-size: 11.5px; color: var(--text2); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; }
+.sp-step-row { margin-top: 4px; font-size: 12.5px; color: var(--text2); display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+
+@media (max-width: 600px) {
+  .sp { padding: 16px 16px 90px; }
+  .sp-search { max-width: none; }
+}

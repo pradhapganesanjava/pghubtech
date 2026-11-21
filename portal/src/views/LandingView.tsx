@@ -22,6 +22,11 @@ const DESTS: Dest[] = [
     sub: ['Tags · Companies · MyList · Point2Rem'],
   },
   {
+    view: 'solve-path', icon: '🧭', title: 'Solve Path',
+    blurb: 'Grow from problems you already solve well, one new idea at a time.',
+    sub: ['Next to try · Prepare for a hard one'],
+  },
+  {
     view: 'sysdsg-hub', icon: '🏛', title: 'SysDsgHub',
     blurb: 'System design practice — a separate app, opened in place.',
   },

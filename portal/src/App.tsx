@@ -15,6 +15,7 @@ import UtilsView from './views/UtilsView'
 import AISkillsView from './views/AISkillsView'
 import AdsView from './views/AdsView'
 import AdsHubView from './views/AdsHubView'
+import SolvePathView from './views/SolvePathView'
 import SettingsView from './views/SettingsView'
 import AskAIPanel from './components/AskAIPanel'
 import ScratchPadPanel from './components/ScratchPad'
@@ -250,6 +251,7 @@ export default function App() {
         )}
         {view === 'ads'      && <AdsView />}
         {view === 'ads-hub'  && <AdsHubView />}
+        {view === 'solve-path' && <SolvePathView onNav={setView} />}
         {view === 'sysdsg-hub' && <SysDsgHubView />}
         {view === 'tech-hub' && <TechHubView />}
         {view === 'ai-skills' && <AISkillsView />}
@@ -286,6 +288,9 @@ export default function App() {
           {/* Ads tab temporarily hidden (pghubads.web.app) — may remove later */}
           <button className={`bn-btn${view === 'ads-hub'  ? ' active' : ''}`} onClick={() => setView('ads-hub')}>
             <span className="bn-icon">🧠</span><span className="bn-label">AdsHub</span>
+          </button>
+          <button className={`bn-btn${view === 'solve-path' ? ' active' : ''}`} onClick={() => setView('solve-path')}>
+            <span className="bn-icon">🧭</span><span className="bn-label">Path</span>
           </button>
           <button
             className={`bn-btn${view === 'sysdsg-hub' ? ' active' : ''}`}
