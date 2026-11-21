@@ -4545,6 +4545,14 @@ body.resizing-v * {
   border: 1px solid var(--border); cursor: pointer; transition: all .12s;
 }
 .adshub-diff-pill:hover { color: var(--text); }
+/* Lineage · Patterns · Recall · Solve Path, clubbed into one bordered group
+   so they read as the study modes beside 📋 Browse. */
+.adshub-mode-group {
+  display: flex; gap: 3px; padding: 2px; flex: 0 0 auto;
+  border: 1px solid var(--border); border-radius: 18px; background: var(--bg2);
+}
+.adshub-mode-group .adshub-diff-pill { border-color: transparent; }
+.adshub-mode-group .adshub-diff-pill.active { border-color: var(--primary); }
 /* Difficulty + Custom multi-select dropdown */
 .adshub-diff-menu-wrap { position: relative; display: inline-flex; }
 .adshub-diff-menu {
@@ -7548,3 +7556,376 @@ html[data-theme="cartoon"] .recall-kind--concept   { color: #0369a1; }
   width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.22em;
   object-fit: contain; flex-shrink: 0;
 }
+
+
+/* ── Solve Path (views/SolvePathView.tsx) ───────────────────────────────────
+   Comfort lanes → "Next to try" cards → "Prepare for…" plan. Theme tokens
+   only, so every theme (dark / light / soft / …) carries it. */
+.sp { padding: 24px 20px 80px; max-width: 1100px; margin: 0 auto; color: var(--text); }
+.sp-hd h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
+.sp-hd p  { margin: 6px 0 0; color: var(--text2); font-size: 13.5px; line-height: 1.55; }
+.sp-err { margin: 14px 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--danger); color: var(--danger); font-size: 13px; }
+.sp-sec { margin-top: 26px; }
+.sp-sec h2 { margin: 0 0 8px; font-size: 16px; }
+.sp-lede { margin: -2px 0 12px; color: var(--text2); font-size: 12.5px; line-height: 1.55; }
+.sp-dim { color: var(--text2); font-size: 12.5px; opacity: .85; }
+.sp-meta { color: var(--text2); font-size: 11.5px; margin-left: 4px; }
+.sp-num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sp-easy .sp-num, .sp-num.sp-easy { color: var(--success); }
+.sp-medium .sp-num, .sp-num.sp-medium { color: var(--warning); }
+.sp-hard .sp-num, .sp-num.sp-hard { color: var(--danger); }
+
+.sp-search { position: relative; max-width: 460px; }
+.sp-search input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px;
+}
+.sp-results {
+  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px);
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18); overflow: hidden;
+}
+.sp-result {
+  display: block; width: 100%; text-align: left; padding: 7px 10px; font-size: 13px;
+  background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); cursor: pointer;
+}
+.sp-result:last-child { border-bottom: 0; }
+.sp-result:hover { background: rgba(var(--primary-rgb), .1); }
+
+.sp-editor {
+  margin: 12px 0; padding: 12px; border-radius: 10px; background: var(--bg2);
+  border: 1px solid var(--border); border-left: 3px solid var(--primary);
+}
+.sp-editor-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sp-x { margin-left: auto; background: none; border: 0; color: var(--text2); cursor: pointer; font-size: 14px; }
+.sp-levels, .sp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.sp-level, .sp-actions button, .sp-card-actions button, .sp-reveal {
+  padding: 5px 10px; border-radius: 999px; font-size: 12.5px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sp-level.active { border-color: var(--primary); background: rgba(var(--primary-rgb), .16); font-weight: 600; }
+.sp-actions .sp-danger { color: var(--danger); }
+.sp-level:disabled, .sp-actions button:disabled { opacity: .55; cursor: default; }
+
+.sp-lanes { display: grid; gap: 10px; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.sp-lane { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 5px; min-height: 64px; }
+.sp-lane-hd { font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
+.sp-count { color: var(--text2); font-weight: 400; margin-left: 2px; }
+.sp-lane-empty { padding: 2px 0; }
+.sp-chip {
+  text-align: left; padding: 5px 8px; border-radius: 7px; font-size: 12.5px; cursor: pointer;
+  background: var(--bg3); border: 1px solid transparent; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-chip:hover { border-color: var(--border); }
+.sp-chip.active { border-color: var(--primary); }
+
+.sp-plink {
+  background: none; border: 0; padding: 0; color: var(--text); cursor: pointer;
+  font-size: 13px; text-align: left;
+}
+.sp-plink:hover { text-decoration: underline; text-decoration-color: var(--primary); }
+.sp-plink.sp-quiet { font-size: 12.5px; color: var(--text2); }
+
+.sp-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.sp-card {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px;
+  background: var(--bg2); border: 1px solid var(--border); border-left: 3px solid rgba(var(--primary-rgb), .55);
+}
+.sp-card-top { font-weight: 600; }
+.sp-card-row { font-size: 12.5px; color: var(--text2); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.sp-new { color: var(--text); }
+.sp-reveal { align-self: flex-start; background: none; }
+.sp-card-actions { margin-top: auto; padding-top: 4px; }
+
+.sp-targets { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-targets .sp-chip { max-width: 320px; }
+.sp-plan { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--border); }
+.sp-path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.sp-path-step { display: inline-flex; align-items: center; gap: 6px; }
+.sp-arrow { color: var(--text2); }
+.sp-steps { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sp-step { padding: 8px 10px; border-radius: 8px; background: var(--bg3); }
+.sp-step.gap { border-left: 3px solid var(--warning); }
+.sp-step.known { border-left: 3px solid var(--success); }
+.sp-step-hd { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sp-idea { font-weight: 600; font-size: 13.5px; }
+.sp-topic { font-size: 11.5px; color: var(--text2); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; }
+.sp-step-row { margin-top: 4px; font-size: 12.5px; color: var(--text2); display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+
+@media (max-width: 600px) {
+  .sp { padding: 16px 16px 90px; }
+  .sp-search { max-width: none; }
+}
+
+/* Solve Path embedded in AdsHub's left column: a fixed nav strip on top, the
+   page scrolls under it. Problems open in the shared detail pane beside. */
+.sp.sp--embed {
+  display: flex; flex-direction: column; flex: 1; min-height: 0;
+  max-width: none; margin: 0; padding: 0;
+}
+.sp-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 16px 60px; }
+.sp--embed .sp-hd p { margin-top: 0; }
+.sp-nav {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg2);
+}
+.sp-nav-title { font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+.sp-nav-cur {
+  flex: 1; min-width: 0; font-size: 12.5px; color: var(--text2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-nav-pos { font-size: 11.5px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.sp-nav-btn {
+  width: 28px; height: 26px; border-radius: 7px; cursor: pointer; font-size: 16px; line-height: 1;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sp-nav-btn:disabled { opacity: .5; cursor: default; }
+.sp-plink.sel { text-decoration: underline; text-decoration-color: var(--primary); text-decoration-thickness: 2px; font-weight: 600; }
+@media (max-width: 768px) {
+  .sp-body { overflow: visible; }
+}
+
+/* ── Solve Path tabs + 🗺 Map (components/SolveMap.tsx, SolveStreet.tsx) ────
+   Aspect hues (line + chip colours) are fixed mid-tones that read on every
+   theme; comfort fills match the lanes (🔴 🟠 🟢 ⭐, grey = not marked). */
+.sp { --sm-ds: #4f8cff; --sm-tech: #a26bff; --sm-family: #19b3a6; --sm-story: #e0a030; }
+.sp-tabs {
+  display: flex; gap: 2px; padding: 0 10px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--border); background: var(--bg2);
+}
+.sp-tabs::-webkit-scrollbar { display: none; }
+.sp-tab {
+  padding: 7px 12px; font-size: 12.5px; white-space: nowrap; cursor: pointer;
+  background: none; border: 0; border-bottom: 2px solid transparent; color: var(--text2);
+}
+.sp-tab.active { color: var(--text); border-bottom-color: var(--primary); font-weight: 600; }
+.sp-body--map { display: flex; flex-direction: column; padding-bottom: 12px; }
+
+.sm-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px; }
+.sm-toolbar { display: flex; flex-direction: column; gap: 6px; }
+.sm-seg {
+  display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 2px; align-self: flex-start;
+  border: 1px solid var(--border); border-radius: 18px; background: var(--bg2);
+}
+.sm-seg button {
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; cursor: pointer;
+  border: 1px solid transparent; background: none; color: var(--text2);
+}
+.sm-seg button.active { border-color: var(--primary); color: var(--text); background: rgba(var(--primary-rgb), .12); }
+.sm-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.sm-lbl { font-size: 11.5px; color: var(--text2); margin-right: 2px; }
+.sm-toggle {
+  padding: 3px 9px; border-radius: 999px; font-size: 11.5px; cursor: pointer;
+  border: 1px solid var(--border); background: none; color: var(--text2); opacity: .55;
+}
+.sm-toggle.on { opacity: 1; color: var(--text); background: var(--bg3); }
+.sm-toggle.on.sm-a-ds     { border-color: var(--sm-ds); }
+.sm-toggle.on.sm-a-tech   { border-color: var(--sm-tech); }
+.sm-toggle.on.sm-a-family { border-color: var(--sm-family); }
+.sm-toggle.on.sm-a-story  { border-color: var(--sm-story); }
+.sm-toggle.on.sm-diff-easy   { border-color: var(--success); }
+.sm-toggle.on.sm-diff-medium { border-color: var(--warning); }
+.sm-toggle.on.sm-diff-hard   { border-color: var(--danger); }
+.sm-select { font-size: 11.5px; padding: 3px 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); }
+.sm-find { flex: 1; min-width: 150px; max-width: 280px; }
+.sm-find input, .ss-route input { padding: 5px 9px; font-size: 12px; }
+.sm-hint { margin: 0; }
+
+.sm {
+  display: flex; flex-direction: column; flex: 1; min-height: 360px; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+}
+.sm-crumbs {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 6px 8px; font-size: 12px;
+  border-bottom: 1px solid var(--border); background: var(--bg2);
+}
+.sm-crumb button { background: none; border: 0; padding: 2px 3px; font-size: 12px; color: var(--primary); cursor: pointer; }
+.sm-crumb button:disabled { color: var(--text); font-weight: 600; cursor: default; }
+.sm-crumb-sep { color: var(--text2); }
+.sm-crumb-count { margin-left: auto; color: var(--text2); font-size: 11.5px; }
+.sm-zoom {
+  width: 24px; height: 22px; border-radius: 6px; font-size: 15px; line-height: 1; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sm-zoom:disabled { opacity: .4; cursor: default; }
+.sm-canvas { flex: 1; min-height: 0; position: relative; }
+.sm-svg { width: 100%; height: 100%; display: block; cursor: zoom-out; user-select: none; }
+.sm-focus { fill: rgba(var(--primary-rgb), .04); }
+.sm-n { cursor: zoom-in; stroke: rgba(var(--primary-rgb), .45); }
+.sm-n.sm-d1 { fill: rgba(var(--primary-rgb), .10); }
+.sm-n.sm-d2 { fill: rgba(var(--primary-rgb), .16); stroke-opacity: .35; }
+.sm-n:hover { stroke: var(--primary); }
+.sm-p { cursor: pointer; stroke: rgba(0, 0, 0, .35); }
+.sm-p.far { opacity: .8; }
+.sm-p.sel { stroke: var(--primary); }
+.sm-c-none        { fill: #8b90a5; }
+.sm-c-new         { fill: #e5484d; }
+.sm-c-tried       { fill: #f08c2e; }
+.sm-c-comfortable { fill: #30a46c; }
+.sm-c-fluent      { fill: #d9a710; }
+.sm-label text { text-anchor: middle; fill: var(--text); font-weight: 600; pointer-events: none; }
+.sm-label .sm-sub { fill: var(--text2); font-weight: 400; }
+.sm-plabel { text-anchor: middle; dominant-baseline: central; fill: #fff; font-weight: 700; pointer-events: none; }
+.sm-edge { stroke-opacity: .55; stroke-linecap: round; pointer-events: none; }
+.sm-edge.sm-a-ds     { stroke: var(--sm-ds); }
+.sm-edge.sm-a-tech   { stroke: var(--sm-tech); }
+.sm-edge.sm-a-family { stroke: var(--sm-family); }
+.sm-edge.sm-a-story  { stroke: var(--sm-story); }
+.sm-edge.next { stroke: var(--primary); stroke-opacity: .95; }
+
+.ss-wrap { display: flex; flex-direction: column; gap: 8px; }
+.ss-hd { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sm-btn {
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sm-btn:disabled { opacity: .45; cursor: default; }
+.ss-hd-title { flex: 1; min-width: 0; font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-route { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ss-route .sp-search { flex: 1; min-width: 200px; max-width: 440px; }
+.sm-check { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; color: var(--text2); }
+.ss-path { padding: 6px 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
+.ss-path .sp-x { margin-left: auto; }
+.ss { display: flex; flex-direction: column; gap: 8px; }
+.ss-svg { width: 100%; height: auto; max-height: 52vh; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+.ss-node { cursor: pointer; }
+.ss-node:hover circle { stroke: var(--primary); stroke-width: 3; }
+.ss-id { text-anchor: middle; font-size: 13px; font-weight: 700; fill: #fff; pointer-events: none; }
+.ss-id-c { font-size: 17px; }
+.ss-title { text-anchor: middle; font-size: 12.5px; fill: var(--text2); pointer-events: none; }
+.ss-title-c { fill: var(--text); font-weight: 600; font-size: 14px; }
+.ss-pct { text-anchor: middle; font-size: 11px; fill: var(--text2); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; }
+.sm-p.next { stroke: var(--primary); stroke-width: 4; }
+.ss-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ss-list li { padding: 7px 9px; border-radius: 8px; background: var(--bg2); border: 1px solid var(--border); }
+.ss-list li.next { border-color: var(--primary); }
+.ss-row { display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 0; text-align: left; background: none; border: 0; color: var(--text); cursor: pointer; font-size: 13px; }
+.ss-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-pct-chip { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: rgba(var(--primary-rgb), .15); font-variant-numeric: tabular-nums; }
+.ss-next-tag { font-size: 10.5px; color: var(--primary); white-space: nowrap; }
+.ss-shared { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.ss-chip { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text2); }
+.ss-chip.sm-a-ds     { border-color: var(--sm-ds); }
+.ss-chip.sm-a-tech   { border-color: var(--sm-tech); }
+.ss-chip.sm-a-family { border-color: var(--sm-family); }
+.ss-chip.sm-a-story  { border-color: var(--sm-story); }
+@media (max-width: 768px) {
+  .sm { min-height: 0; height: 62vh; flex: none; }
+  .ss-svg { max-height: none; }
+}
+.sm-plabel.sm-ptitle { font-weight: 500; opacity: .92; }
+/* Let the embedded page and its map shrink to the column: flex items default
+   to min-width:auto, so one wide child (the toolbar, an SVG) would otherwise
+   push the whole column past a phone's width. */
+.sp.sp--embed, .sp-body, .sm-wrap, .sm-toolbar, .sm, .sm-canvas, .ss-wrap, .ss { min-width: 0; }
+.sm-svg, .ss-svg { max-width: 100%; }
+.ss-route .sp-search { min-width: 0; flex-basis: 220px; }
+
+/* Map filters live in the Solve Path title strip, one line. */
+.sp.sp--embed { position: relative; }
+.sp-nav-title { flex-shrink: 0; }
+.sp-nav-filters {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px;
+  overflow-x: auto; white-space: nowrap; scrollbar-width: thin; padding: 1px 0;
+}
+.sp-nav-group { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.sp-nav-lbl { font-size: 12px; opacity: .8; margin-right: 1px; }
+.sm-toggle.sm-icon { padding: 2px 6px; min-width: 24px; font-size: 12px; line-height: 1.4; }
+.sp-nav-sel, .sp-nav-find {
+  flex-shrink: 0; font-size: 12px; padding: 3px 6px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sp-nav-sel { max-width: 150px; }
+.sp-nav-find { width: 96px; }
+.sp-results.sp-nav-results { left: auto; right: 72px; top: 42px; width: min(360px, 90%); z-index: 30; }
+.sm-help { margin-left: 4px; color: var(--text2); cursor: help; font-size: 13px; }
+.sp-nav-sel.sp-nav-layer   { width: 94px; }
+.sp-nav-sel.sp-nav-comfort { width: 76px; }
+.sp-nav-filters .sm-toggle.sm-icon { padding: 2px 5px; min-width: 22px; }
+
+/* Tabs share the title line; the map is one window (no inner frame), with the
+   breadcrumb and + / − floating over it. */
+.sp-nav .sp-tabs {
+  flex: 1; min-width: 0; padding: 0; border: 0; background: none; align-self: stretch;
+  display: flex; align-items: stretch; gap: 0;
+}
+.sp-nav .sp-tab { padding: 0 10px; }
+.sp-nav { padding-top: 0; padding-bottom: 0; min-height: 42px; }
+.sp-body--map { padding: 0; }
+.sp-body--map .sm-wrap { position: relative; gap: 0; }
+.sm-bar { flex: 0 0 auto; padding: 6px 12px; border-bottom: 1px solid var(--border); }
+.sp-results.sm-find-results { left: auto; right: 12px; top: 38px; width: min(360px, 90%); z-index: 30; }
+.sp-body--map .ss-wrap { padding: 10px 14px 16px; }
+.sm { border: 0; border-radius: 0; background: var(--bg); min-height: 380px; }
+.sm-canvas { position: relative; outline: none; }
+.sm-crumbs {
+  position: absolute; top: 8px; left: 8px; right: 60px; z-index: 2; width: fit-content; max-width: calc(100% - 70px);
+  border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--bg2) 88%, transparent);
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+.sm-zoomctl {
+  position: absolute; right: 10px; bottom: 12px; z-index: 2; display: flex; flex-direction: column;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg2);
+  box-shadow: 0 2px 10px rgba(0,0,0,.22);
+}
+.sm-zoomctl button {
+  width: 32px; height: 32px; font-size: 18px; line-height: 1; cursor: pointer;
+  border: 0; background: none; color: var(--text);
+}
+.sm-zoomctl button + button { border-top: 1px solid var(--border); }
+.sm-zoomctl button:hover:not(:disabled) { background: rgba(var(--primary-rgb), .14); }
+.sm-zoomctl button:disabled { opacity: .35; cursor: default; }
+@media (max-width: 768px) { .sm { height: 64vh; } }
+
+/* Free camera: drag to pan, floating pan pad + zoom column. */
+.sm-svg { cursor: grab; touch-action: none; }
+.sm-canvas.dragging .sm-svg, .sm-canvas.dragging .sm-svg * { cursor: grabbing; }
+.sm-n { cursor: zoom-in; }
+.sm-ctl {
+  position: absolute; right: 10px; bottom: 12px; z-index: 2;
+  display: flex; align-items: flex-end; gap: 8px;
+}
+.sm-ctl .sm-zoomctl { position: static; }
+.sm-pad {
+  display: grid; grid-template-columns: repeat(3, 28px); grid-template-rows: repeat(3, 28px);
+  grid-template-areas: ". up ." "left home right" ". down .";
+  border: 1px solid var(--border); border-radius: 50%; padding: 4px; gap: 0;
+  background: var(--bg2); box-shadow: 0 2px 10px rgba(0,0,0,.22);
+}
+.sm-pad button {
+  width: 28px; height: 28px; border: 0; background: none; color: var(--text2); cursor: pointer;
+  font-size: 11px; line-height: 1; border-radius: 50%;
+}
+.sm-pad button:hover { color: var(--text); background: rgba(var(--primary-rgb), .14); }
+.sm-pad .up { grid-area: up; } .sm-pad .down { grid-area: down; }
+.sm-pad .left { grid-area: left; } .sm-pad .right { grid-area: right; }
+.sm-pad .home { grid-area: home; font-size: 14px; color: var(--text); }
+.sm-zoomctl .sm-up { font-size: 15px; }
+
+/* Controls pinned top-right (always on screen, beside the breadcrumb), and
+   the map sized to the pane so nothing sits below the fold. */
+.sm-ctl { top: 8px; bottom: auto; right: 8px; flex-direction: column-reverse; align-items: flex-end; gap: 6px; }
+.sm-crumbs { max-width: calc(100% - 120px); }
+.sp-body--map { overflow: hidden; }
+.sp-body--map .sm { min-height: 240px; }
+@media (max-width: 768px) {
+  .sp-body--map { overflow: visible; }
+}
+
+/* Solve Path ⋯ map-options menu in the title row (reuses .tb-overflow). */
+.sp-menu .tb-overflow-trigger { height: 28px; min-width: 32px; padding: 0 8px; font-size: 16px; }
+.sp-menu .tb-overflow-items.sp-menu-items { left: auto; right: 0; min-width: 330px; max-width: calc(100vw - 24px); gap: 8px; }
+.sp-menu-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sp-menu-lbl { font-size: 11.5px; color: var(--text2); width: 70px; flex-shrink: 0; }
+.sp-menu-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.sp-menu-items .sp-nav-sel { flex: 1; max-width: none; height: 28px; }
+.sp-menu-find {
+  width: 100%; box-sizing: border-box; height: 32px; padding: 0 9px; font-size: 12.5px;
+  border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+}
+.sp-menu-results { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.sp-menu-results .sp-result { font-size: 12.5px; }
+.sp-menu-reset { align-self: flex-start; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); background: none; color: var(--text2); cursor: pointer; }
+.sp-menu-reset:hover { color: var(--text); border-color: var(--primary); }
+.sm-zoomctl .sm-fit { font-size: 15px; }

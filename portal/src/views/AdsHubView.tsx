@@ -42,6 +42,7 @@ import Point2RemDetail from '../components/Point2RemDetail'
 import { mergeRecallDeck } from '../lib/p2rAsRecall'
 import RecallDeck from '../components/RecallDeck'
 import AdsLineage from '../components/AdsLineage'
+import SolvePathView from './SolvePathView'
 import CodePanel from '../components/CodePanel'
 import HandwritingPad from '../components/HandwritingPad'
 import type { HwDoc, HandwritingPadHandle } from '../components/HandwritingPad'
@@ -534,7 +535,12 @@ export default function AdsHubView() {
   }, [p2rItems])
   // True when EITHER pane occupant is open — drives the split sizing below.
   const detailOpen = !!selected
-  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns' | 'recall' | 'point2rem'>('browse')
+  // Bumped by ↻ so children that own extra sheet data (Solve Path's Comfort
+  // tab) reload it along with the problems.
+  const [refreshTick, setRefreshTick] = useState(0)
+  const [adsMode, setAdsMode]              = useState<'browse' | 'lineage' | 'patterns' | 'recall' | 'solve' | 'point2rem'>(
+    // ?mode=solve (e.g. the old /solve link) opens straight into Solve Path.
+    () => new URLSearchParams(window.location.search).get('mode') === 'solve' ? 'solve' : 'browse')
 
   // Persist all filter state — Clear All triggers this too via state resets.
   useEffect(() => {
@@ -687,7 +693,7 @@ export default function AdsHubView() {
   // (Same effect as double-clicking the dividers; the user can still drag.)
   // When a problem opens: Browse/Patterns narrow the list to 15%; Lineage
   // keeps the graph dominant (55%) so the detail acts as a side panel.
-  useEffect(() => { setListRatio(detailOpen ? (adsMode === 'lineage' ? 55 : 15) : 40) }, [selected?.slug, p2rSel?.id, adsMode]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setListRatio(detailOpen ? (adsMode === 'lineage' || adsMode === 'solve' ? 55 : 15) : 40) }, [selected?.slug, p2rSel?.id, adsMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Per-problem study timer lives in <StudyTimer> (keyed by slug) so its 1 Hz
   // tick doesn't re-render this view — a re-render every second was clearing
@@ -947,6 +953,8 @@ export default function AdsHubView() {
     const sp = new URLSearchParams(window.location.search)
     if (adsMode === 'recall' && recallId) sp.set('recall', recallId)
     else                                  sp.delete('recall')
+    if (adsMode === 'solve') sp.set('mode', 'solve')
+    else                     sp.delete('mode')
     const qs = sp.toString()
     const next = window.location.pathname + (qs ? '?' + qs : '')
     if (next !== window.location.pathname + window.location.search) {
@@ -964,6 +972,7 @@ export default function AdsHubView() {
   async function refreshAll() {
     if (refreshing) return
     setRefresh(true)
+    setRefreshTick(t => t + 1)      // Solve Path re-reads its Comfort tab on this
     const problemsJob = loadProblems(true)
       .then(ps => { setProblems(ps); return null })
       .catch((e: Error) => e.message)
@@ -1375,7 +1384,7 @@ export default function AdsHubView() {
   useEffect(() => { setListMenuOpen(false); setNewListName(''); setShowMeta(false) }, [selected?.slug])
   useEffect(() => { if (!detailOpen) setViewerExpanded(false) }, [detailOpen])
 
-  const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns'
+  const sidebarHidden = leftCollapsed || viewerExpanded || adsMode === 'lineage' || adsMode === 'patterns' || adsMode === 'solve'
 
   // Difficulty/topics row + editable lineage tags. Sits at the top of the
   // detail's left content in every mode (so it lines up with Starter Code).
@@ -1747,6 +1756,9 @@ export default function AdsHubView() {
               className={`adshub-diff-pill${adsMode === 'browse' ? ' active' : ''}`}
               onClick={() => { setAdsMode('browse'); setP2rSel(null); setP2rEditing(false) }}
             >📋 Browse</button>
+            {/* Study modes, clubbed together: each one shows its page in the
+                left column and opens problems in the shared detail pane. */}
+            <div className="adshub-mode-group" role="group" aria-label="Study modes">
             <button
               className={`adshub-diff-pill${adsMode === 'lineage' ? ' active' : ''}`}
               // Open Lineage fresh: drop any open/expanded problem so the graph
@@ -1775,6 +1787,14 @@ export default function AdsHubView() {
               onClick={openRecall}
               title="Quiz / Recall — questions you answer from memory"
             >🎯 Recall</button>
+            {/* Solve Path — comfort lanes, Next to try, Prepare for…. Keeps
+                any open problem: its links open problems beside it. */}
+            <button
+              className={`adshub-diff-pill${adsMode === 'solve' ? ' active' : ''}`}
+              onClick={() => { setViewerExpanded(false); setAdsMode('solve') }}
+              title="Solve Path — grow from comfortable problems, one new idea at a time"
+            >🧭 Solve Path</button>
+            </div>
           </div>
           {adsMode === 'browse' && <>
           <button
@@ -1956,7 +1976,7 @@ export default function AdsHubView() {
             className={[
               'browse-col-cards',
               adsMode === 'patterns' || adsMode === 'lineage' ? 'browse-col-cards--embed' : '',
-              adsMode === 'recall' || adsMode === 'point2rem' ? 'browse-col-cards--fill' : '',
+              adsMode === 'recall' || adsMode === 'point2rem' || adsMode === 'solve' ? 'browse-col-cards--fill' : '',
             ].filter(Boolean).join(' ')}
             style={detailOpen ? { flex: `0 0 ${listRatio}%` } : undefined}
           >
@@ -1993,6 +2013,14 @@ export default function AdsHubView() {
                   onLoad={sendPatternsTheme}
                 />
               </>
+            ) : adsMode === 'solve' ? (
+              <SolvePathView
+                problems={problems}
+                problemsLoading={loading}
+                selectedId={selected?.frontendId ?? null}
+                onOpenProblem={p => { setViewerExpanded(false); setSelected(p) }}
+                refreshKey={refreshTick}
+              />
             ) : adsMode === 'recall' ? (
               <RecallDeck
                 items={recallDeck}

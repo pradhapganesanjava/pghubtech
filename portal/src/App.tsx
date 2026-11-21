@@ -103,6 +103,13 @@ export default function App() {
   // Sync view → URL (pushState). Guarded so we don't push a redundant entry
   // when view was just set FROM the URL (popstate handler, initial mount).
   useEffect(() => {
+    // Solve Path now lives inside AdsHub as a mode, beside Lineage / Patterns /
+    // Recall. Old /solve links land there.
+    if (view === 'solve-path') {
+      window.history.replaceState({ view: 'ads-hub' }, '', `${pathForView('ads-hub')}?mode=solve`)
+      setView('ads-hub')
+      return
+    }
     const target = pathForView(view)
     if (window.location.pathname !== target) {
       window.history.pushState({ view }, '', target)
